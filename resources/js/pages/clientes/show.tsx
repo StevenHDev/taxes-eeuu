@@ -403,25 +403,33 @@ function RevealButton({
         setValor(json.valor);
     };
 
-    if (needsPassword) {
-        return (
-            <a
-                href={confirmPasswordShow().url}
-                className="text-xs text-amber-600 underline"
-            >
-                Confirma tu contraseña para revelar
-            </a>
-        );
-    }
-
-    if (valor !== null) {
-        return <code className="text-xs">{JSON.stringify(valor)}</code>;
+    // El valor enmascarado (ej. "***-**-6789") ya viene calculado del backend en
+    // campo.valor — siempre se muestra, para que se vea que hay algo cargado sin
+    // tener que revelarlo. "Revelar" es una acción aparte, no la única forma de ver
+    // que el dato existe.
+    if (campo.valor === null || campo.valor === undefined) {
+        return <span className="text-muted-foreground">—</span>;
     }
 
     return (
-        <Button variant="ghost" size="sm" onClick={reveal}>
-            Revelar
-        </Button>
+        <div className="flex items-center gap-2">
+            <code className="text-xs">
+                {JSON.stringify(valor ?? campo.valor)}
+            </code>
+            {valor === null &&
+                (needsPassword ? (
+                    <a
+                        href={confirmPasswordShow().url}
+                        className="text-xs text-amber-600 underline"
+                    >
+                        Confirma tu contraseña para revelar
+                    </a>
+                ) : (
+                    <Button variant="ghost" size="sm" onClick={reveal}>
+                        Revelar
+                    </Button>
+                ))}
+        </div>
     );
 }
 
@@ -594,6 +602,11 @@ export default function ClienteShow({
                                                 clienteId={cliente.id}
                                                 campo={campo}
                                             />
+                                        ) : campo.valor === null ||
+                                          campo.valor === undefined ? (
+                                            <span className="text-muted-foreground">
+                                                —
+                                            </span>
                                         ) : (
                                             JSON.stringify(campo.valor)
                                         )}
