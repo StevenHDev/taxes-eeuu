@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
 import { Badge } from '@/components/ui/badge';
@@ -23,15 +23,26 @@ import {
 import { dashboard } from '@/routes';
 import {
     index as clientesIndex,
+    destroy as clienteDestroy,
     exportMethod as clienteExport,
     marcarRevisado,
 } from '@/routes/clientes';
-import { historial as campoHistorial, reveal as campoReveal, update as campoUpdate } from '@/routes/clientes/campos';
+import {
+    destroy as campoDestroy,
+    historial as campoHistorial,
+    reveal as campoReveal,
+    update as campoUpdate,
+} from '@/routes/clientes/campos';
 import type {
     CampoCliente,
+    CatalogoDisponibleItem,
     ClienteForma,
     HistorialCambio,
 } from '@/types';
+
+type PageProps = {
+    auth: { user: { role: 'client' | 'preparer' | 'administrator' } };
+};
 
 const ESTADO_VARIANT: Record<
     CampoCliente['estado'],
@@ -127,6 +138,169 @@ function EditCampoDialog({
 
                 <DialogFooter>
                     <Button onClick={submit}>Guardar corrección</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function AgregarCampoDialog({
+    clienteId,
+    disponibles,
+}: {
+    clienteId: number;
+    disponibles: CatalogoDisponibleItem[];
+}) {
+    const [forma, setForma] = useState<string>(
+        disponibles[0]?.forma ?? '',
+    );
+    const camposDeForma = disponibles.filter((d) => d.forma === forma);
+    const [campo, setCampo] = useState(camposDeForma[0]?.campo ?? '');
+    const [raw, setRaw] = useState('');
+    const [file, setFile] = useState<File | null>(null);
+
+    const tipoCampo = disponibles.find(
+        (d) => d.forma === forma && d.campo === campo,
+    )?.tipo_campo;
+    const esArchivo = tipoCampo === 'documento';
+
+    if (disponibles.length === 0) {
+        return null;
+    }
+
+    const cambiarForma = (nuevaForma: string) => {
+        setForma(nuevaForma);
+        const primero = disponibles.find((d) => d.forma === nuevaForma);
+        setCampo(primero?.campo ?? '');
+    };
+
+    const submit = () => {
+        const contenido = parseContenido(raw);
+
+        router.patch(
+            campoUpdate({ cliente: clienteId, campo }).url +
+                `?forma=${forma}`,
+            esArchivo
+                ? { modo: 'archivo', file }
+                : {
+                      modo: 'texto',
+                      tipo_dato: guessTipoDato(contenido),
+                      contenido,
+                  },
+            { preserveScroll: true },
+        );
+    };
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="secondary">Agregar campo</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>Agregar campo</DialogTitle>
+                <DialogDescription>
+                    Carga a mano un campo que el agente todavía no envió.
+                </DialogDescription>
+
+                <div className="grid gap-2">
+                    <label className="text-sm font-medium" htmlFor="forma">
+                        Forma
+                    </label>
+                    <select
+                        id="forma"
+                        className="rounded border bg-background p-2 text-sm"
+                        value={forma}
+                        onChange={(e) => cambiarForma(e.target.value)}
+                    >
+                        {[...new Set(disponibles.map((d) => d.forma))].map(
+                            (f) => (
+                                <option key={f} value={f}>
+                                    {f}
+                                </option>
+                            ),
+                        )}
+                    </select>
+                </div>
+
+                <div className="mt-2 grid gap-2">
+                    <label className="text-sm font-medium" htmlFor="campo">
+                        Campo
+                    </label>
+                    <select
+                        id="campo"
+                        className="rounded border bg-background p-2 text-sm"
+                        value={campo}
+                        onChange={(e) => setCampo(e.target.value)}
+                    >
+                        {camposDeForma.map((d) => (
+                            <option key={d.campo} value={d.campo}>
+                                {d.campo}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="mt-4">
+                    {esArchivo ? (
+                        <input
+                            type="file"
+                            onChange={(e) =>
+                                setFile(e.target.files?.[0] ?? null)
+                            }
+                        />
+                    ) : (
+                        <Textarea
+                            value={raw}
+                            onChange={(e) => setRaw(e.target.value)}
+                            placeholder='Texto, número, o JSON para objetos/listas (ej. {"nombre_completo":"..."})'
+                            rows={4}
+                        />
+                    )}
+                </div>
+
+                <DialogFooter className="mt-4">
+                    <Button onClick={submit}>Guardar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function EliminarCampoButton({
+    clienteId,
+    campo,
+}: {
+    clienteId: number;
+    campo: CampoCliente;
+}) {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-red-600">
+                    Eliminar
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>¿Eliminar «{campo.campo}»?</DialogTitle>
+                <DialogDescription>
+                    Se borra el valor cargado (y el archivo, si tenía). Queda
+                    registrado en el historial.
+                </DialogDescription>
+                <DialogFooter>
+                    <Button
+                        variant="destructive"
+                        onClick={() =>
+                            router.delete(
+                                campoDestroy({
+                                    cliente: clienteId,
+                                    campo: campo.campo,
+                                }).url + `?forma=${campo.forma}`,
+                                { preserveScroll: true },
+                            )
+                        }
+                    >
+                        Eliminar
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -255,11 +429,16 @@ export default function ClienteShow({
     cliente,
     formas,
     campos,
+    catalogoDisponible,
 }: {
     cliente: { id: number; name: string; email: string };
     formas: ClienteForma[];
     campos: CampoCliente[];
+    catalogoDisponible: CatalogoDisponibleItem[];
 }) {
+    const { auth } = usePage<PageProps>().props;
+    const esAdministrador = auth.user.role === 'administrator';
+
     return (
         <>
             <Head title={cliente.name} />
@@ -274,9 +453,43 @@ export default function ClienteShow({
                             {cliente.email}
                         </p>
                     </div>
-                    <a href={clienteExport(cliente.id).url}>
-                        <Button variant="secondary">Exportar ZIP</Button>
-                    </a>
+                    <div className="flex gap-2">
+                        <a href={clienteExport(cliente.id).url}>
+                            <Button variant="secondary">Exportar ZIP</Button>
+                        </a>
+                        {esAdministrador && (
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="destructive">
+                                        Eliminar cliente
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogTitle>
+                                        ¿Eliminar a {cliente.name}?
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        Se borran todos sus campos,
+                                        documentos e historial. Esta acción no
+                                        se puede deshacer.
+                                    </DialogDescription>
+                                    <DialogFooter>
+                                        <Button
+                                            variant="destructive"
+                                            onClick={() =>
+                                                router.delete(
+                                                    clienteDestroy(cliente.id)
+                                                        .url,
+                                                )
+                                            }
+                                        >
+                                            Eliminar definitivamente
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -319,6 +532,13 @@ export default function ClienteShow({
                             )}
                         </div>
                     ))}
+                </div>
+
+                <div className="flex justify-end">
+                    <AgregarCampoDialog
+                        clienteId={cliente.id}
+                        disponibles={catalogoDisponible}
+                    />
                 </div>
 
                 <div className="overflow-hidden rounded-xl border">
@@ -384,6 +604,10 @@ export default function ClienteShow({
                                             campo={campo}
                                         />
                                         <EditCampoDialog
+                                            clienteId={cliente.id}
+                                            campo={campo}
+                                        />
+                                        <EliminarCampoButton
                                             clienteId={cliente.id}
                                             campo={campo}
                                         />

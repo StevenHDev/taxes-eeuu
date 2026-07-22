@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Enums\FormState;
 use App\Enums\TaxForm;
+use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
+use App\Http\Requests\ClienteStoreRequest;
 use App\Models\FormaCliente;
 use App\Models\User;
 use App\Services\ClienteExportService;
+use App\Support\TaxFieldCatalog;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -50,6 +55,31 @@ class ClienteController extends Controller
         ]);
     }
 
+    public function store(ClienteStoreRequest $request): RedirectResponse
+    {
+        $actor = $request->user();
+
+        $cliente = User::query()->create([
+            'name' => $request->validated('name'),
+            'email' => $request->validated('email'),
+            'password' => Hash::make(Str::random(40)),
+            'role' => UserRole::Client,
+            'preparer_id' => $actor->role === UserRole::Preparer ? $actor->id : $request->validated('preparer_id'),
+        ]);
+
+        return to_route('clientes.show', $cliente);
+    }
+
+    public function destroy(User $cliente): RedirectResponse
+    {
+        $this->authorize('delete', $cliente);
+
+        $this->eliminarArchivosDe($cliente);
+        $cliente->delete();
+
+        return to_route('clientes.index');
+    }
+
     public function show(User $cliente): Response
     {
         $this->authorize('view', $cliente);
@@ -59,12 +89,25 @@ class ClienteController extends Controller
             'camposCliente' => fn ($query) => $query->with('documento')->orderBy('campo'),
         ]);
 
+        $camposCargados = $cliente->camposCliente->map(fn ($c) => "{$c->forma}:{$c->campo}");
+
         return Inertia::render('clientes/show', [
             'cliente' => [
                 'id' => $cliente->id,
                 'name' => $cliente->name,
                 'email' => $cliente->email,
             ],
+            // Por cada forma real, todos sus campos (transversales + propios) que este
+            // cliente todavía no tiene cargados — para el diálogo "Agregar campo".
+            'catalogoDisponible' => collect(TaxForm::cases())
+                ->flatMap(fn (TaxForm $forma) => collect(TaxFieldCatalog::fieldsFor($forma))
+                    ->reject(fn (array $campo) => $camposCargados->contains("{$forma->value}:{$campo['campo']}"))
+                    ->map(fn (array $campo) => [
+                        'forma' => $forma->value,
+                        'campo' => $campo['campo'],
+                        'tipo_campo' => $campo['tipo']->value,
+                    ]))
+                ->values(),
             'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
                 'forma' => $f->forma,
                 'forma_label' => TaxForm::from($f->forma)->label(),

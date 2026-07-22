@@ -13,8 +13,10 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('forma');
             $table->string('campo');
-            $table->json('valor_anterior')->nullable();
-            $table->json('valor_nuevo')->nullable();
+            // 'text', no 'json' — mismo motivo que en campos_cliente.valor_texto:
+            // estos dos también se cifran con `encrypted:array` antes de guardarse.
+            $table->text('valor_anterior')->nullable();
+            $table->text('valor_nuevo')->nullable();
             $table->string('source');
             $table->foreignId('modificado_por')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('created_at')->nullable();

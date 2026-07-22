@@ -36,7 +36,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property-read Collection<int, FormaCliente> $formasCliente
  * @property-read Collection<int, CampoCliente> $camposCliente
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'role', 'preparer_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {

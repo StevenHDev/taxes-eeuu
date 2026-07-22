@@ -68,3 +68,29 @@ export type HistorialCambio = {
     modificado_por: string | null;
     created_at: string;
 };
+
+export type CatalogoDisponibleItem = {
+    forma: TaxForm;
+    campo: string;
+    tipo_campo: 'documento' | 'dato' | 'mixto';
+};
+
+export type CampoCatalogo = {
+    id: number;
+    forma: string;
+    clave: string;
+    tipo_campo: 'documento' | 'dato' | 'mixto';
+    tipo_dato: 'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
+    formatos_aceptados: string[] | null;
+    subcampos: string[] | null;
+    obligatorio: boolean;
+    sensible: boolean;
+};
+
+export type Usuario = {
+    id: number;
+    name: string;
+    email: string;
+    role: 'client' | 'preparer' | 'administrator';
+    preparer?: { id: number; name: string } | null;
+};

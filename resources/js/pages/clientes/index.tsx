@@ -1,7 +1,19 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
+import ClienteController from '@/actions/App/Http/Controllers/ClienteController';
 import { show as clienteShow, index as clientesIndex } from '@/routes/clientes';
 import { dashboard } from '@/routes';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import InputError from '@/components/input-error';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Table,
     TableBody,
@@ -38,12 +50,67 @@ export default function ClientesIndex({
             <Head title="Clientes" />
 
             <div className="space-y-6 p-4">
-                <div>
-                    <h1 className="text-xl font-semibold">Clientes</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Estado de recolección de datos por cliente, campo a
-                        campo.
-                    </p>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h1 className="text-xl font-semibold">Clientes</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Estado de recolección de datos por cliente, campo
+                            a campo.
+                        </p>
+                    </div>
+
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button>Nuevo cliente</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogTitle>Nuevo cliente</DialogTitle>
+                            <Form
+                                {...ClienteController.store.form()}
+                                resetOnSuccess
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="name">
+                                                Nombre
+                                            </Label>
+                                            <Input
+                                                id="name"
+                                                name="name"
+                                                required
+                                            />
+                                            <InputError
+                                                message={errors.name}
+                                            />
+                                        </div>
+                                        <div className="mt-4 grid gap-2">
+                                            <Label htmlFor="email">
+                                                Email
+                                            </Label>
+                                            <Input
+                                                id="email"
+                                                name="email"
+                                                type="email"
+                                                required
+                                            />
+                                            <InputError
+                                                message={errors.email}
+                                            />
+                                        </div>
+                                        <DialogFooter className="mt-4">
+                                            <Button
+                                                type="submit"
+                                                disabled={processing}
+                                            >
+                                                Crear
+                                            </Button>
+                                        </DialogFooter>
+                                    </>
+                                )}
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 <div className="overflow-hidden rounded-xl border">

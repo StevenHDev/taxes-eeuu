@@ -1,9 +1,11 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     Code2,
     FolderGit2,
     LayoutGrid,
+    ListChecks,
+    UserCog,
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -21,26 +23,14 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as apiDocsIndex } from '@/routes/api-docs';
+import { index as catalogoIndex } from '@/routes/catalogo';
 import { index as clientesIndex } from '@/routes/clientes';
+import { index as usuariosIndex } from '@/routes/usuarios';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Clientes',
-        href: clientesIndex(),
-        icon: Users,
-    },
-    {
-        title: 'Documentación API',
-        href: apiDocsIndex(),
-        icon: Code2,
-    },
-];
+type PageProps = {
+    auth: { user: { role: 'client' | 'preparer' | 'administrator' } };
+};
 
 const footerNavItems: NavItem[] = [
     {
@@ -56,6 +46,46 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage<PageProps>().props;
+    const esAdministrador = auth.user.role === 'administrator';
+    const tieneAccesoAlPanel = auth.user.role !== 'client';
+
+    const mainNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        ...(tieneAccesoAlPanel
+            ? [
+                  {
+                      title: 'Clientes',
+                      href: clientesIndex(),
+                      icon: Users,
+                  },
+              ]
+            : []),
+        ...(esAdministrador
+            ? [
+                  {
+                      title: 'Catálogo',
+                      href: catalogoIndex(),
+                      icon: ListChecks,
+                  },
+                  {
+                      title: 'Usuarios',
+                      href: usuariosIndex(),
+                      icon: UserCog,
+                  },
+              ]
+            : []),
+        {
+            title: 'Documentación API',
+            href: apiDocsIndex(),
+            icon: Code2,
+        },
+    ];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>

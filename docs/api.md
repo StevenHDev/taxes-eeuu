@@ -181,23 +181,98 @@ Qué significa cada columna:
 
 Requiere ability `eventos:write`. Un evento = un solo campo, nunca varios juntos.
 
-**Campo de texto:**
+Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `array_object`) el body se puede mandar como **JSON puro** (`Content-Type: application/json`) — Laravel lee los campos igual, sea form-data o JSON. Para `modo: "archivo"` **no hay opción**: un archivo binario no entra en un JSON, así que ese caso siempre va como `multipart/form-data` (el archivo se sube directo en el mismo request — no existe un endpoint de subida separado).
+
+### Ejemplos por tipo de dato
+
+**`string`** — ej. `identificacion_ssn_itin`:
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "form_1040",
+  "campo": "identificacion_ssn_itin",
+  "tipo_campo": "dato",
+  "modo": "texto",
+  "tipo_dato": "string",
+  "contenido": "123-45-6789"
+}
+```
+
+**`number`** — ej. `ingresos`:
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "form_1040",
+  "campo": "ingresos",
+  "tipo_campo": "dato",
+  "modo": "texto",
+  "tipo_dato": "number",
+  "contenido": 52000
+}
+```
+
+**`object`** — ej. `info_conyuge` (subcampos `nombre_completo`, `fecha_nacimiento`, `ssn`):
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "form_1040",
+  "campo": "info_conyuge",
+  "tipo_campo": "dato",
+  "modo": "texto",
+  "tipo_dato": "object",
+  "contenido": {
+    "nombre_completo": "Jane Doe",
+    "fecha_nacimiento": "1990-05-14",
+    "ssn": "987-65-4321"
+  }
+}
+```
+
+**`array_string`** — ej. `creditos`:
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "form_1040",
+  "campo": "creditos",
+  "tipo_campo": "dato",
+  "modo": "texto",
+  "tipo_dato": "array_string",
+  "contenido": ["child_tax_credit", "education_credit"]
+}
+```
+
+**`array_object`** — ej. `info_dependientes` (siempre con el **arreglo acumulado completo**, no solo el elemento nuevo — ver nota más abajo):
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "form_1040",
+  "campo": "info_dependientes",
+  "tipo_campo": "dato",
+  "modo": "texto",
+  "tipo_dato": "array_object",
+  "contenido": [
+    { "nombre_completo": "Kid One", "fecha_nacimiento": "2015-03-01", "ssn": "111-22-3333" },
+    { "nombre_completo": "Kid Two", "fecha_nacimiento": "2018-09-20", "ssn": "444-55-6666" }
+  ]
+}
+```
+
+Cualquiera de los cinco de arriba se envía así con curl:
 
 ```bash
 curl -X POST https://tu-dominio/api/eventos \
   -H "Authorization: Bearer $TOKEN" \
   -H "Accept: application/json" \
-  -F "cliente_id=" \
-  -F "external_ref=whatsapp:+15551234567" \
-  -F "forma=form_1040" \
-  -F "campo=ingresos" \
-  -F "tipo_campo=dato" \
-  -F "modo=texto" \
-  -F "tipo_dato=number" \
-  -F "contenido=52000"
+  -H "Content-Type: application/json" \
+  -d '{ ... el json de arriba ... }'
 ```
 
-**Campo de archivo** (multipart, el archivo se sube directamente en el mismo request — no existe un endpoint de subida separado):
+**`documento`** (siempre archivo, sin `tipo_dato`) — ej. `w2`, y **`mixto`** cuando llega como archivo en vez de dato — únicos casos que van sí o sí como multipart:
 
 ```bash
 curl -X POST https://tu-dominio/api/eventos \
@@ -211,7 +286,7 @@ curl -X POST https://tu-dominio/api/eventos \
   -F "file=@w2_2025.pdf"
 ```
 
-Respuesta `201`:
+Respuesta `201` (misma forma para cualquiera de los casos anteriores):
 
 ```json
 {
@@ -240,12 +315,21 @@ GET   /api/clientes                              — lista clientes visibles par
 GET   /api/clientes/{id}                         — detalle: formas aplicables + todos los campos y su estado
 GET   /api/clientes/{id}/documentos               — documentos subidos, con URL de descarga firmada y temporal
 GET   /api/clientes/{id}/export                  — descarga un ZIP con documentos + JSON de campos
-GET   /api/clientes/{id}/campos/{campo}?forma=   — historial de cambios de un campo (forma es obligatoria)
-PATCH /api/clientes/{id}/campos/{campo}?forma=   — corrección manual de un campo por un preparador/administrador
-POST  /api/clientes/{id}/marcar-revisado/{forma} — marca una forma como revisada por un humano
+GET    /api/clientes/{id}/campos/{campo}?forma=   — historial de cambios de un campo (forma es obligatoria)
+PATCH  /api/clientes/{id}/campos/{campo}?forma=   — corrección manual de un campo por un preparador/administrador
+DELETE /api/clientes/{id}/campos/{campo}?forma=   — elimina un campo cargado por error (conserva el historial)
+POST   /api/clientes/{id}/marcar-revisado/{forma} — marca una forma como revisada por un humano
 ```
 
-La corrección manual (`PATCH`) acepta el mismo shape que un evento de texto/archivo (`modo`, `tipo_dato`+`contenido`, o `file`), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`).
+La corrección manual (`PATCH`) acepta el mismo shape que un evento de texto/archivo (`modo`, `tipo_dato`+`contenido`, o `file`), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`). `DELETE` borra la fila de `campos_cliente` (y el documento/archivo si era de tipo `documento`), pero agrega una entrada final al historial con `valor_nuevo: null` — nada se pierde de la trazabilidad.
+
+## Panel de administración (solo web, sin API de token)
+
+Tres áreas exclusivamente del panel web (sesión), sin equivalente sobre token — pensadas para el equipo interno, no para integraciones externas:
+
+- **`/clientes`**: además de listar/ver, un preparador o administrador puede dar de alta un cliente manualmente (`POST /clientes`) y un administrador puede eliminarlo (`DELETE /clientes/{id}`, borra en cascada todos sus datos y archivos).
+- **`/catalogo`** (solo administrador): CRUD de qué campos pide cada formulario — alta, edición y baja de definiciones (`tipo_campo`, `tipo_dato`, `formatos_aceptados`, `obligatorio`, `sensible`). Las 10 formas en sí son fijas; solo los campos dentro de cada una son editables. Borrar una definición no borra los datos de clientes ya cargados con ese campo — solo deja de pedirse/contar a futuro.
+- **`/usuarios`** (solo administrador): alta, edición y baja de cualquier usuario (cliente, preparador o administrador), incluida la asignación/reasignación de preparador de un cliente. Un administrador no puede eliminarse a sí mismo.
 
 ## Revelar campos sensibles
 

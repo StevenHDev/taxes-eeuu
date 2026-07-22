@@ -15,7 +15,11 @@ return new class extends Migration
             $table->string('campo');
             $table->string('tipo_campo');
             $table->string('modo');
-            $table->json('valor_texto')->nullable();
+            // 'text', no 'json': el cast `encrypted:array` guarda un string cifrado
+            // (no JSON plano), y Postgres valida sintaxis JSON real en columnas `json`
+            // — un blob cifrado la rompe. sqlite (tests) no valida esto, por eso el
+            // bug no aparecía ahí.
+            $table->text('valor_texto')->nullable();
             $table->foreignId('documento_id')->nullable()->constrained('documentos')->nullOnDelete();
             $table->string('estado');
             $table->string('source');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ApiAbility;
 use App\Enums\FieldDataType;
 use App\Enums\FieldMode;
 use App\Enums\TaxForm;
@@ -14,6 +15,7 @@ use App\Services\EventoRecoleccionService;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class CampoClienteController extends Controller
 {
@@ -65,5 +67,26 @@ class CampoClienteController extends Controller
             'campo' => $resultado['campo_cliente']->campo,
             'estado' => $resultado['campo_cliente']->estado,
         ]);
+    }
+
+    public function destroy(Request $request, User $cliente, string $campo): JsonResponse
+    {
+        $this->authorize('update', $cliente);
+        $this->ensureAbility($request, ApiAbility::ClientesWrite);
+
+        $forma = TaxForm::from((string) $request->query('forma'));
+
+        $this->eventos->eliminarCampo($cliente, $forma->value, $campo, $request->user());
+
+        return response()->json(status: 204);
+    }
+
+    private function ensureAbility(Request $request, ApiAbility $ability): void
+    {
+        $token = $request->user()?->currentAccessToken();
+
+        if ($token instanceof PersonalAccessToken && ! $token->can($ability->value)) {
+            abort(403, 'El token no tiene la ability requerida: '.$ability->value);
+        }
     }
 }

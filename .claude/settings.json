@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"EditCampoDialog$\" -B2 -A5 /Users/stevendev/Dev/declaracion-impuestos/resources/js/pages/clientes/show.tsx)",
+      "Bash(psql -U stevendev -d declaracion_impuestos -c \"select forma, count\\(*\\) from catalogo_campos group by forma order by forma;\")",
+      "Bash(git check-ignore *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8000/)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/api/eventos -H 'Authorization: Bearer 1|VLp6rrklyfwBXnwUCuOvDUVJkrBiFTObGYGIzopU4b01c546' -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/api/eventos -H 'Authorization: Bearer 1|XbyZiaAaI53DJAjN3PeFG6V9zmkxwiZCseEKgt2Qb7aed352' -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ *)"
+    ]
+  }
+}

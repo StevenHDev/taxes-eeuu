@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\CampoCatalogo;
 use App\Models\User;
+use App\Policies\CatalogoPolicy;
 use App\Policies\ClientePolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         Gate::policy(User::class, ClientePolicy::class);
+        Gate::policy(CampoCatalogo::class, CatalogoPolicy::class);
     }
 
     /**

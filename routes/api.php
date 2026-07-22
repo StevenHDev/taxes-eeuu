@@ -22,5 +22,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         Route::get('/{cliente}/campos/{campo}', [CampoClienteController::class, 'historial'])->name('campos.historial');
         Route::match(['put', 'patch'], '/{cliente}/campos/{campo}', [CampoClienteController::class, 'update'])->name('campos.update');
+        Route::delete('/{cliente}/campos/{campo}', [CampoClienteController::class, 'destroy'])->name('campos.destroy');
     });
 });

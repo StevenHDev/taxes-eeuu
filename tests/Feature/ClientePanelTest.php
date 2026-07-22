@@ -134,4 +134,83 @@ class ClientePanelTest extends TestCase
 
         $this->assertSame(1, CampoReveal::query()->where('campo_cliente_id', $campo->id)->count());
     }
+
+    public function test_un_preparador_puede_crear_un_cliente_y_queda_asignado_a_si_mismo(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+
+        $this->actingAs($preparador)->post(route('clientes.store'), [
+            'name' => 'Cliente Nuevo',
+            'email' => 'cliente-nuevo@example.com',
+        ])->assertRedirect();
+
+        $cliente = User::query()->where('email', 'cliente-nuevo@example.com')->firstOrFail();
+        $this->assertSame(UserRole::Client, $cliente->role);
+        $this->assertSame($preparador->id, $cliente->preparer_id);
+    }
+
+    public function test_un_cliente_no_puede_crear_otro_cliente(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->actingAs($cliente)->post(route('clientes.store'), [
+            'name' => 'Otro',
+            'email' => 'otro@example.com',
+        ])->assertForbidden();
+    }
+
+    public function test_un_preparador_no_puede_eliminar_un_cliente_pero_un_administrador_si(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->actingAs($preparador)->delete(route('clientes.destroy', $cliente))->assertForbidden();
+        $this->assertDatabaseHas('users', ['id' => $cliente->id]);
+
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $this->actingAs($admin)->delete(route('clientes.destroy', $cliente))->assertRedirect();
+        $this->assertDatabaseMissing('users', ['id' => $cliente->id]);
+    }
+
+    public function test_agregar_un_campo_que_nunca_envio_el_agente(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->actingAs($preparador)
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040', [
+                'forma' => 'form_1040',
+                'modo' => 'texto',
+                'tipo_dato' => 'number',
+                'contenido' => 4500,
+            ])
+            ->assertRedirect();
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
+        $this->assertNotNull($campo);
+        $this->assertSame(4500, $campo->valor);
+    }
+
+    public function test_eliminar_un_campo_lo_borra_pero_conserva_el_historial(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+        $this->crearCampo($cliente);
+
+        $this->actingAs($preparador)
+            ->delete(route('clientes.campos.destroy', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040')
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'ingresos']);
+
+        $historial = HistorialCambio::query()
+            ->where('user_id', $cliente->id)
+            ->where('campo', 'ingresos')
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($historial);
+        $this->assertNull($historial->valor_nuevo);
+        $this->assertSame(1000, $historial->valor_anterior);
+    }
 }

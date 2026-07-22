@@ -21,6 +21,7 @@ use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class EventoRecoleccionService
@@ -121,6 +122,10 @@ class EventoRecoleccionService
             ->where('campo', $campo)
             ->first();
 
+        if ($documento && $anterior?->documento_id && $anterior->documento_id !== $documento->id) {
+            $this->borrarDocumento($anterior->documento);
+        }
+
         /** @var CampoCliente $campoCliente */
         $campoCliente = CampoCliente::query()->updateOrCreate(
             ['user_id' => $cliente->id, 'forma' => $forma, 'campo' => $campo],
@@ -148,6 +153,57 @@ class EventoRecoleccionService
         $formaCliente = $this->recalcularCompletitud($cliente, $forma);
 
         return ['cliente' => $cliente, 'campo_cliente' => $campoCliente, 'forma_cliente' => $formaCliente];
+    }
+
+    /**
+     * Elimina un campo cargado por error (sección 6.1 del plan: el preparador debe
+     * poder corregir o quitar un dato mal capturado). Se conserva `historial_cambios`
+     * (con `valor_nuevo: null`) para trazabilidad; lo que se borra es la fila
+     * "actual" en `campos_cliente` y, si correspondía, el documento y su archivo.
+     */
+    public function eliminarCampo(User $cliente, string $forma, string $campo, User $actor): void
+    {
+        DB::transaction(function () use ($cliente, $forma, $campo, $actor) {
+            $campoCliente = CampoCliente::query()
+                ->where('user_id', $cliente->id)
+                ->where('forma', $forma)
+                ->where('campo', $campo)
+                ->first();
+
+            if (! $campoCliente) {
+                return;
+            }
+
+            $source = $actor->role === UserRole::Administrator ? EventSource::Administrador : EventSource::Preparador;
+
+            HistorialCambio::query()->create([
+                'user_id' => $cliente->id,
+                'forma' => $forma,
+                'campo' => $campo,
+                'valor_anterior' => $campoCliente->valor_texto,
+                'valor_nuevo' => null,
+                'source' => $source,
+                'modificado_por' => $actor->id,
+            ]);
+
+            if ($campoCliente->documento_id) {
+                $this->borrarDocumento($campoCliente->documento);
+            }
+
+            $campoCliente->delete();
+
+            $this->recalcularCompletitud($cliente, $forma);
+        });
+    }
+
+    private function borrarDocumento(?Documento $documento): void
+    {
+        if (! $documento) {
+            return;
+        }
+
+        Storage::disk('local')->delete($documento->file_path);
+        $documento->delete();
     }
 
     private function resolverCliente(EventoRequest $request): User

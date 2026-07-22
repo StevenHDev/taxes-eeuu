@@ -42,6 +42,17 @@ class CampoClienteController extends Controller
         return back();
     }
 
+    public function destroy(Request $request, User $cliente, string $campo): RedirectResponse
+    {
+        $this->authorize('update', $cliente);
+
+        $forma = TaxForm::from((string) $request->query('forma'));
+
+        $this->eventos->eliminarCampo($cliente, $forma->value, $campo, $request->user());
+
+        return back();
+    }
+
     public function historial(Request $request, User $cliente, string $campo): JsonResponse
     {
         $this->authorize('view', $cliente);
