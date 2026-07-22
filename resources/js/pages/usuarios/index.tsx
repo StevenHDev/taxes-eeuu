@@ -3,6 +3,7 @@ import { useState } from 'react';
 import UsuarioController from '@/actions/App/Http/Controllers/UsuarioController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -200,7 +201,7 @@ export default function UsuariosIndex({
             <Head title="Usuarios" />
 
             <div className="space-y-6 p-4">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-xl font-semibold">Usuarios</h1>
                         <p className="text-sm text-muted-foreground">
@@ -227,7 +228,7 @@ export default function UsuariosIndex({
                     </Dialog>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border">
+                <Card className="overflow-hidden py-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -352,7 +353,7 @@ export default function UsuariosIndex({
                             )}
                         </TableBody>
                     </Table>
-                </div>
+                </Card>
             </div>
         </>
     );

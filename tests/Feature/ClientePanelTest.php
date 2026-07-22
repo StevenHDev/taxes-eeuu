@@ -9,6 +9,7 @@ use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ClientePanelTest extends TestCase
@@ -212,5 +213,24 @@ class ClientePanelTest extends TestCase
         $this->assertNotNull($historial);
         $this->assertNull($historial->valor_nuevo);
         $this->assertSame(1000, $historial->valor_anterior);
+    }
+
+    public function test_el_buscador_filtra_clientes_por_nombre_email_o_telefono(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id, 'name' => 'Jane Doe', 'phone' => '+15551112222']);
+        User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id, 'name' => 'John Smith']);
+
+        $this->actingAs($preparador)
+            ->get(route('clientes.index', ['search' => 'Jane']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('clientes.data.0.name', 'Jane Doe')
+                ->where('search', 'Jane'));
+
+        $this->actingAs($preparador)
+            ->get(route('clientes.index', ['search' => '+15551112222']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('clientes.data.0.name', 'Jane Doe'));
     }
 }

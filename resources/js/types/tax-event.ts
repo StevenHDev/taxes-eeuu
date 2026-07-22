@@ -96,3 +96,32 @@ export type Usuario = {
     role: 'client' | 'preparer' | 'administrator';
     preparer?: { id: number; name: string } | null;
 };
+
+export type DashboardResumen = {
+    total: number;
+    sin_iniciar: number;
+    en_progreso: number;
+    completo: number;
+    actividad_por_dia: { fecha: string; cantidad: number }[];
+    campos_recibidos_porcentaje: number;
+    formas_completas_porcentaje: number;
+    distribucion_por_forma: {
+        forma: TaxForm;
+        forma_label: string;
+        cantidad: number;
+    }[];
+    pendientes_revisar: {
+        cliente_id: number;
+        cliente_nombre: string;
+        forma: TaxForm;
+        forma_label: string;
+    }[];
+    actividad_reciente: {
+        campo: string;
+        forma_label: string;
+        cliente_nombre: string;
+        source: 'agente_ia' | 'preparador' | 'administrador';
+        created_at: string | null;
+    }[];
+    ultimos_clientes: { id: number; name: string }[];
+};

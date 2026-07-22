@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\ApiAbility;
-use App\Enums\FormState;
 use App\Enums\TaxForm;
 use App\Http\Concerns\ManagesClientes;
 use App\Http\Controllers\Controller;
@@ -26,7 +25,9 @@ class ClienteController extends Controller
         $this->authorize('viewAny', User::class);
         $this->ensureAbility($request, ApiAbility::ClientesRead);
 
-        $clientes = $this->clientesVisiblesPara($request->user())
+        $search = $request->string('search')->toString() ?: null;
+
+        $clientes = $this->clientesVisiblesPara($request->user(), $search)
             ->with('formasCliente')
             ->paginate(20);
 
@@ -36,7 +37,7 @@ class ClienteController extends Controller
                 'name' => $cliente->name,
                 'email' => $cliente->email,
                 'phone' => $cliente->phone,
-                'estado_general' => $this->estadoGeneral($cliente),
+                'estado_general' => $this->estadoGeneralDe($cliente),
             ]),
             'meta' => ['current_page' => $clientes->currentPage(), 'last_page' => $clientes->lastPage()],
         ]);
@@ -165,18 +166,5 @@ class ClienteController extends Controller
         if ($token instanceof PersonalAccessToken && ! $token->can($ability->value)) {
             abort(403, 'El token no tiene la ability requerida: '.$ability->value);
         }
-    }
-
-    private function estadoGeneral(User $cliente): string
-    {
-        if ($cliente->formasCliente->isEmpty()) {
-            return 'sin_iniciar';
-        }
-
-        if ($cliente->formasCliente->every(fn (FormaCliente $f) => $f->estado === FormState::Completo)) {
-            return 'completo';
-        }
-
-        return 'en_progreso';
     }
 }

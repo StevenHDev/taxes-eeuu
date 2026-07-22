@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\FormState;
 use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
@@ -12,6 +11,7 @@ use App\Models\User;
 use App\Services\ClienteExportService;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -24,21 +24,24 @@ class ClienteController extends Controller
 
     public function __construct(private readonly ClienteExportService $export) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', User::class);
 
-        $clientes = $this->clientesVisiblesPara(request()->user())
+        $search = $request->string('search')->toString() ?: null;
+
+        $clientes = $this->clientesVisiblesPara($request->user(), $search)
             ->withCount(['formasCliente'])
             ->with(['formasCliente'])
             ->orderByDesc('created_at')
             ->paginate(20)
+            ->withQueryString()
             ->through(fn (User $cliente) => [
                 'id' => $cliente->id,
                 'name' => $cliente->name,
                 'email' => $cliente->email,
                 'phone' => $cliente->phone,
-                'estado_general' => $this->estadoGeneral($cliente),
+                'estado_general' => $this->estadoGeneralDe($cliente),
                 'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
                     'forma' => $f->forma,
                     'forma_label' => TaxForm::from($f->forma)->label(),
@@ -49,6 +52,7 @@ class ClienteController extends Controller
 
         return Inertia::render('clientes/index', [
             'clientes' => $clientes,
+            'search' => $search,
             'formas' => array_map(
                 fn (TaxForm $f) => ['value' => $f->value, 'label' => $f->label()],
                 TaxForm::cases(),
@@ -160,18 +164,5 @@ class ClienteController extends Controller
         $zipPath = $this->export->exportarZip($cliente);
 
         return response()->download($zipPath, "cliente-{$cliente->id}.zip")->deleteFileAfterSend();
-    }
-
-    private function estadoGeneral(User $cliente): string
-    {
-        if ($cliente->formasCliente->isEmpty()) {
-            return 'sin_iniciar';
-        }
-
-        if ($cliente->formasCliente->every(fn (FormaCliente $f) => $f->estado === FormState::Completo)) {
-            return 'completo';
-        }
-
-        return 'en_progreso';
     }
 }

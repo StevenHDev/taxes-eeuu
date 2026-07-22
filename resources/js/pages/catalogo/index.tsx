@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -255,7 +256,7 @@ function FormaSection({
                 </Dialog>
             </div>
 
-            <div className="overflow-hidden rounded-xl border">
+            <Card className="overflow-hidden py-0">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -363,7 +364,7 @@ function FormaSection({
                         )}
                     </TableBody>
                 </Table>
-            </div>
+            </Card>
         </div>
     );
 }

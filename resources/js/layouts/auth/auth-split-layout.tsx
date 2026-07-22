@@ -1,5 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
+import { Link } from '@inertiajs/react';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -8,34 +7,64 @@ export default function AuthSplitLayout({
     title,
     description,
 }: AuthLayoutProps) {
-    const { name } = usePage().props;
-
     return (
-        <div className="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-            <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-                <div className="absolute inset-0 bg-zinc-900" />
-                <Link
-                    href={home()}
-                    className="relative z-20 flex items-center text-lg font-medium"
-                >
-                    <AppLogoIcon className="mr-2 size-8 fill-current text-white" />
-                    {name}
+        <div className="relative grid min-h-svh lg:grid-cols-2">
+            <div className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-primary-foreground lg:flex">
+                <div
+                    aria-hidden
+                    className="absolute -top-24 -right-24 size-72 rounded-full border border-white/10"
+                />
+                <div
+                    aria-hidden
+                    className="absolute top-16 -right-10 size-40 rounded-full border border-white/10"
+                />
+                <div
+                    aria-hidden
+                    className="absolute -bottom-16 -left-16 size-64 rotate-12 rounded-3xl border border-white/10"
+                />
+
+                <Link href={home()} className="relative z-10">
+                    <img
+                        src="/images/logo-mark.png"
+                        alt="Global Tax Services"
+                        className="h-11 w-auto brightness-0 invert"
+                    />
                 </Link>
+
+                <div className="relative z-10 max-w-sm space-y-2">
+                    <p className="text-2xl font-medium">
+                        Recolección de datos para declaraciones de impuestos.
+                    </p>
+                    <p className="text-sm text-primary-foreground/70">
+                        Un lugar centralizado para reunir la información de
+                        cada cliente, campo a campo, y llevarla lista para la
+                        preparación de su declaración.
+                    </p>
+                </div>
             </div>
-            <div className="w-full lg:p-8">
-                <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+
+            <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
+                <div className="mx-auto w-full max-w-sm space-y-8">
                     <Link
                         href={home()}
-                        className="relative z-20 flex items-center justify-center lg:hidden"
+                        className="flex justify-center lg:hidden"
                     >
-                        <AppLogoIcon className="h-10 fill-current text-black sm:h-12" />
+                        <img
+                            src="/images/logo.png"
+                            alt="Global Tax Services"
+                            className="h-10 w-auto"
+                        />
                     </Link>
-                    <div className="flex flex-col items-start gap-2 text-left sm:items-center sm:text-center">
-                        <h1 className="text-xl font-medium">{title}</h1>
-                        <p className="text-sm text-balance text-muted-foreground">
+
+                    <div className="space-y-2 text-center lg:text-left">
+                        <h1 className="text-xl font-semibold text-foreground">
+                            {title}
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
                             {description}
                         </p>
                     </div>
+
                     {children}
                 </div>
             </div>

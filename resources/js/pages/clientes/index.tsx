@@ -1,9 +1,12 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
+import { Search } from 'lucide-react';
+import { useState } from 'react';
 import ClienteController from '@/actions/App/Http/Controllers/ClienteController';
 import { show as clienteShow, index as clientesIndex } from '@/routes/clientes';
 import { dashboard } from '@/routes';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -41,16 +44,20 @@ const ESTADO_VARIANT: Record<
 
 export default function ClientesIndex({
     clientes,
+    search,
 }: {
     clientes: Paginated<Cliente>;
     formas: FormaOption[];
+    search: string | null;
 }) {
+    const [query, setQuery] = useState(search ?? '');
+
     return (
         <>
             <Head title="Clientes" />
 
             <div className="space-y-6 p-4">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-xl font-semibold">Clientes</h1>
                         <p className="text-sm text-muted-foreground">
@@ -126,7 +133,27 @@ export default function ClientesIndex({
                     </Dialog>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border">
+                <form
+                    className="max-w-sm"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        router.get(
+                            clientesIndex.url({ query: { search: query } }),
+                        );
+                    }}
+                >
+                    <div className="relative">
+                        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Buscar por nombre, email o teléfono…"
+                            className="rounded-full pl-9"
+                        />
+                    </div>
+                </form>
+
+                <Card className="overflow-hidden py-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -194,7 +221,7 @@ export default function ClientesIndex({
                             )}
                         </TableBody>
                     </Table>
-                </div>
+                </Card>
             </div>
         </>
     );

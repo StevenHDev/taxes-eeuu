@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -452,7 +453,7 @@ export default function ClienteShow({
             <Head title={cliente.name} />
 
             <div className="space-y-6 p-4">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-xl font-semibold">
                             {cliente.name}
@@ -550,7 +551,7 @@ export default function ClienteShow({
                     />
                 </div>
 
-                <div className="overflow-hidden rounded-xl border">
+                <Card className="overflow-hidden py-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -642,7 +643,7 @@ export default function ClienteShow({
                             )}
                         </TableBody>
                     </Table>
-                </div>
+                </Card>
             </div>
         </>
     );

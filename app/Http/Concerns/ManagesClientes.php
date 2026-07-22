@@ -2,7 +2,9 @@
 
 namespace App\Http\Concerns;
 
+use App\Enums\FormState;
 use App\Enums\UserRole;
+use App\Models\FormaCliente;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
@@ -12,15 +14,39 @@ trait ManagesClientes
     /**
      * @return Builder<User>
      */
-    protected function clientesVisiblesPara(User $actor): Builder
+    protected function clientesVisiblesPara(User $actor, ?string $search = null): Builder
     {
         $query = User::query()->where('role', UserRole::Client);
 
         if ($actor->role === UserRole::Preparer) {
-            return $query->where('preparer_id', $actor->id);
+            $query->where('preparer_id', $actor->id);
+        }
+
+        if (filled($search)) {
+            $query->where(fn (Builder $q) => $q
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%"));
         }
 
         return $query;
+    }
+
+    /**
+     * Estado general de un cliente a través de todas sus formas: sin datos
+     * cargados, en progreso, o todas sus formas completas.
+     */
+    protected function estadoGeneralDe(User $cliente): string
+    {
+        if ($cliente->formasCliente->isEmpty()) {
+            return 'sin_iniciar';
+        }
+
+        if ($cliente->formasCliente->every(fn (FormaCliente $f) => $f->estado === FormState::Completo)) {
+            return 'completo';
+        }
+
+        return 'en_progreso';
     }
 
     /**
