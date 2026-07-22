@@ -26,7 +26,7 @@ class ApiTokenTest extends TestCase
         $this->actingAs($user)
             ->post(route('api-tokens.store'), [
                 'name' => 'Integración contable',
-                'abilities' => ['tax-documents:read', 'tax-documents:write'],
+                'abilities' => ['clientes:read', 'clientes:write'],
             ])
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('api-tokens.index'));
@@ -34,7 +34,7 @@ class ApiTokenTest extends TestCase
         $token = $user->tokens()->first();
 
         $this->assertSame('Integración contable', $token->name);
-        $this->assertSame(['tax-documents:read', 'tax-documents:write'], $token->abilities);
+        $this->assertSame(['clientes:read', 'clientes:write'], $token->abilities);
     }
 
     public function test_a_user_can_revoke_their_own_token()

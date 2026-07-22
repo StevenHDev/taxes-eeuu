@@ -9,4 +9,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
-require __DIR__.'/tax-documents.php';
+require __DIR__.'/clientes.php';

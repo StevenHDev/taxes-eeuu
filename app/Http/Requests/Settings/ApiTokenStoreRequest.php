@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Settings;
 
-use App\Enums\TaxDocumentAbility;
+use App\Enums\ApiAbility;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,7 +27,7 @@ class ApiTokenStoreRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'abilities' => ['array'],
-            'abilities.*' => [Rule::in(TaxDocumentAbility::values())],
+            'abilities.*' => [Rule::in(ApiAbility::values())],
         ];
     }
 }

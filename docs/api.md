@@ -1,10 +1,10 @@
-# API de Documentos Fiscales
+# API de Recolección de Datos para Declaraciones de Impuestos
 
-API REST para crear, consultar y administrar los documentos de un contribuyente (identificación, dependientes, W-2, 1099-NEC, estados bancarios, P&L, balance general, gastos deducibles, activos y la declaración del año anterior). Pensada para integraciones externas (contabilidad, apps móviles, scripts de importación), separada de la interfaz web (Inertia) de la aplicación.
+API REST que recibe eventos de recolección de datos fiscales **un campo a la vez** desde un agente conversacional externo, y expone el panel interno de clientes/formularios/campos para preparadores y administradores. Reemplaza el antiguo CRUD de "documentos fiscales" por un modelo de eventos incrementales por campo, alineado al catálogo maestro de formularios del IRS.
 
 ## Autenticación
 
-La API usa [Laravel Sanctum](https://laravel.com/docs/sanctum) con **tokens personales** (Bearer tokens), igual que un token de acceso personal de GitHub.
+La API usa [Laravel Sanctum](https://laravel.com/docs/sanctum) con **tokens personales** (Bearer tokens).
 
 1. Inicia sesión en la aplicación web.
 2. Ve a **Settings → API Tokens**.
@@ -21,206 +21,242 @@ Todas las rutas están bajo el prefijo `/api` y requieren este header. Sin un to
 
 ## Permisos (abilities)
 
-Cada token se crea con uno o más de estos permisos. Un endpoint que requiera un permiso que el token no tiene responde `403 Forbidden`, aunque el usuario sea dueño del documento.
-
 | Ability | Qué habilita |
 |---|---|
-| `tax-documents:read` | Listar, ver el detalle y descargar archivos. |
-| `tax-documents:write` | Crear, actualizar y eliminar documentos. |
-| `tax-documents:reveal-ssn` | Obtener el SSN/ITIN en texto plano (ver [Revelar SSN/ITIN](#revelar-ssnitin)). No se marca por defecto al crear un token: es opt-in explícito dado lo sensible del dato. |
+| `eventos:write` | Emitir eventos de recolección de campos (`POST /api/eventos`). Pensado para un **token de servicio** dedicado al agente conversacional, no para un preparador individual — ver [Emitir eventos](#emitir-un-evento-post-apieventos). |
+| `clientes:read` | Listar clientes, ver su detalle, historial de campos y documentos, y exportar su paquete. |
+| `clientes:write` | Corregir campos manualmente y marcar formularios como revisados. |
+| `clientes:reveal-sensitive` | Reservado para uso futuro sobre API — hoy el "reveal" de campos sensibles solo está disponible desde el panel web (sesión), no sobre token, para poder exigir reconfirmación de contraseña. |
+
+Un endpoint que requiera un permiso que el token no tiene responde `403 Forbidden`.
 
 ## Alcance de los datos
 
-- Un token solo puede ver/gestionar los documentos del usuario dueño del token.
-- Si el usuario es un **preparador** (`role = preparer`), también puede ver/gestionar los documentos de los clientes que tenga asignados. La asignación cliente↔preparador se hace fuera de la API (actualmente vía consola, no hay UI todavía).
-- Un `client` normal solo ve sus propios documentos, sin importar qué contenga el token.
+- Un preparador (`role = preparer`) solo ve/gestiona los clientes que tiene asignados (`preparer_id`).
+- Un administrador (`role = administrator`) ve y gestiona todos los clientes.
+- Un cliente (`role = client`) no tiene acceso a estos endpoints — el panel es exclusivamente interno.
+- El endpoint `POST /eventos` es la excepción: el token del agente conversacional puede escribir sobre **cualquier** `cliente_id`, porque el agente no conoce asignaciones de preparador. Por eso ese token debe ser de un solo propósito (`eventos:write` únicamente) y no compartirse con un preparador.
 
-## Tipos de documento (`type`)
+## Catálogo maestro de campos
 
-| Valor | Descripción | Requiere archivo | Requiere SSN/ITIN | Campos de dependiente | Requiere monto |
-|---|---|:---:|:---:|:---:|:---:|
-| `identification` | Identificación del contribuyente (SSN/ITIN) | | ✓ | | |
-| `dependent` | Cónyuge o dependiente | | ✓ | ✓ | |
-| `w2` | Formulario W-2 | ✓ | | | |
-| `form_1099_nec` | Formulario 1099-NEC | ✓ | | | |
-| `bank_statement` | Estado de cuenta bancario | ✓ | | | |
-| `profit_and_loss` | Estado de resultados (P&L) | ✓ | | | |
-| `balance_sheet` | Balance general | ✓ | | | |
-| `deductible_expense` | Gasto deducible (con comprobante) | ✓ | | | ✓ |
-| `asset_depreciation` | Activo / depreciación | ✓ | | | ✓ |
-| `prior_year_return` | Declaración del año anterior | ✓ | | | |
+Cada campo pertenece a **`campos_transversales`** (se aplican a cualquier `forma`) o a una **forma específica**: `form_1040`, `schedule_c`, `schedule_e`, `form_1065`, `form_1120`, `form_1120_s`, `schedule_f`, `form_1041`, `form_990`, `form_1040_nr`. El catálogo completo (fuente de verdad) vive en `App\Support\TaxFieldCatalog`; las tablas de abajo son su documentación exhaustiva, campo por campo — si cambia el catálogo, hay que actualizar esta sección también.
 
-## Endpoints
+Qué significa cada columna:
 
-Base URL de ejemplo: `http://localhost:8000/api`. Todas las respuestas son JSON.
+- **`tipo_campo`**: `documento` (el campo **solo** admite `modo: archivo`), `dato` (**solo** admite `modo: texto`), o `mixto` (admite cualquiera de los dos — el agente elige según lo que el cliente entregue realmente).
+- **`tipo_dato`**: solo aplica cuando `modo: texto`. Uno de `string`, `number`, `object`, `array_string`, `array_object`.
+- **`formatos_aceptados`**: solo aplica cuando `modo: archivo`. Extensiones de archivo válidas para ese campo — cualquier otra extensión hace que el evento se guarde con `estado: "invalido"`.
+- **`obligatorio`**: si es `no`, ese campo no cuenta para que la API marque la forma como `completo` (ver [Emitir eventos](#emitir-un-evento-post-apieventos)).
+- **`sensible`**: si es `sí`, el valor se cifra en la base de datos, se muestra enmascarado en el panel/API, y revelarlo exige el flujo de [Revelar campos sensibles](#revelar-campos-sensibles).
 
-### Listar documentos
+**Nota importante:** varios nombres de campo se repiten en formas distintas con significado distinto (ej. `gastos` existe en `form_1065`, `form_1120`, `form_1120_s`, `form_1041` y `form_990`). Por eso todo endpoint que identifique un campo específico exige también `forma` — nunca alcanza con el nombre del campo solo.
 
-```
-GET /api/tax-documents
-```
+### `campos_transversales` (aplican a cualquier `forma`)
 
-Ability requerida: `tax-documents:read`.
+| Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `identificacion_ssn_itin` | dato | `string` (SSN/ITIN, 9 dígitos) | — | sí | sí |
+| `info_conyuge` | dato | `object` (`nombre_completo`, `fecha_nacimiento`, `ssn`) | — | sí | sí |
+| `info_dependientes` | dato | `array_object` (`nombre_completo`, `fecha_nacimiento`, `ssn`) | — | sí | sí |
+| `w2` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
+| `form_1099_nec` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
+| `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
+| `pl_balance_general` | mixto | `number` | `pdf`, `xlsx` | sí | no |
+| `gastos_deducibles` | mixto | `number` | `pdf`, `jpg`, `png` | sí | no |
+| `activos_depreciacion` | mixto | `object` | `pdf`, `xlsx` | sí | no |
+| `declaracion_anio_anterior` | documento | — | `pdf` | **no** | no |
 
-Query params opcionales: `type` (uno de los valores de la tabla anterior), `fiscal_year`.
+### `form_1040`
+
+| Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `ingresos` | dato | `number` | — | sí | no |
+| `dependientes` | dato | `array_object` | — | sí | no |
+| `deducciones` | mixto | `number` | `pdf`, `jpg` | sí | no |
+| `creditos` | dato | `array_string` | — | sí | no |
+| `impuestos_retenidos` | dato | `number` | — | sí | no |
+| `info_bancaria` | dato | `object` (`banco`, `tipo_cuenta`, `numero_cuenta`, `routing_number`) | — | sí | sí |
+
+### `schedule_c`
+
+| Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `ingresos_negocio` | dato | `number` | — | sí | no |
+| `gastos_deducibles_negocio` | mixto | `number` | `pdf`, `jpg`, `csv` | sí | no |
+| `millaje` | dato | `number` | — | sí | no |
+| `activos` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
+| `costo_ventas` | dato | `number` | — | sí | no |
+
+### `schedule_e`
+
+| Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `ingresos_renta` | dato | `number` | — | sí | no |
+| `gastos_propiedad` | mixto | `number` | `pdf`, `jpg` | sí | no |
+| `depreciacion` | dato | `number` | — | sí | no |
+| `intereses_hipotecarios` | documento | — | `pdf` | sí | no |
+| `impuestos_propiedad` | documento | — | `pdf` | sí | no |
+| `seguros_propiedad` | documento | — | `pdf` | sí | no |
+
+### `form_1065`
+
+| Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `ingresos` | dato | `number` | — | sí | no |
+| `gastos` | mixto | `number` | `pdf`, `xlsx` | sí | no |
+| `activos` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
+| `pasivos` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
+| `aportes_socios` | dato | `array_object` | — | sí | no |
+| `porcentajes_participacion` | dato | `array_object` | — | sí | no |
+| `datos_k1` | documento | — | `pdf` | sí | no |
+
+### `form_1120`
+
+| Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `estados_financieros` | documento | — | `pdf`, `xlsx` | sí | no |
+| `ingresos` | dato | `number` | — | sí | no |
+| `gastos` | mixto | `number` | `pdf`, `xlsx` | sí | no |
+| `depreciacion` | dato | `number` | — | sí | no |
+| `impuestos_pagados` | dato | `number` | — | sí | no |
+| `activos` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
+| `pasivos` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
+| `balance_general` | documento | — | `pdf`, `xlsx` | sí | no |
+
+### `form_1120_s`
+
+| Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `ingresos` | dato | `number` | — | sí | no |
+| `gastos` | mixto | `number` | `pdf`, `xlsx` | sí | no |
+| `estados_financieros` | documento | — | `pdf`, `xlsx` | sí | no |
+| `nomina_compensacion_accionistas` | mixto | `array_object` | `pdf` | sí | no |
+| `depreciacion` | dato | `number` | — | sí | no |
+| `datos_k1` | documento | — | `pdf` | sí | no |
+
+### `schedule_f`
+
+| Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `ventas_agricolas` | dato | `number` | — | sí | no |
+| `subsidios` | dato | `number` | — | sí | no |
+| `gastos_operacion` | mixto | `number` | `pdf`, `jpg` | sí | no |
+| `maquinaria` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
+| `animales` | dato | `array_object` | — | sí | no |
+| `inventario` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
+
+### `form_1041`
+
+| Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `ingresos` | dato | `number` | — | sí | no |
+| `gastos` | mixto | `number` | `pdf`, `xlsx` | sí | no |
+| `info_beneficiarios` | dato | `array_object` | — | sí | sí |
+| `distribuciones` | dato | `array_object` | — | sí | no |
+| `activos` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
+| `documentos_fideicomiso` | documento | — | `pdf` | sí | no |
+
+### `form_990`
+
+| Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `ingresos` | dato | `number` | — | sí | no |
+| `gastos` | mixto | `number` | `pdf`, `xlsx` | sí | no |
+| `donaciones` | mixto | `number` | `pdf`, `xlsx` | sí | no |
+| `actividades_programas` | dato | `string` | — | sí | no |
+| `compensacion_directivos` | dato | `array_object` | — | sí | no |
+| `gobierno_corporativo` | dato | `string` | — | sí | no |
+
+### `form_1040_nr`
+
+| Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
+| `ingresos_fuente_usa` | dato | `number` | — | sí | no |
+| `formularios_retencion` | documento | — | `pdf` | sí | no |
+| `info_migratoria` | dato | `object` (`tipo_visa`, `fecha_entrada_usa`, `estatus_migratorio`) | — | sí | no |
+| `tratados_tributarios` | dato | `string` | — | sí | no |
+| `deducciones_permitidas` | mixto | `number` | `pdf`, `jpg` | sí | no |
+
+## Emitir un evento (`POST /api/eventos`)
+
+Requiere ability `eventos:write`. Un evento = un solo campo, nunca varios juntos.
+
+**Campo de texto:**
 
 ```bash
-curl -s "http://localhost:8000/api/tax-documents?type=w2&fiscal_year=2024" \
+curl -X POST https://tu-dominio/api/eventos \
   -H "Authorization: Bearer $TOKEN" \
-  -H "Accept: application/json"
+  -H "Accept: application/json" \
+  -F "cliente_id=" \
+  -F "external_ref=whatsapp:+15551234567" \
+  -F "forma=form_1040" \
+  -F "campo=ingresos" \
+  -F "tipo_campo=dato" \
+  -F "modo=texto" \
+  -F "tipo_dato=number" \
+  -F "contenido=52000"
 ```
 
-Respuesta (paginada, 15 por página):
+**Campo de archivo** (multipart, el archivo se sube directamente en el mismo request — no existe un endpoint de subida separado):
+
+```bash
+curl -X POST https://tu-dominio/api/eventos \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/json" \
+  -F "cliente_id=42" \
+  -F "forma=form_1040" \
+  -F "campo=w2" \
+  -F "tipo_campo=documento" \
+  -F "modo=archivo" \
+  -F "file=@w2_2025.pdf"
+```
+
+Respuesta `201`:
 
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "user_id": 3,
-      "type": "w2",
-      "type_label": "Formulario W-2",
-      "fiscal_year": 2024,
-      "title": "W-2 — Acme Corp",
-      "description": null,
-      "ssn_itin_masked": null,
-      "dependent_name": null,
-      "dependent_date_of_birth": null,
-      "amount": null,
-      "file_original_name": "w2-acme.pdf",
-      "file_mime_type": "application/pdf",
-      "file_size": 102400,
-      "download_url": "http://localhost:8000/api/tax-documents/1/download",
-      "created_at": "2026-01-15T18:00:00.000000Z",
-      "updated_at": "2026-01-15T18:00:00.000000Z"
-    }
-  ],
-  "links": { "first": "...", "last": "...", "prev": null, "next": null },
-  "meta": { "current_page": 1, "last_page": 1, "per_page": 15, "total": 1 }
+  "cliente_id": 42,
+  "forma": "form_1040",
+  "forma_estado": "en_progreso",
+  "campo": "w2",
+  "estado": "recibido"
 }
 ```
 
-### Ver un documento
+Notas:
+
+- **`cliente_id` vacío/null** = primer contacto: la API crea un cliente nuevo (placeholder, sin nombre) y lo devuelve en la respuesta. Guarda ese `cliente_id` para los siguientes eventos de la misma persona.
+- **`external_ref`** (opcional, extensión sobre el contrato original): identificador estable de la conversación externa (ej. el número de WhatsApp o el id de sesión del agente). Si lo envías la primera vez que `cliente_id` es null, y luego lo repites, la API reconoce que es el mismo cliente en vez de crear uno duplicado — protección recomendada si tu agente puede perder el `cliente_id` entre turnos.
+- El `estado` que envíes (si lo envías) se ignora: **la API siempre calcula `estado` del lado del servidor** validando el contenido (SSN de 9 dígitos, fecha válida, número ≥ 0, formato de archivo aceptado, archivo legible). Un evento con contenido inválido igual se acepta y persiste con `estado: "invalido"` — no se rechaza con 422, salvo que la forma del evento esté mal (campo inexistente, `tipo_campo`/`modo` inconsistente con el catálogo, etc.).
+- Reenviar el mismo `(cliente_id, forma, campo)` sobrescribe el valor anterior (idempotencia) y queda registrado en el historial de cambios.
+- Para campos `array_object`/`array_string` (ej. `info_dependientes`), reenvía siempre el **arreglo acumulado completo** — la API sobrescribe, no hace merge parcial.
+
+## Endpoints del panel
+
+Requieren ability `clientes:read` (lectura) o `clientes:write` (escritura).
 
 ```
-GET /api/tax-documents/{id}
+GET   /api/clientes                              — lista clientes visibles para el token, con estado general
+GET   /api/clientes/{id}                         — detalle: formas aplicables + todos los campos y su estado
+GET   /api/clientes/{id}/documentos               — documentos subidos, con URL de descarga firmada y temporal
+GET   /api/clientes/{id}/export                  — descarga un ZIP con documentos + JSON de campos
+GET   /api/clientes/{id}/campos/{campo}?forma=   — historial de cambios de un campo (forma es obligatoria)
+PATCH /api/clientes/{id}/campos/{campo}?forma=   — corrección manual de un campo por un preparador/administrador
+POST  /api/clientes/{id}/marcar-revisado/{forma} — marca una forma como revisada por un humano
 ```
 
-Ability requerida: `tax-documents:read`.
+La corrección manual (`PATCH`) acepta el mismo shape que un evento de texto/archivo (`modo`, `tipo_dato`+`contenido`, o `file`), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`).
 
-### Crear un documento
+## Revelar campos sensibles
 
-```
-POST /api/tax-documents
-```
+Los campos marcados como sensibles en el catálogo (`identificacion_ssn_itin`, `info_conyuge`, `info_dependientes`, `info_bancaria`) se cifran en la base de datos y se muestran enmascarados en el panel y en la API de solo lectura. Revelar el valor real **solo está disponible desde el panel web** (no sobre token), exige reconfirmar la contraseña de la sesión (igual que el resto de acciones sensibles de la cuenta) y queda auditado (quién, cuándo, desde qué IP).
 
-Ability requerida: `tax-documents:write`. Content-Type `multipart/form-data` si incluye archivo.
+## Errores comunes
 
-Campos comunes: `type` (requerido), `title` (requerido), `fiscal_year`, `description`.
-Campos condicionales según `type` (ver tabla arriba): `ssn_itin`, `dependent_name`, `dependent_date_of_birth`, `amount`, `file`.
-
-Si el usuario del token es un preparador, debe incluir además `user_id` con el id del cliente dueño del documento (debe ser uno de sus clientes asignados).
-
-Ejemplo — W-2 con archivo:
-
-```bash
-curl -s -X POST "http://localhost:8000/api/tax-documents" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Accept: application/json" \
-  -F "type=w2" \
-  -F "title=W-2 — Acme Corp" \
-  -F "fiscal_year=2024" \
-  -F "file=@/ruta/local/w2-acme.pdf;type=application/pdf"
-```
-
-Ejemplo — identificación (sin archivo):
-
-```bash
-curl -s -X POST "http://localhost:8000/api/tax-documents" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Accept: application/json" \
-  -d "type=identification" \
-  -d "title=SSN del contribuyente" \
-  -d "ssn_itin=123-45-6789"
-```
-
-Respuesta: `201 Created` con el documento creado (mismo shape que en el listado).
-
-### Actualizar un documento
-
-```
-PUT /api/tax-documents/{id}
-```
-
-Ability requerida: `tax-documents:write`. Mismos campos que crear.
-
-- El SSN/ITIN es de solo escritura: si lo dejas vacío, se conserva el valor cifrado existente. Solo se sobreescribe si envías un valor nuevo.
-- El archivo es opcional en una actualización si el documento ya tiene uno guardado; si envías un archivo nuevo, reemplaza al anterior.
-
-Como los navegadores/clientes HTTP no siempre soportan `PUT` con `multipart/form-data`, puedes usar `POST` con `_method=PUT`:
-
-```bash
-curl -s -X POST "http://localhost:8000/api/tax-documents/1" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Accept: application/json" \
-  -F "_method=PUT" \
-  -F "type=w2" \
-  -F "title=W-2 — Acme Corp (corregido)"
-```
-
-### Eliminar un documento
-
-```
-DELETE /api/tax-documents/{id}
-```
-
-Ability requerida: `tax-documents:write`. Respuesta: `204 No Content`.
-
-### Descargar el archivo adjunto
-
-```
-GET /api/tax-documents/{id}/download
-```
-
-Ability requerida: `tax-documents:read`. Responde con el archivo binario (`Content-Disposition: attachment`). `404` si el documento no tiene archivo.
-
-### Revelar SSN/ITIN
-
-```
-POST /api/tax-documents/{id}/reveal-ssn
-```
-
-Ability requerida: `tax-documents:reveal-ssn` (además de `tax-documents:read`/pertenencia). Un token sin esta ability recibe `403`, aunque el usuario sea dueño del documento — es una segunda barrera intencional para un dato tan sensible.
-
-```bash
-curl -s -X POST "http://localhost:8000/api/tax-documents/1/reveal-ssn" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Accept: application/json"
-```
-
-```json
-{ "ssn_itin": "123-45-6789" }
-```
-
-Cada llamada a este endpoint queda registrada (quién reveló, qué documento, IP) para auditoría.
-
-## Errores
-
-- `401 Unauthorized` — falta el header `Authorization` o el token no es válido.
-- `403 Forbidden` — el token no tiene la ability requerida, o el usuario no es dueño del documento (ni su preparador asignado).
-- `404 Not Found` — el documento no existe, o intentas descargar un documento sin archivo.
-- `422 Unprocessable Entity` — error de validación. Cuerpo de ejemplo:
-
-```json
-{
-  "message": "The file field is required.",
-  "errors": {
-    "file": ["The file field is required."]
-  }
-}
-```
-
-## Límites de tasa
-
-- Todas las rutas comparten el throttle por defecto de Laravel para el grupo `api`.
-- `POST /api/tax-documents/{id}/reveal-ssn` tiene además un límite propio de 10 solicitudes por minuto por usuario, dado lo sensible de la operación.
+| Código | Causa típica |
+|---|---|
+| `401` | Token ausente, inválido o revocado. |
+| `403` | Token sin la ability requerida, o el cliente/preparador no tiene acceso a ese recurso. |
+| `404` | El cliente, campo o documento no existe (o no es visible para este token). |
+| `422` | El evento/corrección está mal formado: campo inexistente en el catálogo para esa forma, `tipo_campo`/`modo` inconsistente, o falta un campo requerido de la request. |
+| `429` | Límite de tasa excedido (hay throttling específico en revelar campos sensibles). |

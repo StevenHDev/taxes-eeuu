@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
-use App\Enums\TaxDocumentAbility;
+use App\Enums\ApiAbility;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ApiTokenStoreRequest;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +23,7 @@ class ApiTokenController extends Controller
 
         return Inertia::render('settings/api-tokens', [
             'tokens' => $tokens,
-            'abilities' => TaxDocumentAbility::options(),
+            'abilities' => ApiAbility::options(),
         ]);
     }
 

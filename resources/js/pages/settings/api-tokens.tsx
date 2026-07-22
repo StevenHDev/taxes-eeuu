@@ -1,4 +1,4 @@
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import ApiTokenController from '@/actions/App/Http/Controllers/Settings/ApiTokenController';
 import Heading from '@/components/heading';
@@ -24,6 +24,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { index as apiDocsIndex } from '@/routes/api-docs';
 import { index as apiTokensIndex } from '@/routes/api-tokens';
 import type { ApiToken, ApiTokenAbilityOption } from '@/types';
 
@@ -61,6 +62,13 @@ export default function ApiTokens({
                     title="API Tokens"
                     description="Genera tokens para usar la API de documentos fiscales desde sistemas externos."
                 />
+
+                <Link
+                    href={apiDocsIndex()}
+                    className="text-sm text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                >
+                    Ver documentación de la API →
+                </Link>
 
                 {justCreatedToken && (
                     <div className="space-y-2 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">

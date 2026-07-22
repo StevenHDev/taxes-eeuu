@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\Api\TaxDocumentController;
+use App\Http\Controllers\Api\CampoClienteController;
+use App\Http\Controllers\Api\ClienteController;
+use App\Http\Controllers\Api\EventoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -8,17 +10,17 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::middleware(['auth:sanctum'])
-    ->prefix('tax-documents')
-    ->name('api.tax-documents.')
-    ->group(function () {
-        Route::get('/', [TaxDocumentController::class, 'index'])->name('index');
-        Route::post('/', [TaxDocumentController::class, 'store'])->name('store');
-        Route::get('/{tax_document}', [TaxDocumentController::class, 'show'])->name('show');
-        Route::match(['put', 'patch'], '/{tax_document}', [TaxDocumentController::class, 'update'])->name('update');
-        Route::delete('/{tax_document}', [TaxDocumentController::class, 'destroy'])->name('destroy');
-        Route::get('/{tax_document}/download', [TaxDocumentController::class, 'download'])->name('download');
-        Route::post('/{tax_document}/reveal-ssn', [TaxDocumentController::class, 'revealSsn'])
-            ->middleware('throttle:10,1')
-            ->name('reveal-ssn');
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('eventos', [EventoController::class, 'store'])->name('api.eventos.store');
+
+    Route::prefix('clientes')->name('api.clientes.')->group(function () {
+        Route::get('/', [ClienteController::class, 'index'])->name('index');
+        Route::get('/{cliente}', [ClienteController::class, 'show'])->name('show');
+        Route::get('/{cliente}/documentos', [ClienteController::class, 'documentos'])->name('documentos');
+        Route::get('/{cliente}/export', [ClienteController::class, 'export'])->name('export');
+        Route::post('/{cliente}/marcar-revisado/{forma}', [ClienteController::class, 'marcarRevisado'])->name('marcar-revisado');
+
+        Route::get('/{cliente}/campos/{campo}', [CampoClienteController::class, 'historial'])->name('campos.historial');
+        Route::match(['put', 'patch'], '/{cliente}/campos/{campo}', [CampoClienteController::class, 'update'])->name('campos.update');
     });
+});

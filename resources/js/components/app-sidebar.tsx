@@ -1,5 +1,11 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FileText, FolderGit2, LayoutGrid } from 'lucide-react';
+import {
+    BookOpen,
+    Code2,
+    FolderGit2,
+    LayoutGrid,
+    Users,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,7 +20,8 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { index as taxDocumentsIndex } from '@/routes/tax-documents';
+import { index as apiDocsIndex } from '@/routes/api-docs';
+import { index as clientesIndex } from '@/routes/clientes';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -24,9 +31,14 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Documentos Fiscales',
-        href: taxDocumentsIndex(),
-        icon: FileText,
+        title: 'Clientes',
+        href: clientesIndex(),
+        icon: Users,
+    },
+    {
+        title: 'Documentación API',
+        href: apiDocsIndex(),
+        icon: Code2,
     },
 ];
 

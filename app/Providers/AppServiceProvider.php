@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Models\TaxDocument;
-use App\Policies\TaxDocumentPolicy;
+use App\Models\User;
+use App\Policies\ClientePolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        Gate::policy(TaxDocument::class, TaxDocumentPolicy::class);
+        Gate::policy(User::class, ClientePolicy::class);
     }
 
     /**
