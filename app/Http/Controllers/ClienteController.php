@@ -37,6 +37,7 @@ class ClienteController extends Controller
                 'id' => $cliente->id,
                 'name' => $cliente->name,
                 'email' => $cliente->email,
+                'phone' => $cliente->phone,
                 'estado_general' => $this->estadoGeneral($cliente),
                 'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
                     'forma' => $f->forma,
@@ -62,6 +63,7 @@ class ClienteController extends Controller
         $cliente = User::query()->create([
             'name' => $request->validated('name'),
             'email' => $request->validated('email'),
+            'phone' => $request->validated('phone'),
             'password' => Hash::make(Str::random(40)),
             'role' => UserRole::Client,
             'preparer_id' => $actor->role === UserRole::Preparer ? $actor->id : $request->validated('preparer_id'),
@@ -96,6 +98,7 @@ class ClienteController extends Controller
                 'id' => $cliente->id,
                 'name' => $cliente->name,
                 'email' => $cliente->email,
+                'phone' => $cliente->phone,
             ],
             // Por cada forma real, todos sus campos (transversales + propios) que este
             // cliente todavía no tiene cargados — para el diálogo "Agregar campo".

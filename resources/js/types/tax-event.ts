@@ -29,6 +29,7 @@ export type Cliente = {
     id: number;
     name: string;
     email: string;
+    phone: string | null;
     estado_general: EstadoGeneral;
     formas: ClienteFormaResumen[];
     created_at: string;
@@ -91,6 +92,7 @@ export type Usuario = {
     id: number;
     name: string;
     email: string;
+    phone: string | null;
     role: 'client' | 'preparer' | 'administrator';
     preparer?: { id: number; name: string } | null;
 };

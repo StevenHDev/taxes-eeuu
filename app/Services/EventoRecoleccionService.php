@@ -224,9 +224,23 @@ class EventoRecoleccionService
             }
         }
 
+        $phone = $request->validated('phone');
+
+        // El teléfono es un identificador más estable que external_ref para
+        // reconocer al mismo cliente entre eventos: si ya existe un cliente con
+        // ese teléfono, se reutiliza en vez de crear uno nuevo.
+        if ($phone) {
+            $porTelefono = User::query()->where('role', UserRole::Client)->where('phone', $phone)->first();
+
+            if ($porTelefono) {
+                return $porTelefono;
+            }
+        }
+
         $cliente = User::query()->create([
             'name' => 'Cliente sin nombre',
             'email' => sprintf('cliente-%s@pending.local', Str::uuid()),
+            'phone' => $phone,
             'password' => Hash::make(Str::random(40)),
             'role' => UserRole::Client,
         ]);

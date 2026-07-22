@@ -301,7 +301,8 @@ Respuesta `201` (misma forma para cualquiera de los casos anteriores):
 Notas:
 
 - **`cliente_id` vacío/null** = primer contacto: la API crea un cliente nuevo (placeholder, sin nombre) y lo devuelve en la respuesta. Guarda ese `cliente_id` para los siguientes eventos de la misma persona.
-- **`external_ref`** (opcional, extensión sobre el contrato original): identificador estable de la conversación externa (ej. el número de WhatsApp o el id de sesión del agente). Si lo envías la primera vez que `cliente_id` es null, y luego lo repites, la API reconoce que es el mismo cliente en vez de crear uno duplicado — protección recomendada si tu agente puede perder el `cliente_id` entre turnos.
+- **`external_ref`** (opcional, extensión sobre el contrato original): identificador estable de la conversación externa (ej. el id de sesión del agente). Si lo envías la primera vez que `cliente_id` es null, y luego lo repites, la API reconoce que es el mismo cliente en vez de crear uno duplicado — protección recomendada si tu agente puede perder el `cliente_id` entre turnos.
+- **`phone`** (opcional, extensión sobre el contrato original): teléfono del cliente. Si lo envías cuando `cliente_id` es null y ya existe un cliente con ese teléfono, la API reutiliza ese cliente en vez de crear uno duplicado — es un identificador más estable que `external_ref` para esto, y además queda guardado para poder [buscar al cliente por teléfono](#buscar-un-cliente-por-id-o-por-telefono) más adelante.
 - El `estado` que envíes (si lo envías) se ignora: **la API siempre calcula `estado` del lado del servidor** validando el contenido (SSN de 9 dígitos, fecha válida, número ≥ 0, formato de archivo aceptado, archivo legible). Un evento con contenido inválido igual se acepta y persiste con `estado: "invalido"` — no se rechaza con 422, salvo que la forma del evento esté mal (campo inexistente, `tipo_campo`/`modo` inconsistente con el catálogo, etc.).
 - Reenviar el mismo `(cliente_id, forma, campo)` sobrescribe el valor anterior (idempotencia) y queda registrado en el historial de cambios.
 - Para campos `array_object`/`array_string` (ej. `info_dependientes`), reenvía siempre el **arreglo acumulado completo** — la API sobrescribe, no hace merge parcial.
@@ -312,6 +313,7 @@ Requieren ability `clientes:read` (lectura) o `clientes:write` (escritura).
 
 ```
 GET   /api/clientes                              — lista clientes visibles para el token, con estado general
+GET   /api/clientes/buscar?id= | ?phone=         — busca un cliente por id o por teléfono (ver abajo)
 GET   /api/clientes/{id}                         — detalle: formas aplicables + todos los campos y su estado
 GET   /api/clientes/{id}/documentos               — documentos subidos, con URL de descarga firmada y temporal
 GET   /api/clientes/{id}/export                  — descarga un ZIP con documentos + JSON de campos
@@ -322,6 +324,18 @@ POST   /api/clientes/{id}/marcar-revisado/{forma} — marca una forma como revis
 ```
 
 La corrección manual (`PATCH`) acepta el mismo shape que un evento de texto/archivo (`modo`, `tipo_dato`+`contenido`, o `file`), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`). `DELETE` borra la fila de `campos_cliente` (y el documento/archivo si era de tipo `documento`), pero agrega una entrada final al historial con `valor_nuevo: null` — nada se pierde de la trazabilidad.
+
+### Buscar un cliente por id o por teléfono
+
+Útil para que el agente conversacional resuelva el `cliente_id` a partir del teléfono antes de emitir eventos, en vez de depender de `external_ref`:
+
+```bash
+curl -s "https://tu-dominio/api/clientes/buscar?phone=%2B15551234567" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/json"
+```
+
+Se le puede pasar `id` en vez de `phone` (`?id=42`) — hace falta exactamente uno de los dos. Devuelve el mismo shape que `GET /api/clientes/{id}` (incluye `phone`), respetando el mismo alcance de datos que el resto de la API: un preparador solo encuentra a sus clientes asignados. Si no hay ningún cliente visible con ese id/teléfono, responde `404`.
 
 ## Panel de administración (solo web, sin API de token)
 

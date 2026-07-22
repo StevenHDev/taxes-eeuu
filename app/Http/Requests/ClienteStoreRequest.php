@@ -28,6 +28,7 @@ class ClienteStoreRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')],
+            'phone' => ['nullable', 'string', 'max:32', Rule::unique('users', 'phone')],
             'preparer_id' => [
                 'nullable',
                 Rule::exists('users', 'id')->where('role', UserRole::Preparer->value),

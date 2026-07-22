@@ -79,6 +79,35 @@ class EventoRecoleccionTest extends TestCase
         $this->assertSame(1, User::query()->where('role', UserRole::Client)->count());
     }
 
+    public function test_el_telefono_deduplica_la_creacion_del_cliente(): void
+    {
+        $this->actingAsAgente();
+
+        $primero = $this->postJson('/api/eventos', [
+            'phone' => '+15559876543',
+            'forma' => 'form_1040',
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 1000,
+        ])->assertCreated();
+
+        $segundo = $this->postJson('/api/eventos', [
+            'phone' => '+15559876543',
+            'forma' => 'form_1040',
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 200,
+        ])->assertCreated();
+
+        $this->assertSame($primero->json('cliente_id'), $segundo->json('cliente_id'));
+        $this->assertSame(1, User::query()->where('role', UserRole::Client)->count());
+        $this->assertSame('+15559876543', User::find($primero->json('cliente_id'))->phone);
+    }
+
     public function test_reenviar_el_mismo_campo_sobrescribe_y_registra_historial(): void
     {
         $this->actingAsAgente();

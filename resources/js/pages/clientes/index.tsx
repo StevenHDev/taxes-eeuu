@@ -98,6 +98,19 @@ export default function ClientesIndex({
                                                 message={errors.email}
                                             />
                                         </div>
+                                        <div className="mt-4 grid gap-2">
+                                            <Label htmlFor="phone">
+                                                Teléfono (opcional)
+                                            </Label>
+                                            <Input
+                                                id="phone"
+                                                name="phone"
+                                                placeholder="+15551234567"
+                                            />
+                                            <InputError
+                                                message={errors.phone}
+                                            />
+                                        </div>
                                         <DialogFooter className="mt-4">
                                             <Button
                                                 type="submit"
@@ -134,6 +147,9 @@ export default function ClientesIndex({
                                         </Link>
                                         <div className="text-xs text-muted-foreground">
                                             {cliente.email}
+                                            {cliente.phone
+                                                ? ` · ${cliente.phone}`
+                                                : ''}
                                         </div>
                                     </TableCell>
                                     <TableCell>

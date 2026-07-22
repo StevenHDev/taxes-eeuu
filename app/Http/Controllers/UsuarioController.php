@@ -23,11 +23,12 @@ class UsuarioController extends Controller
             'usuarios' => User::query()
                 ->with('preparer:id,name')
                 ->orderBy('name')
-                ->get(['id', 'name', 'email', 'role', 'preparer_id'])
+                ->get(['id', 'name', 'email', 'phone', 'role', 'preparer_id'])
                 ->map(fn (User $u) => [
                     'id' => $u->id,
                     'name' => $u->name,
                     'email' => $u->email,
+                    'phone' => $u->phone,
                     'role' => $u->role,
                     'preparer' => $u->preparer?->only(['id', 'name']),
                 ]),

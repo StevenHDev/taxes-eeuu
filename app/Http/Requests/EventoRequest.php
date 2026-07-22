@@ -42,6 +42,9 @@ class EventoRequest extends FormRequest
         return [
             'cliente_id' => ['nullable', 'integer', 'exists:users,id'],
             'external_ref' => ['nullable', 'string', 'max:255'],
+            // Solo se usa cuando cliente_id es null: identifica/crea al cliente por
+            // teléfono en vez de (o además de) external_ref — ver resolverCliente().
+            'phone' => ['nullable', 'string', 'max:32'],
             'forma' => ['required', Rule::enum(TaxForm::class)],
             'campo' => ['required', 'string'],
             'tipo_campo' => ['required', Rule::enum(FieldKind::class)],

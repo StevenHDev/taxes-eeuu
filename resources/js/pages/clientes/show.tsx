@@ -439,7 +439,7 @@ export default function ClienteShow({
     campos,
     catalogoDisponible,
 }: {
-    cliente: { id: number; name: string; email: string };
+    cliente: { id: number; name: string; email: string; phone: string | null };
     formas: ClienteForma[];
     campos: CampoCliente[];
     catalogoDisponible: CatalogoDisponibleItem[];
@@ -459,6 +459,7 @@ export default function ClienteShow({
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             {cliente.email}
+                            {cliente.phone ? ` · ${cliente.phone}` : ''}
                         </p>
                     </div>
                     <div className="flex gap-2">

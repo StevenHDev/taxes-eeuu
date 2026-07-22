@@ -33,7 +33,10 @@ const ROLE_LABEL: Record<Usuario['role'], string> = {
 };
 
 type Errors = Partial<
-    Record<'name' | 'email' | 'password' | 'role' | 'preparer_id', string>
+    Record<
+        'name' | 'email' | 'phone' | 'password' | 'role' | 'preparer_id',
+        string
+    >
 >;
 
 function UsuarioForm({
@@ -47,6 +50,7 @@ function UsuarioForm({
 }) {
     const [name, setName] = useState(usuario?.name ?? '');
     const [email, setEmail] = useState(usuario?.email ?? '');
+    const [phone, setPhone] = useState(usuario?.phone ?? '');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState<Usuario['role']>(
         usuario?.role ?? 'client',
@@ -63,6 +67,7 @@ function UsuarioForm({
         const payload = {
             name,
             email,
+            phone: phone || null,
             ...(password ? { password } : {}),
             role,
             preparer_id: preparerId ? Number(preparerId) : null,
@@ -106,6 +111,17 @@ function UsuarioForm({
                     onChange={(e) => setEmail(e.target.value)}
                 />
                 <InputError message={errors.email} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="phone">Teléfono</Label>
+                <Input
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+15551234567"
+                />
+                <InputError message={errors.phone} />
             </div>
 
             <div className="grid gap-2">
@@ -230,6 +246,9 @@ export default function UsuariosIndex({
                                         {usuario.name}
                                         <div className="text-xs text-muted-foreground">
                                             {usuario.email}
+                                            {usuario.phone
+                                                ? ` · ${usuario.phone}`
+                                                : ''}
                                         </div>
                                     </TableCell>
                                     <TableCell>

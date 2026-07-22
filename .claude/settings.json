@@ -6,7 +6,9 @@
       "Bash(git check-ignore *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8000/)",
       "Bash(curl -s -X POST http://127.0.0.1:8000/api/eventos -H 'Authorization: Bearer 1|VLp6rrklyfwBXnwUCuOvDUVJkrBiFTObGYGIzopU4b01c546' -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ *)",
-      "Bash(curl -s -X POST http://127.0.0.1:8000/api/eventos -H 'Authorization: Bearer 1|XbyZiaAaI53DJAjN3PeFG6V9zmkxwiZCseEKgt2Qb7aed352' -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ *)"
+      "Bash(curl -s -X POST http://127.0.0.1:8000/api/eventos -H 'Authorization: Bearer 1|XbyZiaAaI53DJAjN3PeFG6V9zmkxwiZCseEKgt2Qb7aed352' -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(grep -n ''\\\\''name'\\\\'' => $cliente->name\\\\|'\\\\''email'\\\\'' => $cliente->email\\\\|'\\\\''name'\\\\'' => $cliente\\\\.name' /Users/stevendev/Dev/declaracion-impuestos/app/Http/Controllers/ClienteController.php)",
+      "Bash(grep -n ''\\\\''email'\\\\'' => $cliente->email' /Users/stevendev/Dev/declaracion-impuestos/app/Http/Controllers/Api/ClienteController.php)"
     ]
   }
 }

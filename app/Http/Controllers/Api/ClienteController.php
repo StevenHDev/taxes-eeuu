@@ -35,6 +35,7 @@ class ClienteController extends Controller
                 'id' => $cliente->id,
                 'name' => $cliente->name,
                 'email' => $cliente->email,
+                'phone' => $cliente->phone,
                 'estado_general' => $this->estadoGeneral($cliente),
             ]),
             'meta' => ['current_page' => $clientes->currentPage(), 'last_page' => $clientes->lastPage()],
@@ -46,12 +47,49 @@ class ClienteController extends Controller
         $this->authorize('view', $cliente);
         $this->ensureAbility($request, ApiAbility::ClientesRead);
 
+        return response()->json($this->detalle($cliente));
+    }
+
+    /**
+     * Busca el detalle de un cliente por `id` o por `phone` — pensado para que el
+     * agente conversacional (u otra integración) resuelva el `cliente_id` a partir
+     * del teléfono antes de emitir eventos, en vez de arrastrar `external_ref`.
+     */
+    public function buscar(Request $request): JsonResponse
+    {
+        $this->ensureAbility($request, ApiAbility::ClientesRead);
+
+        $request->validate([
+            'id' => ['required_without:phone', 'nullable', 'integer'],
+            'phone' => ['required_without:id', 'nullable', 'string'],
+        ]);
+
+        $cliente = $this->clientesVisiblesPara($request->user())
+            ->when($request->filled('id'), fn ($q) => $q->where('id', $request->integer('id')))
+            ->when($request->filled('phone'), fn ($q) => $q->where('phone', $request->string('phone')))
+            ->first();
+
+        if (! $cliente) {
+            return response()->json(['message' => 'Cliente no encontrado.'], 404);
+        }
+
+        $this->authorize('view', $cliente);
+
+        return response()->json($this->detalle($cliente));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function detalle(User $cliente): array
+    {
         $cliente->load(['formasCliente', 'camposCliente.documento']);
 
-        return response()->json([
+        return [
             'id' => $cliente->id,
             'name' => $cliente->name,
             'email' => $cliente->email,
+            'phone' => $cliente->phone,
             'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
                 'forma' => $f->forma,
                 'estado' => $f->estado,
@@ -66,7 +104,7 @@ class ClienteController extends Controller
                 'valor' => $c->valor,
                 'updated_at' => $c->updated_at,
             ]),
-        ]);
+        ];
     }
 
     public function documentos(Request $request, User $cliente): JsonResponse

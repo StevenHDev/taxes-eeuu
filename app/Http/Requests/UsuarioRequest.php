@@ -36,6 +36,10 @@ class UsuarioRequest extends FormRequest
                 'required', 'string', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($usuario?->id),
             ],
+            'phone' => [
+                'nullable', 'string', 'max:32',
+                Rule::unique('users', 'phone')->ignore($usuario?->id),
+            ],
             'password' => [
                 Rule::requiredIf($usuario === null),
                 'nullable', 'string', 'min:8',

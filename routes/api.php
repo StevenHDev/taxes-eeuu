@@ -15,6 +15,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('clientes')->name('api.clientes.')->group(function () {
         Route::get('/', [ClienteController::class, 'index'])->name('index');
+        Route::get('/buscar', [ClienteController::class, 'buscar'])->name('buscar');
         Route::get('/{cliente}', [ClienteController::class, 'show'])->name('show');
         Route::get('/{cliente}/documentos', [ClienteController::class, 'documentos'])->name('documentos');
         Route::get('/{cliente}/export', [ClienteController::class, 'export'])->name('export');
