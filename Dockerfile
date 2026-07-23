@@ -74,9 +74,8 @@ RUN mkdir -p storage/framework/sessions storage/framework/views \
 # PHP-FPM escucha por TCP en 127.0.0.1:9000 (Nginx lo consume en el mismo contenedor)
 RUN sed -i 's|^listen = .*|listen = 127.0.0.1:9000|' /usr/local/etc/php-fpm.d/www.conf
 
-# Nginx + Supervisord
-COPY docker/nginx/default.conf /etc/nginx/sites-available/default
-RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+# Nginx (config principal completa, reemplaza la de Debian) + Supervisord
+COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/app.conf
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint
