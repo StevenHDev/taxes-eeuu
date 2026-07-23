@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Detrás de Traefik (Dokploy): confiar en el proxy para respetar
+        // X-Forwarded-Proto/Host/Port. Sin esto Laravel ve la petición como
+        // HTTP y genera URLs de assets con http:// (error de Mixed Content).
+        $middleware->trustProxies(at: '*');
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
