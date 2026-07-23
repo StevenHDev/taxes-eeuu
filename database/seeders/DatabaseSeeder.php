@@ -18,23 +18,34 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(CatalogoCamposSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin@example.com',
-            'role' => UserRole::Administrator,
-        ]);
+        // Usuario administrador. Se crea sin factory (no depende de faker, que
+        // es require-dev y no existe en producción con --no-dev). Es idempotente
+        // gracias a firstOrCreate. Define ADMIN_EMAIL / ADMIN_PASSWORD en el
+        // entorno de producción; el password se hashea solo (cast 'hashed').
+        User::firstOrCreate(
+            ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
+            [
+                'name' => env('ADMIN_NAME', 'Admin'),
+                'password' => env('ADMIN_PASSWORD', 'password'),
+                'role' => UserRole::Administrator,
+            ]
+        );
 
-        $preparador = User::factory()->create([
-            'name' => 'Preparador de prueba',
-            'email' => 'preparador@example.com',
-            'role' => UserRole::Preparer,
-        ]);
+        // Usuarios de prueba: solo fuera de producción, ya que la factory usa
+        // fake() (faker) que no está disponible con --no-dev.
+        if (! app()->isProduction()) {
+            $preparador = User::factory()->create([
+                'name' => 'Preparador de prueba',
+                'email' => 'preparador@example.com',
+                'role' => UserRole::Preparer,
+            ]);
 
-        User::factory()->create([
-            'name' => 'Cliente de prueba',
-            'email' => 'cliente@example.com',
-            'role' => UserRole::Client,
-            'preparer_id' => $preparador->id,
-        ]);
+            User::factory()->create([
+                'name' => 'Cliente de prueba',
+                'email' => 'cliente@example.com',
+                'role' => UserRole::Client,
+                'preparer_id' => $preparador->id,
+            ]);
+        }
     }
 }
