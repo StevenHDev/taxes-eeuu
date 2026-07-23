@@ -1,9 +1,13 @@
 import { Head, router } from '@inertiajs/react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
+import CatalogoController from '@/actions/App/Http/Controllers/CatalogoController';
+import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DataTable } from '@/components/ui/data-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
     Dialog,
     DialogContent,
@@ -11,20 +15,10 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { dashboard } from '@/routes';
 import { index as catalogoIndex } from '@/routes/catalogo';
-import CatalogoController from '@/actions/App/Http/Controllers/CatalogoController';
 import type { CampoCatalogo, FormaOption } from '@/types';
 
 type Errors = Partial<
@@ -50,9 +44,7 @@ function CampoForm({
     onDone: () => void;
 }) {
     const [clave, setClave] = useState(campo?.clave ?? '');
-    const [tipoCampo, setTipoCampo] = useState(
-        campo?.tipo_campo ?? 'dato',
-    );
+    const [tipoCampo, setTipoCampo] = useState(campo?.tipo_campo ?? 'dato');
     const [tipoDato, setTipoDato] = useState(campo?.tipo_dato ?? 'string');
     const [formatos, setFormatos] = useState(
         campo?.formatos_aceptados?.join(', ') ?? '',
@@ -60,9 +52,7 @@ function CampoForm({
     const [subcampos, setSubcampos] = useState(
         campo?.subcampos?.join(', ') ?? '',
     );
-    const [obligatorio, setObligatorio] = useState(
-        campo?.obligatorio ?? true,
-    );
+    const [obligatorio, setObligatorio] = useState(campo?.obligatorio ?? true);
     const [sensible, setSensible] = useState(campo?.sensible ?? false);
     const [errors, setErrors] = useState<Errors>({});
     const [processing, setProcessing] = useState(false);
@@ -97,7 +87,11 @@ function CampoForm({
         };
 
         if (campo) {
-            router.patch(CatalogoController.update(campo.id).url, payload, options);
+            router.patch(
+                CatalogoController.update(campo.id).url,
+                payload,
+                options,
+            );
         } else {
             router.post(CatalogoController.store().url, payload, options);
         }
@@ -218,155 +212,169 @@ function CampoForm({
     );
 }
 
-function FormaSection({
-    forma,
-    campos,
-}: {
-    forma: FormaOption;
-    campos: CampoCatalogo[];
-}) {
-    const [dialogAbierto, setDialogAbierto] = useState<
-        'nuevo' | number | null
-    >(null);
+function CampoRowActions({ campo }: { campo: CampoCatalogo }) {
+    const [editar, setEditar] = useState(false);
 
     return (
-        <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <h2 className="font-semibold">{forma.label}</h2>
-                <Dialog
-                    open={dialogAbierto === 'nuevo'}
-                    onOpenChange={(open) =>
-                        setDialogAbierto(open ? 'nuevo' : null)
+        <div className="flex justify-end gap-1">
+            <Dialog open={editar} onOpenChange={setEditar}>
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                        Editar
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogTitle>Editar «{campo.clave}»</DialogTitle>
+                    <CampoForm
+                        forma={campo.forma}
+                        campo={campo}
+                        onDone={() => setEditar(false)}
+                    />
+                </DialogContent>
+            </Dialog>
+            <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => {
+                    if (
+                        confirm(
+                            `¿Eliminar «${campo.clave}»? Los datos ya cargados de clientes no se borran.`,
+                        )
+                    ) {
+                        router.delete(CatalogoController.destroy(campo.id).url);
                     }
-                >
-                    <DialogTrigger asChild>
-                        <Button size="sm" variant="secondary">
-                            Agregar campo
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogTitle>
-                            Agregar campo a {forma.label}
-                        </DialogTitle>
-                        <CampoForm
-                            forma={forma.value}
-                            onDone={() => setDialogAbierto(null)}
-                        />
-                    </DialogContent>
-                </Dialog>
-            </div>
-
-            <Card className="overflow-hidden py-0">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Clave</TableHead>
-                            <TableHead>Tipo</TableHead>
-                            <TableHead>Obligatorio</TableHead>
-                            <TableHead>Sensible</TableHead>
-                            <TableHead className="text-right">
-                                Acciones
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {campos.map((campo) => (
-                            <TableRow key={campo.id}>
-                                <TableCell>{campo.clave}</TableCell>
-                                <TableCell className="text-xs text-muted-foreground">
-                                    {campo.tipo_campo}
-                                    {campo.tipo_dato
-                                        ? ` · ${campo.tipo_dato}`
-                                        : ''}
-                                    {campo.formatos_aceptados?.length
-                                        ? ` · ${campo.formatos_aceptados.join('/')}`
-                                        : ''}
-                                </TableCell>
-                                <TableCell>
-                                    {campo.obligatorio ? (
-                                        <Badge variant="default">Sí</Badge>
-                                    ) : (
-                                        <Badge variant="outline">No</Badge>
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {campo.sensible ? (
-                                        <Badge variant="destructive">
-                                            Sensible
-                                        </Badge>
-                                    ) : (
-                                        '—'
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Dialog
-                                        open={dialogAbierto === campo.id}
-                                        onOpenChange={(open) =>
-                                            setDialogAbierto(
-                                                open ? campo.id : null,
-                                            )
-                                        }
-                                    >
-                                        <DialogTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                            >
-                                                Editar
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogTitle>
-                                                Editar «{campo.clave}»
-                                            </DialogTitle>
-                                            <CampoForm
-                                                forma={forma.value}
-                                                campo={campo}
-                                                onDone={() =>
-                                                    setDialogAbierto(null)
-                                                }
-                                            />
-                                        </DialogContent>
-                                    </Dialog>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-red-600"
-                                        onClick={() => {
-                                            if (
-                                                confirm(
-                                                    `¿Eliminar «${campo.clave}»? Los datos ya cargados de clientes no se borran.`,
-                                                )
-                                            ) {
-                                                router.delete(
-                                                    CatalogoController.destroy(
-                                                        campo.id,
-                                                    ).url,
-                                                );
-                                            }
-                                        }}
-                                    >
-                                        Eliminar
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-
-                        {campos.length === 0 && (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={5}
-                                    className="text-center text-muted-foreground"
-                                >
-                                    Sin campos definidos.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </Card>
+                }}
+            >
+                Eliminar
+            </Button>
         </div>
     );
+}
+
+function NuevoCampoDialog({ formas }: { formas: FormaOption[] }) {
+    const [open, setOpen] = useState(false);
+    const [forma, setForma] = useState<string>(String(formas[0]?.value ?? ''));
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button>Nuevo campo</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>Nuevo campo</DialogTitle>
+                <div className="grid gap-2">
+                    <Label htmlFor="forma_nuevo">Forma</Label>
+                    <select
+                        id="forma_nuevo"
+                        className="rounded border bg-background p-2 text-sm"
+                        value={forma}
+                        onChange={(e) => setForma(e.target.value)}
+                    >
+                        {formas.map((f) => (
+                            <option key={f.value} value={f.value}>
+                                {f.label}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <CampoForm forma={forma} onDone={() => setOpen(false)} />
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function buildColumns(
+    formaLabel: (value: string) => string,
+): ColumnDef<CampoCatalogo>[] {
+    return [
+        {
+            accessorKey: 'clave',
+            id: 'clave',
+            header: ({ column }) => (
+                <DataTableColumnHeader column={column} title="Clave" />
+            ),
+            cell: ({ row }) => (
+                <span className="font-medium text-foreground">
+                    {row.original.clave}
+                </span>
+            ),
+            enableHiding: false,
+        },
+        {
+            accessorKey: 'forma',
+            id: 'forma',
+            header: ({ column }) => (
+                <DataTableColumnHeader column={column} title="Forma" />
+            ),
+            cell: ({ row }) => (
+                <span className="text-sm text-muted-foreground">
+                    {formaLabel(row.original.forma)}
+                </span>
+            ),
+            filterFn: (row, id, value) =>
+                (value as string[]).includes(row.getValue<string>(id)),
+        },
+        {
+            accessorKey: 'tipo_campo',
+            id: 'tipo',
+            header: ({ column }) => (
+                <DataTableColumnHeader column={column} title="Tipo" />
+            ),
+            cell: ({ row }) => {
+                const c = row.original;
+
+                return (
+                    <span className="text-xs text-muted-foreground">
+                        {c.tipo_campo}
+                        {c.tipo_dato ? ` · ${c.tipo_dato}` : ''}
+                        {c.formatos_aceptados?.length
+                            ? ` · ${c.formatos_aceptados.join('/')}`
+                            : ''}
+                    </span>
+                );
+            },
+            filterFn: (row, id, value) =>
+                (value as string[]).includes(row.getValue<string>(id)),
+        },
+        {
+            id: 'obligatorio',
+            accessorFn: (c) => (c.obligatorio ? 'si' : 'no'),
+            header: ({ column }) => (
+                <DataTableColumnHeader column={column} title="Obligatorio" />
+            ),
+            cell: ({ row }) =>
+                row.original.obligatorio ? (
+                    <Badge variant="default">Sí</Badge>
+                ) : (
+                    <Badge variant="outline">No</Badge>
+                ),
+            filterFn: (row, id, value) =>
+                (value as string[]).includes(row.getValue<string>(id)),
+        },
+        {
+            id: 'sensible',
+            accessorFn: (c) => (c.sensible ? 'si' : 'no'),
+            header: ({ column }) => (
+                <DataTableColumnHeader column={column} title="Sensible" />
+            ),
+            cell: ({ row }) =>
+                row.original.sensible ? (
+                    <Badge variant="destructive">Sensible</Badge>
+                ) : (
+                    <span className="text-muted-foreground">—</span>
+                ),
+            filterFn: (row, id, value) =>
+                (value as string[]).includes(row.getValue<string>(id)),
+        },
+        {
+            id: 'acciones',
+            header: () => <span className="sr-only">Acciones</span>,
+            cell: ({ row }) => <CampoRowActions campo={row.original} />,
+            enableHiding: false,
+            enableSorting: false,
+        },
+    ];
 }
 
 export default function CatalogoIndex({
@@ -376,30 +384,68 @@ export default function CatalogoIndex({
     formas: FormaOption[];
     campos: CampoCatalogo[];
 }) {
+    const formaLabel = (value: string) =>
+        formas.find((f) => String(f.value) === value)?.label ?? value;
+
+    const columns = buildColumns(formaLabel);
+
     return (
         <>
             <Head title="Catálogo" />
 
-            <div className="space-y-8 p-4">
-                <div>
-                    <h1 className="text-xl font-semibold">
-                        Catálogo de campos
-                    </h1>
+            <div className="space-y-6 p-4">
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-xl font-semibold">Catálogo de campos</h1>
                     <p className="text-sm text-muted-foreground">
-                        Qué campos pide cada formulario. Eliminar una
-                        definición no borra los datos ya cargados de
-                        clientes — solo deja de pedirse y de contar para la
-                        completitud.
+                        Qué campos pide cada formulario. Eliminar una definición
+                        no borra los datos ya cargados de clientes — solo deja de
+                        pedirse y de contar para la completitud.
                     </p>
                 </div>
 
-                {formas.map((forma) => (
-                    <FormaSection
-                        key={forma.value}
-                        forma={forma}
-                        campos={campos.filter((c) => c.forma === forma.value)}
-                    />
-                ))}
+                <DataTable
+                    columns={columns}
+                    data={campos}
+                    searchPlaceholder="Buscar por clave…"
+                    emptyMessage="Sin campos definidos."
+                    initialPageSize={20}
+                    facetedFilters={[
+                        {
+                            columnId: 'forma',
+                            title: 'Forma',
+                            options: formas.map((f) => ({
+                                label: f.label,
+                                value: String(f.value),
+                            })),
+                        },
+                        {
+                            columnId: 'tipo',
+                            title: 'Tipo',
+                            options: [
+                                { label: 'documento', value: 'documento' },
+                                { label: 'dato', value: 'dato' },
+                                { label: 'mixto', value: 'mixto' },
+                            ],
+                        },
+                        {
+                            columnId: 'obligatorio',
+                            title: 'Obligatorio',
+                            options: [
+                                { label: 'Sí', value: 'si' },
+                                { label: 'No', value: 'no' },
+                            ],
+                        },
+                        {
+                            columnId: 'sensible',
+                            title: 'Sensible',
+                            options: [
+                                { label: 'Sensible', value: 'si' },
+                                { label: 'No sensible', value: 'no' },
+                            ],
+                        },
+                    ]}
+                    toolbarActions={<NuevoCampoDialog formas={formas} />}
+                />
             </div>
         </>
     );

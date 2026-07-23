@@ -161,7 +161,9 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Registro público deshabilitado: los usuarios solo se crean desde el
+        // panel interno /usuarios y únicamente por administradores.
+        // Features::registration(),
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

@@ -1,9 +1,12 @@
 import { Head, router } from '@inertiajs/react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import UsuarioController from '@/actions/App/Http/Controllers/UsuarioController';
+import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { DataTable } from '@/components/ui/data-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
     Dialog,
     DialogContent,
@@ -12,17 +15,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { dashboard } from '@/routes';
 import { index as usuariosIndex } from '@/routes/usuarios';
 import type { Usuario } from '@/types';
@@ -32,6 +26,8 @@ const ROLE_LABEL: Record<Usuario['role'], string> = {
     preparer: 'Preparador',
     administrator: 'Administrador',
 };
+
+type Preparador = { id: number; name: string };
 
 type Errors = Partial<
     Record<
@@ -46,7 +42,7 @@ function UsuarioForm({
     onDone,
 }: {
     usuario?: Usuario;
-    preparadores: { id: number; name: string }[];
+    preparadores: Preparador[];
     onDone: () => void;
 }) {
     const [name, setName] = useState(usuario?.name ?? '');
@@ -145,9 +141,7 @@ function UsuarioForm({
                     id="role"
                     className="rounded border bg-background p-2 text-sm"
                     value={role}
-                    onChange={(e) =>
-                        setRole(e.target.value as Usuario['role'])
-                    }
+                    onChange={(e) => setRole(e.target.value as Usuario['role'])}
                 >
                     <option value="client">Cliente</option>
                     <option value="preparer">Preparador</option>
@@ -185,175 +179,188 @@ function UsuarioForm({
     );
 }
 
+function UsuarioRowActions({
+    usuario,
+    preparadores,
+}: {
+    usuario: Usuario;
+    preparadores: Preparador[];
+}) {
+    const [editar, setEditar] = useState(false);
+
+    return (
+        <div className="flex justify-end gap-1">
+            <Dialog open={editar} onOpenChange={setEditar}>
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                        Editar
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogTitle>Editar {usuario.name}</DialogTitle>
+                    <UsuarioForm
+                        usuario={usuario}
+                        preparadores={preparadores}
+                        onDone={() => setEditar(false)}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                    >
+                        Eliminar
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogTitle>¿Eliminar a {usuario.name}?</DialogTitle>
+                    <DialogDescription>
+                        Si es un cliente, se borran todos sus datos cargados.
+                        Esta acción no se puede deshacer.
+                    </DialogDescription>
+                    <DialogFooter>
+                        <Button
+                            variant="destructive"
+                            onClick={() =>
+                                router.delete(
+                                    UsuarioController.destroy(usuario.id).url,
+                                )
+                            }
+                        >
+                            Eliminar definitivamente
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}
+
+function buildColumns(preparadores: Preparador[]): ColumnDef<Usuario>[] {
+    return [
+        {
+            id: 'nombre',
+            accessorFn: (u) => `${u.name} ${u.email} ${u.phone ?? ''}`,
+            header: ({ column }) => (
+                <DataTableColumnHeader column={column} title="Nombre" />
+            ),
+            cell: ({ row }) => {
+                const u = row.original;
+
+                return (
+                    <div>
+                        <div className="font-medium text-foreground">
+                            {u.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                            {u.email}
+                            {u.phone ? ` · ${u.phone}` : ''}
+                        </div>
+                    </div>
+                );
+            },
+            enableHiding: false,
+        },
+        {
+            accessorKey: 'role',
+            id: 'rol',
+            header: ({ column }) => (
+                <DataTableColumnHeader column={column} title="Rol" />
+            ),
+            cell: ({ row }) => (
+                <Badge variant="outline">{ROLE_LABEL[row.original.role]}</Badge>
+            ),
+            filterFn: (row, id, value) =>
+                (value as string[]).includes(row.getValue<string>(id)),
+        },
+        {
+            id: 'preparador',
+            accessorFn: (u) => u.preparer?.name ?? '',
+            header: ({ column }) => (
+                <DataTableColumnHeader column={column} title="Preparador" />
+            ),
+            cell: ({ row }) => (
+                <span className="text-sm text-muted-foreground">
+                    {row.original.preparer?.name ?? '—'}
+                </span>
+            ),
+        },
+        {
+            id: 'acciones',
+            header: () => <span className="sr-only">Acciones</span>,
+            cell: ({ row }) => (
+                <UsuarioRowActions
+                    usuario={row.original}
+                    preparadores={preparadores}
+                />
+            ),
+            enableHiding: false,
+            enableSorting: false,
+        },
+    ];
+}
+
 export default function UsuariosIndex({
     usuarios,
     preparadores,
 }: {
     usuarios: Usuario[];
-    preparadores: { id: number; name: string }[];
+    preparadores: Preparador[];
 }) {
-    const [dialogAbierto, setDialogAbierto] = useState<
-        'nuevo' | number | null
-    >(null);
+    const [nuevo, setNuevo] = useState(false);
+    const columns = buildColumns(preparadores);
 
     return (
         <>
             <Head title="Usuarios" />
 
             <div className="space-y-6 p-4">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <h1 className="text-xl font-semibold">Usuarios</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Alta, edición y baja de clientes, preparadores y
-                            administradores.
-                        </p>
-                    </div>
-                    <Dialog
-                        open={dialogAbierto === 'nuevo'}
-                        onOpenChange={(open) =>
-                            setDialogAbierto(open ? 'nuevo' : null)
-                        }
-                    >
-                        <DialogTrigger asChild>
-                            <Button>Nuevo usuario</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogTitle>Nuevo usuario</DialogTitle>
-                            <UsuarioForm
-                                preparadores={preparadores}
-                                onDone={() => setDialogAbierto(null)}
-                            />
-                        </DialogContent>
-                    </Dialog>
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-xl font-semibold">Usuarios</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Alta, edición y baja de clientes, preparadores y
+                        administradores.
+                    </p>
                 </div>
 
-                <Card className="overflow-hidden py-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Rol</TableHead>
-                                <TableHead>Preparador</TableHead>
-                                <TableHead className="text-right">
-                                    Acciones
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {usuarios.map((usuario) => (
-                                <TableRow key={usuario.id}>
-                                    <TableCell>
-                                        {usuario.name}
-                                        <div className="text-xs text-muted-foreground">
-                                            {usuario.email}
-                                            {usuario.phone
-                                                ? ` · ${usuario.phone}`
-                                                : ''}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline">
-                                            {ROLE_LABEL[usuario.role]}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-sm text-muted-foreground">
-                                        {usuario.preparer?.name ?? '—'}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Dialog
-                                            open={
-                                                dialogAbierto === usuario.id
-                                            }
-                                            onOpenChange={(open) =>
-                                                setDialogAbierto(
-                                                    open
-                                                        ? usuario.id
-                                                        : null,
-                                                )
-                                            }
-                                        >
-                                            <DialogTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                >
-                                                    Editar
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogTitle>
-                                                    Editar {usuario.name}
-                                                </DialogTitle>
-                                                <UsuarioForm
-                                                    usuario={usuario}
-                                                    preparadores={
-                                                        preparadores
-                                                    }
-                                                    onDone={() =>
-                                                        setDialogAbierto(
-                                                            null,
-                                                        )
-                                                    }
-                                                />
-                                            </DialogContent>
-                                        </Dialog>
-
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-red-600"
-                                                >
-                                                    Eliminar
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogTitle>
-                                                    ¿Eliminar a{' '}
-                                                    {usuario.name}?
-                                                </DialogTitle>
-                                                <DialogDescription>
-                                                    Si es un cliente, se
-                                                    borran todos sus datos
-                                                    cargados. Esta acción no
-                                                    se puede deshacer.
-                                                </DialogDescription>
-                                                <DialogFooter>
-                                                    <Button
-                                                        variant="destructive"
-                                                        onClick={() =>
-                                                            router.delete(
-                                                                UsuarioController.destroy(
-                                                                    usuario.id,
-                                                                ).url,
-                                                            )
-                                                        }
-                                                    >
-                                                        Eliminar
-                                                        definitivamente
-                                                    </Button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-
-                            {usuarios.length === 0 && (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={4}
-                                        className="text-center text-muted-foreground"
-                                    >
-                                        Sin usuarios.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </Card>
+                <DataTable
+                    columns={columns}
+                    data={usuarios}
+                    searchPlaceholder="Buscar por nombre, email o teléfono…"
+                    emptyMessage="Sin usuarios."
+                    facetedFilters={[
+                        {
+                            columnId: 'rol',
+                            title: 'Rol',
+                            options: [
+                                { label: 'Cliente', value: 'client' },
+                                { label: 'Preparador', value: 'preparer' },
+                                {
+                                    label: 'Administrador',
+                                    value: 'administrator',
+                                },
+                            ],
+                        },
+                    ]}
+                    toolbarActions={
+                        <Dialog open={nuevo} onOpenChange={setNuevo}>
+                            <DialogTrigger asChild>
+                                <Button>Nuevo usuario</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogTitle>Nuevo usuario</DialogTitle>
+                                <UsuarioForm
+                                    preparadores={preparadores}
+                                    onDone={() => setNuevo(false)}
+                                />
+                            </DialogContent>
+                        </Dialog>
+                    }
+                />
             </div>
         </>
     );

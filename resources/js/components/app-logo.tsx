@@ -9,7 +9,7 @@ export default function AppLogo() {
             <img
                 src="/images/logo.png"
                 alt="Global Tax Services"
-                className="h-8 w-auto object-contain group-data-[collapsible=icon]:hidden"
+                className="w-full object-contain group-data-[collapsible=icon]:hidden"
             />
         </>
     );

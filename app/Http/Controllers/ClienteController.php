@@ -28,15 +28,13 @@ class ClienteController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $search = $request->string('search')->toString() ?: null;
-
-        $clientes = $this->clientesVisiblesPara($request->user(), $search)
-            ->withCount(['formasCliente'])
+        // Colección completa (scopeada por rol): el filtrado, orden y paginado
+        // se hacen client-side con el DataTable de TanStack en el navegador.
+        $clientes = $this->clientesVisiblesPara($request->user())
             ->with(['formasCliente'])
             ->orderByDesc('created_at')
-            ->paginate(20)
-            ->withQueryString()
-            ->through(fn (User $cliente) => [
+            ->get()
+            ->map(fn (User $cliente) => [
                 'id' => $cliente->id,
                 'name' => $cliente->name,
                 'email' => $cliente->email,
@@ -52,7 +50,6 @@ class ClienteController extends Controller
 
         return Inertia::render('clientes/index', [
             'clientes' => $clientes,
-            'search' => $search,
             'formas' => array_map(
                 fn (TaxForm $f) => ['value' => $f->value, 'label' => $f->label()],
                 TaxForm::cases(),

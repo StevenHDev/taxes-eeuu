@@ -14,9 +14,6 @@ import {
     SidebarContent,
     SidebarFooter,
     SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as apiDocsIndex } from '@/routes/api-docs';
@@ -73,15 +70,13 @@ export function AppSidebar() {
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
+                <Link
+                    href={dashboard()}
+                    prefetch
+                    className="flex w-full items-center justify-center rounded-md px-1 py-1 group-data-[collapsible=icon]:px-0"
+                >
+                    <AppLogo />
+                </Link>
             </SidebarHeader>
 
             <SidebarContent>
