@@ -1,7 +1,7 @@
 # Dockerfile — Laravel 13 + Inertia/React + Vite (pnpm) + PHP-FPM/Nginx
 # ---------------------------------------------------------------------------
 # Stage 1: build — dependencias PHP (Composer) y assets (Vite/pnpm).
-# Se usa una imagen con PHP 8.4 + Node 20 porque el build de Vite ejecuta
+# Se usa una imagen con PHP 8.4 + Node 22 porque el build de Vite ejecuta
 # `php artisan wayfinder:generate` (plugin @laravel/vite-plugin-wayfinder),
 # así que necesita PHP y la app booteable durante la compilación del frontend.
 # ---------------------------------------------------------------------------
@@ -9,7 +9,7 @@ FROM php:8.4-cli AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip libzip-dev libpq-dev libpng-dev libonig-dev ca-certificates curl gnupg \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && docker-php-ext-install pdo pdo_pgsql zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
