@@ -15,6 +15,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('clientes')->name('api.clientes.')->group(function () {
         Route::get('/', [ClienteController::class, 'index'])->name('index');
+        Route::post('/', [ClienteController::class, 'store'])->name('store');
         Route::get('/buscar', [ClienteController::class, 'buscar'])->name('buscar');
         Route::get('/{cliente}', [ClienteController::class, 'show'])->name('show');
         Route::get('/{cliente}/documentos', [ClienteController::class, 'documentos'])->name('documentos');

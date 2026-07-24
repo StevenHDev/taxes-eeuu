@@ -38,6 +38,19 @@ class ClienteBuscarApiTest extends TestCase
             ->assertJsonPath('id', $cliente->id);
     }
 
+    public function test_encuentra_un_cliente_por_email(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id, 'email' => 'busca@example.com']);
+
+        Sanctum::actingAs($preparador, [ApiAbility::ClientesRead->value]);
+
+        $this->getJson('/api/clientes/buscar?email=busca@example.com')
+            ->assertOk()
+            ->assertJsonPath('id', $cliente->id)
+            ->assertJsonPath('email', 'busca@example.com');
+    }
+
     public function test_404_si_no_encuentra_el_telefono(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
