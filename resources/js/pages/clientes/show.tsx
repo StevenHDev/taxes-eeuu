@@ -1,5 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Table,
     TableBody,
@@ -21,6 +21,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { dashboard } from '@/routes';
 import {
     index as clientesIndex,
@@ -36,6 +37,7 @@ import {
 } from '@/routes/clientes/campos';
 import type {
     CampoCliente,
+    CampoDocumento,
     CatalogoDisponibleItem,
     ClienteForma,
     HistorialCambio,
@@ -55,13 +57,20 @@ const ESTADO_VARIANT: Record<
 };
 
 function guessTipoDato(valor: unknown): string {
-    if (typeof valor === 'number') return 'number';
+    if (typeof valor === 'number') {
+        return 'number';
+    }
+
     if (Array.isArray(valor)) {
         return valor.every((v) => typeof v === 'string')
             ? 'array_string'
             : 'array_object';
     }
-    if (valor !== null && typeof valor === 'object') return 'object';
+
+    if (valor !== null && typeof valor === 'object') {
+        return 'object';
+    }
+
     return 'string';
 }
 
@@ -75,6 +84,161 @@ function parseContenido(raw: string): Json {
     }
 }
 
+// Visor de documentos a pantalla completa (100% ancho/alto) con botón de descarga.
+// El archivo se sirve inline vía URL firmada temporal (preview_url); los PDFs y
+// formatos que el navegador entiende se renderizan en el iframe, las imágenes con <img>.
+function DocumentoViewerDialog({ documento }: { documento: CampoDocumento }) {
+    const { t } = useTranslation();
+    const esImagen = documento.file_mime_type?.startsWith('image/');
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button
+                    variant="link"
+                    className="h-auto max-w-full justify-start truncate p-0 underline"
+                    title={t('clienteShow.viewer.viewTitle', {
+                        name: documento.file_original_name,
+                    })}
+                >
+                    {documento.file_original_name}
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="flex h-screen w-screen max-w-none flex-col gap-0 rounded-none border-0 p-0 sm:max-w-none">
+                <DialogTitle className="sr-only">
+                    {documento.file_original_name}
+                </DialogTitle>
+                <div className="flex items-center justify-between gap-4 border-b bg-background px-4 py-3">
+                    <span className="truncate text-sm font-medium">
+                        {documento.file_original_name}
+                    </span>
+                    <div className="flex items-center gap-2 pr-10">
+                        {documento.download_url && (
+                            <a
+                                href={documento.download_url}
+                                download={documento.file_original_name}
+                            >
+                                <Button size="sm">
+                                    {t('common.download')}
+                                </Button>
+                            </a>
+                        )}
+                    </div>
+                </div>
+                <div className="min-h-0 flex-1 bg-muted">
+                    {documento.preview_url ? (
+                        esImagen ? (
+                            <div className="flex h-full w-full items-center justify-center overflow-auto p-4">
+                                <img
+                                    src={documento.preview_url}
+                                    alt={documento.file_original_name}
+                                    className="max-h-full max-w-full object-contain"
+                                />
+                            </div>
+                        ) : (
+                            <iframe
+                                src={documento.preview_url}
+                                title={documento.file_original_name}
+                                className="h-full w-full border-0"
+                            />
+                        )
+                    ) : (
+                        <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
+                            {t('clienteShow.viewer.noPreview')}
+                            {documento.download_url && (
+                                <>
+                                    {' '}
+                                    <a
+                                        href={documento.download_url}
+                                        className="underline"
+                                    >
+                                        {t('clienteShow.viewer.downloadFile')}
+                                    </a>
+                                    .
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+// Carga (o reemplazo) de un documento directamente desde el dashboard. Reutiliza
+// el mismo endpoint de corrección manual en modo "archivo".
+function SubirDocumentoDialog({
+    clienteId,
+    campo,
+}: {
+    clienteId: number;
+    campo: CampoCliente;
+}) {
+    const { t } = useTranslation();
+    const [file, setFile] = useState<File | null>(null);
+    const [open, setOpen] = useState(false);
+    const yaHayArchivo = campo.documento !== null;
+
+    const submit = () => {
+        if (!file) {
+            return;
+        }
+
+        router.patch(
+            campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
+                `?forma=${campo.forma}`,
+            { modo: 'archivo', file },
+            {
+                preserveScroll: true,
+                forceFormData: true,
+                onSuccess: () => {
+                    setFile(null);
+                    setOpen(false);
+                },
+            },
+        );
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="sm">
+                    {yaHayArchivo ? t('common.replace') : t('common.upload')}
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>
+                    {yaHayArchivo
+                        ? t('clienteShow.upload.replaceTitle', {
+                              campo: campo.campo,
+                          })
+                        : t('clienteShow.upload.uploadTitle', {
+                              campo: campo.campo,
+                          })}
+                </DialogTitle>
+                <DialogDescription>
+                    {t('clienteShow.upload.description', {
+                        forma: campo.forma,
+                    })}
+                </DialogDescription>
+
+                <input
+                    type="file"
+                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                />
+
+                <DialogFooter>
+                    <Button onClick={submit} disabled={!file}>
+                        {yaHayArchivo
+                            ? t('common.replace')
+                            : t('common.upload')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function EditCampoDialog({
     clienteId,
     campo,
@@ -82,6 +246,7 @@ function EditCampoDialog({
     clienteId: number;
     campo: CampoCliente;
 }) {
+    const { t } = useTranslation();
     const [raw, setRaw] = useState(
         campo.valor !== null && campo.valor !== undefined
             ? JSON.stringify(campo.valor)
@@ -111,34 +276,35 @@ function EditCampoDialog({
         <Dialog>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="sm">
-                    Corregir
+                    {t('clienteShow.edit.trigger')}
                 </Button>
             </DialogTrigger>
             <DialogContent>
-                <DialogTitle>Corregir «{campo.campo}»</DialogTitle>
+                <DialogTitle>
+                    {t('clienteShow.edit.title', { campo: campo.campo })}
+                </DialogTitle>
                 <DialogDescription>
-                    Forma: {campo.forma}. Este cambio queda registrado en el
-                    historial.
+                    {t('clienteShow.edit.description', { forma: campo.forma })}
                 </DialogDescription>
 
                 {esArchivo ? (
                     <input
                         type="file"
-                        onChange={(e) =>
-                            setFile(e.target.files?.[0] ?? null)
-                        }
+                        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                     />
                 ) : (
                     <Textarea
                         value={raw}
                         onChange={(e) => setRaw(e.target.value)}
-                        placeholder='Texto, número, o JSON para objetos/listas (ej. {"nombre_completo":"..."})'
+                        placeholder={t('clienteShow.edit.placeholder')}
                         rows={4}
                     />
                 )}
 
                 <DialogFooter>
-                    <Button onClick={submit}>Guardar corrección</Button>
+                    <Button onClick={submit}>
+                        {t('clienteShow.edit.save')}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -152,9 +318,8 @@ function AgregarCampoDialog({
     clienteId: number;
     disponibles: CatalogoDisponibleItem[];
 }) {
-    const [forma, setForma] = useState<string>(
-        disponibles[0]?.forma ?? '',
-    );
+    const { t } = useTranslation();
+    const [forma, setForma] = useState<string>(disponibles[0]?.forma ?? '');
     const camposDeForma = disponibles.filter((d) => d.forma === forma);
     const [campo, setCampo] = useState(camposDeForma[0]?.campo ?? '');
     const [raw, setRaw] = useState('');
@@ -179,8 +344,7 @@ function AgregarCampoDialog({
         const contenido = parseContenido(raw);
 
         router.patch(
-            campoUpdate({ cliente: clienteId, campo }).url +
-                `?forma=${forma}`,
+            campoUpdate({ cliente: clienteId, campo }).url + `?forma=${forma}`,
             esArchivo
                 ? { modo: 'archivo', file }
                 : {
@@ -195,17 +359,19 @@ function AgregarCampoDialog({
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="secondary">Agregar campo</Button>
+                <Button variant="secondary">
+                    {t('clienteShow.addField.trigger')}
+                </Button>
             </DialogTrigger>
             <DialogContent>
-                <DialogTitle>Agregar campo</DialogTitle>
+                <DialogTitle>{t('clienteShow.addField.title')}</DialogTitle>
                 <DialogDescription>
-                    Carga a mano un campo que el agente todavía no envió.
+                    {t('clienteShow.addField.description')}
                 </DialogDescription>
 
                 <div className="grid gap-2">
                     <label className="text-sm font-medium" htmlFor="forma">
-                        Forma
+                        {t('common.form')}
                     </label>
                     <select
                         id="forma"
@@ -225,7 +391,7 @@ function AgregarCampoDialog({
 
                 <div className="mt-2 grid gap-2">
                     <label className="text-sm font-medium" htmlFor="campo">
-                        Campo
+                        {t('clienteShow.addField.fieldLabel')}
                     </label>
                     <select
                         id="campo"
@@ -253,14 +419,14 @@ function AgregarCampoDialog({
                         <Textarea
                             value={raw}
                             onChange={(e) => setRaw(e.target.value)}
-                            placeholder='Texto, número, o JSON para objetos/listas (ej. {"nombre_completo":"..."})'
+                            placeholder={t('clienteShow.edit.placeholder')}
                             rows={4}
                         />
                     )}
                 </div>
 
                 <DialogFooter className="mt-4">
-                    <Button onClick={submit}>Guardar</Button>
+                    <Button onClick={submit}>{t('common.save')}</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -274,18 +440,21 @@ function EliminarCampoButton({
     clienteId: number;
     campo: CampoCliente;
 }) {
+    const { t } = useTranslation();
+
     return (
         <Dialog>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-red-600">
-                    Eliminar
+                    {t('common.delete')}
                 </Button>
             </DialogTrigger>
             <DialogContent>
-                <DialogTitle>¿Eliminar «{campo.campo}»?</DialogTitle>
+                <DialogTitle>
+                    {t('clienteShow.deleteField.title', { campo: campo.campo })}
+                </DialogTitle>
                 <DialogDescription>
-                    Se borra el valor cargado (y el archivo, si tenía). Queda
-                    registrado en el historial.
+                    {t('clienteShow.deleteField.description')}
                 </DialogDescription>
                 <DialogFooter>
                     <Button
@@ -300,7 +469,7 @@ function EliminarCampoButton({
                             )
                         }
                     >
-                        Eliminar
+                        {t('common.delete')}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -315,6 +484,7 @@ function HistorialDialog({
     clienteId: number;
     campo: CampoCliente;
 }) {
+    const { t } = useTranslation();
     const [items, setItems] = useState<HistorialCambio[] | null>(null);
 
     const load = async () => {
@@ -331,32 +501,38 @@ function HistorialDialog({
         <Dialog onOpenChange={(open) => open && load()}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="sm">
-                    Historial
+                    {t('clienteShow.history.trigger')}
                 </Button>
             </DialogTrigger>
             <DialogContent>
-                <DialogTitle>Historial de «{campo.campo}»</DialogTitle>
+                <DialogTitle>
+                    {t('clienteShow.history.title', { campo: campo.campo })}
+                </DialogTitle>
                 <div className="max-h-80 space-y-3 overflow-y-auto text-sm">
-                    {items === null && <p>Cargando…</p>}
+                    {items === null && <p>{t('common.loading')}</p>}
                     {items?.length === 0 && (
                         <p className="text-muted-foreground">
-                            Sin cambios registrados todavía.
+                            {t('clienteShow.history.empty')}
                         </p>
                     )}
                     {items?.map((h, i) => (
                         <div key={i} className="rounded border p-2">
                             <div className="text-xs text-muted-foreground">
                                 {h.created_at} · {h.source}
-                                {h.modificado_por ? ` · ${h.modificado_por}` : ''}
+                                {h.modificado_por
+                                    ? ` · ${h.modificado_por}`
+                                    : ''}
                             </div>
                             <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
                                 <div>
-                                    <span className="font-medium">Antes:</span>{' '}
+                                    <span className="font-medium">
+                                        {t('clienteShow.history.before')}
+                                    </span>{' '}
                                     {JSON.stringify(h.valor_anterior)}
                                 </div>
                                 <div>
                                     <span className="font-medium">
-                                        Después:
+                                        {t('clienteShow.history.after')}
                                     </span>{' '}
                                     {JSON.stringify(h.valor_nuevo)}
                                 </div>
@@ -376,6 +552,7 @@ function RevealButton({
     clienteId: number;
     campo: CampoCliente;
 }) {
+    const { t } = useTranslation();
     const [valor, setValor] = useState<unknown>(null);
     const [needsPassword, setNeedsPassword] = useState(false);
 
@@ -397,6 +574,7 @@ function RevealButton({
 
         if (response.status === 423) {
             setNeedsPassword(true);
+
             return;
         }
 
@@ -409,7 +587,9 @@ function RevealButton({
     // tener que revelarlo. "Revelar" es una acción aparte, no la única forma de ver
     // que el dato existe.
     if (campo.valor === null || campo.valor === undefined) {
-        return <span className="text-muted-foreground">—</span>;
+        return (
+            <span className="text-muted-foreground">{t('common.none')}</span>
+        );
     }
 
     return (
@@ -423,11 +603,11 @@ function RevealButton({
                         href={confirmPasswordShow().url}
                         className="text-xs text-amber-600 underline"
                     >
-                        Confirma tu contraseña para revelar
+                        {t('clienteShow.reveal.confirmPassword')}
                     </a>
                 ) : (
                     <Button variant="ghost" size="sm" onClick={reveal}>
-                        Revelar
+                        {t('clienteShow.reveal.reveal')}
                     </Button>
                 ))}
         </div>
@@ -445,6 +625,7 @@ export default function ClienteShow({
     campos: CampoCliente[];
     catalogoDisponible: CatalogoDisponibleItem[];
 }) {
+    const { t } = useTranslation();
     const { auth } = usePage<PageProps>().props;
     const esAdministrador = auth.user.role === 'administrator';
 
@@ -465,23 +646,27 @@ export default function ClienteShow({
                     </div>
                     <div className="flex gap-2">
                         <a href={clienteExport(cliente.id).url}>
-                            <Button variant="secondary">Exportar ZIP</Button>
+                            <Button variant="secondary">
+                                {t('clienteShow.exportZip')}
+                            </Button>
                         </a>
                         {esAdministrador && (
                             <Dialog>
                                 <DialogTrigger asChild>
                                     <Button variant="destructive">
-                                        Eliminar cliente
+                                        {t('clienteShow.deleteClient.trigger')}
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
                                     <DialogTitle>
-                                        ¿Eliminar a {cliente.name}?
+                                        {t('clienteShow.deleteClient.title', {
+                                            name: cliente.name,
+                                        })}
                                     </DialogTitle>
                                     <DialogDescription>
-                                        Se borran todos sus campos,
-                                        documentos e historial. Esta acción no
-                                        se puede deshacer.
+                                        {t(
+                                            'clienteShow.deleteClient.description',
+                                        )}
                                     </DialogDescription>
                                     <DialogFooter>
                                         <Button
@@ -493,7 +678,9 @@ export default function ClienteShow({
                                                 )
                                             }
                                         >
-                                            Eliminar definitivamente
+                                            {t(
+                                                'clienteShow.deleteClient.confirm',
+                                            )}
                                         </Button>
                                     </DialogFooter>
                                 </DialogContent>
@@ -519,11 +706,13 @@ export default function ClienteShow({
                                 }
                             >
                                 {f.estado === 'completo'
-                                    ? 'Completo'
-                                    : 'En progreso'}
+                                    ? t('clienteShow.formState.complete')
+                                    : t('clienteShow.formState.inProgress')}
                             </Badge>
                             {f.revisado_en ? (
-                                <Badge variant="outline">Revisado</Badge>
+                                <Badge variant="outline">
+                                    {t('clienteShow.reviewed')}
+                                </Badge>
                             ) : (
                                 <Button
                                     size="sm"
@@ -537,7 +726,7 @@ export default function ClienteShow({
                                         )
                                     }
                                 >
-                                    Marcar revisado
+                                    {t('clienteShow.markReviewed')}
                                 </Button>
                             )}
                         </div>
@@ -555,12 +744,18 @@ export default function ClienteShow({
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Forma</TableHead>
-                                <TableHead>Campo</TableHead>
-                                <TableHead>Estado</TableHead>
-                                <TableHead>Valor</TableHead>
+                                <TableHead>{t('common.form')}</TableHead>
+                                <TableHead>
+                                    {t('clienteShow.table.field')}
+                                </TableHead>
+                                <TableHead>
+                                    {t('clienteShow.table.status')}
+                                </TableHead>
+                                <TableHead>
+                                    {t('clienteShow.table.value')}
+                                </TableHead>
                                 <TableHead className="text-right">
-                                    Acciones
+                                    {t('common.actions')}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -577,28 +772,16 @@ export default function ClienteShow({
                                                 ESTADO_VARIANT[campo.estado]
                                             }
                                         >
-                                            {campo.estado}
+                                            {t(
+                                                `clienteShow.fieldState.${campo.estado}`,
+                                            )}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="max-w-xs truncate text-sm">
                                         {campo.documento ? (
-                                            campo.documento.download_url ? (
-                                                <a
-                                                    href={
-                                                        campo.documento
-                                                            .download_url
-                                                    }
-                                                    className="underline"
-                                                >
-                                                    {
-                                                        campo.documento
-                                                            .file_original_name
-                                                    }
-                                                </a>
-                                            ) : (
-                                                campo.documento
-                                                    .file_original_name
-                                            )
+                                            <DocumentoViewerDialog
+                                                documento={campo.documento}
+                                            />
                                         ) : campo.es_sensible ? (
                                             <RevealButton
                                                 clienteId={cliente.id}
@@ -607,7 +790,7 @@ export default function ClienteShow({
                                         ) : campo.valor === null ||
                                           campo.valor === undefined ? (
                                             <span className="text-muted-foreground">
-                                                —
+                                                {t('common.none')}
                                             </span>
                                         ) : (
                                             JSON.stringify(campo.valor)
@@ -618,10 +801,17 @@ export default function ClienteShow({
                                             clienteId={cliente.id}
                                             campo={campo}
                                         />
-                                        <EditCampoDialog
-                                            clienteId={cliente.id}
-                                            campo={campo}
-                                        />
+                                        {campo.tipo_campo === 'documento' ? (
+                                            <SubirDocumentoDialog
+                                                clienteId={cliente.id}
+                                                campo={campo}
+                                            />
+                                        ) : (
+                                            <EditCampoDialog
+                                                clienteId={cliente.id}
+                                                campo={campo}
+                                            />
+                                        )}
                                         <EliminarCampoButton
                                             clienteId={cliente.id}
                                             campo={campo}
@@ -636,8 +826,7 @@ export default function ClienteShow({
                                         colSpan={5}
                                         className="text-center text-muted-foreground"
                                     >
-                                        Todavía no se ha recolectado ningún
-                                        campo.
+                                        {t('clienteShow.table.empty')}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -651,7 +840,7 @@ export default function ClienteShow({
 
 ClienteShow.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
-        { title: 'Clientes', href: clientesIndex() },
+        { title: 'nav.dashboard', href: dashboard() },
+        { title: 'nav.clients', href: clientesIndex() },
     ],
 };

@@ -1,11 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
-import {
-    Code2,
-    LayoutGrid,
-    ListChecks,
-    UserCog,
-    Users,
-} from 'lucide-react';
+import { Code2, LayoutGrid, ListChecks, UserCog, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -27,20 +22,21 @@ type PageProps = {
 };
 
 export function AppSidebar() {
+    const { t } = useTranslation();
     const { auth } = usePage<PageProps>().props;
     const esAdministrador = auth.user.role === 'administrator';
     const tieneAccesoAlPanel = auth.user.role !== 'client';
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Dashboard',
+            title: t('nav.dashboard'),
             href: dashboard(),
             icon: LayoutGrid,
         },
         ...(tieneAccesoAlPanel
             ? [
                   {
-                      title: 'Clientes',
+                      title: t('nav.clients'),
                       href: clientesIndex(),
                       icon: Users,
                   },
@@ -49,19 +45,19 @@ export function AppSidebar() {
         ...(esAdministrador
             ? [
                   {
-                      title: 'Catálogo',
+                      title: t('nav.catalog'),
                       href: catalogoIndex(),
                       icon: ListChecks,
                   },
                   {
-                      title: 'Usuarios',
+                      title: t('nav.users'),
                       href: usuariosIndex(),
                       icon: UserCog,
                   },
               ]
             : []),
         {
-            title: 'Documentación API',
+            title: t('nav.apiDocs'),
             href: apiDocsIndex(),
             icon: Code2,
         },

@@ -1,5 +1,6 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ApiTokenController from '@/actions/App/Http/Controllers/Settings/ApiTokenController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -35,6 +36,7 @@ export default function ApiTokens({
     tokens: ApiToken[];
     abilities: ApiTokenAbilityOption[];
 }) {
+    const { t } = useTranslation();
     const [justCreatedToken, setJustCreatedToken] = useState<string | null>(
         null,
     );
@@ -54,26 +56,26 @@ export default function ApiTokens({
 
     return (
         <>
-            <Head title="API Tokens" />
+            <Head title={t('settings.apiTokens.pageTitle')} />
 
             <div className="space-y-6">
                 <Heading
                     variant="small"
-                    title="API Tokens"
-                    description="Genera tokens para usar la API de documentos fiscales desde sistemas externos."
+                    title={t('settings.apiTokens.title')}
+                    description={t('settings.apiTokens.description')}
                 />
 
                 <Link
                     href={apiDocsIndex()}
                     className="text-sm text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                 >
-                    Ver documentación de la API →
+                    {t('settings.apiTokens.viewDocs')}
                 </Link>
 
                 {justCreatedToken && (
                     <div className="space-y-2 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
                         <p className="text-sm font-medium">
-                            Copia este token ahora. No volverá a mostrarse.
+                            {t('settings.apiTokens.copyTokenNotice')}
                         </p>
                         <code className="block overflow-x-auto rounded bg-background p-2 text-xs">
                             {justCreatedToken}
@@ -83,7 +85,7 @@ export default function ApiTokens({
                             size="sm"
                             onClick={() => setJustCreatedToken(null)}
                         >
-                            Entendido
+                            {t('settings.apiTokens.gotIt')}
                         </Button>
                     </div>
                 )}
@@ -96,18 +98,24 @@ export default function ApiTokens({
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Nombre</Label>
+                                <Label htmlFor="name">
+                                    {t('settings.apiTokens.nameLabel')}
+                                </Label>
                                 <Input
                                     id="name"
                                     name="name"
                                     required
-                                    placeholder="Ej. Integración contable"
+                                    placeholder={t(
+                                        'settings.apiTokens.namePlaceholder',
+                                    )}
                                 />
                                 <InputError message={errors.name} />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label>Permisos</Label>
+                                <Label>
+                                    {t('settings.apiTokens.permissionsLabel')}
+                                </Label>
                                 {abilities.map((ability) => (
                                     <label
                                         key={ability.value}
@@ -129,7 +137,9 @@ export default function ApiTokens({
                                 <InputError message={errors.abilities} />
                             </div>
 
-                            <Button disabled={processing}>Crear token</Button>
+                            <Button disabled={processing}>
+                                {t('settings.apiTokens.createToken')}
+                            </Button>
                         </>
                     )}
                 </Form>
@@ -138,11 +148,17 @@ export default function ApiTokens({
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Permisos</TableHead>
-                                <TableHead>Último uso</TableHead>
+                                <TableHead>
+                                    {t('settings.apiTokens.nameColumn')}
+                                </TableHead>
+                                <TableHead>
+                                    {t('settings.apiTokens.permissionsColumn')}
+                                </TableHead>
+                                <TableHead>
+                                    {t('settings.apiTokens.lastUsedColumn')}
+                                </TableHead>
                                 <TableHead className="text-right">
-                                    Acciones
+                                    {t('common.actions')}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -163,7 +179,8 @@ export default function ApiTokens({
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        {token.last_used_at ?? 'Nunca'}
+                                        {token.last_used_at ??
+                                            t('settings.apiTokens.never')}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Dialog>
@@ -173,22 +190,26 @@ export default function ApiTokens({
                                                     size="sm"
                                                     className="text-red-600"
                                                 >
-                                                    Revocar
+                                                    {t(
+                                                        'settings.apiTokens.revoke',
+                                                    )}
                                                 </Button>
                                             </DialogTrigger>
                                             <DialogContent>
                                                 <DialogTitle>
-                                                    ¿Revocar este token?
+                                                    {t(
+                                                        'settings.apiTokens.revokeConfirmTitle',
+                                                    )}
                                                 </DialogTitle>
                                                 <DialogDescription>
-                                                    Cualquier integración que lo
-                                                    use dejará de funcionar de
-                                                    inmediato.
+                                                    {t(
+                                                        'settings.apiTokens.revokeConfirmDescription',
+                                                    )}
                                                 </DialogDescription>
                                                 <DialogFooter className="gap-2">
                                                     <DialogClose asChild>
                                                         <Button variant="secondary">
-                                                            Cancelar
+                                                            {t('common.cancel')}
                                                         </Button>
                                                     </DialogClose>
                                                     <Form
@@ -205,7 +226,9 @@ export default function ApiTokens({
                                                                 asChild
                                                             >
                                                                 <button type="submit">
-                                                                    Revocar
+                                                                    {t(
+                                                                        'settings.apiTokens.revoke',
+                                                                    )}
                                                                 </button>
                                                             </Button>
                                                         )}
@@ -223,7 +246,7 @@ export default function ApiTokens({
                                         colSpan={4}
                                         className="text-center text-muted-foreground"
                                     >
-                                        Todavía no has creado ningún token.
+                                        {t('settings.apiTokens.emptyState')}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -238,7 +261,7 @@ export default function ApiTokens({
 ApiTokens.layout = {
     breadcrumbs: [
         {
-            title: 'API Tokens',
+            title: 'settings.apiTokens.pageTitle',
             href: apiTokensIndex(),
         },
     ],

@@ -36,7 +36,7 @@ export function RadialGauge({ percentage }: { percentage: number }) {
                     className="text-primary transition-[stroke-dashoffset] duration-500"
                 />
             </svg>
-            <span className="absolute text-2xl font-semibold tabular-nums text-foreground">
+            <span className="absolute text-2xl font-semibold text-foreground tabular-nums">
                 {clamped}%
             </span>
         </div>

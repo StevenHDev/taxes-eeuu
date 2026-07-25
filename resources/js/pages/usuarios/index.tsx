@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import UsuarioController from '@/actions/App/Http/Controllers/UsuarioController';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -21,11 +22,15 @@ import { dashboard } from '@/routes';
 import { index as usuariosIndex } from '@/routes/usuarios';
 import type { Usuario } from '@/types';
 
-const ROLE_LABEL: Record<Usuario['role'], string> = {
-    client: 'Cliente',
-    preparer: 'Preparador',
-    administrator: 'Administrador',
-};
+function useRoleLabel(): Record<Usuario['role'], string> {
+    const { t } = useTranslation();
+
+    return {
+        client: t('usuarios.roles.client'),
+        preparer: t('usuarios.roles.preparer'),
+        administrator: t('usuarios.roles.administrator'),
+    };
+}
 
 type Preparador = { id: number; name: string };
 
@@ -45,6 +50,7 @@ function UsuarioForm({
     preparadores: Preparador[];
     onDone: () => void;
 }) {
+    const { t } = useTranslation();
     const [name, setName] = useState(usuario?.name ?? '');
     const [email, setEmail] = useState(usuario?.email ?? '');
     const [phone, setPhone] = useState(usuario?.phone ?? '');
@@ -90,7 +96,7 @@ function UsuarioForm({
     return (
         <div className="space-y-4">
             <div className="grid gap-2">
-                <Label htmlFor="name">Nombre</Label>
+                <Label htmlFor="name">{t('usuarios.form.name')}</Label>
                 <Input
                     id="name"
                     value={name}
@@ -100,7 +106,7 @@ function UsuarioForm({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('usuarios.form.email')}</Label>
                 <Input
                     id="email"
                     type="email"
@@ -111,7 +117,7 @@ function UsuarioForm({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="phone">Teléfono</Label>
+                <Label htmlFor="phone">{t('usuarios.form.phone')}</Label>
                 <Input
                     id="phone"
                     value={phone}
@@ -123,8 +129,8 @@ function UsuarioForm({
 
             <div className="grid gap-2">
                 <Label htmlFor="password">
-                    Contraseña
-                    {usuario ? ' (dejar en blanco para no cambiarla)' : ''}
+                    {t('usuarios.form.password')}
+                    {usuario ? t('usuarios.form.passwordHint') : ''}
                 </Label>
                 <Input
                     id="password"
@@ -136,30 +142,38 @@ function UsuarioForm({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="role">Rol</Label>
+                <Label htmlFor="role">{t('usuarios.form.role')}</Label>
                 <select
                     id="role"
                     className="rounded border bg-background p-2 text-sm"
                     value={role}
                     onChange={(e) => setRole(e.target.value as Usuario['role'])}
                 >
-                    <option value="client">Cliente</option>
-                    <option value="preparer">Preparador</option>
-                    <option value="administrator">Administrador</option>
+                    <option value="client">{t('usuarios.roles.client')}</option>
+                    <option value="preparer">
+                        {t('usuarios.roles.preparer')}
+                    </option>
+                    <option value="administrator">
+                        {t('usuarios.roles.administrator')}
+                    </option>
                 </select>
                 <InputError message={errors.role} />
             </div>
 
             {role === 'client' && (
                 <div className="grid gap-2">
-                    <Label htmlFor="preparer_id">Preparador asignado</Label>
+                    <Label htmlFor="preparer_id">
+                        {t('usuarios.form.assignedPreparer')}
+                    </Label>
                     <select
                         id="preparer_id"
                         className="rounded border bg-background p-2 text-sm"
                         value={preparerId}
                         onChange={(e) => setPreparerId(e.target.value)}
                     >
-                        <option value="">Sin asignar</option>
+                        <option value="">
+                            {t('usuarios.form.unassigned')}
+                        </option>
                         {preparadores.map((p) => (
                             <option key={p.id} value={p.id}>
                                 {p.name}
@@ -172,7 +186,7 @@ function UsuarioForm({
 
             <DialogFooter>
                 <Button onClick={submit} disabled={processing}>
-                    Guardar
+                    {t('common.save')}
                 </Button>
             </DialogFooter>
         </div>
@@ -186,6 +200,7 @@ function UsuarioRowActions({
     usuario: Usuario;
     preparadores: Preparador[];
 }) {
+    const { t } = useTranslation();
     const [editar, setEditar] = useState(false);
 
     return (
@@ -193,11 +208,15 @@ function UsuarioRowActions({
             <Dialog open={editar} onOpenChange={setEditar}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="sm">
-                        Editar
+                        {t('common.edit')}
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
-                    <DialogTitle>Editar {usuario.name}</DialogTitle>
+                    <DialogTitle>
+                        {t('usuarios.actions.editTitle', {
+                            name: usuario.name,
+                        })}
+                    </DialogTitle>
                     <UsuarioForm
                         usuario={usuario}
                         preparadores={preparadores}
@@ -213,14 +232,17 @@ function UsuarioRowActions({
                         size="sm"
                         className="text-destructive hover:text-destructive"
                     >
-                        Eliminar
+                        {t('common.delete')}
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
-                    <DialogTitle>¿Eliminar a {usuario.name}?</DialogTitle>
+                    <DialogTitle>
+                        {t('usuarios.actions.deleteTitle', {
+                            name: usuario.name,
+                        })}
+                    </DialogTitle>
                     <DialogDescription>
-                        Si es un cliente, se borran todos sus datos cargados.
-                        Esta acción no se puede deshacer.
+                        {t('usuarios.actions.deleteDescription')}
                     </DialogDescription>
                     <DialogFooter>
                         <Button
@@ -231,7 +253,7 @@ function UsuarioRowActions({
                                 )
                             }
                         >
-                            Eliminar definitivamente
+                            {t('usuarios.actions.deleteConfirm')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -240,13 +262,19 @@ function UsuarioRowActions({
     );
 }
 
-function buildColumns(preparadores: Preparador[]): ColumnDef<Usuario>[] {
+function useColumns(preparadores: Preparador[]): ColumnDef<Usuario>[] {
+    const { t } = useTranslation();
+    const roleLabel = useRoleLabel();
+
     return [
         {
             id: 'nombre',
             accessorFn: (u) => `${u.name} ${u.email} ${u.phone ?? ''}`,
             header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Nombre" />
+                <DataTableColumnHeader
+                    column={column}
+                    title={t('usuarios.columns.name')}
+                />
             ),
             cell: ({ row }) => {
                 const u = row.original;
@@ -269,10 +297,13 @@ function buildColumns(preparadores: Preparador[]): ColumnDef<Usuario>[] {
             accessorKey: 'role',
             id: 'rol',
             header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Rol" />
+                <DataTableColumnHeader
+                    column={column}
+                    title={t('usuarios.columns.role')}
+                />
             ),
             cell: ({ row }) => (
-                <Badge variant="outline">{ROLE_LABEL[row.original.role]}</Badge>
+                <Badge variant="outline">{roleLabel[row.original.role]}</Badge>
             ),
             filterFn: (row, id, value) =>
                 (value as string[]).includes(row.getValue<string>(id)),
@@ -281,7 +312,10 @@ function buildColumns(preparadores: Preparador[]): ColumnDef<Usuario>[] {
             id: 'preparador',
             accessorFn: (u) => u.preparer?.name ?? '',
             header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Preparador" />
+                <DataTableColumnHeader
+                    column={column}
+                    title={t('usuarios.columns.preparer')}
+                />
             ),
             cell: ({ row }) => (
                 <span className="text-sm text-muted-foreground">
@@ -291,7 +325,9 @@ function buildColumns(preparadores: Preparador[]): ColumnDef<Usuario>[] {
         },
         {
             id: 'acciones',
-            header: () => <span className="sr-only">Acciones</span>,
+            header: () => (
+                <span className="sr-only">{t('common.actions')}</span>
+            ),
             cell: ({ row }) => (
                 <UsuarioRowActions
                     usuario={row.original}
@@ -311,36 +347,44 @@ export default function UsuariosIndex({
     usuarios: Usuario[];
     preparadores: Preparador[];
 }) {
+    const { t } = useTranslation();
     const [nuevo, setNuevo] = useState(false);
-    const columns = buildColumns(preparadores);
+    const columns = useColumns(preparadores);
 
     return (
         <>
-            <Head title="Usuarios" />
+            <Head title={t('usuarios.title')} />
 
             <div className="space-y-6 p-4">
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-xl font-semibold">Usuarios</h1>
+                    <h1 className="text-xl font-semibold">
+                        {t('usuarios.title')}
+                    </h1>
                     <p className="text-sm text-muted-foreground">
-                        Alta, edición y baja de clientes, preparadores y
-                        administradores.
+                        {t('usuarios.subtitle')}
                     </p>
                 </div>
 
                 <DataTable
                     columns={columns}
                     data={usuarios}
-                    searchPlaceholder="Buscar por nombre, email o teléfono…"
-                    emptyMessage="Sin usuarios."
+                    searchPlaceholder={t('usuarios.searchPlaceholder')}
+                    emptyMessage={t('usuarios.empty')}
                     facetedFilters={[
                         {
                             columnId: 'rol',
-                            title: 'Rol',
+                            title: t('usuarios.columns.role'),
                             options: [
-                                { label: 'Cliente', value: 'client' },
-                                { label: 'Preparador', value: 'preparer' },
                                 {
-                                    label: 'Administrador',
+                                    label: t('usuarios.roles.client'),
+                                    value: 'client',
+                                },
+                                {
+                                    label: t('usuarios.roles.preparer'),
+                                    value: 'preparer',
+                                },
+                                {
+                                    label: t('usuarios.roles.administrator'),
                                     value: 'administrator',
                                 },
                             ],
@@ -349,10 +393,12 @@ export default function UsuariosIndex({
                     toolbarActions={
                         <Dialog open={nuevo} onOpenChange={setNuevo}>
                             <DialogTrigger asChild>
-                                <Button>Nuevo usuario</Button>
+                                <Button>{t('usuarios.actions.new')}</Button>
                             </DialogTrigger>
                             <DialogContent>
-                                <DialogTitle>Nuevo usuario</DialogTitle>
+                                <DialogTitle>
+                                    {t('usuarios.actions.new')}
+                                </DialogTitle>
                                 <UsuarioForm
                                     preparadores={preparadores}
                                     onDone={() => setNuevo(false)}
@@ -368,7 +414,7 @@ export default function UsuariosIndex({
 
 UsuariosIndex.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
-        { title: 'Usuarios', href: usuariosIndex() },
+        { title: 'nav.dashboard', href: dashboard() },
+        { title: 'nav.users', href: usuariosIndex() },
     ],
 };

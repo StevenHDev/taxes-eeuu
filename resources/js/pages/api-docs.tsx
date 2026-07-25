@@ -1,16 +1,19 @@
 import { Head } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
 import Heading from '@/components/heading';
 import { index as apiDocsIndex } from '@/routes/api-docs';
 
 export default function ApiDocs({ html }: { html: string }) {
+    const { t } = useTranslation();
+
     return (
         <>
-            <Head title="Documentación de la API" />
+            <Head title={t('apiDocs.title')} />
 
             <div className="space-y-6 px-4 py-6">
                 <Heading
-                    title="Documentación de la API"
-                    description="Cómo autenticarte y usar cada endpoint para subir y consultar documentos fiscales."
+                    title={t('apiDocs.title')}
+                    description={t('apiDocs.intro')}
                 />
 
                 <div
@@ -25,7 +28,7 @@ export default function ApiDocs({ html }: { html: string }) {
 ApiDocs.layout = {
     breadcrumbs: [
         {
-            title: 'Documentación de la API',
+            title: 'nav.apiDocs',
             href: apiDocsIndex(),
         },
     ],

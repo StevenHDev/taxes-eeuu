@@ -12,6 +12,7 @@ import {
     UserCog,
     Users,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ActivityBarChart } from '@/components/dashboard/activity-bar-chart';
 import { RadialGauge } from '@/components/dashboard/radial-gauge';
 import { StatCard } from '@/components/dashboard/stat-card';
@@ -33,15 +34,23 @@ import type { DashboardResumen } from '@/types';
 
 const SOURCE: Record<
     DashboardResumen['actividad_reciente'][number]['source'],
-    { label: string; icon: typeof Bot }
+    { labelKey: string; icon: typeof Bot }
 > = {
-    agente_ia: { label: 'Agente IA', icon: Bot },
-    preparador: { label: 'Preparador', icon: UserCog },
-    administrador: { label: 'Admin', icon: ShieldCheck },
+    agente_ia: { labelKey: 'dashboard.activity.source.aiAgent', icon: Bot },
+    preparador: {
+        labelKey: 'dashboard.activity.source.preparer',
+        icon: UserCog,
+    },
+    administrador: {
+        labelKey: 'dashboard.activity.source.admin',
+        icon: ShieldCheck,
+    },
 };
 
 function fechaHora(fecha: string | null): string {
-    if (!fecha) return '—';
+    if (!fecha) {
+        return '—';
+    }
 
     return new Date(fecha).toLocaleString('es-AR', {
         day: '2-digit',
@@ -71,20 +80,22 @@ export default function Dashboard({
 }: {
     resumen: DashboardResumen | null;
 }) {
+    const { t } = useTranslation();
     const getInitials = useInitials();
 
     if (!resumen) {
         return (
             <>
-                <Head title="Dashboard" />
+                <Head title={t('dashboard.pageTitle')} />
                 <div className="flex h-full flex-1 flex-col p-4">
                     <Card className="mx-auto mt-8 max-w-lg">
                         <CardHeader>
-                            <CardTitle>Bienvenido</CardTitle>
+                            <CardTitle>
+                                {t('dashboard.welcome.title')}
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-sm text-muted-foreground">
-                            Tu preparador va a ir cargando tu información acá. No
-                            tenés acceso al panel interno.
+                            {t('dashboard.welcome.description')}
                         </CardContent>
                     </Card>
                 </div>
@@ -99,7 +110,7 @@ export default function Dashboard({
 
     return (
         <>
-            <Head title="Dashboard" />
+            <Head title={t('dashboard.pageTitle')} />
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 {/* ── Hero ─────────────────────────────────────────────── */}
                 <section className="dash-hero-texture dash-reveal relative overflow-hidden rounded-xl bg-primary p-6 text-primary-foreground shadow-lg ring-1 ring-white/10 sm:p-8">
@@ -109,25 +120,31 @@ export default function Dashboard({
                     />
                     <div
                         aria-hidden
-                        className="pointer-events-none absolute -bottom-28 right-40 size-72 rounded-full bg-primary-foreground/5"
+                        className="pointer-events-none absolute right-40 -bottom-28 size-72 rounded-full bg-primary-foreground/5"
                     />
                     <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <p className="text-xs font-medium tracking-[0.14em] text-primary-foreground/60 uppercase">
-                                Clientes en gestión
+                                {t('dashboard.hero.clientsInManagement')}
                             </p>
-                            <p className="mt-1.5 text-[clamp(2.75rem,7vw,4.25rem)] font-semibold leading-[0.95] tracking-tight tabular-nums">
+                            <p className="mt-1.5 text-[clamp(2.75rem,7vw,4.25rem)] leading-[0.95] font-semibold tracking-tight tabular-nums">
                                 {resumen.total}
                             </p>
                             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                                <span className="rounded-full bg-primary-foreground/10 px-2.5 py-1 font-medium ring-1 ring-inset ring-primary-foreground/15">
-                                    {resumen.en_progreso} en progreso
+                                <span className="rounded-full bg-primary-foreground/10 px-2.5 py-1 font-medium ring-1 ring-primary-foreground/15 ring-inset">
+                                    {t('dashboard.hero.inProgress', {
+                                        count: resumen.en_progreso,
+                                    })}
                                 </span>
-                                <span className="rounded-full bg-primary-foreground/10 px-2.5 py-1 font-medium ring-1 ring-inset ring-primary-foreground/15">
-                                    {resumen.completo} completos
+                                <span className="rounded-full bg-primary-foreground/10 px-2.5 py-1 font-medium ring-1 ring-primary-foreground/15 ring-inset">
+                                    {t('dashboard.hero.completed', {
+                                        count: resumen.completo,
+                                    })}
                                 </span>
-                                <span className="rounded-full bg-primary-foreground/10 px-2.5 py-1 font-medium ring-1 ring-inset ring-primary-foreground/15">
-                                    {resumen.sin_iniciar} sin iniciar
+                                <span className="rounded-full bg-primary-foreground/10 px-2.5 py-1 font-medium ring-1 ring-primary-foreground/15 ring-inset">
+                                    {t('dashboard.hero.notStarted', {
+                                        count: resumen.sin_iniciar,
+                                    })}
                                 </span>
                             </div>
                         </div>
@@ -135,7 +152,7 @@ export default function Dashboard({
                             href={clientesIndex()}
                             className="group inline-flex w-full items-center justify-center gap-1.5 self-start rounded-lg bg-primary-foreground px-5 py-3 text-sm font-semibold text-primary shadow-sm transition-all hover:shadow-md sm:w-auto sm:self-auto"
                         >
-                            Ver clientes
+                            {t('dashboard.hero.viewClients')}
                             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                         </Link>
                     </div>
@@ -149,32 +166,34 @@ export default function Dashboard({
                     <Card className="lg:col-span-2">
                         <CardHeader>
                             <SectionTitle icon={ClipboardList}>
-                                Actividad
+                                {t('dashboard.activity.title')}
                             </SectionTitle>
                             <p className="text-xs text-muted-foreground">
-                                Campos recibidos por día · últimos 7 días
+                                {t('dashboard.activity.subtitle')}
                             </p>
                         </CardHeader>
                         <CardContent>
-                            <ActivityBarChart data={resumen.actividad_por_dia} />
+                            <ActivityBarChart
+                                data={resumen.actividad_por_dia}
+                            />
                         </CardContent>
                     </Card>
 
                     <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
                         <StatCard
                             icon={CircleDashed}
-                            label="Sin iniciar"
+                            label={t('dashboard.stats.notStarted')}
                             value={resumen.sin_iniciar}
                             accent="muted"
                         />
                         <StatCard
                             icon={Loader}
-                            label="En progreso"
+                            label={t('dashboard.stats.inProgress')}
                             value={resumen.en_progreso}
                         />
                         <StatCard
                             icon={CheckCircle2}
-                            label="Completos"
+                            label={t('dashboard.stats.completed')}
                             value={resumen.completo}
                             accent="strong"
                         />
@@ -188,17 +207,17 @@ export default function Dashboard({
                 >
                     <StatCard
                         icon={Inbox}
-                        label="Campos recibidos"
+                        label={t('dashboard.kpi.fieldsReceived.label')}
                         value={`${resumen.campos_recibidos_porcentaje}%`}
-                        tag="Progreso"
-                        hint="Sobre el total esperado de todas las formas."
+                        tag={t('dashboard.kpi.fieldsReceived.tag')}
+                        hint={t('dashboard.kpi.fieldsReceived.hint')}
                     />
                     <StatCard
                         icon={ClipboardCheck}
-                        label="Formas completas"
+                        label={t('dashboard.kpi.completedForms.label')}
                         value={`${resumen.formas_completas_porcentaje}%`}
-                        tag="Total"
-                        hint="De las formas iniciadas que llegaron al 100%."
+                        tag={t('dashboard.kpi.completedForms.tag')}
+                        hint={t('dashboard.kpi.completedForms.hint')}
                     />
                     {resumen.pendientes_revisar.length > 0 ? (
                         <Link
@@ -207,19 +226,19 @@ export default function Dashboard({
                         >
                             <StatCard
                                 icon={ClipboardCheck}
-                                label="Pendientes de revisar"
+                                label={t('dashboard.kpi.pendingReview.label')}
                                 value={resumen.pendientes_revisar.length}
-                                tag="Revisión"
-                                hint="Formas completas esperando aprobación."
+                                tag={t('dashboard.kpi.pendingReview.tag')}
+                                hint={t('dashboard.kpi.pendingReview.hint')}
                             />
                         </Link>
                     ) : (
                         <StatCard
                             icon={ClipboardCheck}
-                            label="Pendientes de revisar"
+                            label={t('dashboard.kpi.pendingReview.label')}
                             value={0}
-                            tag="Revisión"
-                            hint="No hay formas esperando revisión."
+                            tag={t('dashboard.kpi.pendingReview.tag')}
+                            hint={t('dashboard.kpi.pendingReview.hintEmpty')}
                         />
                     )}
                 </div>
@@ -232,72 +251,93 @@ export default function Dashboard({
                     <Card className="lg:col-span-2">
                         <CardHeader className="flex-row items-center justify-between space-y-0">
                             <SectionTitle icon={ClipboardList}>
-                                Actividad reciente
+                                {t('dashboard.recentActivity.title')}
                             </SectionTitle>
                             <Link
                                 href={clientesIndex()}
                                 className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                             >
-                                Ver clientes
+                                {t('dashboard.hero.viewClients')}
                                 <ArrowRight className="size-3" />
                             </Link>
                         </CardHeader>
                         <CardContent>
                             {resumen.actividad_reciente.length === 0 ? (
                                 <p className="py-8 text-center text-sm text-muted-foreground">
-                                    Todavía no hay actividad.
+                                    {t('dashboard.recentActivity.empty')}
                                 </p>
                             ) : (
                                 <div className="-mx-2 overflow-x-auto px-2">
                                     <Table>
-                                    <TableHeader>
-                                        <TableRow className="hover:bg-transparent">
-                                            <TableHead>Campo</TableHead>
-                                            <TableHead>Cliente</TableHead>
-                                            <TableHead>Origen</TableHead>
-                                            <TableHead className="hidden text-right sm:table-cell">
-                                                Fecha
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {resumen.actividad_reciente.map(
-                                            (a, i) => {
-                                                const src = SOURCE[a.source];
-                                                const SrcIcon = src.icon;
+                                        <TableHeader>
+                                            <TableRow className="hover:bg-transparent">
+                                                <TableHead>
+                                                    {t(
+                                                        'dashboard.recentActivity.columns.field',
+                                                    )}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {t(
+                                                        'dashboard.recentActivity.columns.client',
+                                                    )}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {t(
+                                                        'dashboard.recentActivity.columns.source',
+                                                    )}
+                                                </TableHead>
+                                                <TableHead className="hidden text-right sm:table-cell">
+                                                    {t(
+                                                        'dashboard.recentActivity.columns.date',
+                                                    )}
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {resumen.actividad_reciente.map(
+                                                (a, i) => {
+                                                    const src =
+                                                        SOURCE[a.source];
+                                                    const SrcIcon = src.icon;
 
-                                                return (
-                                                    <TableRow key={i}>
-                                                        <TableCell>
-                                                            <div className="font-medium text-foreground">
-                                                                {a.campo}
-                                                            </div>
-                                                            <div className="text-xs text-muted-foreground">
-                                                                {a.forma_label}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-muted-foreground">
-                                                            {a.cliente_nombre}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Badge
-                                                                variant="secondary"
-                                                                className="gap-1 font-normal"
-                                                            >
-                                                                <SrcIcon className="size-3" />
-                                                                {src.label}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="hidden text-right text-xs text-muted-foreground tabular-nums sm:table-cell">
-                                                            {fechaHora(
-                                                                a.created_at,
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            },
-                                        )}
-                                    </TableBody>
+                                                    return (
+                                                        <TableRow key={i}>
+                                                            <TableCell>
+                                                                <div className="font-medium text-foreground">
+                                                                    {a.campo}
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {
+                                                                        a.forma_label
+                                                                    }
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-muted-foreground">
+                                                                {
+                                                                    a.cliente_nombre
+                                                                }
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    className="gap-1 font-normal"
+                                                                >
+                                                                    <SrcIcon className="size-3" />
+                                                                    {t(
+                                                                        src.labelKey,
+                                                                    )}
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell className="hidden text-right text-xs text-muted-foreground tabular-nums sm:table-cell">
+                                                                {fechaHora(
+                                                                    a.created_at,
+                                                                )}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                },
+                                            )}
+                                        </TableBody>
                                     </Table>
                                 </div>
                             )}
@@ -308,7 +348,7 @@ export default function Dashboard({
                         <Card>
                             <CardHeader>
                                 <SectionTitle icon={ClipboardCheck}>
-                                    Formas completas
+                                    {t('dashboard.completedForms.title')}
                                 </SectionTitle>
                             </CardHeader>
                             <CardContent className="flex flex-col items-center gap-4">
@@ -320,7 +360,9 @@ export default function Dashboard({
                                 {resumen.distribucion_por_forma.length > 0 && (
                                     <div className="w-full space-y-2.5">
                                         <p className="text-xs font-medium text-muted-foreground">
-                                            Distribución por forma
+                                            {t(
+                                                'dashboard.completedForms.distributionByForm',
+                                            )}
                                         </p>
                                         {resumen.distribucion_por_forma
                                             .slice(0, 4)
@@ -352,13 +394,13 @@ export default function Dashboard({
                         <Card>
                             <CardHeader>
                                 <SectionTitle icon={Users}>
-                                    Últimos clientes
+                                    {t('dashboard.latestClients.title')}
                                 </SectionTitle>
                             </CardHeader>
                             <CardContent>
                                 {resumen.ultimos_clientes.length === 0 ? (
                                     <p className="text-sm text-muted-foreground">
-                                        Todavía no hay clientes.
+                                        {t('dashboard.latestClients.empty')}
                                     </p>
                                 ) : (
                                     <div className="space-y-1">
@@ -393,7 +435,7 @@ export default function Dashboard({
 Dashboard.layout = {
     breadcrumbs: [
         {
-            title: 'Dashboard',
+            title: 'nav.dashboard',
             href: dashboard(),
         },
     ],

@@ -1,4 +1,6 @@
 import { Link } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -7,8 +9,13 @@ export default function AuthSplitLayout({
     title,
     description,
 }: AuthLayoutProps) {
+    const { t } = useTranslation();
+
     return (
         <div className="relative grid min-h-svh lg:grid-cols-2">
+            <div className="absolute top-4 right-4 z-20">
+                <LanguageSwitcher />
+            </div>
             <div className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-primary-foreground lg:flex">
                 <div
                     aria-hidden
@@ -33,12 +40,10 @@ export default function AuthSplitLayout({
 
                 <div className="relative z-10 max-w-sm space-y-2">
                     <p className="text-2xl font-medium">
-                        Recolección de datos para declaraciones de impuestos.
+                        {t('auth.brand.tagline')}
                     </p>
                     <p className="text-sm text-primary-foreground/70">
-                        Un lugar centralizado para reunir la información de
-                        cada cliente, campo a campo, y llevarla lista para la
-                        preparación de su declaración.
+                        {t('auth.brand.description')}
                     </p>
                 </div>
             </div>

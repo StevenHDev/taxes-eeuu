@@ -61,4 +61,16 @@ class Documento extends Model
     {
         return URL::temporarySignedRoute('documentos.show', now()->addMinutes(10), ['documento' => $this->id]);
     }
+
+    /**
+     * URL firmada y temporal para visualizar el archivo en el navegador (inline),
+     * usada por la previsualización a pantalla completa. `disposition` viaja firmado.
+     */
+    public function previewUrl(): string
+    {
+        return URL::temporarySignedRoute('documentos.show', now()->addMinutes(10), [
+            'documento' => $this->id,
+            'disposition' => 'inline',
+        ]);
+    }
 }

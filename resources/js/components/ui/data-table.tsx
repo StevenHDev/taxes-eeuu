@@ -14,6 +14,7 @@ import {
 } from '@tanstack/react-table';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DataTableFacetedFilter } from '@/components/ui/data-table-faceted-filter';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Button } from '@/components/ui/button';
@@ -50,10 +51,10 @@ export type FacetedFilterConfig = {
 export function DataTable<TData, TValue>({
     columns,
     data,
-    searchPlaceholder = 'Buscar…',
+    searchPlaceholder,
     facetedFilters = [],
     toolbarActions,
-    emptyMessage = 'Sin resultados.',
+    emptyMessage,
     initialPageSize = 10,
 }: {
     columns: ColumnDef<TData, TValue>[];
@@ -64,6 +65,7 @@ export function DataTable<TData, TValue>({
     emptyMessage?: string;
     initialPageSize?: number;
 }) {
+    const { t } = useTranslation();
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
@@ -103,7 +105,10 @@ export function DataTable<TData, TValue>({
                         <Input
                             value={globalFilter}
                             onChange={(e) => setGlobalFilter(e.target.value)}
-                            placeholder={searchPlaceholder}
+                            placeholder={
+                                searchPlaceholder ??
+                                t('dataTable.searchPlaceholder')
+                            }
                             className="rounded-full pl-9"
                         />
                     </div>
@@ -126,7 +131,7 @@ export function DataTable<TData, TValue>({
                                     setGlobalFilter('');
                                 }}
                             >
-                                Limpiar
+                                {t('dataTable.clear')}
                                 <X className="ml-1 size-4" />
                             </Button>
                         )}
@@ -143,12 +148,12 @@ export function DataTable<TData, TValue>({
                                     className="h-9"
                                 >
                                     <SlidersHorizontal className="mr-2 size-4" />
-                                    Columnas
+                                    {t('dataTable.columns')}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
                                 <DropdownMenuLabel>
-                                    Mostrar columnas
+                                    {t('dataTable.showColumns')}
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {hideableColumns.map((c) => (
@@ -215,7 +220,7 @@ export function DataTable<TData, TValue>({
                                         colSpan={columns.length}
                                         className="h-24 text-center text-muted-foreground"
                                     >
-                                        {emptyMessage}
+                                        {emptyMessage ?? t('dataTable.empty')}
                                     </TableCell>
                                 </TableRow>
                             )}

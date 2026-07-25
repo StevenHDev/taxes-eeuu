@@ -129,9 +129,11 @@ class ClienteController extends Controller
                 'documento' => $c->documento ? [
                     'id' => $c->documento->id,
                     'file_original_name' => $c->documento->file_original_name,
+                    'file_mime_type' => $c->documento->file_mime_type,
                     'formato' => $c->documento->formato,
                     'estado_validacion' => $c->documento->estado_validacion,
                     'download_url' => $c->documento->downloadUrl(),
+                    'preview_url' => $c->documento->previewUrl(),
                 ] : null,
                 'updated_at' => $c->updated_at,
             ]),

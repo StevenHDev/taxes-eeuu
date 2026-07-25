@@ -58,7 +58,7 @@ export function StatCard({
                     </span>
                 )}
             </div>
-            <p className="mt-4 text-4xl font-semibold leading-none tracking-tight tabular-nums text-foreground">
+            <p className="mt-4 text-4xl leading-none font-semibold tracking-tight text-foreground tabular-nums">
                 {value}
             </p>
             {hint && (

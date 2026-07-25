@@ -1,0 +1,450 @@
+{
+    "common": {
+        "actions": "Actions",
+        "save": "Save",
+        "saveChange": "Save change",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "close": "Close",
+        "download": "Download",
+        "upload": "Upload",
+        "replace": "Replace",
+        "loading": "Loading…",
+        "search": "Search",
+        "back": "Back",
+        "confirm": "Confirm",
+        "add": "Add",
+        "create": "Create",
+        "view": "View",
+        "form": "Form",
+        "none": "—"
+    },
+    "language": {
+        "change": "Change language"
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "clients": "Clients",
+        "catalog": "Catalog",
+        "users": "Users",
+        "apiDocs": "API docs",
+        "platform": "Platform",
+        "repository": "Repository",
+        "documentation": "Documentation",
+        "navigationMenu": "Navigation menu",
+        "searchClient": "Search client…"
+    },
+    "userMenu": {
+        "settings": "Settings",
+        "logout": "Log out"
+    },
+    "dataTable": {
+        "searchPlaceholder": "Search…",
+        "empty": "No results.",
+        "clear": "Clear",
+        "columns": "Columns",
+        "showColumns": "Show columns",
+        "rows_one": "{{count}} row",
+        "rows_other": "{{count}} rows",
+        "rowsPerPage": "Rows per page",
+        "pageOf": "Page {{current}} of {{total}}",
+        "firstPage": "First page",
+        "prevPage": "Previous page",
+        "nextPage": "Next page",
+        "lastPage": "Last page"
+    },
+    "auth": {
+        "brand": {
+            "tagline": "Data collection for tax returns.",
+            "description": "A centralized place to gather each client's information, field by field, and have it ready for their return preparation."
+        },
+        "login": {
+            "headTitle": "Log in",
+            "layoutTitle": "Log in to your account",
+            "layoutDescription": "Enter your email and password below to log in",
+            "emailLabel": "Email address",
+            "emailPlaceholder": "email@example.com",
+            "passwordLabel": "Password",
+            "passwordPlaceholder": "Password",
+            "forgotPassword": "Forgot your password?",
+            "rememberMe": "Remember me",
+            "submit": "Log in"
+        },
+        "forgotPassword": {
+            "headTitle": "Forgot password",
+            "layoutTitle": "Forgot password",
+            "layoutDescription": "Enter your email to receive a password reset link",
+            "emailLabel": "Email address",
+            "emailPlaceholder": "email@example.com",
+            "submit": "Email password reset link",
+            "returnTo": "Or, return to",
+            "loginLink": "log in"
+        },
+        "resetPassword": {
+            "headTitle": "Reset password",
+            "layoutTitle": "Reset password",
+            "layoutDescription": "Please enter your new password below",
+            "emailLabel": "Email",
+            "passwordLabel": "Password",
+            "passwordPlaceholder": "Password",
+            "confirmPasswordLabel": "Confirm password",
+            "confirmPasswordPlaceholder": "Confirm password",
+            "submit": "Reset password"
+        },
+        "confirmPassword": {
+            "headTitle": "Confirm password",
+            "layoutTitle": "Confirm password",
+            "layoutDescription": "This is a secure area of the application. Please confirm your password before continuing.",
+            "passkeyLabel": "Confirm with passkey",
+            "passkeyLoadingLabel": "Confirming...",
+            "passkeySeparator": "Or confirm with password",
+            "passwordLabel": "Password",
+            "passwordPlaceholder": "Password",
+            "submit": "Confirm password"
+        },
+        "twoFactor": {
+            "headTitle": "Two-factor authentication",
+            "authTitle": "Authentication code",
+            "authDescription": "Enter the authentication code provided by your authenticator application.",
+            "recoveryTitle": "Recovery code",
+            "recoveryDescription": "Please confirm access to your account by entering one of your emergency recovery codes.",
+            "toggleToAuthCode": "log in using an authentication code",
+            "toggleToRecoveryCode": "log in using a recovery code",
+            "recoveryCodePlaceholder": "Enter recovery code",
+            "submit": "Continue",
+            "orYouCan": "or you can"
+        },
+        "verifyEmail": {
+            "headTitle": "Email verification",
+            "layoutTitle": "Email verification",
+            "layoutDescription": "Please verify your email address by clicking on the link we just emailed to you.",
+            "linkSent": "A new verification link has been sent to the email address you provided during registration.",
+            "resend": "Resend verification email",
+            "logout": "Log out"
+        }
+    },
+    "welcome": {
+        "headTitle": "Welcome",
+        "logIn": "Log in",
+        "getStarted": "Let's get started",
+        "ecosystemLine1": "Laravel has an incredibly rich ecosystem.",
+        "ecosystemLine2": "We suggest starting with the following.",
+        "readThe": "Read the",
+        "watchTutorials": "Watch video tutorials at",
+        "laracasts": "Laracasts",
+        "deployNow": "Deploy now"
+    },
+    "dashboard": {
+        "pageTitle": "Dashboard",
+        "welcome": {
+            "title": "Welcome",
+            "description": "Your preparer will start loading your information here. You don't have access to the internal panel."
+        },
+        "hero": {
+            "clientsInManagement": "Clients in management",
+            "inProgress_one": "{{count}} in progress",
+            "inProgress_other": "{{count}} in progress",
+            "completed_one": "{{count}} completed",
+            "completed_other": "{{count}} completed",
+            "notStarted_one": "{{count}} not started",
+            "notStarted_other": "{{count}} not started",
+            "viewClients": "View clients"
+        },
+        "activity": {
+            "title": "Activity",
+            "subtitle": "Fields received per day · last 7 days",
+            "source": {
+                "aiAgent": "AI Agent",
+                "preparer": "Preparer",
+                "admin": "Admin"
+            }
+        },
+        "stats": {
+            "notStarted": "Not started",
+            "inProgress": "In progress",
+            "completed": "Completed"
+        },
+        "kpi": {
+            "fieldsReceived": {
+                "label": "Fields received",
+                "tag": "Progress",
+                "hint": "Out of the total expected across all forms."
+            },
+            "completedForms": {
+                "label": "Completed forms",
+                "tag": "Total",
+                "hint": "Of the started forms that reached 100%."
+            },
+            "pendingReview": {
+                "label": "Pending review",
+                "tag": "Review",
+                "hint": "Completed forms awaiting approval.",
+                "hintEmpty": "No forms awaiting review."
+            }
+        },
+        "recentActivity": {
+            "title": "Recent activity",
+            "empty": "No activity yet.",
+            "columns": {
+                "field": "Field",
+                "client": "Client",
+                "source": "Source",
+                "date": "Date"
+            }
+        },
+        "completedForms": {
+            "title": "Completed forms",
+            "distributionByForm": "Distribution by form"
+        },
+        "latestClients": {
+            "title": "Latest clients",
+            "empty": "No clients yet."
+        }
+    },
+    "clientesIndex": {
+        "head": {
+            "title": "Clients"
+        },
+        "heading": "Clients",
+        "subheading": "Data collection status per client, field by field.",
+        "searchPlaceholder": "Search by name, email, or phone…",
+        "emptyMessage": "No clients yet.",
+        "columns": {
+            "client": "Client",
+            "status": "Status",
+            "forms": "Forms"
+        },
+        "estado": {
+            "sinIniciar": "Not started",
+            "enProgreso": "In progress",
+            "completo": "Complete"
+        },
+        "filters": {
+            "form": "Form"
+        },
+        "newClient": {
+            "trigger": "New client",
+            "title": "New client",
+            "nameLabel": "Name",
+            "emailLabel": "Email",
+            "phoneLabel": "Phone (optional)",
+            "submit": "Create"
+        }
+    },
+    "clienteShow": {
+        "viewer": {
+            "viewTitle": "View {{name}}",
+            "noPreview": "No preview available.",
+            "downloadFile": "Download the file"
+        },
+        "upload": {
+            "uploadTitle": "Upload file «{{campo}}»",
+            "replaceTitle": "Replace file «{{campo}}»",
+            "description": "Form: {{forma}}. The file is stored securely and the change is recorded in the history."
+        },
+        "edit": {
+            "trigger": "Correct",
+            "title": "Correct «{{campo}}»",
+            "description": "Form: {{forma}}. This change is recorded in the history.",
+            "placeholder": "Text, number, or JSON for objects/lists (e.g. {\"full_name\":\"...\"})",
+            "save": "Save correction"
+        },
+        "addField": {
+            "trigger": "Add field",
+            "title": "Add field",
+            "description": "Manually load a field the agent hasn't sent yet.",
+            "fieldLabel": "Field"
+        },
+        "deleteField": {
+            "title": "Delete «{{campo}}»?",
+            "description": "The loaded value (and the file, if any) is deleted. It is recorded in the history."
+        },
+        "history": {
+            "trigger": "History",
+            "title": "History of «{{campo}}»",
+            "empty": "No changes recorded yet.",
+            "before": "Before:",
+            "after": "After:"
+        },
+        "reveal": {
+            "confirmPassword": "Confirm your password to reveal",
+            "reveal": "Reveal"
+        },
+        "exportZip": "Export ZIP",
+        "deleteClient": {
+            "trigger": "Delete client",
+            "title": "Delete {{name}}?",
+            "description": "All of their fields, documents, and history will be deleted. This action cannot be undone.",
+            "confirm": "Delete permanently"
+        },
+        "formState": {
+            "complete": "Complete",
+            "inProgress": "In progress"
+        },
+        "reviewed": "Reviewed",
+        "markReviewed": "Mark as reviewed",
+        "table": {
+            "field": "Field",
+            "status": "Status",
+            "value": "Value",
+            "empty": "No fields have been collected yet."
+        },
+        "fieldState": {
+            "pendiente": "Pending",
+            "recibido": "Received",
+            "invalido": "Invalid"
+        }
+    },
+    "usuarios": {
+        "title": "Users",
+        "subtitle": "Create, edit, and remove clients, preparers, and administrators.",
+        "searchPlaceholder": "Search by name, email, or phone…",
+        "empty": "No users.",
+        "roles": {
+            "client": "Client",
+            "preparer": "Preparer",
+            "administrator": "Administrator"
+        },
+        "columns": {
+            "name": "Name",
+            "role": "Role",
+            "preparer": "Preparer"
+        },
+        "form": {
+            "name": "Name",
+            "email": "Email",
+            "phone": "Phone",
+            "password": "Password",
+            "passwordHint": " (leave blank to keep it unchanged)",
+            "role": "Role",
+            "assignedPreparer": "Assigned preparer",
+            "unassigned": "Unassigned"
+        },
+        "actions": {
+            "new": "New user",
+            "editTitle": "Edit {{name}}",
+            "deleteTitle": "Delete {{name}}?",
+            "deleteDescription": "If this is a client, all of their uploaded data will be deleted. This action cannot be undone.",
+            "deleteConfirm": "Delete permanently"
+        }
+    },
+    "catalogo": {
+        "title": "Field catalog",
+        "subtitle": "Which fields each form requests. Removing a definition does not delete clients' already-uploaded data — it simply stops being requested and no longer counts toward completeness.",
+        "searchPlaceholder": "Search by key…",
+        "empty": "No fields defined.",
+        "columns": {
+            "key": "Key",
+            "form": "Form",
+            "type": "Type",
+            "required": "Required",
+            "sensitive": "Sensitive"
+        },
+        "badges": {
+            "yes": "Yes",
+            "no": "No",
+            "sensitive": "Sensitive",
+            "notSensitive": "Not sensitive"
+        },
+        "fieldTypes": {
+            "documentoOption": "document (file only)",
+            "datoOption": "data (text/number only)",
+            "mixtoOption": "mixed (file or text)"
+        },
+        "form": {
+            "key": "Field key",
+            "keyPlaceholder": "e.g. business_income",
+            "fieldType": "Field type",
+            "dataType": "Data type",
+            "acceptedFormats": "Accepted formats (comma-separated)",
+            "subfields": "Subfields (optional, for object/array_object)",
+            "required": "Required to complete the form",
+            "sensitive": "Sensitive (encrypted and masked)"
+        },
+        "actions": {
+            "new": "New field",
+            "editTitle": "Edit «{{key}}»",
+            "deleteConfirm": "Delete «{{key}}»? Clients' already-uploaded data will not be deleted."
+        }
+    },
+    "settings": {
+        "layout": {
+            "title": "Settings",
+            "description": "Manage your profile and account settings",
+            "navAriaLabel": "Settings"
+        },
+        "nav": {
+            "profile": "Profile",
+            "security": "Security",
+            "appearance": "Appearance",
+            "apiTokens": "API Tokens"
+        },
+        "profile": {
+            "pageTitle": "Profile settings",
+            "title": "Profile",
+            "description": "Update your name and email address",
+            "nameLabel": "Name",
+            "namePlaceholder": "Full name",
+            "emailLabel": "Email address",
+            "emailPlaceholder": "Email address",
+            "unverified": "Your email address is unverified.",
+            "resendVerification": "Click here to re-send the verification email.",
+            "verificationSent": "A new verification link has been sent to your email address."
+        },
+        "security": {
+            "pageTitle": "Security settings",
+            "updatePasswordTitle": "Update password",
+            "updatePasswordDescription": "Ensure your account is using a long, random password to stay secure",
+            "currentPasswordLabel": "Current password",
+            "currentPasswordPlaceholder": "Current password",
+            "newPasswordLabel": "New password",
+            "newPasswordPlaceholder": "New password",
+            "confirmPasswordLabel": "Confirm password",
+            "confirmPasswordPlaceholder": "Confirm password"
+        },
+        "appearance": {
+            "pageTitle": "Appearance settings",
+            "title": "Appearance settings",
+            "description": "Update the appearance settings for your account",
+            "light": "Light",
+            "dark": "Dark",
+            "system": "System"
+        },
+        "apiTokens": {
+            "pageTitle": "API Tokens",
+            "title": "API Tokens",
+            "description": "Generate tokens to use the tax documents API from external systems.",
+            "viewDocs": "View API documentation →",
+            "copyTokenNotice": "Copy this token now. It won't be shown again.",
+            "gotIt": "Got it",
+            "nameLabel": "Name",
+            "namePlaceholder": "e.g. Accounting integration",
+            "permissionsLabel": "Permissions",
+            "createToken": "Create token",
+            "nameColumn": "Name",
+            "permissionsColumn": "Permissions",
+            "lastUsedColumn": "Last used",
+            "never": "Never",
+            "revoke": "Revoke",
+            "revokeConfirmTitle": "Revoke this token?",
+            "revokeConfirmDescription": "Any integration that uses it will stop working immediately.",
+            "emptyState": "You haven't created any tokens yet."
+        },
+        "deleteAccount": {
+            "title": "Delete account",
+            "description": "Delete your account and all of its resources",
+            "warningTitle": "Warning",
+            "warningText": "Please proceed with caution, this cannot be undone.",
+            "button": "Delete account",
+            "confirmTitle": "Are you sure you want to delete your account?",
+            "confirmDescription": "Once your account is deleted, all of its resources and data will also be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.",
+            "passwordLabel": "Password",
+            "passwordPlaceholder": "Password"
+        }
+    },
+    "apiDocs": {
+        "title": "API Documentation",
+        "intro": "How to authenticate and use each endpoint to upload and query tax documents."
+    }
+}

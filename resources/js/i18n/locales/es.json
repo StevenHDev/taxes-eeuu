@@ -1,0 +1,450 @@
+{
+    "common": {
+        "actions": "Acciones",
+        "save": "Guardar",
+        "saveChange": "Guardar cambio",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "edit": "Editar",
+        "close": "Cerrar",
+        "download": "Descargar",
+        "upload": "Cargar",
+        "replace": "Reemplazar",
+        "loading": "Cargando…",
+        "search": "Buscar",
+        "back": "Volver",
+        "confirm": "Confirmar",
+        "add": "Agregar",
+        "create": "Crear",
+        "view": "Ver",
+        "form": "Forma",
+        "none": "—"
+    },
+    "language": {
+        "change": "Cambiar idioma"
+    },
+    "nav": {
+        "dashboard": "Panel",
+        "clients": "Clientes",
+        "catalog": "Catálogo",
+        "users": "Usuarios",
+        "apiDocs": "Documentación API",
+        "platform": "Plataforma",
+        "repository": "Repositorio",
+        "documentation": "Documentación",
+        "navigationMenu": "Menú de navegación",
+        "searchClient": "Buscar cliente…"
+    },
+    "userMenu": {
+        "settings": "Ajustes",
+        "logout": "Cerrar sesión"
+    },
+    "dataTable": {
+        "searchPlaceholder": "Buscar…",
+        "empty": "Sin resultados.",
+        "clear": "Limpiar",
+        "columns": "Columnas",
+        "showColumns": "Mostrar columnas",
+        "rows_one": "{{count}} fila",
+        "rows_other": "{{count}} filas",
+        "rowsPerPage": "Filas por página",
+        "pageOf": "Página {{current}} de {{total}}",
+        "firstPage": "Primera página",
+        "prevPage": "Página anterior",
+        "nextPage": "Página siguiente",
+        "lastPage": "Última página"
+    },
+    "auth": {
+        "brand": {
+            "tagline": "Recolección de datos para declaraciones de impuestos.",
+            "description": "Un lugar centralizado para reunir la información de cada cliente, campo a campo, y llevarla lista para la preparación de su declaración."
+        },
+        "login": {
+            "headTitle": "Iniciar sesión",
+            "layoutTitle": "Inicia sesión en tu cuenta",
+            "layoutDescription": "Ingresa tu correo electrónico y contraseña para iniciar sesión",
+            "emailLabel": "Correo electrónico",
+            "emailPlaceholder": "correo@ejemplo.com",
+            "passwordLabel": "Contraseña",
+            "passwordPlaceholder": "Contraseña",
+            "forgotPassword": "¿Olvidaste tu contraseña?",
+            "rememberMe": "Recordarme",
+            "submit": "Iniciar sesión"
+        },
+        "forgotPassword": {
+            "headTitle": "Olvidé mi contraseña",
+            "layoutTitle": "Olvidé mi contraseña",
+            "layoutDescription": "Ingresa tu correo electrónico para recibir un enlace de restablecimiento de contraseña",
+            "emailLabel": "Correo electrónico",
+            "emailPlaceholder": "correo@ejemplo.com",
+            "submit": "Enviar enlace de restablecimiento",
+            "returnTo": "O regresa a",
+            "loginLink": "iniciar sesión"
+        },
+        "resetPassword": {
+            "headTitle": "Restablecer contraseña",
+            "layoutTitle": "Restablecer contraseña",
+            "layoutDescription": "Ingresa tu nueva contraseña a continuación",
+            "emailLabel": "Correo electrónico",
+            "passwordLabel": "Contraseña",
+            "passwordPlaceholder": "Contraseña",
+            "confirmPasswordLabel": "Confirmar contraseña",
+            "confirmPasswordPlaceholder": "Confirmar contraseña",
+            "submit": "Restablecer contraseña"
+        },
+        "confirmPassword": {
+            "headTitle": "Confirmar contraseña",
+            "layoutTitle": "Confirmar contraseña",
+            "layoutDescription": "Esta es un área segura de la aplicación. Por favor confirma tu contraseña antes de continuar.",
+            "passkeyLabel": "Confirmar con clave de acceso",
+            "passkeyLoadingLabel": "Confirmando...",
+            "passkeySeparator": "O confirma con contraseña",
+            "passwordLabel": "Contraseña",
+            "passwordPlaceholder": "Contraseña",
+            "submit": "Confirmar contraseña"
+        },
+        "twoFactor": {
+            "headTitle": "Autenticación de dos factores",
+            "authTitle": "Código de autenticación",
+            "authDescription": "Ingresa el código de autenticación que proporciona tu aplicación de autenticación.",
+            "recoveryTitle": "Código de recuperación",
+            "recoveryDescription": "Por favor confirma el acceso a tu cuenta ingresando uno de tus códigos de recuperación de emergencia.",
+            "toggleToAuthCode": "iniciar sesión con un código de autenticación",
+            "toggleToRecoveryCode": "iniciar sesión con un código de recuperación",
+            "recoveryCodePlaceholder": "Ingresa el código de recuperación",
+            "submit": "Continuar",
+            "orYouCan": "o puedes"
+        },
+        "verifyEmail": {
+            "headTitle": "Verificación de correo electrónico",
+            "layoutTitle": "Verificación de correo electrónico",
+            "layoutDescription": "Por favor verifica tu correo electrónico haciendo clic en el enlace que acabamos de enviarte.",
+            "linkSent": "Se ha enviado un nuevo enlace de verificación al correo electrónico que proporcionaste durante el registro.",
+            "resend": "Reenviar correo de verificación",
+            "logout": "Cerrar sesión"
+        }
+    },
+    "welcome": {
+        "headTitle": "Bienvenido",
+        "logIn": "Iniciar sesión",
+        "getStarted": "Comencemos",
+        "ecosystemLine1": "Laravel tiene un ecosistema increíblemente rico.",
+        "ecosystemLine2": "Te sugerimos empezar con lo siguiente.",
+        "readThe": "Lee la",
+        "watchTutorials": "Mira tutoriales en video en",
+        "laracasts": "Laracasts",
+        "deployNow": "Desplegar ahora"
+    },
+    "dashboard": {
+        "pageTitle": "Dashboard",
+        "welcome": {
+            "title": "Bienvenido",
+            "description": "Tu preparador va a ir cargando tu información acá. No tenés acceso al panel interno."
+        },
+        "hero": {
+            "clientsInManagement": "Clientes en gestión",
+            "inProgress_one": "{{count}} en progreso",
+            "inProgress_other": "{{count}} en progreso",
+            "completed_one": "{{count}} completo",
+            "completed_other": "{{count}} completos",
+            "notStarted_one": "{{count}} sin iniciar",
+            "notStarted_other": "{{count}} sin iniciar",
+            "viewClients": "Ver clientes"
+        },
+        "activity": {
+            "title": "Actividad",
+            "subtitle": "Campos recibidos por día · últimos 7 días",
+            "source": {
+                "aiAgent": "Agente IA",
+                "preparer": "Preparador",
+                "admin": "Admin"
+            }
+        },
+        "stats": {
+            "notStarted": "Sin iniciar",
+            "inProgress": "En progreso",
+            "completed": "Completos"
+        },
+        "kpi": {
+            "fieldsReceived": {
+                "label": "Campos recibidos",
+                "tag": "Progreso",
+                "hint": "Sobre el total esperado de todas las formas."
+            },
+            "completedForms": {
+                "label": "Formas completas",
+                "tag": "Total",
+                "hint": "De las formas iniciadas que llegaron al 100%."
+            },
+            "pendingReview": {
+                "label": "Pendientes de revisar",
+                "tag": "Revisión",
+                "hint": "Formas completas esperando aprobación.",
+                "hintEmpty": "No hay formas esperando revisión."
+            }
+        },
+        "recentActivity": {
+            "title": "Actividad reciente",
+            "empty": "Todavía no hay actividad.",
+            "columns": {
+                "field": "Campo",
+                "client": "Cliente",
+                "source": "Origen",
+                "date": "Fecha"
+            }
+        },
+        "completedForms": {
+            "title": "Formas completas",
+            "distributionByForm": "Distribución por forma"
+        },
+        "latestClients": {
+            "title": "Últimos clientes",
+            "empty": "Todavía no hay clientes."
+        }
+    },
+    "clientesIndex": {
+        "head": {
+            "title": "Clientes"
+        },
+        "heading": "Clientes",
+        "subheading": "Estado de recolección de datos por cliente, campo a campo.",
+        "searchPlaceholder": "Buscar por nombre, email o teléfono…",
+        "emptyMessage": "Todavía no hay clientes.",
+        "columns": {
+            "client": "Cliente",
+            "status": "Estado",
+            "forms": "Formas"
+        },
+        "estado": {
+            "sinIniciar": "Sin iniciar",
+            "enProgreso": "En progreso",
+            "completo": "Completo"
+        },
+        "filters": {
+            "form": "Forma"
+        },
+        "newClient": {
+            "trigger": "Nuevo cliente",
+            "title": "Nuevo cliente",
+            "nameLabel": "Nombre",
+            "emailLabel": "Email",
+            "phoneLabel": "Teléfono (opcional)",
+            "submit": "Crear"
+        }
+    },
+    "clienteShow": {
+        "viewer": {
+            "viewTitle": "Ver {{name}}",
+            "noPreview": "No hay previsualización disponible.",
+            "downloadFile": "Descargar el archivo"
+        },
+        "upload": {
+            "uploadTitle": "Cargar archivo «{{campo}}»",
+            "replaceTitle": "Reemplazar archivo «{{campo}}»",
+            "description": "Forma: {{forma}}. El archivo se guarda de forma segura y el cambio queda registrado en el historial."
+        },
+        "edit": {
+            "trigger": "Corregir",
+            "title": "Corregir «{{campo}}»",
+            "description": "Forma: {{forma}}. Este cambio queda registrado en el historial.",
+            "placeholder": "Texto, número, o JSON para objetos/listas (ej. {\"nombre_completo\":\"...\"})",
+            "save": "Guardar corrección"
+        },
+        "addField": {
+            "trigger": "Agregar campo",
+            "title": "Agregar campo",
+            "description": "Carga a mano un campo que el agente todavía no envió.",
+            "fieldLabel": "Campo"
+        },
+        "deleteField": {
+            "title": "¿Eliminar «{{campo}}»?",
+            "description": "Se borra el valor cargado (y el archivo, si tenía). Queda registrado en el historial."
+        },
+        "history": {
+            "trigger": "Historial",
+            "title": "Historial de «{{campo}}»",
+            "empty": "Sin cambios registrados todavía.",
+            "before": "Antes:",
+            "after": "Después:"
+        },
+        "reveal": {
+            "confirmPassword": "Confirma tu contraseña para revelar",
+            "reveal": "Revelar"
+        },
+        "exportZip": "Exportar ZIP",
+        "deleteClient": {
+            "trigger": "Eliminar cliente",
+            "title": "¿Eliminar a {{name}}?",
+            "description": "Se borran todos sus campos, documentos e historial. Esta acción no se puede deshacer.",
+            "confirm": "Eliminar definitivamente"
+        },
+        "formState": {
+            "complete": "Completo",
+            "inProgress": "En progreso"
+        },
+        "reviewed": "Revisado",
+        "markReviewed": "Marcar revisado",
+        "table": {
+            "field": "Campo",
+            "status": "Estado",
+            "value": "Valor",
+            "empty": "Todavía no se ha recolectado ningún campo."
+        },
+        "fieldState": {
+            "pendiente": "Pendiente",
+            "recibido": "Recibido",
+            "invalido": "Inválido"
+        }
+    },
+    "usuarios": {
+        "title": "Usuarios",
+        "subtitle": "Alta, edición y baja de clientes, preparadores y administradores.",
+        "searchPlaceholder": "Buscar por nombre, email o teléfono…",
+        "empty": "Sin usuarios.",
+        "roles": {
+            "client": "Cliente",
+            "preparer": "Preparador",
+            "administrator": "Administrador"
+        },
+        "columns": {
+            "name": "Nombre",
+            "role": "Rol",
+            "preparer": "Preparador"
+        },
+        "form": {
+            "name": "Nombre",
+            "email": "Email",
+            "phone": "Teléfono",
+            "password": "Contraseña",
+            "passwordHint": " (dejar en blanco para no cambiarla)",
+            "role": "Rol",
+            "assignedPreparer": "Preparador asignado",
+            "unassigned": "Sin asignar"
+        },
+        "actions": {
+            "new": "Nuevo usuario",
+            "editTitle": "Editar {{name}}",
+            "deleteTitle": "¿Eliminar a {{name}}?",
+            "deleteDescription": "Si es un cliente, se borran todos sus datos cargados. Esta acción no se puede deshacer.",
+            "deleteConfirm": "Eliminar definitivamente"
+        }
+    },
+    "catalogo": {
+        "title": "Catálogo de campos",
+        "subtitle": "Qué campos pide cada formulario. Eliminar una definición no borra los datos ya cargados de clientes — solo deja de pedirse y de contar para la completitud.",
+        "searchPlaceholder": "Buscar por clave…",
+        "empty": "Sin campos definidos.",
+        "columns": {
+            "key": "Clave",
+            "form": "Forma",
+            "type": "Tipo",
+            "required": "Obligatorio",
+            "sensitive": "Sensible"
+        },
+        "badges": {
+            "yes": "Sí",
+            "no": "No",
+            "sensitive": "Sensible",
+            "notSensitive": "No sensible"
+        },
+        "fieldTypes": {
+            "documentoOption": "documento (solo archivo)",
+            "datoOption": "dato (solo texto/número)",
+            "mixtoOption": "mixto (archivo o texto)"
+        },
+        "form": {
+            "key": "Clave del campo",
+            "keyPlaceholder": "ej. ingresos_negocio",
+            "fieldType": "Tipo de campo",
+            "dataType": "Tipo de dato",
+            "acceptedFormats": "Formatos aceptados (separados por coma)",
+            "subfields": "Subcampos (opcional, para object/array_object)",
+            "required": "Obligatorio para completar la forma",
+            "sensitive": "Sensible (se cifra y se enmascara)"
+        },
+        "actions": {
+            "new": "Nuevo campo",
+            "editTitle": "Editar «{{key}}»",
+            "deleteConfirm": "¿Eliminar «{{key}}»? Los datos ya cargados de clientes no se borran."
+        }
+    },
+    "settings": {
+        "layout": {
+            "title": "Ajustes",
+            "description": "Administra tu perfil y la configuración de tu cuenta",
+            "navAriaLabel": "Ajustes"
+        },
+        "nav": {
+            "profile": "Perfil",
+            "security": "Seguridad",
+            "appearance": "Apariencia",
+            "apiTokens": "Tokens de API"
+        },
+        "profile": {
+            "pageTitle": "Ajustes de perfil",
+            "title": "Perfil",
+            "description": "Actualiza tu nombre y tu dirección de correo electrónico",
+            "nameLabel": "Nombre",
+            "namePlaceholder": "Nombre completo",
+            "emailLabel": "Correo electrónico",
+            "emailPlaceholder": "Correo electrónico",
+            "unverified": "Tu dirección de correo electrónico no está verificada.",
+            "resendVerification": "Haz clic aquí para reenviar el correo de verificación.",
+            "verificationSent": "Se ha enviado un nuevo enlace de verificación a tu dirección de correo electrónico."
+        },
+        "security": {
+            "pageTitle": "Ajustes de seguridad",
+            "updatePasswordTitle": "Actualizar contraseña",
+            "updatePasswordDescription": "Asegúrate de que tu cuenta use una contraseña larga y aleatoria para mantenerte seguro",
+            "currentPasswordLabel": "Contraseña actual",
+            "currentPasswordPlaceholder": "Contraseña actual",
+            "newPasswordLabel": "Nueva contraseña",
+            "newPasswordPlaceholder": "Nueva contraseña",
+            "confirmPasswordLabel": "Confirmar contraseña",
+            "confirmPasswordPlaceholder": "Confirmar contraseña"
+        },
+        "appearance": {
+            "pageTitle": "Ajustes de apariencia",
+            "title": "Ajustes de apariencia",
+            "description": "Actualiza los ajustes de apariencia de tu cuenta",
+            "light": "Claro",
+            "dark": "Oscuro",
+            "system": "Sistema"
+        },
+        "apiTokens": {
+            "pageTitle": "Tokens de API",
+            "title": "Tokens de API",
+            "description": "Genera tokens para usar la API de documentos fiscales desde sistemas externos.",
+            "viewDocs": "Ver documentación de la API →",
+            "copyTokenNotice": "Copia este token ahora. No volverá a mostrarse.",
+            "gotIt": "Entendido",
+            "nameLabel": "Nombre",
+            "namePlaceholder": "Ej. Integración contable",
+            "permissionsLabel": "Permisos",
+            "createToken": "Crear token",
+            "nameColumn": "Nombre",
+            "permissionsColumn": "Permisos",
+            "lastUsedColumn": "Último uso",
+            "never": "Nunca",
+            "revoke": "Revocar",
+            "revokeConfirmTitle": "¿Revocar este token?",
+            "revokeConfirmDescription": "Cualquier integración que lo use dejará de funcionar de inmediato.",
+            "emptyState": "Todavía no has creado ningún token."
+        },
+        "deleteAccount": {
+            "title": "Eliminar cuenta",
+            "description": "Elimina tu cuenta y todos sus recursos",
+            "warningTitle": "Advertencia",
+            "warningText": "Procede con precaución, esta acción no se puede deshacer.",
+            "button": "Eliminar cuenta",
+            "confirmTitle": "¿Estás seguro de que quieres eliminar tu cuenta?",
+            "confirmDescription": "Una vez que se elimine tu cuenta, todos sus recursos y datos también se eliminarán de forma permanente. Ingresa tu contraseña para confirmar que deseas eliminar tu cuenta de forma permanente.",
+            "passwordLabel": "Contraseña",
+            "passwordPlaceholder": "Contraseña"
+        }
+    },
+    "apiDocs": {
+        "title": "Documentación de la API",
+        "intro": "Cómo autenticarte y usar cada endpoint para subir y consultar documentos fiscales."
+    }
+}

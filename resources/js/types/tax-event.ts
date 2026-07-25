@@ -45,9 +45,11 @@ export type ClienteForma = {
 export type CampoDocumento = {
     id: number;
     file_original_name: string;
+    file_mime_type: string;
     formato: string;
     estado_validacion: FieldState;
     download_url?: string;
+    preview_url?: string;
 };
 
 export type CampoCliente = {
@@ -81,7 +83,8 @@ export type CampoCatalogo = {
     forma: string;
     clave: string;
     tipo_campo: 'documento' | 'dato' | 'mixto';
-    tipo_dato: 'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
+    tipo_dato:
+        'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
     formatos_aceptados: string[] | null;
     subcampos: string[] | null;
     obligatorio: boolean;

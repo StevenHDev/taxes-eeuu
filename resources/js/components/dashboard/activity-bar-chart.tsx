@@ -16,7 +16,7 @@ export function ActivityBarChart({ data }: { data: Punto[] }) {
     const max = Math.max(1, ...data.map((d) => d.cantidad));
 
     return (
-        <div className="relative @container">
+        <div className="@container relative">
             {/* Líneas guía */}
             <div className="pointer-events-none absolute inset-x-0 top-0 flex h-40 flex-col justify-between">
                 {[0, 1, 2, 3].map((i) => (
@@ -33,7 +33,7 @@ export function ActivityBarChart({ data }: { data: Punto[] }) {
                         key={d.fecha}
                         className="group flex flex-1 flex-col items-center justify-end"
                     >
-                        <span className="mb-1.5 text-[11px] font-medium tabular-nums text-muted-foreground opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <span className="mb-1.5 text-[11px] font-medium text-muted-foreground tabular-nums opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                             {d.cantidad}
                         </span>
                         <div className="flex w-full items-end justify-center">
@@ -54,7 +54,7 @@ export function ActivityBarChart({ data }: { data: Punto[] }) {
                 {data.map((d) => (
                     <span
                         key={d.fecha}
-                        className="flex-1 text-center text-[11px] font-medium capitalize text-muted-foreground"
+                        className="flex-1 text-center text-[11px] font-medium text-muted-foreground capitalize"
                     >
                         {diaCorto(d.fecha)}
                     </span>
