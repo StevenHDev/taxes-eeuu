@@ -1,4 +1,4 @@
-import { Check, Languages } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +16,12 @@ const LANGUAGE_LABELS: Record<Language, string> = {
     es: 'Español',
 };
 
+// App de impuestos de EE.UU.: inglés → bandera de EE.UU., español → España.
+const LANGUAGE_FLAGS: Record<Language, string> = {
+    en: '🇺🇸',
+    es: '🇪🇸',
+};
+
 export function LanguageSwitcher() {
     const { t } = useTranslation();
     const { language, setLanguage, languages } = useLanguage();
@@ -30,7 +36,9 @@ export function LanguageSwitcher() {
                     aria-label={t('language.change')}
                     title={t('language.change')}
                 >
-                    <Languages className="size-5 opacity-80" />
+                    <span className="text-lg leading-none">
+                        {LANGUAGE_FLAGS[language]}
+                    </span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -46,6 +54,9 @@ export function LanguageSwitcher() {
                                 language === lng ? 'opacity-100' : 'opacity-0',
                             )}
                         />
+                        <span className="mr-2 text-base leading-none">
+                            {LANGUAGE_FLAGS[lng]}
+                        </span>
                         {LANGUAGE_LABELS[lng]}
                     </DropdownMenuItem>
                 ))}
