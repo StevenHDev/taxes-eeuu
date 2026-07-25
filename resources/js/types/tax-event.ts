@@ -61,6 +61,7 @@ export type CampoCliente = {
     valor: unknown;
     es_sensible: boolean;
     documento: CampoDocumento | null;
+    formatos_aceptados: string[] | null;
     updated_at: string;
 };
 
@@ -76,6 +77,7 @@ export type CatalogoDisponibleItem = {
     forma: TaxForm;
     campo: string;
     tipo_campo: 'documento' | 'dato' | 'mixto';
+    formatos_aceptados: string[] | null;
 };
 
 export type CampoCatalogo = {

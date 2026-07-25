@@ -241,7 +241,13 @@
         "upload": {
             "uploadTitle": "Cargar archivo «{{campo}}»",
             "replaceTitle": "Reemplazar archivo «{{campo}}»",
-            "description": "Forma: {{forma}}. El archivo se guarda de forma segura y el cambio queda registrado en el historial."
+            "description": "Forma: {{forma}}. El archivo se guarda de forma segura y el cambio queda registrado en el historial.",
+            "selectFile": "Seleccionar documento",
+            "hint": "Máx {{max}} MB · {{formats}}",
+            "anyFormat": "Cualquier formato",
+            "uploading": "Subiendo…",
+            "errorSize": "El archivo supera el límite de {{max}} MB.",
+            "errorFormat": "Formato no permitido. Permitidos: {{formats}}."
         },
         "edit": {
             "trigger": "Corregir",

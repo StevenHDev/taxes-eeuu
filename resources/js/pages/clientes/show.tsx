@@ -1,5 +1,6 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Upload } from 'lucide-react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
 import { Badge } from '@/components/ui/badge';
@@ -82,6 +83,176 @@ function parseContenido(raw: string): Json {
     } catch {
         return raw;
     }
+}
+
+const MAX_UPLOAD_MB = 10;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+
+function formatBytes(bytes: number): string {
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+        return `${Math.round(bytes / 1024)} KB`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// Formulario de subida de archivo reutilizable (cargar/reemplazar documento y
+// agregar campo tipo archivo). Usa useForm de Inertia para:
+//  - method spoofing (POST + _method=patch): sin esto PHP no parsea el archivo
+//    en un PATCH multipart y la subida "no hace nada".
+//  - barra de progreso (form.progress.percentage).
+// Valida en el cliente el peso (<=10MB) y el formato antes de subir.
+function DocumentoUploadForm({
+    url,
+    formatos,
+    submitLabel,
+    onDone,
+}: {
+    url: string;
+    formatos: string[] | null;
+    submitLabel: string;
+    onDone: () => void;
+}) {
+    const { t } = useTranslation();
+    const inputId = useId();
+    const [error, setError] = useState<string | null>(null);
+    const form = useForm<{
+        _method: string;
+        modo: string;
+        file: File | null;
+    }>({
+        _method: 'patch',
+        modo: 'archivo',
+        file: null,
+    });
+
+    const validar = (file: File): string | null => {
+        if (file.size > MAX_UPLOAD_BYTES) {
+            return t('clienteShow.upload.errorSize', { max: MAX_UPLOAD_MB });
+        }
+
+        const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+
+        if (formatos && formatos.length > 0 && !formatos.includes(extension)) {
+            return t('clienteShow.upload.errorFormat', {
+                formats: formatos.join(', '),
+            });
+        }
+
+        return null;
+    };
+
+    const seleccionar = (file: File | null) => {
+        setError(null);
+
+        if (!file) {
+            form.setData('file', null);
+
+            return;
+        }
+
+        const problema = validar(file);
+
+        if (problema) {
+            setError(problema);
+            form.setData('file', null);
+
+            return;
+        }
+
+        form.setData('file', file);
+    };
+
+    const submit = () => {
+        if (!form.data.file) {
+            return;
+        }
+
+        form.post(url, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                form.reset();
+                onDone();
+            },
+        });
+    };
+
+    const accept =
+        formatos && formatos.length > 0
+            ? formatos.map((f) => `.${f}`).join(',')
+            : undefined;
+    const subiendo = form.progress !== null && form.progress !== undefined;
+
+    return (
+        <div className="grid gap-3">
+            <label
+                htmlFor={inputId}
+                className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-input bg-secondary/30 px-4 py-6 text-center transition-colors hover:bg-secondary/60"
+            >
+                <Upload className="size-6 text-muted-foreground" />
+                <span className="text-sm font-medium">
+                    {form.data.file
+                        ? form.data.file.name
+                        : t('clienteShow.upload.selectFile')}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                    {form.data.file
+                        ? formatBytes(form.data.file.size)
+                        : t('clienteShow.upload.hint', {
+                              max: MAX_UPLOAD_MB,
+                              formats:
+                                  formatos && formatos.length > 0
+                                      ? formatos.join(', ').toUpperCase()
+                                      : t('clienteShow.upload.anyFormat'),
+                          })}
+                </span>
+                <input
+                    id={inputId}
+                    type="file"
+                    accept={accept}
+                    className="sr-only"
+                    onChange={(e) => seleccionar(e.target.files?.[0] ?? null)}
+                />
+            </label>
+
+            {(error || form.errors.file) && (
+                <p className="text-sm text-destructive">
+                    {error ?? form.errors.file}
+                </p>
+            )}
+
+            {subiendo && (
+                <div
+                    className="h-2 w-full overflow-hidden rounded-full bg-secondary"
+                    role="progressbar"
+                    aria-valuenow={form.progress?.percentage ?? 0}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                >
+                    <div
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${form.progress?.percentage ?? 0}%` }}
+                    />
+                </div>
+            )}
+
+            <DialogFooter>
+                <Button
+                    onClick={submit}
+                    disabled={!form.data.file || form.processing}
+                >
+                    {form.processing
+                        ? t('clienteShow.upload.uploading')
+                        : submitLabel}
+                </Button>
+            </DialogFooter>
+        </div>
+    );
 }
 
 // Visor de documentos a pantalla completa (100% ancho/alto) con botón de descarga.
@@ -175,29 +346,11 @@ function SubirDocumentoDialog({
     campo: CampoCliente;
 }) {
     const { t } = useTranslation();
-    const [file, setFile] = useState<File | null>(null);
     const [open, setOpen] = useState(false);
     const yaHayArchivo = campo.documento !== null;
-
-    const submit = () => {
-        if (!file) {
-            return;
-        }
-
-        router.patch(
-            campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
-                `?forma=${campo.forma}`,
-            { modo: 'archivo', file },
-            {
-                preserveScroll: true,
-                forceFormData: true,
-                onSuccess: () => {
-                    setFile(null);
-                    setOpen(false);
-                },
-            },
-        );
-    };
+    const url =
+        campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
+        `?forma=${campo.forma}`;
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -222,18 +375,14 @@ function SubirDocumentoDialog({
                     })}
                 </DialogDescription>
 
-                <input
-                    type="file"
-                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                <DocumentoUploadForm
+                    url={url}
+                    formatos={campo.formatos_aceptados}
+                    submitLabel={
+                        yaHayArchivo ? t('common.replace') : t('common.upload')
+                    }
+                    onDone={() => setOpen(false)}
                 />
-
-                <DialogFooter>
-                    <Button onClick={submit} disabled={!file}>
-                        {yaHayArchivo
-                            ? t('common.replace')
-                            : t('common.upload')}
-                    </Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
@@ -252,22 +401,20 @@ function EditCampoDialog({
             ? JSON.stringify(campo.valor)
             : '',
     );
-    const [file, setFile] = useState<File | null>(null);
-    const esArchivo = campo.tipo_campo === 'documento';
 
+    // Edición del valor de texto. Los archivos se cargan/reemplazan con
+    // SubirDocumentoDialog (subida multipart con progreso y validación).
     const submit = () => {
         const contenido = parseContenido(raw);
 
         router.patch(
             campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
                 `?forma=${campo.forma}`,
-            esArchivo
-                ? { modo: 'archivo', file }
-                : {
-                      modo: 'texto',
-                      tipo_dato: guessTipoDato(contenido),
-                      contenido,
-                  },
+            {
+                modo: 'texto',
+                tipo_dato: guessTipoDato(contenido),
+                contenido,
+            },
             { preserveScroll: true },
         );
     };
@@ -287,19 +434,12 @@ function EditCampoDialog({
                     {t('clienteShow.edit.description', { forma: campo.forma })}
                 </DialogDescription>
 
-                {esArchivo ? (
-                    <input
-                        type="file"
-                        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                    />
-                ) : (
-                    <Textarea
-                        value={raw}
-                        onChange={(e) => setRaw(e.target.value)}
-                        placeholder={t('clienteShow.edit.placeholder')}
-                        rows={4}
-                    />
-                )}
+                <Textarea
+                    value={raw}
+                    onChange={(e) => setRaw(e.target.value)}
+                    placeholder={t('clienteShow.edit.placeholder')}
+                    rows={4}
+                />
 
                 <DialogFooter>
                     <Button onClick={submit}>
@@ -319,20 +459,22 @@ function AgregarCampoDialog({
     disponibles: CatalogoDisponibleItem[];
 }) {
     const { t } = useTranslation();
+    const [open, setOpen] = useState(false);
     const [forma, setForma] = useState<string>(disponibles[0]?.forma ?? '');
     const camposDeForma = disponibles.filter((d) => d.forma === forma);
     const [campo, setCampo] = useState(camposDeForma[0]?.campo ?? '');
     const [raw, setRaw] = useState('');
-    const [file, setFile] = useState<File | null>(null);
-
-    const tipoCampo = disponibles.find(
-        (d) => d.forma === forma && d.campo === campo,
-    )?.tipo_campo;
-    const esArchivo = tipoCampo === 'documento';
 
     if (disponibles.length === 0) {
         return null;
     }
+
+    const seleccionado = disponibles.find(
+        (d) => d.forma === forma && d.campo === campo,
+    );
+    const esArchivo = seleccionado?.tipo_campo === 'documento';
+    const url =
+        campoUpdate({ cliente: clienteId, campo }).url + `?forma=${forma}`;
 
     const cambiarForma = (nuevaForma: string) => {
         setForma(nuevaForma);
@@ -340,24 +482,22 @@ function AgregarCampoDialog({
         setCampo(primero?.campo ?? '');
     };
 
-    const submit = () => {
+    const submitTexto = () => {
         const contenido = parseContenido(raw);
 
         router.patch(
-            campoUpdate({ cliente: clienteId, campo }).url + `?forma=${forma}`,
-            esArchivo
-                ? { modo: 'archivo', file }
-                : {
-                      modo: 'texto',
-                      tipo_dato: guessTipoDato(contenido),
-                      contenido,
-                  },
-            { preserveScroll: true },
+            url,
+            {
+                modo: 'texto',
+                tipo_dato: guessTipoDato(contenido),
+                contenido,
+            },
+            { preserveScroll: true, onSuccess: () => setOpen(false) },
         );
     };
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="secondary">
                     {t('clienteShow.addField.trigger')}
@@ -409,25 +549,29 @@ function AgregarCampoDialog({
 
                 <div className="mt-4">
                     {esArchivo ? (
-                        <input
-                            type="file"
-                            onChange={(e) =>
-                                setFile(e.target.files?.[0] ?? null)
-                            }
+                        <DocumentoUploadForm
+                            url={url}
+                            formatos={seleccionado?.formatos_aceptados ?? null}
+                            submitLabel={t('common.save')}
+                            onDone={() => setOpen(false)}
                         />
                     ) : (
-                        <Textarea
-                            value={raw}
-                            onChange={(e) => setRaw(e.target.value)}
-                            placeholder={t('clienteShow.edit.placeholder')}
-                            rows={4}
-                        />
+                        <>
+                            <Textarea
+                                value={raw}
+                                onChange={(e) => setRaw(e.target.value)}
+                                placeholder={t('clienteShow.edit.placeholder')}
+                                rows={4}
+                            />
+
+                            <DialogFooter className="mt-4">
+                                <Button onClick={submitTexto}>
+                                    {t('common.save')}
+                                </Button>
+                            </DialogFooter>
+                        </>
                     )}
                 </div>
-
-                <DialogFooter className="mt-4">
-                    <Button onClick={submit}>{t('common.save')}</Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
@@ -801,12 +945,15 @@ export default function ClienteShow({
                                             clienteId={cliente.id}
                                             campo={campo}
                                         />
-                                        {campo.tipo_campo === 'documento' ? (
+                                        {(campo.tipo_campo === 'documento' ||
+                                            campo.tipo_campo === 'mixto') && (
                                             <SubirDocumentoDialog
                                                 clienteId={cliente.id}
                                                 campo={campo}
                                             />
-                                        ) : (
+                                        )}
+                                        {(campo.tipo_campo === 'dato' ||
+                                            campo.tipo_campo === 'mixto') && (
                                             <EditCampoDialog
                                                 clienteId={cliente.id}
                                                 campo={campo}

@@ -110,6 +110,7 @@ class ClienteController extends Controller
                         'forma' => $forma->value,
                         'campo' => $campo['campo'],
                         'tipo_campo' => $campo['tipo']->value,
+                        'formatos_aceptados' => $campo['formatos_aceptados'] ?? null,
                     ]))
                 ->values(),
             'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
@@ -126,6 +127,7 @@ class ClienteController extends Controller
                 'estado' => $c->estado,
                 'valor' => $c->valor,
                 'es_sensible' => $c->esSensible(),
+                'formatos_aceptados' => TaxFieldCatalog::find($c->forma, $c->campo)['formatos_aceptados'] ?? null,
                 'documento' => $c->documento ? [
                     'id' => $c->documento->id,
                     'file_original_name' => $c->documento->file_original_name,

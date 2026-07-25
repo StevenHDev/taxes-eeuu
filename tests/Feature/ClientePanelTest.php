@@ -5,10 +5,13 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\CampoCliente;
 use App\Models\CampoReveal;
+use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -94,6 +97,68 @@ class ClientePanelTest extends TestCase
                 'contenido' => 1,
             ])
             ->assertForbidden();
+    }
+
+    public function test_un_preparador_carga_un_documento_via_web(): void
+    {
+        Storage::fake('local');
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        // Subida real del navegador: POST con _method=patch (method spoofing) para
+        // que PHP parsee el multipart; un PATCH multipart directo no expone $_FILES.
+        $this->actingAs($preparador)
+            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040', [
+                '_method' => 'patch',
+                'forma' => 'form_1040',
+                'modo' => 'archivo',
+                'file' => UploadedFile::fake()->create('w2.pdf', 200, 'application/pdf'),
+            ])
+            ->assertRedirect();
+
+        $documento = Documento::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first();
+        $this->assertNotNull($documento);
+        $this->assertSame('w2.pdf', $documento->file_original_name);
+        Storage::disk('local')->assertExists($documento->file_path);
+    }
+
+    public function test_rechaza_un_documento_de_mas_de_10mb(): void
+    {
+        Storage::fake('local');
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->actingAs($preparador)
+            ->from(route('clientes.show', $cliente))
+            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040', [
+                '_method' => 'patch',
+                'forma' => 'form_1040',
+                'modo' => 'archivo',
+                'file' => UploadedFile::fake()->create('grande.pdf', 11 * 1024, 'application/pdf'),
+            ])
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseCount('documentos', 0);
+    }
+
+    public function test_rechaza_un_formato_de_archivo_no_permitido(): void
+    {
+        Storage::fake('local');
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        // w2 solo acepta pdf/jpg/png/heic; un .txt debe rechazarse.
+        $this->actingAs($preparador)
+            ->from(route('clientes.show', $cliente))
+            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040', [
+                '_method' => 'patch',
+                'forma' => 'form_1040',
+                'modo' => 'archivo',
+                'file' => UploadedFile::fake()->create('w2.txt', 100, 'text/plain'),
+            ])
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseCount('documentos', 0);
     }
 
     public function test_marcar_una_forma_como_revisada(): void

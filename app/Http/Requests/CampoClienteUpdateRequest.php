@@ -66,7 +66,8 @@ class CampoClienteUpdateRequest extends FormRequest
                 Rule::requiredIf($modo === FieldMode::Archivo->value),
                 'nullable',
                 'file',
-                'max:20480',
+                // Máximo 10 MB (en kilobytes). El frontend valida lo mismo antes de subir.
+                'max:10240',
             ],
             'nombre_original' => ['nullable', 'string', 'max:255'],
         ];

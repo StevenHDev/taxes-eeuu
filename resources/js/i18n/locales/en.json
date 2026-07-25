@@ -241,7 +241,13 @@
         "upload": {
             "uploadTitle": "Upload file «{{campo}}»",
             "replaceTitle": "Replace file «{{campo}}»",
-            "description": "Form: {{forma}}. The file is stored securely and the change is recorded in the history."
+            "description": "Form: {{forma}}. The file is stored securely and the change is recorded in the history.",
+            "selectFile": "Select document",
+            "hint": "Max {{max}} MB · {{formats}}",
+            "anyFormat": "Any format",
+            "uploading": "Uploading…",
+            "errorSize": "The file exceeds the {{max}} MB limit.",
+            "errorFormat": "Unsupported format. Allowed: {{formats}}."
         },
         "edit": {
             "trigger": "Correct",
