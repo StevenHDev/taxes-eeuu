@@ -214,27 +214,55 @@ function FieldValue({ value }: { value: unknown }) {
     return <span>{String(value)}</span>;
 }
 
-type EditorKind = 'scalar' | 'stringList' | 'object' | 'advanced';
+// Un valor es "complejo" (objeto o lista de objetos) si merece verse en un
+// popup ordenado en vez de amontonado dentro de la celda. Los escalares y las
+// listas de valores simples se muestran bien en línea.
+function esComplejo(value: unknown): boolean {
+    if (value === null || typeof value !== 'object') {
+        return false;
+    }
+
+    if (Array.isArray(value)) {
+        return value.some((v) => v !== null && typeof v === 'object');
+    }
+
+    return true;
+}
+
+function esObjetoPlano(v: unknown): boolean {
+    return (
+        !!v &&
+        typeof v === 'object' &&
+        !Array.isArray(v) &&
+        Object.values(v).every((x) => x === null || typeof x !== 'object')
+    );
+}
+
+type EditorKind =
+    | 'scalar'
+    | 'stringList'
+    | 'object'
+    | 'objectList'
+    | 'advanced';
 
 // Elige el editor más amigable según la forma del valor actual:
 // escalar -> un campo de texto; lista simple -> uno por línea; objeto plano ->
-// un campo por atributo; datos anidados -> editor JSON avanzado.
+// un campo por atributo; lista de objetos -> una card por registro; datos
+// anidados -> editor JSON avanzado.
 function editorKindFor(v: unknown): EditorKind {
     if (v === null || v === undefined || typeof v !== 'object') {
         return 'scalar';
     }
 
     if (Array.isArray(v)) {
-        return v.every((x) => x === null || typeof x !== 'object')
-            ? 'stringList'
-            : 'advanced';
+        if (v.every((x) => x === null || typeof x !== 'object')) {
+            return 'stringList';
+        }
+
+        return v.every((x) => esObjetoPlano(x)) ? 'objectList' : 'advanced';
     }
 
-    const plano = Object.values(v).every(
-        (x) => x === null || typeof x !== 'object',
-    );
-
-    return plano ? 'object' : 'advanced';
+    return esObjetoPlano(v) ? 'object' : 'advanced';
 }
 
 function scalarToString(v: unknown): string {
@@ -279,6 +307,22 @@ function ValueEditor({
     const [obj, setObj] = useState<Record<string, string>>(() =>
         objToStrings(initial),
     );
+    const [items, setItems] = useState<Record<string, string>[]>(() =>
+        Array.isArray(initial) ? initial.map((x) => objToStrings(x)) : [],
+    );
+    // Claves de cada registro de la lista, inferidas del valor inicial. Sirven
+    // de plantilla al agregar un registro nuevo (vacío).
+    const [plantilla] = useState<string[]>(() => {
+        const claves = new Set<string>();
+
+        (Array.isArray(initial) ? initial : []).forEach((x) => {
+            if (x && typeof x === 'object' && !Array.isArray(x)) {
+                Object.keys(x).forEach((k) => claves.add(k));
+            }
+        });
+
+        return [...claves];
+    });
     const [raw, setRaw] = useState(() =>
         initial === null || initial === undefined
             ? ''
@@ -316,6 +360,15 @@ function ValueEditor({
         onChange(obj);
         onValidityChange(true);
     }, [kind, obj, onChange, onValidityChange]);
+
+    useEffect(() => {
+        if (kind !== 'objectList') {
+            return;
+        }
+
+        onChange(items);
+        onValidityChange(true);
+    }, [kind, items, onChange, onValidityChange]);
 
     useEffect(() => {
         if (kind !== 'advanced') {
@@ -374,6 +427,76 @@ function ValueEditor({
                         />
                     </div>
                 ))}
+            </div>
+        );
+    }
+
+    if (kind === 'objectList') {
+        const actualizar = (idx: number, clave: string, valor: string) =>
+            setItems((prev) =>
+                prev.map((registro, i) =>
+                    i === idx ? { ...registro, [clave]: valor } : registro,
+                ),
+            );
+        const eliminar = (idx: number) =>
+            setItems((prev) => prev.filter((_, i) => i !== idx));
+        const agregar = () =>
+            setItems((prev) => [
+                ...prev,
+                Object.fromEntries(plantilla.map((k) => [k, ''])),
+            ]);
+
+        return (
+            <div className="grid gap-3">
+                {items.map((registro, idx) => (
+                    <div
+                        key={idx}
+                        className="space-y-3 rounded-lg border p-3"
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">
+                                {t('clienteShow.value.record', { n: idx + 1 })}
+                            </span>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => eliminar(idx)}
+                            >
+                                {t('common.delete')}
+                            </Button>
+                        </div>
+                        {plantilla.map((k) => (
+                            <div key={k} className="grid gap-1.5">
+                                <Label htmlFor={`item-${idx}-${k}`}>
+                                    {humanizarClave(k)}
+                                </Label>
+                                <Input
+                                    id={`item-${idx}-${k}`}
+                                    value={registro[k] ?? ''}
+                                    onChange={(e) =>
+                                        actualizar(idx, k, e.target.value)
+                                    }
+                                />
+                            </div>
+                        ))}
+                    </div>
+                ))}
+
+                {items.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                        {t('clienteShow.value.emptyList')}
+                    </p>
+                )}
+
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    className="justify-self-start"
+                    onClick={agregar}
+                >
+                    {t('clienteShow.edit.addRecord')}
+                </Button>
             </div>
         );
     }
@@ -747,12 +870,14 @@ function EditCampoDialog({
                 </DialogDescription>
 
                 {/* key: al reabrir, reinicia el editor con el valor actual */}
-                <ValueEditor
-                    key={open ? 'abierto' : 'cerrado'}
-                    initial={campo.valor}
-                    onChange={onChange}
-                    onValidityChange={onValidityChange}
-                />
+                <div className="max-h-[65vh] overflow-y-auto pr-1">
+                    <ValueEditor
+                        key={open ? 'abierto' : 'cerrado'}
+                        initial={campo.valor}
+                        onChange={onChange}
+                        onValidityChange={onValidityChange}
+                    />
+                </div>
 
                 <DialogFooter>
                     <Button onClick={submit} disabled={!valido}>
@@ -1044,15 +1169,20 @@ function HistorialDialog({
     );
 }
 
-function RevealButton({
+// Muestra el valor recolectado de un campo. Los valores simples se ven en línea;
+// los complejos (objeto o lista de objetos) se resumen con un botón que abre un
+// popup ordenado. Integra el "Revelar" de los campos sensibles.
+function ValorCampo({
     clienteId,
     campo,
+    formaLabel,
 }: {
     clienteId: number;
     campo: CampoCliente;
+    formaLabel: string;
 }) {
     const { t } = useTranslation();
-    const [valor, setValor] = useState<unknown>(null);
+    const [revelado, setRevelado] = useState<unknown>(undefined);
     const [needsPassword, setNeedsPassword] = useState(false);
 
     const reveal = async () => {
@@ -1078,35 +1208,76 @@ function RevealButton({
         }
 
         const json = await response.json();
-        setValor(json.valor);
+        setRevelado(json.valor);
     };
 
-    // El valor enmascarado (ej. "***-**-6789") ya viene calculado del backend en
-    // campo.valor — siempre se muestra, para que se vea que hay algo cargado sin
-    // tener que revelarlo. "Revelar" es una acción aparte, no la única forma de ver
-    // que el dato existe.
-    if (campo.valor === null || campo.valor === undefined) {
+    // El valor enmascarado (ej. "***-**-6789") ya viene del backend en campo.valor
+    // — siempre se muestra, para que se vea que hay algo cargado sin revelarlo.
+    const valor = revelado !== undefined ? revelado : campo.valor;
+
+    if (
+        valor === null ||
+        valor === undefined ||
+        (typeof valor === 'string' && valor.trim() === '')
+    ) {
         return (
             <span className="text-muted-foreground">{t('common.none')}</span>
         );
     }
 
+    const sensibleOculto = campo.es_sensible && revelado === undefined;
+    const revealControl = sensibleOculto ? (
+        needsPassword ? (
+            <a
+                href={confirmPasswordShow().url}
+                className="text-xs text-amber-600 underline"
+            >
+                {t('clienteShow.reveal.confirmPassword')}
+            </a>
+        ) : (
+            <Button variant="ghost" size="sm" onClick={reveal}>
+                {t('clienteShow.reveal.reveal')}
+            </Button>
+        )
+    ) : null;
+
+    // Simple → en línea.
+    if (!esComplejo(valor)) {
+        return (
+            <div className="flex flex-wrap items-center gap-2">
+                <FieldValue value={valor} />
+                {revealControl}
+            </div>
+        );
+    }
+
+    // Complejo → resumen + popup ordenado.
+    const resumen = Array.isArray(valor)
+        ? t('clienteShow.value.recordCount', { count: valor.length })
+        : t('clienteShow.value.fieldCount', {
+              count: Object.keys(valor as object).length,
+          });
+
     return (
         <div className="flex flex-wrap items-center gap-2">
-            <FieldValue value={valor ?? campo.valor} />
-            {valor === null &&
-                (needsPassword ? (
-                    <a
-                        href={confirmPasswordShow().url}
-                        className="text-xs text-amber-600 underline"
-                    >
-                        {t('clienteShow.reveal.confirmPassword')}
-                    </a>
-                ) : (
-                    <Button variant="ghost" size="sm" onClick={reveal}>
-                        {t('clienteShow.reveal.reveal')}
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                        {t('clienteShow.value.view')}
+                        <span className="ml-1 text-muted-foreground">
+                            · {resumen}
+                        </span>
                     </Button>
-                ))}
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogTitle>{humanizarClave(campo.campo)}</DialogTitle>
+                    <DialogDescription>{formaLabel}</DialogDescription>
+                    <div className="max-h-[70vh] overflow-y-auto pr-1">
+                        <FieldValue value={valor} />
+                    </div>
+                </DialogContent>
+            </Dialog>
+            {revealControl}
         </div>
     );
 }
@@ -1284,13 +1455,14 @@ export default function ClienteShow({
                                             <DocumentoViewerDialog
                                                 documento={campo.documento}
                                             />
-                                        ) : campo.es_sensible ? (
-                                            <RevealButton
+                                        ) : (
+                                            <ValorCampo
                                                 clienteId={cliente.id}
                                                 campo={campo}
+                                                formaLabel={formaLabel(
+                                                    campo.forma,
+                                                )}
                                             />
-                                        ) : (
-                                            <FieldValue value={campo.valor} />
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right align-top">

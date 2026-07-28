@@ -260,7 +260,8 @@
             "valuePlaceholder": "Escribe el valor",
             "listPlaceholder": "Un valor por línea",
             "listHint": "Escribe un valor por línea.",
-            "advancedHint": "Formato avanzado (JSON), para datos anidados."
+            "advancedHint": "Formato avanzado (JSON), para datos anidados.",
+            "addRecord": "Agregar registro"
         },
         "addField": {
             "trigger": "Agregar campo",
@@ -314,7 +315,12 @@
         },
         "value": {
             "emptyList": "Sin registros",
-            "record": "Registro {{n}}"
+            "record": "Registro {{n}}",
+            "view": "Ver",
+            "recordCount_one": "{{count}} registro",
+            "recordCount_other": "{{count}} registros",
+            "fieldCount_one": "{{count}} dato",
+            "fieldCount_other": "{{count}} datos"
         }
     },
     "usuarios": {

@@ -260,7 +260,8 @@
             "valuePlaceholder": "Enter the value",
             "listPlaceholder": "One value per line",
             "listHint": "Enter one value per line.",
-            "advancedHint": "Advanced format (JSON), for nested data."
+            "advancedHint": "Advanced format (JSON), for nested data.",
+            "addRecord": "Add record"
         },
         "addField": {
             "trigger": "Add field",
@@ -314,7 +315,12 @@
         },
         "value": {
             "emptyList": "No records",
-            "record": "Record {{n}}"
+            "record": "Record {{n}}",
+            "view": "View",
+            "recordCount_one": "{{count}} record",
+            "recordCount_other": "{{count}} records",
+            "fieldCount_one": "{{count}} field",
+            "fieldCount_other": "{{count}} fields"
         }
     },
     "usuarios": {
