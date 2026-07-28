@@ -1,14 +1,12 @@
 import { Head, router } from '@inertiajs/react';
-import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CatalogoController from '@/actions/App/Http/Controllers/CatalogoController';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DataTable } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
     Dialog,
     DialogContent,
@@ -18,6 +16,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { dashboard } from '@/routes';
 import { index as catalogoIndex } from '@/routes/catalogo';
 import type { CampoCatalogo, FormaOption } from '@/types';
@@ -267,153 +273,127 @@ function CampoRowActions({ campo }: { campo: CampoCatalogo }) {
     );
 }
 
-function NuevoCampoDialog({ formas }: { formas: FormaOption[] }) {
+function FormaSection({
+    forma,
+    campos,
+}: {
+    forma: FormaOption;
+    campos: CampoCatalogo[];
+}) {
     const { t } = useTranslation();
-    const [open, setOpen] = useState(false);
-    const [forma, setForma] = useState<string>(String(formas[0]?.value ?? ''));
+    const [nuevo, setNuevo] = useState(false);
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button>{t('catalogo.actions.new')}</Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogTitle>{t('catalogo.actions.new')}</DialogTitle>
-                <div className="grid gap-2">
-                    <Label htmlFor="forma_nuevo">
-                        {t('catalogo.columns.form')}
-                    </Label>
-                    <select
-                        id="forma_nuevo"
-                        className="rounded border bg-background p-2 text-sm"
-                        value={forma}
-                        onChange={(e) => setForma(e.target.value)}
-                    >
-                        {formas.map((f) => (
-                            <option key={f.value} value={f.value}>
-                                {f.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <CampoForm forma={forma} onDone={() => setOpen(false)} />
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function useColumns(
-    formaLabel: (value: string) => string,
-): ColumnDef<CampoCatalogo>[] {
-    const { t } = useTranslation();
-
-    return [
-        {
-            accessorKey: 'clave',
-            id: 'clave',
-            header: ({ column }) => (
-                <DataTableColumnHeader
-                    column={column}
-                    title={t('catalogo.columns.key')}
-                />
-            ),
-            cell: ({ row }) => (
-                <span className="font-medium text-foreground">
-                    {row.original.clave}
-                </span>
-            ),
-            enableHiding: false,
-        },
-        {
-            accessorKey: 'forma',
-            id: 'forma',
-            header: ({ column }) => (
-                <DataTableColumnHeader
-                    column={column}
-                    title={t('catalogo.columns.form')}
-                />
-            ),
-            cell: ({ row }) => (
-                <span className="text-sm text-muted-foreground">
-                    {formaLabel(row.original.forma)}
-                </span>
-            ),
-            filterFn: (row, id, value) =>
-                (value as string[]).includes(row.getValue<string>(id)),
-        },
-        {
-            accessorKey: 'tipo_campo',
-            id: 'tipo',
-            header: ({ column }) => (
-                <DataTableColumnHeader
-                    column={column}
-                    title={t('catalogo.columns.type')}
-                />
-            ),
-            cell: ({ row }) => {
-                const c = row.original;
-
-                return (
+        <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-baseline gap-2">
+                    <h2 className="font-semibold">{forma.label}</h2>
                     <span className="text-xs text-muted-foreground">
-                        {c.tipo_campo}
-                        {c.tipo_dato ? ` · ${c.tipo_dato}` : ''}
-                        {c.formatos_aceptados?.length
-                            ? ` · ${c.formatos_aceptados.join('/')}`
-                            : ''}
+                        {t('catalogo.fieldCount', { count: campos.length })}
                     </span>
-                );
-            },
-            filterFn: (row, id, value) =>
-                (value as string[]).includes(row.getValue<string>(id)),
-        },
-        {
-            id: 'obligatorio',
-            accessorFn: (c) => (c.obligatorio ? 'si' : 'no'),
-            header: ({ column }) => (
-                <DataTableColumnHeader
-                    column={column}
-                    title={t('catalogo.columns.required')}
-                />
-            ),
-            cell: ({ row }) =>
-                row.original.obligatorio ? (
-                    <Badge variant="default">{t('catalogo.badges.yes')}</Badge>
-                ) : (
-                    <Badge variant="outline">{t('catalogo.badges.no')}</Badge>
-                ),
-            filterFn: (row, id, value) =>
-                (value as string[]).includes(row.getValue<string>(id)),
-        },
-        {
-            id: 'sensible',
-            accessorFn: (c) => (c.sensible ? 'si' : 'no'),
-            header: ({ column }) => (
-                <DataTableColumnHeader
-                    column={column}
-                    title={t('catalogo.columns.sensitive')}
-                />
-            ),
-            cell: ({ row }) =>
-                row.original.sensible ? (
-                    <Badge variant="destructive">
-                        {t('catalogo.badges.sensitive')}
-                    </Badge>
-                ) : (
-                    <span className="text-muted-foreground">—</span>
-                ),
-            filterFn: (row, id, value) =>
-                (value as string[]).includes(row.getValue<string>(id)),
-        },
-        {
-            id: 'acciones',
-            header: () => (
-                <span className="sr-only">{t('common.actions')}</span>
-            ),
-            cell: ({ row }) => <CampoRowActions campo={row.original} />,
-            enableHiding: false,
-            enableSorting: false,
-        },
-    ];
+                </div>
+                <Dialog open={nuevo} onOpenChange={setNuevo}>
+                    <DialogTrigger asChild>
+                        <Button size="sm" variant="secondary">
+                            {t('catalogo.actions.addField')}
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogTitle>
+                            {t('catalogo.actions.addFieldTo', {
+                                form: forma.label,
+                            })}
+                        </DialogTitle>
+                        <CampoForm
+                            forma={String(forma.value)}
+                            onDone={() => setNuevo(false)}
+                        />
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            <Card className="overflow-hidden py-0">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>{t('catalogo.columns.key')}</TableHead>
+                            <TableHead>{t('catalogo.columns.type')}</TableHead>
+                            <TableHead>
+                                {t('catalogo.columns.required')}
+                            </TableHead>
+                            <TableHead>
+                                {t('catalogo.columns.sensitive')}
+                            </TableHead>
+                            <TableHead className="text-right">
+                                {t('common.actions')}
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {campos.map((campo) => (
+                            <TableRow key={campo.id}>
+                                <TableCell>
+                                    <span className="font-medium text-foreground">
+                                        {campo.clave}
+                                    </span>
+                                    {campo.subcampos?.length ? (
+                                        <div className="text-xs text-muted-foreground">
+                                            {campo.subcampos.join(', ')}
+                                        </div>
+                                    ) : null}
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground">
+                                    {campo.tipo_campo}
+                                    {campo.tipo_dato
+                                        ? ` · ${campo.tipo_dato}`
+                                        : ''}
+                                    {campo.formatos_aceptados?.length
+                                        ? ` · ${campo.formatos_aceptados.join('/')}`
+                                        : ''}
+                                </TableCell>
+                                <TableCell>
+                                    {campo.obligatorio ? (
+                                        <Badge variant="default">
+                                            {t('catalogo.badges.yes')}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline">
+                                            {t('catalogo.badges.no')}
+                                        </Badge>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    {campo.sensible ? (
+                                        <Badge variant="destructive">
+                                            {t('catalogo.badges.sensitive')}
+                                        </Badge>
+                                    ) : (
+                                        <span className="text-muted-foreground">
+                                            —
+                                        </span>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    <CampoRowActions campo={campo} />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+
+                        {campos.length === 0 && (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={5}
+                                    className="text-center text-muted-foreground"
+                                >
+                                    {t('catalogo.empty')}
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </Card>
+        </section>
+    );
 }
 
 export default function CatalogoIndex({
@@ -424,16 +404,12 @@ export default function CatalogoIndex({
     campos: CampoCatalogo[];
 }) {
     const { t } = useTranslation();
-    const formaLabel = (value: string) =>
-        formas.find((f) => String(f.value) === value)?.label ?? value;
-
-    const columns = useColumns(formaLabel);
 
     return (
         <>
             <Head title={t('catalogo.title')} />
 
-            <div className="space-y-6 p-4">
+            <div className="space-y-8 p-4">
                 <div className="flex flex-col gap-1">
                     <h1 className="text-xl font-semibold">
                         {t('catalogo.title')}
@@ -443,58 +419,15 @@ export default function CatalogoIndex({
                     </p>
                 </div>
 
-                <DataTable
-                    columns={columns}
-                    data={campos}
-                    searchPlaceholder={t('catalogo.searchPlaceholder')}
-                    emptyMessage={t('catalogo.empty')}
-                    initialPageSize={20}
-                    facetedFilters={[
-                        {
-                            columnId: 'forma',
-                            title: t('catalogo.columns.form'),
-                            options: formas.map((f) => ({
-                                label: f.label,
-                                value: String(f.value),
-                            })),
-                        },
-                        {
-                            columnId: 'tipo',
-                            title: t('catalogo.columns.type'),
-                            options: [
-                                { label: 'documento', value: 'documento' },
-                                { label: 'dato', value: 'dato' },
-                                { label: 'mixto', value: 'mixto' },
-                            ],
-                        },
-                        {
-                            columnId: 'obligatorio',
-                            title: t('catalogo.columns.required'),
-                            options: [
-                                {
-                                    label: t('catalogo.badges.yes'),
-                                    value: 'si',
-                                },
-                                { label: t('catalogo.badges.no'), value: 'no' },
-                            ],
-                        },
-                        {
-                            columnId: 'sensible',
-                            title: t('catalogo.columns.sensitive'),
-                            options: [
-                                {
-                                    label: t('catalogo.badges.sensitive'),
-                                    value: 'si',
-                                },
-                                {
-                                    label: t('catalogo.badges.notSensitive'),
-                                    value: 'no',
-                                },
-                            ],
-                        },
-                    ]}
-                    toolbarActions={<NuevoCampoDialog formas={formas} />}
-                />
+                {(formas ?? []).map((forma) => (
+                    <FormaSection
+                        key={String(forma.value)}
+                        forma={forma}
+                        campos={(campos ?? []).filter(
+                            (c) => c.forma === forma.value,
+                        )}
+                    />
+                ))}
             </div>
         </>
     );

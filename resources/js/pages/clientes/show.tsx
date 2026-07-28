@@ -1,6 +1,6 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { Upload } from 'lucide-react';
-import { useId, useState } from 'react';
+import { Fragment, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Table,
     TableBody,
@@ -83,6 +85,312 @@ function parseContenido(raw: string): Json {
     } catch {
         return raw;
     }
+}
+
+// Convierte una clave técnica (snake_case) en una etiqueta legible:
+// "nombre_completo" -> "Nombre completo", "ssn" -> "SSN", "w2" -> "W2".
+const ACRONIMOS = new Set([
+    'ssn',
+    'itin',
+    'rfc',
+    'ein',
+    'w2',
+    'id',
+    'irs',
+    'usa',
+]);
+
+function humanizarClave(clave: string): string {
+    return clave
+        .split(/[_\s]+/)
+        .filter(Boolean)
+        .map((palabra, i) => {
+            if (ACRONIMOS.has(palabra.toLowerCase())) {
+                return palabra.toUpperCase();
+            }
+
+            return i === 0
+                ? palabra.charAt(0).toUpperCase() + palabra.slice(1)
+                : palabra;
+        })
+        .join(' ');
+}
+
+// Renderiza cualquier valor recolectado de forma amigable para un usuario no
+// técnico: sin corchetes ni llaves. Strings/números tal cual, listas como
+// etiquetas, objetos como pares "campo: valor", y listas de objetos como fichas.
+function FieldValue({ value }: { value: unknown }) {
+    const { t } = useTranslation();
+
+    if (
+        value === null ||
+        value === undefined ||
+        (typeof value === 'string' && value.trim() === '')
+    ) {
+        return <span className="text-muted-foreground">{t('common.none')}</span>;
+    }
+
+    if (typeof value === 'boolean') {
+        return <span>{value ? t('common.yes') : t('common.no')}</span>;
+    }
+
+    if (typeof value === 'number' || typeof value === 'string') {
+        return (
+            <span className="whitespace-pre-wrap wrap-break-word">
+                {String(value)}
+            </span>
+        );
+    }
+
+    if (Array.isArray(value)) {
+        if (value.length === 0) {
+            return (
+                <span className="text-muted-foreground">
+                    {t('clienteShow.value.emptyList')}
+                </span>
+            );
+        }
+
+        const soloPrimitivos = value.every(
+            (v) => v === null || typeof v !== 'object',
+        );
+
+        if (soloPrimitivos) {
+            return (
+                <div className="flex flex-wrap gap-1">
+                    {value.map((v, i) => (
+                        <Badge key={i} variant="secondary" className="font-normal">
+                            {String(v)}
+                        </Badge>
+                    ))}
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-2">
+                {value.map((v, i) => (
+                    <div
+                        key={i}
+                        className="rounded-md border bg-muted/30 p-2"
+                    >
+                        <div className="mb-1 text-xs font-medium text-muted-foreground">
+                            {t('clienteShow.value.record', { n: i + 1 })}
+                        </div>
+                        <FieldValue value={v} />
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    if (typeof value === 'object') {
+        const entries = Object.entries(value as Record<string, unknown>);
+
+        if (entries.length === 0) {
+            return (
+                <span className="text-muted-foreground">
+                    {t('clienteShow.value.emptyList')}
+                </span>
+            );
+        }
+
+        return (
+            <dl className="grid gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,auto)_1fr]">
+                {entries.map(([k, v]) => (
+                    <Fragment key={k}>
+                        <dt className="text-xs font-medium text-muted-foreground sm:text-right">
+                            {humanizarClave(k)}
+                        </dt>
+                        <dd className="text-sm">
+                            <FieldValue value={v} />
+                        </dd>
+                    </Fragment>
+                ))}
+            </dl>
+        );
+    }
+
+    return <span>{String(value)}</span>;
+}
+
+type EditorKind = 'scalar' | 'stringList' | 'object' | 'advanced';
+
+// Elige el editor más amigable según la forma del valor actual:
+// escalar -> un campo de texto; lista simple -> uno por línea; objeto plano ->
+// un campo por atributo; datos anidados -> editor JSON avanzado.
+function editorKindFor(v: unknown): EditorKind {
+    if (v === null || v === undefined || typeof v !== 'object') {
+        return 'scalar';
+    }
+
+    if (Array.isArray(v)) {
+        return v.every((x) => x === null || typeof x !== 'object')
+            ? 'stringList'
+            : 'advanced';
+    }
+
+    const plano = Object.values(v).every(
+        (x) => x === null || typeof x !== 'object',
+    );
+
+    return plano ? 'object' : 'advanced';
+}
+
+function scalarToString(v: unknown): string {
+    if (v === null || v === undefined || typeof v === 'object') {
+        return '';
+    }
+
+    return String(v);
+}
+
+function objToStrings(v: unknown): Record<string, string> {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) {
+        return {};
+    }
+
+    const out: Record<string, string> = {};
+
+    for (const [k, val] of Object.entries(v)) {
+        out[k] = val === null || val === undefined ? '' : String(val);
+    }
+
+    return out;
+}
+
+// Editor de valores que reporta el contenido editado (y su validez) al padre.
+// Evita exponer JSON al usuario salvo en datos anidados (caso "advanced").
+function ValueEditor({
+    initial,
+    onChange,
+    onValidityChange,
+}: {
+    initial: unknown;
+    onChange: (v: Json) => void;
+    onValidityChange: (ok: boolean) => void;
+}) {
+    const { t } = useTranslation();
+    const [kind] = useState<EditorKind>(() => editorKindFor(initial));
+    const [scalar, setScalar] = useState(() => scalarToString(initial));
+    const [list, setList] = useState(() =>
+        Array.isArray(initial) ? initial.map((x) => String(x)).join('\n') : '',
+    );
+    const [obj, setObj] = useState<Record<string, string>>(() =>
+        objToStrings(initial),
+    );
+    const [raw, setRaw] = useState(() =>
+        initial === null || initial === undefined
+            ? ''
+            : JSON.stringify(initial, null, 2),
+    );
+
+    useEffect(() => {
+        if (kind !== 'scalar') {
+            return;
+        }
+
+        onChange(scalar);
+        onValidityChange(true);
+    }, [kind, scalar, onChange, onValidityChange]);
+
+    useEffect(() => {
+        if (kind !== 'stringList') {
+            return;
+        }
+
+        onChange(
+            list
+                .split('\n')
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0),
+        );
+        onValidityChange(true);
+    }, [kind, list, onChange, onValidityChange]);
+
+    useEffect(() => {
+        if (kind !== 'object') {
+            return;
+        }
+
+        onChange(obj);
+        onValidityChange(true);
+    }, [kind, obj, onChange, onValidityChange]);
+
+    useEffect(() => {
+        if (kind !== 'advanced') {
+            return;
+        }
+
+        try {
+            onChange(JSON.parse(raw) as Json);
+            onValidityChange(true);
+        } catch {
+            onValidityChange(false);
+        }
+    }, [kind, raw, onChange, onValidityChange]);
+
+    if (kind === 'scalar') {
+        return (
+            <Input
+                value={scalar}
+                onChange={(e) => setScalar(e.target.value)}
+                placeholder={t('clienteShow.edit.valuePlaceholder')}
+            />
+        );
+    }
+
+    if (kind === 'stringList') {
+        return (
+            <div className="grid gap-1.5">
+                <Textarea
+                    value={list}
+                    onChange={(e) => setList(e.target.value)}
+                    rows={4}
+                    placeholder={t('clienteShow.edit.listPlaceholder')}
+                />
+                <p className="text-xs text-muted-foreground">
+                    {t('clienteShow.edit.listHint')}
+                </p>
+            </div>
+        );
+    }
+
+    if (kind === 'object') {
+        return (
+            <div className="grid gap-3">
+                {Object.keys(obj).map((k) => (
+                    <div key={k} className="grid gap-1.5">
+                        <Label htmlFor={`campo-${k}`}>{humanizarClave(k)}</Label>
+                        <Input
+                            id={`campo-${k}`}
+                            value={obj[k]}
+                            onChange={(e) =>
+                                setObj((prev) => ({
+                                    ...prev,
+                                    [k]: e.target.value,
+                                }))
+                            }
+                        />
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    return (
+        <div className="grid gap-1.5">
+            <Textarea
+                value={raw}
+                onChange={(e) => setRaw(e.target.value)}
+                rows={8}
+                className="font-mono text-xs"
+            />
+            <p className="text-xs text-muted-foreground">
+                {t('clienteShow.edit.advancedHint')}
+            </p>
+        </div>
+    );
 }
 
 const MAX_UPLOAD_MB = 10;
@@ -391,22 +699,24 @@ function SubirDocumentoDialog({
 function EditCampoDialog({
     clienteId,
     campo,
+    formaLabel,
 }: {
     clienteId: number;
     campo: CampoCliente;
+    formaLabel: string;
 }) {
     const { t } = useTranslation();
-    const [raw, setRaw] = useState(
-        campo.valor !== null && campo.valor !== undefined
-            ? JSON.stringify(campo.valor)
-            : '',
+    const [open, setOpen] = useState(false);
+    const [contenido, setContenido] = useState<Json>(
+        () => (campo.valor ?? '') as Json,
     );
+    const [valido, setValido] = useState(true);
+    const onChange = useCallback((v: Json) => setContenido(v), []);
+    const onValidityChange = useCallback((ok: boolean) => setValido(ok), []);
 
     // Edición del valor de texto. Los archivos se cargan/reemplazan con
     // SubirDocumentoDialog (subida multipart con progreso y validación).
     const submit = () => {
-        const contenido = parseContenido(raw);
-
         router.patch(
             campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
                 `?forma=${campo.forma}`,
@@ -415,12 +725,12 @@ function EditCampoDialog({
                 tipo_dato: guessTipoDato(contenido),
                 contenido,
             },
-            { preserveScroll: true },
+            { preserveScroll: true, onSuccess: () => setOpen(false) },
         );
     };
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="sm">
                     {t('clienteShow.edit.trigger')}
@@ -428,21 +738,24 @@ function EditCampoDialog({
             </DialogTrigger>
             <DialogContent>
                 <DialogTitle>
-                    {t('clienteShow.edit.title', { campo: campo.campo })}
+                    {t('clienteShow.edit.title', {
+                        campo: humanizarClave(campo.campo),
+                    })}
                 </DialogTitle>
                 <DialogDescription>
-                    {t('clienteShow.edit.description', { forma: campo.forma })}
+                    {t('clienteShow.edit.description', { forma: formaLabel })}
                 </DialogDescription>
 
-                <Textarea
-                    value={raw}
-                    onChange={(e) => setRaw(e.target.value)}
-                    placeholder={t('clienteShow.edit.placeholder')}
-                    rows={4}
+                {/* key: al reabrir, reinicia el editor con el valor actual */}
+                <ValueEditor
+                    key={open ? 'abierto' : 'cerrado'}
+                    initial={campo.valor}
+                    onChange={onChange}
+                    onValidityChange={onValidityChange}
                 />
 
                 <DialogFooter>
-                    <Button onClick={submit}>
+                    <Button onClick={submit} disabled={!valido}>
                         {t('clienteShow.edit.save')}
                     </Button>
                 </DialogFooter>
@@ -621,6 +934,15 @@ function EliminarCampoButton({
     );
 }
 
+const SOURCE_VARIANT: Record<
+    HistorialCambio['source'],
+    'default' | 'secondary' | 'outline'
+> = {
+    agente_ia: 'default',
+    preparador: 'secondary',
+    administrador: 'outline',
+};
+
 function HistorialDialog({
     clienteId,
     campo,
@@ -628,8 +950,25 @@ function HistorialDialog({
     clienteId: number;
     campo: CampoCliente;
 }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [items, setItems] = useState<HistorialCambio[] | null>(null);
+
+    const formatDate = (iso: string | null): string => {
+        if (!iso) {
+            return '';
+        }
+
+        const fecha = new Date(iso);
+
+        if (Number.isNaN(fecha.getTime())) {
+            return iso;
+        }
+
+        return new Intl.DateTimeFormat(i18n.language, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        }).format(fecha);
+    };
 
     const load = async () => {
         const response = await fetch(
@@ -648,37 +987,53 @@ function HistorialDialog({
                     {t('clienteShow.history.trigger')}
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-lg">
                 <DialogTitle>
-                    {t('clienteShow.history.title', { campo: campo.campo })}
+                    {t('clienteShow.history.title', {
+                        campo: humanizarClave(campo.campo),
+                    })}
                 </DialogTitle>
-                <div className="max-h-80 space-y-3 overflow-y-auto text-sm">
-                    {items === null && <p>{t('common.loading')}</p>}
+                <div className="max-h-[70vh] space-y-3 overflow-y-auto">
+                    {items === null && (
+                        <p className="text-sm text-muted-foreground">
+                            {t('common.loading')}
+                        </p>
+                    )}
                     {items?.length === 0 && (
-                        <p className="text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                             {t('clienteShow.history.empty')}
                         </p>
                     )}
                     {items?.map((h, i) => (
-                        <div key={i} className="rounded border p-2">
-                            <div className="text-xs text-muted-foreground">
-                                {h.created_at} · {h.source}
-                                {h.modificado_por
-                                    ? ` · ${h.modificado_por}`
-                                    : ''}
+                        <div key={i} className="rounded-lg border p-3">
+                            <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                <Badge
+                                    variant={SOURCE_VARIANT[h.source]}
+                                    className="font-normal"
+                                >
+                                    {t(`clienteShow.history.source.${h.source}`)}
+                                </Badge>
+                                <span>{formatDate(h.created_at)}</span>
+                                {h.modificado_por && (
+                                    <span>· {h.modificado_por}</span>
+                                )}
                             </div>
-                            <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
+                            <div className="space-y-2">
                                 <div>
-                                    <span className="font-medium">
+                                    <div className="text-xs font-medium text-muted-foreground">
                                         {t('clienteShow.history.before')}
-                                    </span>{' '}
-                                    {JSON.stringify(h.valor_anterior)}
+                                    </div>
+                                    <div className="mt-0.5 text-sm">
+                                        <FieldValue value={h.valor_anterior} />
+                                    </div>
                                 </div>
                                 <div>
-                                    <span className="font-medium">
+                                    <div className="text-xs font-medium text-muted-foreground">
                                         {t('clienteShow.history.after')}
-                                    </span>{' '}
-                                    {JSON.stringify(h.valor_nuevo)}
+                                    </div>
+                                    <div className="mt-0.5 text-sm">
+                                        <FieldValue value={h.valor_nuevo} />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -737,10 +1092,8 @@ function RevealButton({
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <code className="text-xs">
-                {JSON.stringify(valor ?? campo.valor)}
-            </code>
+        <div className="flex flex-wrap items-center gap-2">
+            <FieldValue value={valor ?? campo.valor} />
             {valor === null &&
                 (needsPassword ? (
                     <a
@@ -772,6 +1125,9 @@ export default function ClienteShow({
     const { t } = useTranslation();
     const { auth } = usePage<PageProps>().props;
     const esAdministrador = auth.user.role === 'administrator';
+
+    const formaLabel = (forma: string) =>
+        formas.find((f) => f.forma === forma)?.forma_label ?? forma;
 
     return (
         <>
@@ -906,11 +1262,13 @@ export default function ClienteShow({
                         <TableBody>
                             {campos.map((campo) => (
                                 <TableRow key={`${campo.forma}-${campo.campo}`}>
-                                    <TableCell className="text-xs text-muted-foreground">
-                                        {campo.forma}
+                                    <TableCell className="align-top text-sm text-muted-foreground">
+                                        {formaLabel(campo.forma)}
                                     </TableCell>
-                                    <TableCell>{campo.campo}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="align-top font-medium">
+                                        {humanizarClave(campo.campo)}
+                                    </TableCell>
+                                    <TableCell className="align-top">
                                         <Badge
                                             variant={
                                                 ESTADO_VARIANT[campo.estado]
@@ -921,7 +1279,7 @@ export default function ClienteShow({
                                             )}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="max-w-xs truncate text-sm">
+                                    <TableCell className="max-w-sm align-top text-sm">
                                         {campo.documento ? (
                                             <DocumentoViewerDialog
                                                 documento={campo.documento}
@@ -931,16 +1289,11 @@ export default function ClienteShow({
                                                 clienteId={cliente.id}
                                                 campo={campo}
                                             />
-                                        ) : campo.valor === null ||
-                                          campo.valor === undefined ? (
-                                            <span className="text-muted-foreground">
-                                                {t('common.none')}
-                                            </span>
                                         ) : (
-                                            JSON.stringify(campo.valor)
+                                            <FieldValue value={campo.valor} />
                                         )}
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right align-top">
                                         <HistorialDialog
                                             clienteId={cliente.id}
                                             campo={campo}
@@ -957,6 +1310,9 @@ export default function ClienteShow({
                                             <EditCampoDialog
                                                 clienteId={cliente.id}
                                                 campo={campo}
+                                                formaLabel={formaLabel(
+                                                    campo.forma,
+                                                )}
                                             />
                                         )}
                                         <EliminarCampoButton

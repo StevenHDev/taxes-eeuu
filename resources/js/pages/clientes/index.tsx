@@ -91,7 +91,7 @@ function useColumns(): ColumnDef<Cliente>[] {
         },
         {
             id: 'formas',
-            accessorFn: (c) => c.formas.map((f) => f.forma),
+            accessorFn: (c) => (c.formas ?? []).map((f) => f.forma),
             header: () => (
                 <span className="text-sm">
                     {t('clientesIndex.columns.forms')}
@@ -99,7 +99,7 @@ function useColumns(): ColumnDef<Cliente>[] {
             ),
             cell: ({ row }) => (
                 <div className="flex flex-wrap gap-1">
-                    {row.original.formas.map((f) => (
+                    {(row.original.formas ?? []).map((f) => (
                         <Badge key={f.forma} variant="outline">
                             {f.forma_label}
                         </Badge>
@@ -219,7 +219,7 @@ export default function ClientesIndex({
                         {
                             columnId: 'formas',
                             title: t('clientesIndex.filters.form'),
-                            options: formas.map((f) => ({
+                            options: (formas ?? []).map((f) => ({
                                 label: f.label,
                                 value: f.value,
                             })),

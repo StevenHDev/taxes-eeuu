@@ -18,7 +18,9 @@
         "create": "Crear",
         "view": "Ver",
         "form": "Forma",
-        "none": "—"
+        "none": "—",
+        "yes": "Sí",
+        "no": "No"
     },
     "language": {
         "change": "Cambiar idioma"
@@ -254,7 +256,11 @@
             "title": "Corregir «{{campo}}»",
             "description": "Forma: {{forma}}. Este cambio queda registrado en el historial.",
             "placeholder": "Texto, número, o JSON para objetos/listas (ej. {\"nombre_completo\":\"...\"})",
-            "save": "Guardar corrección"
+            "save": "Guardar corrección",
+            "valuePlaceholder": "Escribe el valor",
+            "listPlaceholder": "Un valor por línea",
+            "listHint": "Escribe un valor por línea.",
+            "advancedHint": "Formato avanzado (JSON), para datos anidados."
         },
         "addField": {
             "trigger": "Agregar campo",
@@ -271,7 +277,12 @@
             "title": "Historial de «{{campo}}»",
             "empty": "Sin cambios registrados todavía.",
             "before": "Antes:",
-            "after": "Después:"
+            "after": "Después:",
+            "source": {
+                "agente_ia": "Agente IA",
+                "preparador": "Preparador",
+                "administrador": "Administrador"
+            }
         },
         "reveal": {
             "confirmPassword": "Confirma tu contraseña para revelar",
@@ -300,6 +311,10 @@
             "pendiente": "Pendiente",
             "recibido": "Recibido",
             "invalido": "Inválido"
+        },
+        "value": {
+            "emptyList": "Sin registros",
+            "record": "Registro {{n}}"
         }
     },
     "usuarios": {
@@ -371,8 +386,12 @@
         "actions": {
             "new": "Nuevo campo",
             "editTitle": "Editar «{{key}}»",
-            "deleteConfirm": "¿Eliminar «{{key}}»? Los datos ya cargados de clientes no se borran."
-        }
+            "deleteConfirm": "¿Eliminar «{{key}}»? Los datos ya cargados de clientes no se borran.",
+            "addField": "Agregar campo",
+            "addFieldTo": "Agregar campo a {{form}}"
+        },
+        "fieldCount_one": "{{count}} campo",
+        "fieldCount_other": "{{count}} campos"
     },
     "settings": {
         "layout": {

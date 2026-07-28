@@ -18,7 +18,9 @@
         "create": "Create",
         "view": "View",
         "form": "Form",
-        "none": "—"
+        "none": "—",
+        "yes": "Yes",
+        "no": "No"
     },
     "language": {
         "change": "Change language"
@@ -254,7 +256,11 @@
             "title": "Correct «{{campo}}»",
             "description": "Form: {{forma}}. This change is recorded in the history.",
             "placeholder": "Text, number, or JSON for objects/lists (e.g. {\"full_name\":\"...\"})",
-            "save": "Save correction"
+            "save": "Save correction",
+            "valuePlaceholder": "Enter the value",
+            "listPlaceholder": "One value per line",
+            "listHint": "Enter one value per line.",
+            "advancedHint": "Advanced format (JSON), for nested data."
         },
         "addField": {
             "trigger": "Add field",
@@ -271,7 +277,12 @@
             "title": "History of «{{campo}}»",
             "empty": "No changes recorded yet.",
             "before": "Before:",
-            "after": "After:"
+            "after": "After:",
+            "source": {
+                "agente_ia": "AI agent",
+                "preparador": "Preparer",
+                "administrador": "Administrator"
+            }
         },
         "reveal": {
             "confirmPassword": "Confirm your password to reveal",
@@ -300,6 +311,10 @@
             "pendiente": "Pending",
             "recibido": "Received",
             "invalido": "Invalid"
+        },
+        "value": {
+            "emptyList": "No records",
+            "record": "Record {{n}}"
         }
     },
     "usuarios": {
@@ -371,8 +386,12 @@
         "actions": {
             "new": "New field",
             "editTitle": "Edit «{{key}}»",
-            "deleteConfirm": "Delete «{{key}}»? Clients' already-uploaded data will not be deleted."
-        }
+            "deleteConfirm": "Delete «{{key}}»? Clients' already-uploaded data will not be deleted.",
+            "addField": "Add field",
+            "addFieldTo": "Add field to {{form}}"
+        },
+        "fieldCount_one": "{{count}} field",
+        "fieldCount_other": "{{count}} fields"
     },
     "settings": {
         "layout": {
