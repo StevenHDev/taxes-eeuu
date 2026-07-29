@@ -960,7 +960,9 @@ function AgregarCampoDialog({
                         {[...new Set(disponibles.map((d) => d.forma))].map(
                             (f) => (
                                 <option key={f} value={f}>
-                                    {f}
+                                    {f === 'transversal'
+                                        ? t('clienteShow.transversalLabel')
+                                        : f}
                                 </option>
                             ),
                         )}
@@ -1298,7 +1300,9 @@ export default function ClienteShow({
     const esAdministrador = auth.user.role === 'administrator';
 
     const formaLabel = (forma: string) =>
-        formas.find((f) => f.forma === forma)?.forma_label ?? forma;
+        forma === 'transversal'
+            ? t('clienteShow.transversalLabel')
+            : (formas.find((f) => f.forma === forma)?.forma_label ?? forma);
 
     return (
         <>

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\FieldDataType;
 use App\Enums\FieldMode;
-use App\Enums\TaxForm;
 use App\Http\Requests\CampoClienteUpdateRequest;
 use App\Models\CampoCliente;
 use App\Models\CampoReveal;
@@ -24,11 +23,11 @@ class CampoClienteController extends Controller
     {
         $forma = $request->forma();
         $campo = $request->campoNombre();
-        $field = TaxFieldCatalog::find($forma->value, $campo);
+        $field = TaxFieldCatalog::find($forma, $campo);
 
         $this->eventos->corregirManualmente(
             cliente: $cliente,
-            forma: $forma->value,
+            forma: $forma,
             campo: $campo,
             tipoCampo: $field['tipo']->value,
             modo: FieldMode::from($request->validated('modo')),
@@ -46,9 +45,9 @@ class CampoClienteController extends Controller
     {
         $this->authorize('update', $cliente);
 
-        $forma = TaxForm::from((string) $request->query('forma'));
+        $forma = (string) $request->query('forma');
 
-        $this->eventos->eliminarCampo($cliente, $forma->value, $campo, $request->user());
+        $this->eventos->eliminarCampo($cliente, $forma, $campo, $request->user());
 
         return back();
     }
@@ -57,7 +56,7 @@ class CampoClienteController extends Controller
     {
         $this->authorize('view', $cliente);
 
-        $forma = TaxForm::from((string) $request->query('forma'));
+        $forma = (string) $request->query('forma');
 
         $campoCliente = $this->buscarCampoCliente($cliente, $forma, $campo);
 
@@ -76,7 +75,7 @@ class CampoClienteController extends Controller
     {
         $this->authorize('view', $cliente);
 
-        $forma = TaxForm::from((string) $request->query('forma'));
+        $forma = (string) $request->query('forma');
 
         $campoCliente = $this->buscarCampoCliente($cliente, $forma, $campo);
 
@@ -89,11 +88,15 @@ class CampoClienteController extends Controller
         return response()->json(['valor' => $campoCliente->valor_texto]);
     }
 
-    private function buscarCampoCliente(User $cliente, TaxForm $forma, string $campo): CampoCliente
+    private function buscarCampoCliente(User $cliente, string $forma, string $campo): CampoCliente
     {
+        // Normaliza a la forma de almacenamiento: los campos únicos por cliente
+        // viven bajo 'transversal', sin importar la forma que llegue en el request.
+        $formaAlmacen = TaxFieldCatalog::formaAlmacen($campo, $forma);
+
         return CampoCliente::query()
             ->where('user_id', $cliente->id)
-            ->where('forma', $forma->value)
+            ->where('forma', $formaAlmacen)
             ->where('campo', $campo)
             ->firstOrFail();
     }

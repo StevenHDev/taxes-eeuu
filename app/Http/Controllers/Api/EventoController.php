@@ -17,8 +17,10 @@ class EventoController extends Controller
 
         return response()->json([
             'cliente_id' => $resultado['cliente']->id,
-            'forma' => $resultado['campo_cliente']->forma,
-            'forma_estado' => $resultado['forma_cliente']->estado,
+            // La forma del evento tal como la envió el agente (los campos únicos por
+            // cliente se guardan bajo 'transversal', pero se responde la del evento).
+            'forma' => $request->validated('forma'),
+            'forma_estado' => $resultado['forma_cliente']?->estado,
             'campo' => $resultado['campo_cliente']->campo,
             'estado' => $resultado['campo_cliente']->estado,
         ], 201);

@@ -321,7 +321,8 @@
             "recordCount_other": "{{count}} registros",
             "fieldCount_one": "{{count}} dato",
             "fieldCount_other": "{{count}} datos"
-        }
+        },
+        "transversalLabel": "Datos del cliente"
     },
     "usuarios": {
         "title": "Usuarios",

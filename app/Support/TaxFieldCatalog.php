@@ -39,6 +39,19 @@ class TaxFieldCatalog
      */
     public static function find(string $forma, string $campo): ?array
     {
+        // 'transversal' es la forma canónica bajo la que se guardan los campos
+        // únicos por cliente — no es una TaxForm, así que se resuelve aparte.
+        if ($forma === CampoCatalogo::TRANSVERSAL) {
+            foreach (self::todos() as $candidato) {
+                if ($candidato['forma'] === CampoCatalogo::TRANSVERSAL
+                    && $candidato['definicion']['campo'] === $campo) {
+                    return $candidato['definicion'];
+                }
+            }
+
+            return null;
+        }
+
         $taxForm = TaxForm::tryFrom($forma);
 
         if (! $taxForm) {
@@ -52,6 +65,33 @@ class TaxFieldCatalog
         }
 
         return null;
+    }
+
+    /**
+     * Un campo "único por cliente" es un dato personal del cliente (SSN/ITIN,
+     * cónyuge, dependientes) que no pertenece a una forma en particular: se guarda
+     * una sola vez y se comparte entre todas sus formas.
+     */
+    public static function isUnicoPorCliente(string $campo): bool
+    {
+        foreach (self::todos() as $candidato) {
+            if ($candidato['definicion']['campo'] === $campo) {
+                return (bool) ($candidato['definicion']['unico_por_cliente'] ?? false);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Forma bajo la que se debe guardar un campo: 'transversal' si es único por
+     * cliente (una sola fila compartida), o la forma solicitada en caso contrario.
+     */
+    public static function formaAlmacen(string $campo, string $formaSolicitada): string
+    {
+        return self::isUnicoPorCliente($campo)
+            ? CampoCatalogo::TRANSVERSAL
+            : $formaSolicitada;
     }
 
     public static function isSensible(string $campo): bool

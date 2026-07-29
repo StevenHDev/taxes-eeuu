@@ -42,6 +42,7 @@ class CatalogoCamposSeeder extends Seeder
                 'subcampos' => $campo['subcampos'] ?? null,
                 'obligatorio' => $campo['obligatorio'] ?? true,
                 'sensible' => $campo['sensible'] ?? false,
+                'unico_por_cliente' => $campo['unico_por_cliente'] ?? false,
             ],
         );
     }
@@ -52,16 +53,12 @@ class CatalogoCamposSeeder extends Seeder
     private function transversales(): array
     {
         return [
-            $this->campo('identificacion_ssn_itin', FieldKind::Dato, tipoDato: FieldDataType::String, sensible: true),
-            $this->campo('info_conyuge', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: ['nombre_completo', 'fecha_nacimiento', 'ssn'], sensible: true),
-            $this->campo('info_dependientes', FieldKind::Dato, tipoDato: FieldDataType::ArrayObject, subcampos: ['nombre_completo', 'fecha_nacimiento', 'ssn'], sensible: true),
-            $this->campo('w2', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic']),
-            $this->campo('form_1099_nec', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic']),
-            $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
-            $this->campo('pl_balance_general', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'xlsx']),
-            $this->campo('gastos_deducibles', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'png']),
-            $this->campo('activos_depreciacion', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'xlsx']),
-            $this->campo('declaracion_anio_anterior', FieldKind::Documento, formatos: ['pdf'], obligatorio: false),
+            $this->campo('identificacion_ssn_itin', FieldKind::Dato, tipoDato: FieldDataType::String, sensible: true, unicoPorCliente: true),
+            $this->campo('info_conyuge', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: ['nombre_completo', 'fecha_nacimiento', 'ssn'], sensible: true, unicoPorCliente: true),
+            $this->campo('info_dependientes', FieldKind::Dato, tipoDato: FieldDataType::ArrayObject, subcampos: ['nombre_completo', 'fecha_nacimiento', 'ssn'], sensible: true, unicoPorCliente: true),
+            $this->campo('w2', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], unicoPorCliente: true),
+            $this->campo('form_1099_nec', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], unicoPorCliente: true),
+            $this->campo('declaracion_anio_anterior', FieldKind::Documento, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
         ];
     }
 
@@ -73,13 +70,13 @@ class CatalogoCamposSeeder extends Seeder
         return [
             TaxForm::Form1040->value => [
                 $this->campo('ingresos', FieldKind::Dato, tipoDato: FieldDataType::Number),
-                $this->campo('dependientes', FieldKind::Dato, tipoDato: FieldDataType::ArrayObject),
                 $this->campo('deducciones', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg']),
                 $this->campo('creditos', FieldKind::Dato, tipoDato: FieldDataType::ArrayString),
                 $this->campo('impuestos_retenidos', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('info_bancaria', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: ['banco', 'tipo_cuenta', 'numero_cuenta', 'routing_number'], sensible: true),
             ],
             TaxForm::ScheduleC->value => [
+                $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
                 $this->campo('ingresos_negocio', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('gastos_deducibles_negocio', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'csv']),
                 $this->campo('millaje', FieldKind::Dato, tipoDato: FieldDataType::Number),
@@ -87,6 +84,7 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('costo_ventas', FieldKind::Dato, tipoDato: FieldDataType::Number),
             ],
             TaxForm::ScheduleE->value => [
+                $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
                 $this->campo('ingresos_renta', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('gastos_propiedad', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg']),
                 $this->campo('depreciacion', FieldKind::Dato, tipoDato: FieldDataType::Number),
@@ -95,6 +93,7 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('seguros_propiedad', FieldKind::Documento, formatos: ['pdf']),
             ],
             TaxForm::Form1065->value => [
+                $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
                 $this->campo('ingresos', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('gastos', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'xlsx']),
                 $this->campo('activos', FieldKind::Mixto, tipoDato: FieldDataType::ArrayObject, formatos: ['pdf', 'xlsx']),
@@ -104,6 +103,7 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('datos_k1', FieldKind::Documento, formatos: ['pdf']),
             ],
             TaxForm::Form1120->value => [
+                $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
                 $this->campo('estados_financieros', FieldKind::Documento, formatos: ['pdf', 'xlsx']),
                 $this->campo('ingresos', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('gastos', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'xlsx']),
@@ -114,6 +114,7 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('balance_general', FieldKind::Documento, formatos: ['pdf', 'xlsx']),
             ],
             TaxForm::Form1120S->value => [
+                $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
                 $this->campo('ingresos', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('gastos', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'xlsx']),
                 $this->campo('estados_financieros', FieldKind::Documento, formatos: ['pdf', 'xlsx']),
@@ -122,6 +123,7 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('datos_k1', FieldKind::Documento, formatos: ['pdf']),
             ],
             TaxForm::ScheduleF->value => [
+                $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
                 $this->campo('ventas_agricolas', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('subsidios', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('gastos_operacion', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg']),
@@ -168,6 +170,7 @@ class CatalogoCamposSeeder extends Seeder
         ?array $subcampos = null,
         bool $obligatorio = true,
         bool $sensible = false,
+        bool $unicoPorCliente = false,
     ): array {
         return [
             'campo' => $campo,
@@ -177,6 +180,7 @@ class CatalogoCamposSeeder extends Seeder
             'subcampos' => $subcampos,
             'obligatorio' => $obligatorio,
             'sensible' => $sensible,
+            'unico_por_cliente' => $unicoPorCliente,
         ];
     }
 }

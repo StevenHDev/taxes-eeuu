@@ -22,8 +22,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property array<int, string>|null $subcampos
  * @property bool $obligatorio
  * @property bool $sensible
+ * @property bool $unico_por_cliente
  */
-#[Fillable(['forma', 'clave', 'tipo_campo', 'tipo_dato', 'formatos_aceptados', 'subcampos', 'obligatorio', 'sensible'])]
+#[Fillable(['forma', 'clave', 'tipo_campo', 'tipo_dato', 'formatos_aceptados', 'subcampos', 'obligatorio', 'sensible', 'unico_por_cliente'])]
 class CampoCatalogo extends Model
 {
     public const TRANSVERSAL = 'transversal';
@@ -46,6 +47,7 @@ class CampoCatalogo extends Model
             'subcampos' => 'array',
             'obligatorio' => 'boolean',
             'sensible' => 'boolean',
+            'unico_por_cliente' => 'boolean',
         ];
     }
 
@@ -66,6 +68,7 @@ class CampoCatalogo extends Model
             'subcampos' => $this->subcampos,
             'obligatorio' => $this->obligatorio,
             'sensible' => $this->sensible,
+            'unico_por_cliente' => $this->unico_por_cliente,
         ];
     }
 }

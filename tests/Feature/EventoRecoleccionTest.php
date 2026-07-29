@@ -163,6 +163,50 @@ class EventoRecoleccionTest extends TestCase
         $this->assertNotNull($campo, 'El evento inválido igual debe conservarse para trazabilidad.');
     }
 
+    public function test_un_campo_unico_por_cliente_no_se_duplica_entre_formas(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        // El mismo dato personal (SSN) llega en eventos de dos formas distintas.
+        foreach (['form_1040', 'schedule_c'] as $forma) {
+            $this->postJson('/api/eventos', [
+                'cliente_id' => $cliente->id,
+                'forma' => $forma,
+                'campo' => 'identificacion_ssn_itin',
+                'tipo_campo' => 'dato',
+                'modo' => 'texto',
+                'tipo_dato' => 'string',
+                'contenido' => '123-45-6789',
+            ])->assertCreated();
+        }
+
+        // Debe existir una sola fila, bajo la forma canónica 'transversal'.
+        $filas = CampoCliente::query()
+            ->where('user_id', $cliente->id)
+            ->where('campo', 'identificacion_ssn_itin')
+            ->get();
+
+        $this->assertCount(1, $filas);
+        $this->assertSame('transversal', $filas->first()->forma);
+    }
+
+    public function test_dependientes_ya_no_existe_en_form_1040(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'campo' => 'dependientes',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'array_object',
+            'contenido' => [],
+        ])->assertStatus(422)->assertJsonValidationErrors(['campo']);
+    }
+
     public function test_la_forma_permanece_en_progreso_mientras_falten_campos_requeridos(): void
     {
         $this->actingAsAgente();
@@ -194,11 +238,7 @@ class EventoRecoleccionTest extends TestCase
                 'nombre_completo' => 'Jane Doe', 'fecha_nacimiento' => '1990-01-01', 'ssn' => '987654321',
             ]],
             ['campo' => 'info_dependientes', 'tipo_campo' => 'dato', 'tipo_dato' => 'array_object', 'contenido' => []],
-            ['campo' => 'pl_balance_general', 'tipo_campo' => 'mixto', 'tipo_dato' => 'number', 'contenido' => 5000],
-            ['campo' => 'gastos_deducibles', 'tipo_campo' => 'mixto', 'tipo_dato' => 'number', 'contenido' => 300],
-            ['campo' => 'activos_depreciacion', 'tipo_campo' => 'mixto', 'tipo_dato' => 'object', 'contenido' => ['descripcion' => 'Laptop']],
             ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 52000],
-            ['campo' => 'dependientes', 'tipo_campo' => 'dato', 'tipo_dato' => 'array_object', 'contenido' => []],
             ['campo' => 'deducciones', 'tipo_campo' => 'mixto', 'tipo_dato' => 'number', 'contenido' => 1000],
             ['campo' => 'creditos', 'tipo_campo' => 'dato', 'tipo_dato' => 'array_string', 'contenido' => []],
             ['campo' => 'impuestos_retenidos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 0],
@@ -215,10 +255,11 @@ class EventoRecoleccionTest extends TestCase
             ], $campo))->assertCreated();
         }
 
+        // w2 y form_1099_nec son únicos por cliente (documentos básicos); aplican a
+        // todas las formas. estados_bancarios ya no es de form_1040 (es por negocio).
         $documentos = [
             ['campo' => 'w2', 'nombre' => 'w2.pdf'],
             ['campo' => 'form_1099_nec', 'nombre' => 'f1099.pdf'],
-            ['campo' => 'estados_bancarios', 'nombre' => 'estado.pdf'],
         ];
 
         foreach ($documentos as $documento) {

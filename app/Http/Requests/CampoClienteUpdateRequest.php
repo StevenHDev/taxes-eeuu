@@ -7,6 +7,7 @@ use App\Enums\FieldDataType;
 use App\Enums\FieldKind;
 use App\Enums\FieldMode;
 use App\Enums\TaxForm;
+use App\Models\CampoCatalogo;
 use App\Models\User;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -50,8 +51,12 @@ class CampoClienteUpdateRequest extends FormRequest
         $tipoDato = FieldDataType::tryFrom((string) $this->input('tipo_dato'));
         $esArray = in_array($tipoDato, [FieldDataType::ArrayString, FieldDataType::ArrayObject], true);
 
+        $formasValidas = [...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), CampoCatalogo::TRANSVERSAL];
+
         return [
-            'forma' => ['required', Rule::enum(TaxForm::class)],
+            // Además de las 10 formas, se acepta 'transversal': los campos únicos por
+            // cliente (SSN, cónyuge, dependientes) se guardan bajo esa forma canónica.
+            'forma' => ['required', Rule::in($formasValidas)],
             'modo' => ['required', Rule::enum(FieldMode::class)],
             'tipo_dato' => [
                 Rule::requiredIf($modo === FieldMode::Texto->value),
@@ -89,13 +94,13 @@ class CampoClienteUpdateRequest extends FormRequest
     public function withValidator(ValidatorContract $validator): void
     {
         $validator->after(function (ValidatorContract $validator) {
-            $forma = TaxForm::tryFrom((string) $this->query('forma'));
+            $forma = (string) $this->query('forma');
 
-            if (! $forma) {
+            if ($forma !== CampoCatalogo::TRANSVERSAL && ! TaxForm::tryFrom($forma)) {
                 return;
             }
 
-            $field = TaxFieldCatalog::find($forma->value, (string) $this->route('campo'));
+            $field = TaxFieldCatalog::find($forma, (string) $this->route('campo'));
 
             if (! $field) {
                 $validator->errors()->add('campo', 'El campo indicado no existe en el catálogo para esa forma.');
@@ -131,9 +136,9 @@ class CampoClienteUpdateRequest extends FormRequest
         return $cliente instanceof User ? $cliente : null;
     }
 
-    public function forma(): TaxForm
+    public function forma(): string
     {
-        return TaxForm::from((string) $this->query('forma'));
+        return (string) $this->query('forma');
     }
 
     public function campoNombre(): string

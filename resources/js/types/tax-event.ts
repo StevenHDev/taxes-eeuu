@@ -15,6 +15,10 @@ export type FormaOption = {
     label: string;
 };
 
+// Forma bajo la que se guarda un valor: una de las 10 formas, o 'transversal'
+// para los campos únicos por cliente (SSN, cónyuge, dependientes).
+export type FormaAlmacen = TaxForm | 'transversal';
+
 export type FieldState = 'recibido' | 'pendiente' | 'invalido';
 export type FormState = 'en_progreso' | 'completo';
 export type EstadoGeneral = 'sin_iniciar' | 'en_progreso' | 'completo';
@@ -53,7 +57,7 @@ export type CampoDocumento = {
 };
 
 export type CampoCliente = {
-    forma: TaxForm;
+    forma: FormaAlmacen;
     campo: string;
     tipo_campo: 'documento' | 'dato' | 'mixto';
     modo: 'archivo' | 'texto';
@@ -74,7 +78,7 @@ export type HistorialCambio = {
 };
 
 export type CatalogoDisponibleItem = {
-    forma: TaxForm;
+    forma: FormaAlmacen;
     campo: string;
     tipo_campo: 'documento' | 'dato' | 'mixto';
     formatos_aceptados: string[] | null;

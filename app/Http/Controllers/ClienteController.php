@@ -6,6 +6,7 @@ use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
 use App\Http\Requests\ClienteStoreRequest;
+use App\Models\CampoCatalogo;
 use App\Models\FormaCliente;
 use App\Models\User;
 use App\Services\ClienteExportService;
@@ -93,6 +94,37 @@ class ClienteController extends Controller
         ]);
 
         $camposCargados = $cliente->camposCliente->map(fn ($c) => "{$c->forma}:{$c->campo}");
+        $unicosCargados = $cliente->camposCliente
+            ->filter(fn ($c) => TaxFieldCatalog::isUnicoPorCliente($c->campo))
+            ->pluck('campo');
+
+        // Por cada forma real, sus campos propios + transversales-por-forma que el
+        // cliente aún no tiene cargados — excluyendo los únicos por cliente, que se
+        // agregan una sola vez aparte (no por forma).
+        $disponiblePorForma = collect(TaxForm::cases())
+            ->flatMap(fn (TaxForm $forma) => collect(TaxFieldCatalog::fieldsFor($forma))
+                ->reject(fn (array $campo) => TaxFieldCatalog::isUnicoPorCliente($campo['campo'])
+                    || $camposCargados->contains("{$forma->value}:{$campo['campo']}"))
+                ->map(fn (array $campo) => [
+                    'forma' => $forma->value,
+                    'campo' => $campo['campo'],
+                    'tipo_campo' => $campo['tipo']->value,
+                    'formatos_aceptados' => $campo['formatos_aceptados'] ?? null,
+                ]));
+
+        // Los campos únicos por cliente (SSN, cónyuge, dependientes): una sola vez,
+        // bajo la forma canónica 'transversal', si no están ya cargados.
+        $disponibleUnicos = CampoCatalogo::query()
+            ->where('unico_por_cliente', true)
+            ->orderBy('clave')
+            ->get()
+            ->reject(fn (CampoCatalogo $c) => $unicosCargados->contains($c->clave))
+            ->map(fn (CampoCatalogo $c) => [
+                'forma' => CampoCatalogo::TRANSVERSAL,
+                'campo' => $c->clave,
+                'tipo_campo' => $c->tipo_campo->value,
+                'formatos_aceptados' => $c->formatos_aceptados,
+            ]);
 
         return Inertia::render('clientes/show', [
             'cliente' => [
@@ -101,17 +133,8 @@ class ClienteController extends Controller
                 'email' => $cliente->email,
                 'phone' => $cliente->phone,
             ],
-            // Por cada forma real, todos sus campos (transversales + propios) que este
-            // cliente todavía no tiene cargados — para el diálogo "Agregar campo".
-            'catalogoDisponible' => collect(TaxForm::cases())
-                ->flatMap(fn (TaxForm $forma) => collect(TaxFieldCatalog::fieldsFor($forma))
-                    ->reject(fn (array $campo) => $camposCargados->contains("{$forma->value}:{$campo['campo']}"))
-                    ->map(fn (array $campo) => [
-                        'forma' => $forma->value,
-                        'campo' => $campo['campo'],
-                        'tipo_campo' => $campo['tipo']->value,
-                        'formatos_aceptados' => $campo['formatos_aceptados'] ?? null,
-                    ]))
+            'catalogoDisponible' => $disponiblePorForma
+                ->concat($disponibleUnicos)
                 ->values(),
             'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
                 'forma' => $f->forma,

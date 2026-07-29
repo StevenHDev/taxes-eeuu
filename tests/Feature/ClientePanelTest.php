@@ -9,6 +9,7 @@ use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\User;
+use App\Support\TaxFieldCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +24,9 @@ class ClientePanelTest extends TestCase
     {
         return CampoCliente::query()->create(array_merge([
             'user_id' => $cliente->id,
-            'forma' => 'form_1040',
+            // Los campos únicos por cliente (SSN, cónyuge, dependientes) se guardan
+            // bajo la forma canónica 'transversal'.
+            'forma' => TaxFieldCatalog::formaAlmacen($campo, 'form_1040'),
             'campo' => $campo,
             'tipo_campo' => 'dato',
             'modo' => 'texto',

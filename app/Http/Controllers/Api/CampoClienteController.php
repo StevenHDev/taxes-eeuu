@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Enums\ApiAbility;
 use App\Enums\FieldDataType;
 use App\Enums\FieldMode;
-use App\Enums\TaxForm;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CampoClienteUpdateRequest;
 use App\Models\CampoCliente;
@@ -25,11 +24,13 @@ class CampoClienteController extends Controller
     {
         $this->authorize('view', $cliente);
 
-        $forma = TaxForm::from((string) $request->query('forma'));
+        // Normaliza a la forma de almacenamiento: los campos únicos por cliente
+        // viven bajo 'transversal', sin importar la forma que llegue en el request.
+        $forma = TaxFieldCatalog::formaAlmacen($campo, (string) $request->query('forma'));
 
         $campoCliente = CampoCliente::query()
             ->where('user_id', $cliente->id)
-            ->where('forma', $forma->value)
+            ->where('forma', $forma)
             ->where('campo', $campo)
             ->firstOrFail();
 
@@ -48,11 +49,11 @@ class CampoClienteController extends Controller
     {
         $forma = $request->forma();
         $campo = $request->campoNombre();
-        $field = TaxFieldCatalog::find($forma->value, $campo);
+        $field = TaxFieldCatalog::find($forma, $campo);
 
         $resultado = $this->eventos->corregirManualmente(
             cliente: $cliente,
-            forma: $forma->value,
+            forma: $forma,
             campo: $campo,
             tipoCampo: $field['tipo']->value,
             modo: FieldMode::from($request->validated('modo')),
@@ -74,9 +75,9 @@ class CampoClienteController extends Controller
         $this->authorize('update', $cliente);
         $this->ensureAbility($request, ApiAbility::ClientesWrite);
 
-        $forma = TaxForm::from((string) $request->query('forma'));
+        $forma = (string) $request->query('forma');
 
-        $this->eventos->eliminarCampo($cliente, $forma->value, $campo, $request->user());
+        $this->eventos->eliminarCampo($cliente, $forma, $campo, $request->user());
 
         return response()->json(status: 204);
     }
