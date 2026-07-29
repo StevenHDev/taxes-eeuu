@@ -10,11 +10,66 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+    /*
+     * Tres papeles tipográficos, uno por trabajo. Antes Poppins hacía los tres
+     * (--font-serif también era Poppins), y por eso la jerarquía dependía solo
+     * del peso.
+     *
+     * sans    → texto e interfaz. Instrument Sans aguanta 13-14px, que es
+     *           donde vive casi todo el producto; Poppins ahí se abre y cansa.
+     * display → Poppins, la cara de marca, solo en tamaños grandes y con
+     *           tracking cerrado: es donde una geométrica rinde.
+     * mono    → IBM Plex Mono para todo dato (SSN, montos, fechas, valores
+     *           enmascarados). Cifras tabulares y 0/O inconfundibles, algo que
+     *           Poppins no da: sus cifras son circulares.
+     */
     --font-sans:
-        'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
 
-    --font-serif: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Poppins', 'Instrument Sans', ui-sans-serif, sans-serif;
+
+    --font-mono:
+        'IBM Plex Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo,
+        monospace;
+
+    /*
+     * Escala con saltos deliberados. `text-sm` (14px) sigue siendo el texto
+     * corrido — el problema nunca fue su tamaño sino que no había nada por
+     * encima ni por debajo. Estos tres pasos son los que faltaban.
+     */
+
+    /* Rótulos, códigos de forma y etiquetas de estado. Siempre en versalitas. */
+    --text-micro: 0.6875rem;
+    --text-micro--line-height: 1.2;
+    --text-micro--letter-spacing: 0.11em;
+
+    /* Título de sección: por fin distinguible del texto que encabeza. */
+    --text-title: 0.9375rem;
+    --text-title--line-height: 1.35;
+    --text-title--letter-spacing: -0.01em;
+
+    /* Título de página. */
+    --text-display: clamp(1.5rem, 3.5vw, 2rem);
+    --text-display--line-height: 1.05;
+    --text-display--letter-spacing: -0.03em;
+
+    /* Cifra protagonista (hero del dashboard). */
+    --text-figure: clamp(2.75rem, 7vw, 4.25rem);
+    --text-figure--line-height: 0.95;
+    --text-figure--letter-spacing: -0.04em;
+
+    /*
+     * Rampa de estado: la intensidad del navy codifica el avance. Una ficha
+     * que se ve oscura está lista; pálida, sin tocar. Se lee de reojo, sin
+     * leer texto, y sale de los 4 colores de marca en lugar de sumar otros.
+     *
+     * Son exactamente los tres casos de App\Enums\FieldState — ni uno más.
+     */
+    --color-state-pendiente: var(--state-pendiente);
+    --color-state-recibido: var(--state-recibido);
+    --color-state-invalido: var(--state-invalido);
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -90,6 +145,10 @@
     --accent-foreground: #194569;
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.577 0.245 27.325);
+    /* Rampa de estado — ver la nota en @theme. Monotónica: más avance, más navy. */
+    --state-pendiente: #c9d8e3;
+    --state-recibido: #194569;
+    --state-invalido: var(--destructive);
     --border: #c9d8e3;
     --input: #c9d8e3;
     --ring: #194569;
@@ -98,7 +157,13 @@
     --chart-3: color-mix(in oklch, #194569 45%, white);
     --chart-4: #c9d8e3;
     --chart-5: #dbeef0;
-    --radius: 0.9rem;
+    /*
+     * Bajado de 0.9rem. A 14px cada card y cada botón se leían como burbuja y
+     * competían con la densidad de una tabla de cientos de campos; el producto
+     * es un registro de documentos, no una app de consumo. Sigue siendo suave.
+     * Para volver atrás alcanza con esta línea.
+     */
+    --radius: 0.5rem;
     --sidebar: #ffffff;
     --sidebar-foreground: #194569;
     --sidebar-primary: #194569;
@@ -127,6 +192,10 @@
     --accent-foreground: #dbeef0;
     --destructive: oklch(0.396 0.141 25.723);
     --destructive-foreground: oklch(0.637 0.237 25.331);
+    /* La rampa se invierte sobre fondo navy: más avance, más claro. */
+    --state-pendiente: color-mix(in oklch, #194569 45%, black);
+    --state-recibido: #dbeef0;
+    --state-invalido: oklch(0.637 0.237 25.331);
     --border: color-mix(in oklch, #194569 40%, black);
     --input: color-mix(in oklch, #194569 40%, black);
     --ring: #dbeef0;

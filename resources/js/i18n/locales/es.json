@@ -322,7 +322,10 @@
             "fieldCount_one": "{{count}} dato",
             "fieldCount_other": "{{count}} datos"
         },
-        "transversalLabel": "Datos del cliente"
+        "transversalLabel": "Datos del cliente",
+        "section": {
+            "received": "{{recibidos}}/{{total}} recibidos"
+        }
     },
     "usuarios": {
         "title": "Usuarios",

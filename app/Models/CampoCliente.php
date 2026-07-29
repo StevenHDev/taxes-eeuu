@@ -141,10 +141,19 @@ class CampoCliente extends Model
             return array_map(fn ($item) => $this->maskRecursively($item), $value);
         }
 
-        if (is_string($value) && strlen($value) > 4) {
-            return str_repeat('*', strlen($value) - 4).substr($value, -4);
+        if (! is_string($value)) {
+            return $value;
         }
 
-        return is_string($value) ? str_repeat('*', strlen($value)) : $value;
+        // Multibyte-aware: cortar por bytes partiría un carácter acentuado
+        // («López», «Muñoz») y produciría UTF-8 inválido, que rompe la
+        // serialización JSON de la respuesta completa.
+        $largo = mb_strlen($value);
+
+        if ($largo > 4) {
+            return str_repeat('*', $largo - 4).mb_substr($value, -4);
+        }
+
+        return str_repeat('*', $largo);
     }
 }

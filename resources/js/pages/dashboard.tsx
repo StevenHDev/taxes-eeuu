@@ -127,7 +127,7 @@ export default function Dashboard({
                             <p className="text-xs font-medium tracking-[0.14em] text-primary-foreground/60 uppercase">
                                 {t('dashboard.hero.clientsInManagement')}
                             </p>
-                            <p className="mt-1.5 text-[clamp(2.75rem,7vw,4.25rem)] leading-[0.95] font-semibold tracking-tight tabular-nums">
+                            <p className="mt-1.5 font-display text-figure font-semibold tabular-nums">
                                 {resumen.total}
                             </p>
                             <div className="mt-4 flex flex-wrap gap-2 text-xs">

@@ -6,6 +6,7 @@ use App\Enums\FieldDataType;
 use App\Enums\FieldKind;
 use App\Enums\TaxForm;
 use App\Models\CampoCatalogo;
+use App\Support\TaxFieldCatalog;
 use Illuminate\Database\Seeder;
 
 /**
@@ -26,6 +27,13 @@ class CatalogoCamposSeeder extends Seeder
                 $this->crear($forma, $campo);
             }
         }
+
+        // TaxFieldCatalog cachea el catálogo con rememberForever(); un reseed
+        // manual (migrate:fresh --seed) no pasa por CatalogoController, que es
+        // el único lugar que hoy invalida esa caché. Sin esto, un entorno con
+        // CACHE_STORE persistente (database, redis) se queda sirviendo el
+        // catálogo de ANTES del reseed, indefinidamente.
+        TaxFieldCatalog::invalidate();
     }
 
     /**

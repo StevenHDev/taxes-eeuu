@@ -1,11 +1,10 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Upload } from 'lucide-react';
+import { AlertTriangle, Check, Circle, Upload } from 'lucide-react';
 import { Fragment, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -50,14 +49,74 @@ type PageProps = {
     auth: { user: { role: 'client' | 'preparer' | 'administrator' } };
 };
 
-const ESTADO_VARIANT: Record<
-    CampoCliente['estado'],
-    'outline' | 'secondary' | 'default' | 'destructive'
-> = {
-    pendiente: 'outline',
-    recibido: 'default',
-    invalido: 'destructive',
+// ── Presentación de estado ───────────────────────────────────────────────
+// Recorrer cientos de campos con pills de color termina en ruido: todos pesan
+// lo mismo y ninguno destaca. Acá el estado se dice dos veces, en dos canales
+// distintos: un riel de color al borde de la fila, que se lee de reojo sin
+// leer, y una etiqueta en versalitas monoespaciadas que confirma al detenerse.
+
+const ESTADO_RIEL: Record<CampoCliente['estado'], string> = {
+    pendiente: 'border-l-state-pendiente',
+    recibido: 'border-l-state-recibido',
+    invalido: 'border-l-state-invalido',
 };
+
+const ESTADO_FONDO: Record<CampoCliente['estado'], string> = {
+    pendiente: 'bg-state-pendiente',
+    recibido: 'bg-state-recibido',
+    invalido: 'bg-state-invalido',
+};
+
+const ESTADO_TINTA: Record<CampoCliente['estado'], string> = {
+    pendiente: 'text-muted-foreground',
+    recibido: 'text-foreground',
+    invalido: 'text-destructive',
+};
+
+const ESTADO_ICONO: Record<CampoCliente['estado'], typeof Circle> = {
+    pendiente: Circle,
+    recibido: Check,
+    invalido: AlertTriangle,
+};
+
+function EstadoTag({ estado }: { estado: CampoCliente['estado'] }) {
+    const { t } = useTranslation();
+    const Icono = ESTADO_ICONO[estado];
+
+    return (
+        <span
+            className={`inline-flex items-center gap-1.5 font-mono text-micro uppercase ${ESTADO_TINTA[estado]}`}
+        >
+            <Icono className="size-3 shrink-0" aria-hidden />
+            {t(`clienteShow.fieldState.${estado}`)}
+        </span>
+    );
+}
+
+// Los campos únicos por cliente se guardan bajo esta forma canónica; no es una
+// forma fiscal sino la identidad del cliente (SSN, cónyuge, dependientes).
+const TRANSVERSAL = 'transversal';
+
+// El código es como los preparadores nombran el trabajo — «el 1040», «la
+// Schedule C» — así que encabeza la sección en vez de quedar sepultado en una
+// columna. Sale del valor del enum, que es el identificador estable.
+function codigoForma(forma: string): string {
+    if (forma === TRANSVERSAL) {
+        return 'IDENT';
+    }
+
+    return forma
+        .replace(/^form_/, '')
+        .replace(/^schedule_/, 'sch ')
+        .replace(/_/g, '-')
+        .toUpperCase();
+}
+
+// La etiqueta del backend ya trae el código («Form 1040 (Individual)»), que
+// arriba se muestra aparte. Acá queda la parte en lenguaje llano.
+function descriptorForma(label: string): string {
+    return label.match(/\(([^)]+)\)\s*$/)?.[1] ?? label;
+}
 
 function guessTipoDato(valor: unknown): string {
     if (typeof valor === 'number') {
@@ -127,7 +186,9 @@ function FieldValue({ value }: { value: unknown }) {
         value === undefined ||
         (typeof value === 'string' && value.trim() === '')
     ) {
-        return <span className="text-muted-foreground">{t('common.none')}</span>;
+        return (
+            <span className="text-muted-foreground">{t('common.none')}</span>
+        );
     }
 
     if (typeof value === 'boolean') {
@@ -135,8 +196,18 @@ function FieldValue({ value }: { value: unknown }) {
     }
 
     if (typeof value === 'number' || typeof value === 'string') {
+        // Monoespaciada solo donde aporta: cifras alineadas y 0/O
+        // inconfundibles en SSN, montos, fechas y valores enmascarados. Un
+        // nombre o una dirección se leen peor en mono, así que el texto sin
+        // dígitos se queda en la sans.
+        const esDato = typeof value === 'number' || /\d/.test(value);
+
         return (
-            <span className="whitespace-pre-wrap wrap-break-word">
+            <span
+                className={`wrap-break-word whitespace-pre-wrap ${
+                    esDato ? 'font-mono tabular-nums' : ''
+                }`}
+            >
                 {String(value)}
             </span>
         );
@@ -159,7 +230,11 @@ function FieldValue({ value }: { value: unknown }) {
             return (
                 <div className="flex flex-wrap gap-1">
                     {value.map((v, i) => (
-                        <Badge key={i} variant="secondary" className="font-normal">
+                        <Badge
+                            key={i}
+                            variant="secondary"
+                            className="font-normal"
+                        >
                             {String(v)}
                         </Badge>
                     ))}
@@ -170,10 +245,7 @@ function FieldValue({ value }: { value: unknown }) {
         return (
             <div className="space-y-2">
                 {value.map((v, i) => (
-                    <div
-                        key={i}
-                        className="rounded-md border bg-muted/30 p-2"
-                    >
+                    <div key={i} className="rounded-md border bg-muted/30 p-2">
                         <div className="mb-1 text-xs font-medium text-muted-foreground">
                             {t('clienteShow.value.record', { n: i + 1 })}
                         </div>
@@ -239,11 +311,7 @@ function esObjetoPlano(v: unknown): boolean {
 }
 
 type EditorKind =
-    | 'scalar'
-    | 'stringList'
-    | 'object'
-    | 'objectList'
-    | 'advanced';
+    'scalar' | 'stringList' | 'object' | 'objectList' | 'advanced';
 
 // Elige el editor más amigable según la forma del valor actual:
 // escalar -> un campo de texto; lista simple -> uno por línea; objeto plano ->
@@ -414,7 +482,9 @@ function ValueEditor({
             <div className="grid gap-3">
                 {Object.keys(obj).map((k) => (
                     <div key={k} className="grid gap-1.5">
-                        <Label htmlFor={`campo-${k}`}>{humanizarClave(k)}</Label>
+                        <Label htmlFor={`campo-${k}`}>
+                            {humanizarClave(k)}
+                        </Label>
                         <Input
                             id={`campo-${k}`}
                             value={obj[k]}
@@ -449,10 +519,7 @@ function ValueEditor({
         return (
             <div className="grid gap-3">
                 {items.map((registro, idx) => (
-                    <div
-                        key={idx}
-                        className="space-y-3 rounded-lg border p-3"
-                    >
+                    <div key={idx} className="space-y-3 rounded-lg border p-3">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium">
                                 {t('clienteShow.value.record', { n: idx + 1 })}
@@ -1138,7 +1205,9 @@ function HistorialDialog({
                                     variant={SOURCE_VARIANT[h.source]}
                                     className="font-normal"
                                 >
-                                    {t(`clienteShow.history.source.${h.source}`)}
+                                    {t(
+                                        `clienteShow.history.source.${h.source}`,
+                                    )}
                                 </Badge>
                                 <span>{formatDate(h.created_at)}</span>
                                 {h.modificado_por && (
@@ -1284,6 +1353,193 @@ function ValorCampo({
     );
 }
 
+// Una forma por sección: el preparador trabaja «el 1040», no una tabla plana
+// donde la forma es una columna más que hay que ir leyendo fila por fila.
+function FormaSection({
+    clienteId,
+    forma,
+    label,
+    info,
+    campos,
+    faltantes,
+}: {
+    clienteId: number;
+    forma: string;
+    label: string;
+    info: ClienteForma | undefined;
+    campos: CampoCliente[];
+    // Campos del catálogo para esta forma que el cliente todavía no tiene
+    // cargados (ni siquiera como fila pendiente) — no están en `campos`
+    // porque no existe CampoCliente hasta que llega un primer valor. Sin
+    // esto, "recibidos" se medía contra sí mismo: un 1040 con un solo campo
+    // cargado mostraba «1/1», aunque el catálogo real tenga cinco.
+    faltantes: number;
+}) {
+    const { t } = useTranslation();
+    const tituloId = useId();
+    const recibidos = campos.filter((c) => c.estado === 'recibido').length;
+    const total = campos.length + faltantes;
+
+    return (
+        <section aria-labelledby={tituloId}>
+            <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b pb-2.5">
+                <div className="min-w-0">
+                    <p className="font-mono text-micro text-muted-foreground uppercase">
+                        {codigoForma(forma)}
+                    </p>
+                    <h2
+                        id={tituloId}
+                        className="text-title font-semibold text-foreground"
+                    >
+                        {descriptorForma(label)}
+                    </h2>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    {/*
+                     * Mini-mapa: un segmento por campo del catálogo, con la
+                     * misma rampa que los rieles de abajo — incluyendo los que
+                     * todavía no se cargaron (sin fila propia en `campos`),
+                     * pintados como pendiente. Muestra la forma de lo que
+                     * falta, no solo cuánto — dos huecos al final no es lo
+                     * mismo que dos huecos salteados. El texto de al lado lo
+                     * dice para quien no puede verlo.
+                     */}
+                    <div
+                        aria-hidden
+                        className="flex w-20 gap-px overflow-hidden rounded-full sm:w-28"
+                    >
+                        {campos.map((c) => (
+                            <span
+                                key={`${c.forma}-${c.campo}`}
+                                className={`h-1.5 flex-1 ${ESTADO_FONDO[c.estado]}`}
+                            />
+                        ))}
+                        {Array.from({ length: faltantes }).map((_, i) => (
+                            <span
+                                key={`faltante-${i}`}
+                                className={`h-1.5 flex-1 ${ESTADO_FONDO.pendiente}`}
+                            />
+                        ))}
+                    </div>
+
+                    <span className="font-mono text-micro text-muted-foreground tabular-nums">
+                        {t('clienteShow.section.received', {
+                            recibidos,
+                            total,
+                        })}
+                    </span>
+
+                    {info &&
+                        (info.revisado_en ? (
+                            <span className="inline-flex items-center gap-1.5 font-mono text-micro text-foreground uppercase">
+                                <Check
+                                    className="size-3 shrink-0"
+                                    aria-hidden
+                                />
+                                {t('clienteShow.reviewed')}
+                            </span>
+                        ) : (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                    router.post(
+                                        marcarRevisado({
+                                            cliente: clienteId,
+                                            forma,
+                                        }).url,
+                                    )
+                                }
+                            >
+                                {t('clienteShow.markReviewed')}
+                            </Button>
+                        ))}
+                </div>
+            </header>
+
+            <Table>
+                {/*
+                 * El header de <TableHeader> de fábrica es un bloque navy
+                 * sólido — pensado para una tabla suelta, no para repetirse
+                 * una vez por forma. Acá se apaga a una fila utilitaria (borde
+                 * inferior, sin relleno): el navy queda para el riel de
+                 * estado, que es el único lugar donde este color debe hablar
+                 * dentro de la sección.
+                 */}
+                <TableHeader className="bg-transparent [&_th]:text-muted-foreground [&_tr]:border-border">
+                    <TableRow className="hover:bg-transparent">
+                        <TableHead className="font-mono text-micro uppercase">
+                            {t('clienteShow.table.field')}
+                        </TableHead>
+                        <TableHead className="font-mono text-micro uppercase">
+                            {t('clienteShow.table.value')}
+                        </TableHead>
+                        <TableHead className="font-mono text-micro uppercase">
+                            {t('clienteShow.table.status')}
+                        </TableHead>
+                        <TableHead className="text-right font-mono text-micro uppercase">
+                            {t('common.actions')}
+                        </TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {campos.map((campo) => (
+                        <TableRow key={`${campo.forma}-${campo.campo}`}>
+                            <TableCell
+                                className={`border-l-[3px] align-top font-medium ${ESTADO_RIEL[campo.estado]}`}
+                            >
+                                {humanizarClave(campo.campo)}
+                            </TableCell>
+                            <TableCell className="max-w-sm align-top text-sm">
+                                {campo.documento ? (
+                                    <DocumentoViewerDialog
+                                        documento={campo.documento}
+                                    />
+                                ) : (
+                                    <ValorCampo
+                                        clienteId={clienteId}
+                                        campo={campo}
+                                        formaLabel={label}
+                                    />
+                                )}
+                            </TableCell>
+                            <TableCell className="align-top">
+                                <EstadoTag estado={campo.estado} />
+                            </TableCell>
+                            <TableCell className="text-right align-top">
+                                <HistorialDialog
+                                    clienteId={clienteId}
+                                    campo={campo}
+                                />
+                                {(campo.tipo_campo === 'documento' ||
+                                    campo.tipo_campo === 'mixto') && (
+                                    <SubirDocumentoDialog
+                                        clienteId={clienteId}
+                                        campo={campo}
+                                    />
+                                )}
+                                {(campo.tipo_campo === 'dato' ||
+                                    campo.tipo_campo === 'mixto') && (
+                                    <EditCampoDialog
+                                        clienteId={clienteId}
+                                        campo={campo}
+                                        formaLabel={label}
+                                    />
+                                )}
+                                <EliminarCampoButton
+                                    clienteId={clienteId}
+                                    campo={campo}
+                                />
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </section>
+    );
+}
+
 export default function ClienteShow({
     cliente,
     formas,
@@ -1300,21 +1556,57 @@ export default function ClienteShow({
     const esAdministrador = auth.user.role === 'administrator';
 
     const formaLabel = (forma: string) =>
-        forma === 'transversal'
+        forma === TRANSVERSAL
             ? t('clienteShow.transversalLabel')
             : (formas.find((f) => f.forma === forma)?.forma_label ?? forma);
+
+    // Agrupado por forma, preservando el orden por campo que ya trae el backend.
+    const porForma = new Map<string, CampoCliente[]>();
+
+    for (const campo of campos) {
+        const lista = porForma.get(campo.forma);
+
+        if (lista) {
+            lista.push(campo);
+        } else {
+            porForma.set(campo.forma, [campo]);
+        }
+    }
+
+    // Campos del catálogo que el cliente todavía no tiene cargados (ni
+    // siquiera como fila pendiente): son el resto del total real de cada
+    // forma, el que "recibidos" necesita para no medirse contra sí mismo.
+    const faltantesPorForma = new Map<string, number>();
+
+    for (const item of catalogoDisponible) {
+        faltantesPorForma.set(
+            item.forma,
+            (faltantesPorForma.get(item.forma) ?? 0) + 1,
+        );
+    }
+
+    // Los datos del cliente van primero: son su identidad (SSN, cónyuge,
+    // dependientes) y no pertenecen a ninguna forma en particular. Después las
+    // formas en el orden del backend, y al final cualquier forma con campos que
+    // no esté declarada — no debería pasar, pero no la escondemos si pasa.
+    const declaradas = [TRANSVERSAL, ...formas.map((f) => f.forma)];
+    const secciones = [
+        ...declaradas,
+        ...[...porForma.keys()].filter((f) => !declaradas.includes(f)),
+    ].filter((forma) => porForma.has(forma));
 
     return (
         <>
             <Head title={cliente.name} />
 
-            <div className="space-y-6 p-4">
+            <div className="space-y-8 p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <h1 className="text-xl font-semibold">
+                    <div className="min-w-0">
+                        <h1 className="font-display text-display text-foreground">
                             {cliente.name}
                         </h1>
-                        <p className="text-sm text-muted-foreground">
+                        {/* Correo y teléfono son identificadores, no prosa. */}
+                        <p className="mt-1.5 font-mono text-xs text-muted-foreground">
                             {cliente.email}
                             {cliente.phone ? ` · ${cliente.phone}` : ''}
                         </p>
@@ -1364,50 +1656,6 @@ export default function ClienteShow({
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    {formas.map((f) => (
-                        <div
-                            key={f.forma}
-                            className="flex items-center gap-2 rounded-lg border p-2"
-                        >
-                            <span className="text-sm font-medium">
-                                {f.forma_label}
-                            </span>
-                            <Badge
-                                variant={
-                                    f.estado === 'completo'
-                                        ? 'default'
-                                        : 'secondary'
-                                }
-                            >
-                                {f.estado === 'completo'
-                                    ? t('clienteShow.formState.complete')
-                                    : t('clienteShow.formState.inProgress')}
-                            </Badge>
-                            {f.revisado_en ? (
-                                <Badge variant="outline">
-                                    {t('clienteShow.reviewed')}
-                                </Badge>
-                            ) : (
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() =>
-                                        router.post(
-                                            marcarRevisado({
-                                                cliente: cliente.id,
-                                                forma: f.forma,
-                                            }).url,
-                                        )
-                                    }
-                                >
-                                    {t('clienteShow.markReviewed')}
-                                </Button>
-                            )}
-                        </div>
-                    ))}
-                </div>
-
                 <div className="flex justify-end">
                     <AgregarCampoDialog
                         clienteId={cliente.id}
@@ -1415,103 +1663,25 @@ export default function ClienteShow({
                     />
                 </div>
 
-                <Card className="overflow-hidden py-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>{t('common.form')}</TableHead>
-                                <TableHead>
-                                    {t('clienteShow.table.field')}
-                                </TableHead>
-                                <TableHead>
-                                    {t('clienteShow.table.status')}
-                                </TableHead>
-                                <TableHead>
-                                    {t('clienteShow.table.value')}
-                                </TableHead>
-                                <TableHead className="text-right">
-                                    {t('common.actions')}
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {campos.map((campo) => (
-                                <TableRow key={`${campo.forma}-${campo.campo}`}>
-                                    <TableCell className="align-top text-sm text-muted-foreground">
-                                        {formaLabel(campo.forma)}
-                                    </TableCell>
-                                    <TableCell className="align-top font-medium">
-                                        {humanizarClave(campo.campo)}
-                                    </TableCell>
-                                    <TableCell className="align-top">
-                                        <Badge
-                                            variant={
-                                                ESTADO_VARIANT[campo.estado]
-                                            }
-                                        >
-                                            {t(
-                                                `clienteShow.fieldState.${campo.estado}`,
-                                            )}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="max-w-sm align-top text-sm">
-                                        {campo.documento ? (
-                                            <DocumentoViewerDialog
-                                                documento={campo.documento}
-                                            />
-                                        ) : (
-                                            <ValorCampo
-                                                clienteId={cliente.id}
-                                                campo={campo}
-                                                formaLabel={formaLabel(
-                                                    campo.forma,
-                                                )}
-                                            />
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-right align-top">
-                                        <HistorialDialog
-                                            clienteId={cliente.id}
-                                            campo={campo}
-                                        />
-                                        {(campo.tipo_campo === 'documento' ||
-                                            campo.tipo_campo === 'mixto') && (
-                                            <SubirDocumentoDialog
-                                                clienteId={cliente.id}
-                                                campo={campo}
-                                            />
-                                        )}
-                                        {(campo.tipo_campo === 'dato' ||
-                                            campo.tipo_campo === 'mixto') && (
-                                            <EditCampoDialog
-                                                clienteId={cliente.id}
-                                                campo={campo}
-                                                formaLabel={formaLabel(
-                                                    campo.forma,
-                                                )}
-                                            />
-                                        )}
-                                        <EliminarCampoButton
-                                            clienteId={cliente.id}
-                                            campo={campo}
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-
-                            {campos.length === 0 && (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={5}
-                                        className="text-center text-muted-foreground"
-                                    >
-                                        {t('clienteShow.table.empty')}
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </Card>
+                {secciones.length === 0 ? (
+                    <p className="border-t pt-6 text-sm text-muted-foreground">
+                        {t('clienteShow.table.empty')}
+                    </p>
+                ) : (
+                    <div className="space-y-10">
+                        {secciones.map((forma) => (
+                            <FormaSection
+                                key={forma}
+                                clienteId={cliente.id}
+                                forma={forma}
+                                label={formaLabel(forma)}
+                                info={formas.find((f) => f.forma === forma)}
+                                campos={porForma.get(forma) ?? []}
+                                faltantes={faltantesPorForma.get(forma) ?? 0}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </>
     );

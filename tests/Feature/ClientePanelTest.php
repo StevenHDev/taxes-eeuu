@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\CampoCliente;
 use App\Models\CampoReveal;
 use App\Models\Documento;
@@ -60,6 +61,33 @@ class ClientePanelTest extends TestCase
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
         $this->actingAs($admin)->get(route('clientes.show', $cliente))->assertOk();
+    }
+
+    public function test_el_detalle_carga_con_campos_sensibles_con_acentos(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        // Enmascarar por bytes partía el carácter acentuado y producía UTF-8
+        // inválido, que hacía fallar la serialización JSON de toda la respuesta.
+        $this->crearCampo($cliente, 'info_conyuge', [
+            'valor_texto' => ['nombre_completo' => 'María López', 'ssn' => '123-45-6789'],
+        ]);
+
+        // Petición Inertia (XHR) — es la que serializa las props como JsonResponse.
+        $respuesta = $this->actingAs($admin)
+            ->withHeaders([
+                'X-Inertia' => 'true',
+                'X-Inertia-Version' => app(HandleInertiaRequests::class)->version(request()),
+            ])
+            ->get(route('clientes.show', $cliente))
+            ->assertOk();
+
+        $conyuge = collect($respuesta->json('props.campos'))
+            ->firstWhere('campo', 'info_conyuge');
+
+        $this->assertSame('*******ópez', $conyuge['valor']['nombre_completo']);
+        $this->assertSame('*******6789', $conyuge['valor']['ssn']);
     }
 
     public function test_un_preparador_puede_corregir_un_campo_manualmente_y_queda_en_el_historial(): void
