@@ -39,7 +39,12 @@ Un endpoint que requiera un permiso que el token no tiene responde `403 Forbidde
 
 ## Catálogo maestro de campos
 
-Cada campo pertenece a **`campos_transversales`** (se aplican a cualquier `forma`) o a una **forma específica**: `form_1040`, `schedule_c`, `schedule_e`, `form_1065`, `form_1120`, `form_1120_s`, `schedule_f`, `form_1041`, `form_990`, `form_1040_nr`. El catálogo completo (fuente de verdad) vive en `App\Support\TaxFieldCatalog`; las tablas de abajo son su documentación exhaustiva, campo por campo — si cambia el catálogo, hay que actualizar esta sección también.
+Cada campo pertenece a una de dos categorías:
+
+- **Datos únicos por cliente** (`unico_por_cliente: sí`): son datos de la **persona**, no de una forma en particular (identificación, cónyuge, dependientes, W-2, 1099-NEC, declaración del año anterior). Se piden **una sola vez** y se comparten entre todas las formas del cliente. Internamente se guardan bajo la forma canónica **`transversal`** — una sola fila por `(cliente, campo)`, sin importar en qué forma llegó el evento. Ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente).
+- **Campos por forma**: pertenecen a una **forma específica** (`form_1040`, `schedule_c`, `schedule_e`, `form_1065`, `form_1120`, `form_1120_s`, `schedule_f`, `form_1041`, `form_990`, `form_1040_nr`). Un mismo campo puede pedirse en varias formas y tener **un valor distinto en cada una** (ej. `estados_bancarios`, `gastos`, `activos`).
+
+El catálogo completo (fuente de verdad) vive en `catalogo_campos` (administrable desde `/catalogo`) y se lee vía `App\Support\TaxFieldCatalog`; las tablas de abajo son su documentación exhaustiva, campo por campo — si cambia el catálogo, hay que actualizar esta sección también.
 
 Qué significa cada columna:
 
@@ -48,10 +53,11 @@ Qué significa cada columna:
 - **`formatos_aceptados`**: solo aplica cuando `modo: archivo`. Extensiones de archivo válidas para ese campo — cualquier otra extensión hace que el evento se guarde con `estado: "invalido"`.
 - **`obligatorio`**: si es `no`, ese campo no cuenta para que la API marque la forma como `completo` (ver [Emitir eventos](#emitir-un-evento-post-apieventos)).
 - **`sensible`**: si es `sí`, el valor se cifra en la base de datos, se muestra enmascarado en el panel/API, y revelarlo exige el flujo de [Revelar campos sensibles](#revelar-campos-sensibles).
+- **`unico_por_cliente`**: si es `sí`, es un dato de la persona que se guarda una sola vez (bajo la forma `transversal`) y se comparte entre todas sus formas.
 
-**Nota importante:** varios nombres de campo se repiten en formas distintas con significado distinto (ej. `gastos` existe en `form_1065`, `form_1120`, `form_1120_s`, `form_1041` y `form_990`). Por eso todo endpoint que identifique un campo específico exige también `forma` — nunca alcanza con el nombre del campo solo.
+**Nota importante:** varios nombres de campo se repiten en formas distintas con significado distinto (ej. `gastos` existe en `form_1065`, `form_1120`, `form_1120_s`, `form_1041` y `form_990`; `estados_bancarios` en todas las formas de negocio). Por eso todo endpoint que identifique un campo específico exige también `forma` — nunca alcanza con el nombre del campo solo. Para los datos únicos por cliente, la forma de almacenamiento es siempre `transversal` (ver más abajo).
 
-### `campos_transversales` (aplican a cualquier `forma`)
+### Datos únicos por cliente (`unico_por_cliente`, se guardan bajo `transversal`)
 
 | Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
@@ -60,18 +66,15 @@ Qué significa cada columna:
 | `info_dependientes` | dato | `array_object` (`nombre_completo`, `fecha_nacimiento`, `ssn`) | — | sí | sí |
 | `w2` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
 | `form_1099_nec` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
-| `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
-| `pl_balance_general` | mixto | `number` | `pdf`, `xlsx` | sí | no |
-| `gastos_deducibles` | mixto | `number` | `pdf`, `jpg`, `png` | sí | no |
-| `activos_depreciacion` | mixto | `object` | `pdf`, `xlsx` | sí | no |
 | `declaracion_anio_anterior` | documento | — | `pdf` | **no** | no |
+
+Estos 6 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)).
 
 ### `form_1040`
 
 | Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
 | `ingresos` | dato | `number` | — | sí | no |
-| `dependientes` | dato | `array_object` | — | sí | no |
 | `deducciones` | mixto | `number` | `pdf`, `jpg` | sí | no |
 | `creditos` | dato | `array_string` | — | sí | no |
 | `impuestos_retenidos` | dato | `number` | — | sí | no |
@@ -81,6 +84,7 @@ Qué significa cada columna:
 
 | Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
+| `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
 | `ingresos_negocio` | dato | `number` | — | sí | no |
 | `gastos_deducibles_negocio` | mixto | `number` | `pdf`, `jpg`, `csv` | sí | no |
 | `millaje` | dato | `number` | — | sí | no |
@@ -91,6 +95,7 @@ Qué significa cada columna:
 
 | Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
+| `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
 | `ingresos_renta` | dato | `number` | — | sí | no |
 | `gastos_propiedad` | mixto | `number` | `pdf`, `jpg` | sí | no |
 | `depreciacion` | dato | `number` | — | sí | no |
@@ -102,6 +107,7 @@ Qué significa cada columna:
 
 | Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
+| `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
 | `ingresos` | dato | `number` | — | sí | no |
 | `gastos` | mixto | `number` | `pdf`, `xlsx` | sí | no |
 | `activos` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
@@ -114,6 +120,7 @@ Qué significa cada columna:
 
 | Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
+| `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
 | `estados_financieros` | documento | — | `pdf`, `xlsx` | sí | no |
 | `ingresos` | dato | `number` | — | sí | no |
 | `gastos` | mixto | `number` | `pdf`, `xlsx` | sí | no |
@@ -127,6 +134,7 @@ Qué significa cada columna:
 
 | Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
+| `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
 | `ingresos` | dato | `number` | — | sí | no |
 | `gastos` | mixto | `number` | `pdf`, `xlsx` | sí | no |
 | `estados_financieros` | documento | — | `pdf`, `xlsx` | sí | no |
@@ -138,6 +146,7 @@ Qué significa cada columna:
 
 | Campo | `tipo_campo` | `tipo_dato` | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
+| `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
 | `ventas_agricolas` | dato | `number` | — | sí | no |
 | `subsidios` | dato | `number` | — | sí | no |
 | `gastos_operacion` | mixto | `number` | `pdf`, `jpg` | sí | no |
@@ -177,6 +186,19 @@ Qué significa cada columna:
 | `tratados_tributarios` | dato | `string` | — | sí | no |
 | `deducciones_permitidas` | mixto | `number` | `pdf`, `jpg` | sí | no |
 
+## Cómo se guardan los datos únicos por cliente
+
+Los 6 campos marcados `unico_por_cliente` (identificación, cónyuge, dependientes, W-2, 1099-NEC, declaración del año anterior) son datos de la **persona**, no de una forma. Antes se guardaban con la `forma` de cada evento, así que el mismo dato quedaba **duplicado** si llegaba en el contexto de dos formas distintas (ej. un SSN en `form_1040` y otro en `schedule_c`). Ahora:
+
+- Se guardan **una sola vez** por cliente, bajo la forma canónica **`transversal`** (`campos_cliente.forma = "transversal"`), sin importar en qué `forma` llegó el evento.
+- Al emitir el evento, envía **`forma: "transversal"`** (recomendado, es lo semánticamente correcto para un dato de la persona). También se acepta una forma real (ej. `form_1040`): la API la reubica igual bajo `transversal`. La respuesta del evento devuelve la `forma` que enviaste.
+- Cuentan para la **completitud de todas** las formas del cliente: basta cargarlos una vez para que todas sus formas los den por recibidos.
+- Reenviar uno de estos campos (en cualquier forma) **sobrescribe la única fila existente** — no crea una nueva por forma.
+- En el detalle del cliente (`GET /api/clientes/{id}`) estos campos aparecen con `forma: "transversal"`, y en el panel web se muestran agrupados como **"Datos del cliente"**.
+- Para los endpoints que identifican un campo por `forma` (historial, `PATCH`, `DELETE`), usa **`?forma=transversal`** para estos campos — es lo que devuelve el detalle. Pasar una forma real también funciona: la API la normaliza a `transversal` para estos campos.
+
+Los demás campos (los que pertenecen a una forma) siguen guardándose por `(cliente, forma, campo)` como antes: un mismo campo puede tener valores distintos en formas distintas.
+
 ## Emitir un evento (`POST /api/eventos`)
 
 Requiere ability `eventos:write`. Un evento = un solo campo, nunca varios juntos.
@@ -190,7 +212,7 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
 ```json
 {
   "cliente_id": 42,
-  "forma": "form_1040",
+  "forma": "transversal",
   "campo": "identificacion_ssn_itin",
   "tipo_campo": "dato",
   "modo": "texto",
@@ -198,6 +220,8 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
   "contenido": "123-45-6789"
 }
 ```
+
+> `identificacion_ssn_itin` es un dato **único por cliente**, así que su `forma` es `transversal` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). También se aceptaría una forma real (ej. `form_1040`): la API lo reubica igual bajo `transversal`.
 
 **`number`** — ej. `ingresos`:
 
@@ -218,7 +242,7 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
 ```json
 {
   "cliente_id": 42,
-  "forma": "form_1040",
+  "forma": "transversal",
   "campo": "info_conyuge",
   "tipo_campo": "dato",
   "modo": "texto",
@@ -250,7 +274,7 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
 ```json
 {
   "cliente_id": 42,
-  "forma": "form_1040",
+  "forma": "transversal",
   "campo": "info_dependientes",
   "tipo_campo": "dato",
   "modo": "texto",
@@ -279,20 +303,20 @@ curl -X POST https://tu-dominio/api/eventos \
   -H "Authorization: Bearer $TOKEN" \
   -H "Accept: application/json" \
   -F "cliente_id=42" \
-  -F "forma=form_1040" \
+  -F "forma=transversal" \
   -F "campo=w2" \
   -F "tipo_campo=documento" \
   -F "modo=archivo" \
   -F "file=@w2_2025.pdf"
 ```
 
-Respuesta `201` (misma forma para cualquiera de los casos anteriores):
+Respuesta `201` (mismo shape para cualquiera de los casos anteriores). `forma` refleja la que enviaste; para un campo único enviado como `transversal`, `forma_estado` puede venir `null` si el cliente todavía no tiene ninguna forma iniciada (el dato igual queda guardado y contará cuando existan formas):
 
 ```json
 {
   "cliente_id": 42,
-  "forma": "form_1040",
-  "forma_estado": "en_progreso",
+  "forma": "transversal",
+  "forma_estado": null,
   "campo": "w2",
   "estado": "recibido"
 }
@@ -304,7 +328,7 @@ Notas:
 - **`external_ref`** (opcional, extensión sobre el contrato original): identificador estable de la conversación externa (ej. el id de sesión del agente). Si lo envías la primera vez que `cliente_id` es null, y luego lo repites, la API reconoce que es el mismo cliente en vez de crear uno duplicado — protección recomendada si tu agente puede perder el `cliente_id` entre turnos.
 - **`phone`** (opcional, extensión sobre el contrato original): teléfono del cliente. Si lo envías cuando `cliente_id` es null y ya existe un cliente con ese teléfono, la API reutiliza ese cliente en vez de crear uno duplicado — es un identificador más estable que `external_ref` para esto, y además queda guardado para poder [buscar al cliente por teléfono](#buscar-un-cliente-por-id-o-por-telefono) más adelante.
 - El `estado` que envíes (si lo envías) se ignora: **la API siempre calcula `estado` del lado del servidor** validando el contenido (SSN de 9 dígitos, fecha válida, número ≥ 0, formato de archivo aceptado, archivo legible). Un evento con contenido inválido igual se acepta y persiste con `estado: "invalido"` — no se rechaza con 422, salvo que la forma del evento esté mal (campo inexistente, `tipo_campo`/`modo` inconsistente con el catálogo, etc.).
-- Reenviar el mismo `(cliente_id, forma, campo)` sobrescribe el valor anterior (idempotencia) y queda registrado en el historial de cambios.
+- Reenviar el mismo `(cliente_id, forma, campo)` sobrescribe el valor anterior (idempotencia) y queda registrado en el historial de cambios. Para los campos `unico_por_cliente` la unicidad es por `(cliente_id, campo)` — reenviarlos en cualquier `forma` sobrescribe la misma fila única (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)).
 - Para campos `array_object`/`array_string` (ej. `info_dependientes`), reenvía siempre el **arreglo acumulado completo** — la API sobrescribe, no hace merge parcial.
 
 ## Endpoints del panel

@@ -7,6 +7,7 @@ use App\Enums\FieldDataType;
 use App\Enums\FieldKind;
 use App\Enums\FieldMode;
 use App\Enums\TaxForm;
+use App\Models\CampoCatalogo;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
@@ -45,7 +46,10 @@ class EventoRequest extends FormRequest
             // Solo se usa cuando cliente_id es null: identifica/crea al cliente por
             // teléfono en vez de (o además de) external_ref — ver resolverCliente().
             'phone' => ['nullable', 'string', 'max:32'],
-            'forma' => ['required', Rule::enum(TaxForm::class)],
+            // Las 10 formas del IRS, o 'transversal' para los datos únicos por
+            // cliente (SSN, cónyuge, dependientes, W-2, 1099-NEC, declaración
+            // anterior) — que no pertenecen a una forma en particular.
+            'forma' => ['required', Rule::in([...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), CampoCatalogo::TRANSVERSAL])],
             'campo' => ['required', 'string'],
             'tipo_campo' => ['required', Rule::enum(FieldKind::class)],
             'modo' => ['required', Rule::enum(FieldMode::class)],
@@ -75,13 +79,13 @@ class EventoRequest extends FormRequest
     public function withValidator(ValidatorContract|Validator $validator): void
     {
         $validator->after(function (ValidatorContract $validator) {
-            $forma = TaxForm::tryFrom((string) $this->input('forma'));
+            $forma = (string) $this->input('forma');
 
-            if (! $forma) {
+            if ($forma !== CampoCatalogo::TRANSVERSAL && ! TaxForm::tryFrom($forma)) {
                 return;
             }
 
-            $field = TaxFieldCatalog::find($forma->value, (string) $this->input('campo'));
+            $field = TaxFieldCatalog::find($forma, (string) $this->input('campo'));
 
             if (! $field) {
                 $validator->errors()->add('campo', 'El campo indicado no existe en el catálogo para esa forma.');

@@ -191,6 +191,45 @@ class EventoRecoleccionTest extends TestCase
         $this->assertSame('transversal', $filas->first()->forma);
     }
 
+    public function test_un_dato_unico_se_puede_enviar_con_forma_transversal(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'campo' => 'identificacion_ssn_itin',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'string',
+            'contenido' => '123-45-6789',
+        ])->assertCreated()->assertJsonPath('estado', 'recibido');
+
+        $this->assertDatabaseHas('campos_cliente', [
+            'user_id' => $cliente->id,
+            'forma' => 'transversal',
+            'campo' => 'identificacion_ssn_itin',
+        ]);
+    }
+
+    public function test_un_campo_de_forma_no_se_puede_enviar_como_transversal(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        // 'ingresos' pertenece a una forma, no es transversal → 422.
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 1000,
+        ])->assertStatus(422)->assertJsonValidationErrors(['campo']);
+    }
+
     public function test_dependientes_ya_no_existe_en_form_1040(): void
     {
         $this->actingAsAgente();
