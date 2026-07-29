@@ -409,7 +409,6 @@
         "nav": {
             "profile": "Profile",
             "security": "Security",
-            "appearance": "Appearance",
             "apiTokens": "API Tokens"
         },
         "profile": {
@@ -434,14 +433,6 @@
             "newPasswordPlaceholder": "New password",
             "confirmPasswordLabel": "Confirm password",
             "confirmPasswordPlaceholder": "Confirm password"
-        },
-        "appearance": {
-            "pageTitle": "Appearance settings",
-            "title": "Appearance settings",
-            "description": "Update the appearance settings for your account",
-            "light": "Light",
-            "dark": "Dark",
-            "system": "System"
         },
         "apiTokens": {
             "pageTitle": "API Tokens",
