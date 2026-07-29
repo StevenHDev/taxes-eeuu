@@ -296,3 +296,152 @@
         animation: none;
     }
 }
+
+/*
+ * ── Docs de API: markdown crudo con tratamiento propio ────────────────
+ * El HTML llega de `Str::markdown()` vía dangerouslySetInnerHTML — Tailwind no
+ * puede apuntarle con utilities, así que el tratamiento va acá, reusando los
+ * mismos tokens que el resto de la app (mono para código/rutas/params, rampa
+ * de navy, el mismo --table-stripe de las tablas de clientes) en vez de
+ * inventar una paleta nueva para esta pantalla.
+ */
+.api-docs-content {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--foreground);
+}
+
+.api-docs-content > :first-child {
+    margin-top: 0;
+}
+
+.api-docs-content h2 {
+    font-size: var(--text-title);
+    font-weight: 600;
+    letter-spacing: var(--text-title--letter-spacing);
+    margin-block: 2.5rem 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.api-docs-content h2:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.api-docs-content h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-block: 2rem 0.75rem;
+}
+
+.api-docs-content h2 code,
+.api-docs-content h3 code {
+    font-weight: 500;
+}
+
+.api-docs-content p,
+.api-docs-content ul,
+.api-docs-content ol {
+    margin-block: 0.85rem;
+    max-width: 72ch;
+}
+
+.api-docs-content li {
+    margin-block: 0.3rem;
+}
+
+.api-docs-content a {
+    color: var(--primary);
+    text-underline-offset: 2px;
+}
+
+.api-docs-content strong {
+    font-weight: 600;
+}
+
+/* Código en línea: chip mono discreto — el mismo tratamiento para un método,
+   una ruta, un nombre de campo o un valor, sin fingir una categoría que el
+   contenido no tiene de forma consistente. */
+.api-docs-content code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+    border-radius: calc(var(--radius) * 0.5);
+    padding: 0.1em 0.4em;
+}
+
+.api-docs-content pre {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    background: color-mix(in oklch, var(--primary) 5%, var(--background));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    margin-block: 1.25rem;
+    overflow-x: auto;
+}
+
+.api-docs-content pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    color: inherit;
+}
+
+.api-docs-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-block: 1.5rem;
+    font-size: 0.85rem;
+}
+
+.api-docs-content th,
+.api-docs-content td {
+    text-align: left;
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+
+.api-docs-content th {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    letter-spacing: var(--text-micro--letter-spacing);
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.api-docs-content tbody tr:nth-child(even) {
+    background: var(--table-stripe);
+}
+
+.api-docs-content td code,
+.api-docs-content tbody tr:nth-child(even) code {
+    background: color-mix(in oklch, var(--background) 55%, transparent);
+}
+
+/* Tablas y bloques de código anchos: scroll propio, nunca el body. */
+.api-docs-content :is(table, pre) {
+    display: block;
+    overflow-x: auto;
+}
+
+.api-docs-content blockquote {
+    border-left: 3px solid var(--border);
+    padding-left: 1rem;
+    color: var(--muted-foreground);
+    margin-block: 1.25rem;
+}
+
+/* ── Nav lateral de la tabla de contenidos ──────────────────────────── */
+.api-docs-nav a[data-active='true'] {
+    color: var(--foreground);
+    border-color: var(--primary);
+    font-weight: 500;
+}

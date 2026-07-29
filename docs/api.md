@@ -310,6 +310,8 @@ curl -X POST https://tu-dominio/api/eventos \
   -F "file=@w2_2025.pdf"
 ```
 
+**Límite de tamaño:** `file` acepta hasta **20 MB** en este endpoint (`POST /api/eventos`). Superarlo responde `422`. Nota: la corrección manual (`PATCH /api/clientes/{id}/campos/{campo}`, ver [Endpoints del panel](#endpoints-del-panel)) acepta solo **10 MB** — es un límite más chico a propósito, pensado para correcciones puntuales de un preparador, no para la carga inicial del agente.
+
 Respuesta `201` (mismo shape para cualquiera de los casos anteriores). `forma` refleja la que enviaste; para un campo único enviado como `transversal`, `forma_estado` puede venir `null` si el cliente todavía no tiene ninguna forma iniciada (el dato igual queda guardado y contará cuando existan formas):
 
 ```json
@@ -336,22 +338,78 @@ Notas:
 Requieren ability `clientes:read` (lectura) o `clientes:write` (escritura).
 
 ```
-GET   /api/clientes                              — lista clientes visibles para el token, con estado general
-GET   /api/clientes/buscar?id= | ?phone=         — busca un cliente por id o por teléfono (ver abajo)
-GET   /api/clientes/{id}                         — detalle: formas aplicables + todos los campos y su estado
-GET   /api/clientes/{id}/documentos               — documentos subidos, con URL de descarga firmada y temporal
-GET   /api/clientes/{id}/export                  — descarga un ZIP con documentos + JSON de campos
+GET    /api/clientes                              — lista paginada de clientes visibles para el token
+POST   /api/clientes                              — alta de un cliente (mismas reglas que /clientes web)
+GET    /api/clientes/buscar?id= | ?phone= | ?email= — busca un cliente por id, teléfono o email (ver abajo)
+GET    /api/clientes/{id}                         — detalle: formas aplicables + todos los campos y su estado
+GET    /api/clientes/{id}/documentos              — documentos subidos, con URL de descarga firmada y temporal
+GET    /api/clientes/{id}/export                  — descarga un ZIP con documentos + JSON de campos
 GET    /api/clientes/{id}/campos/{campo}?forma=   — historial de cambios de un campo (forma es obligatoria)
 PATCH  /api/clientes/{id}/campos/{campo}?forma=   — corrección manual de un campo por un preparador/administrador
 DELETE /api/clientes/{id}/campos/{campo}?forma=   — elimina un campo cargado por error (conserva el historial)
 POST   /api/clientes/{id}/marcar-revisado/{forma} — marca una forma como revisada por un humano
 ```
 
-La corrección manual (`PATCH`) acepta el mismo shape que un evento de texto/archivo (`modo`, `tipo_dato`+`contenido`, o `file`), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`). `DELETE` borra la fila de `campos_cliente` (y el documento/archivo si era de tipo `documento`), pero agrega una entrada final al historial con `valor_nuevo: null` — nada se pierde de la trazabilidad.
+### Listar clientes (`GET /api/clientes`)
 
-### Buscar un cliente por id o por teléfono
+Paginado, 20 por página. Acepta `?search=` (busca por nombre, email o teléfono) y `?page=`.
 
-Útil para que el agente conversacional resuelva el `cliente_id` a partir del teléfono antes de emitir eventos, en vez de depender de `external_ref`:
+```bash
+curl -s "https://tu-dominio/api/clientes?search=lopez&page=2" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/json"
+```
+
+```json
+{
+  "data": [
+    { "id": 42, "name": "María López", "email": "maria@ejemplo.com", "phone": "+15551234567", "estado_general": "en_progreso" }
+  ],
+  "meta": { "current_page": 2, "last_page": 5 }
+}
+```
+
+### Crear un cliente (`POST /api/clientes`)
+
+Requiere ability `clientes:write`. Pensado para dar de alta al cliente con datos reales **antes** de emitir eventos, en vez de dejar que `POST /eventos` genere el placeholder "Cliente sin nombre" cuando `cliente_id` llega vacío. Mismas reglas que el alta manual desde `/clientes` (rol fijo `client`, `email`/`phone` únicos):
+
+```bash
+curl -X POST https://tu-dominio/api/clientes \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "María López", "email": "maria@ejemplo.com", "phone": "+15551234567" }'
+```
+
+Responde `201` con el mismo shape que `GET /api/clientes/{id}` (ver más abajo).
+
+La corrección manual (`PATCH`) acepta el mismo shape que un evento de texto/archivo (`modo`, `tipo_dato`+`contenido`, o `file` — máx. **10 MB**, ver nota en [Emitir eventos](#emitir-un-evento-post-apieventos)), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`). Responde `200` con `{ "campo": "...", "estado": "..." }`.
+
+`DELETE` borra la fila de `campos_cliente` (y el documento/archivo si era de tipo `documento`), pero agrega una entrada final al historial con `valor_nuevo: null` — nada se pierde de la trazabilidad. Responde `204` sin body.
+
+`POST .../marcar-revisado/{forma}` responde `200` con `{ "forma": "form_1040", "estado": "completo", "revisado_en": "2025-01-15T10:30:00Z" }`.
+
+### Historial de un campo (`GET /api/clientes/{id}/campos/{campo}?forma=`)
+
+```json
+{
+  "data": [
+    {
+      "valor_anterior": null,
+      "valor_nuevo": 52000,
+      "source": "agente_ia",
+      "modificado_por": null,
+      "created_at": "2025-01-10T09:00:00Z"
+    }
+  ]
+}
+```
+
+**Nota:** a diferencia del detalle del cliente, los valores de este historial **no se enmascaran** aunque el campo sea sensible (`HistorialCambio` no tiene el accessor de máscara que sí tiene `campos_cliente.valor`) — quien tenga ability `clientes:read` ve el valor real en texto plano en `valor_anterior`/`valor_nuevo`.
+
+### Buscar un cliente por id, teléfono o email
+
+Útil para que el agente conversacional resuelva el `cliente_id` a partir del teléfono o el email antes de emitir eventos, en vez de depender de `external_ref`:
 
 ```bash
 curl -s "https://tu-dominio/api/clientes/buscar?phone=%2B15551234567" \
@@ -359,7 +417,7 @@ curl -s "https://tu-dominio/api/clientes/buscar?phone=%2B15551234567" \
   -H "Accept: application/json"
 ```
 
-Se le puede pasar `id` en vez de `phone` (`?id=42`) — hace falta exactamente uno de los dos. Devuelve el mismo shape que `GET /api/clientes/{id}` (incluye `phone`), respetando el mismo alcance de datos que el resto de la API: un preparador solo encuentra a sus clientes asignados. Si no hay ningún cliente visible con ese id/teléfono, responde `404`.
+Se le puede pasar `id` o `email` en vez de `phone` (`?id=42`, `?email=maria@ejemplo.com`) — hace falta exactamente uno de los tres. Devuelve el mismo shape que `GET /api/clientes/{id}` (incluye `phone`), respetando el mismo alcance de datos que el resto de la API: un preparador solo encuentra a sus clientes asignados. Si no hay ningún cliente visible con ese id/teléfono/email, responde `404`.
 
 ## Panel de administración (solo web, sin API de token)
 
@@ -380,5 +438,6 @@ Los campos marcados como sensibles en el catálogo (`identificacion_ssn_itin`, `
 | `401` | Token ausente, inválido o revocado. |
 | `403` | Token sin la ability requerida, o el cliente/preparador no tiene acceso a ese recurso. |
 | `404` | El cliente, campo o documento no existe (o no es visible para este token). |
-| `422` | El evento/corrección está mal formado: campo inexistente en el catálogo para esa forma, `tipo_campo`/`modo` inconsistente, o falta un campo requerido de la request. |
-| `429` | Límite de tasa excedido (hay throttling específico en revelar campos sensibles). |
+| `422` | El evento/corrección está mal formado: campo inexistente en el catálogo para esa forma, `tipo_campo`/`modo` inconsistente, falta un campo requerido de la request, o el archivo supera el límite de tamaño (ver [Emitir eventos](#emitir-un-evento-post-apieventos) y [Endpoints del panel](#endpoints-del-panel)). |
+
+Ningún endpoint bajo `/api/*` tiene rate limiting hoy — un token puede llamarlos sin límite de tasa. (El `429` solo existe en `POST /clientes/{cliente}/campos/{campo}/reveal`, que es exclusivo del panel web con sesión, no un endpoint de esta API — ver [Revelar campos sensibles](#revelar-campos-sensibles).)

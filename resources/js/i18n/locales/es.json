@@ -471,6 +471,8 @@
     },
     "apiDocs": {
         "title": "Documentación de la API",
-        "intro": "Cómo autenticarte y usar cada endpoint para subir y consultar documentos fiscales."
+        "intro": "Cómo autenticarte y usar cada endpoint para subir y consultar documentos fiscales.",
+        "downloadSpec": "Descargar spec OpenAPI",
+        "contents": "Contenidos"
     }
 }

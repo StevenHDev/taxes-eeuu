@@ -1,0 +1,826 @@
+openapi: 3.1.0
+
+info:
+  title: API de Recolección de Datos para Declaraciones de Impuestos
+  version: "1.0.0"
+  description: |
+    API REST que recibe eventos de recolección de datos fiscales **un campo a la
+    vez** desde un agente conversacional externo, y expone el panel interno de
+    clientes/formularios/campos para preparadores y administradores.
+
+    Esta especificación es la contraparte máquina-legible de `docs/api.md` — para
+    el catálogo completo de campos por formulario (72 definiciones), las reglas de
+    negocio detalladas y ejemplos curl adicionales, ver ese documento. Si algo
+    difiere entre ambos, `docs/api.md` explica el porqué; este archivo describe el
+    contrato técnico exacto.
+  contact:
+    name: GlobalTax Services
+
+servers:
+  - url: /api
+    description: Relativo al dominio donde esté desplegada la app.
+
+tags:
+  - name: Eventos
+    description: Recolección incremental de campos desde el agente conversacional.
+  - name: Clientes
+    description: Alta, listado, búsqueda y detalle de clientes.
+  - name: Campos
+    description: Historial, corrección y borrado de campos individuales de un cliente.
+
+security:
+  - BearerAuth: []
+
+paths:
+  /eventos:
+    post:
+      tags: [Eventos]
+      operationId: emitirEvento
+      summary: Emite un evento de recolección de un campo
+      description: |
+        Un evento = un solo campo, nunca varios juntos. Requiere ability
+        `eventos:write`. `modo: "texto"` acepta JSON o multipart; `modo: "archivo"`
+        exige `multipart/form-data` (el archivo va en el mismo request).
+
+        El `estado` resultante (`recibido` / `invalido`) lo calcula siempre el
+        servidor validando el contenido — un evento con contenido inválido igual
+        se acepta y persiste con `estado: "invalido"`, no se rechaza con 422
+        (salvo que la FORMA del evento esté mal: campo inexistente en el catálogo,
+        `tipo_campo`/`modo` inconsistente, etc.).
+      x-required-ability: eventos:write
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventoTexto'
+            examples:
+              string:
+                summary: Dato simple (string) — identificacion_ssn_itin
+                value:
+                  cliente_id: 42
+                  forma: transversal
+                  campo: identificacion_ssn_itin
+                  tipo_campo: dato
+                  modo: texto
+                  tipo_dato: string
+                  contenido: "123-45-6789"
+              number:
+                summary: Dato numérico — ingresos
+                value:
+                  cliente_id: 42
+                  forma: form_1040
+                  campo: ingresos
+                  tipo_campo: dato
+                  modo: texto
+                  tipo_dato: number
+                  contenido: 52000
+              object:
+                summary: Objeto — info_conyuge
+                value:
+                  cliente_id: 42
+                  forma: transversal
+                  campo: info_conyuge
+                  tipo_campo: dato
+                  modo: texto
+                  tipo_dato: object
+                  contenido:
+                    nombre_completo: Jane Doe
+                    fecha_nacimiento: "1990-05-14"
+                    ssn: "987-65-4321"
+              array_object:
+                summary: Lista de objetos — info_dependientes (arreglo acumulado completo)
+                value:
+                  cliente_id: 42
+                  forma: transversal
+                  campo: info_dependientes
+                  tipo_campo: dato
+                  modo: texto
+                  tipo_dato: array_object
+                  contenido:
+                    - nombre_completo: Kid One
+                      fecha_nacimiento: "2015-03-01"
+                      ssn: "111-22-3333"
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EventoArchivo'
+      responses:
+        '201':
+          description: Evento procesado (aceptado con `estado` recibido o inválido).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventoRespuesta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |
+            La FORMA del evento está mal (no el contenido): campo inexistente en
+            el catálogo para esa forma, `tipo_campo`/`modo` inconsistente, falta
+            un campo requerido, o el archivo supera 20 MB.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /clientes:
+    get:
+      tags: [Clientes]
+      operationId: listarClientes
+      summary: Lista paginada de clientes visibles para el token
+      description: 'Un preparador solo ve sus clientes asignados; un administrador ve todos. 20 por página.'
+      x-required-ability: clientes:read
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Busca por nombre, email o teléfono.
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        '200':
+          description: Página de clientes.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClienteResumen'
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+                    required: [current_page, last_page]
+                required: [data, meta]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Clientes]
+      operationId: crearCliente
+      summary: Da de alta un cliente
+      description: |
+        Pensado para crear al cliente con datos reales **antes** de emitir
+        eventos, en vez de dejar que `POST /eventos` genere el placeholder
+        "Cliente sin nombre" cuando `cliente_id` llega vacío.
+      x-required-ability: clientes:write
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                phone:
+                  type: string
+                  maxLength: 32
+                  nullable: true
+                preparer_id:
+                  type: integer
+                  nullable: true
+                  description: Solo lo usa un administrador — un preparador se asigna a sí mismo automáticamente.
+              required: [name, email]
+      responses:
+        '201':
+          description: Cliente creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteDetalle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationErrorResponse'
+
+  /clientes/buscar:
+    get:
+      tags: [Clientes]
+      operationId: buscarCliente
+      summary: Busca un cliente por id, teléfono o email
+      description: |
+        Útil para que el agente conversacional resuelva el `cliente_id` a partir
+        del teléfono o el email antes de emitir eventos, en vez de depender de
+        `external_ref`. Hace falta exactamente uno de los tres parámetros.
+      x-required-ability: clientes:read
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: integer
+        - name: phone
+          in: query
+          schema:
+            type: string
+        - name: email
+          in: query
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Cliente encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteDetalle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clientes/{cliente}:
+    parameters:
+      - $ref: '#/components/parameters/ClienteId'
+    get:
+      tags: [Clientes]
+      operationId: obtenerCliente
+      summary: Detalle de un cliente — formas + todos sus campos y estado
+      description: Incluye todas las formas aplicables y todos los campos cargados, con su valor (enmascarado si es sensible) y estado.
+      x-required-ability: clientes:read
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Detalle del cliente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteDetalle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clientes/{cliente}/documentos:
+    parameters:
+      - $ref: '#/components/parameters/ClienteId'
+    get:
+      tags: [Clientes]
+      operationId: listarDocumentos
+      summary: Documentos subidos por el cliente
+      description: Cada documento incluye una URL de descarga firmada y temporal (10 minutos).
+      x-required-ability: clientes:read
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de documentos.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Documento'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clientes/{cliente}/export:
+    parameters:
+      - $ref: '#/components/parameters/ClienteId'
+    get:
+      tags: [Clientes]
+      operationId: exportarCliente
+      summary: Descarga un ZIP con documentos + JSON de campos del cliente
+      description: El ZIP incluye todos los documentos subidos más un archivo JSON con el detalle de todos los campos.
+      x-required-ability: clientes:read
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Archivo ZIP.
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clientes/{cliente}/marcar-revisado/{forma}:
+    parameters:
+      - $ref: '#/components/parameters/ClienteId'
+      - name: forma
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TaxForm'
+    post:
+      tags: [Clientes]
+      operationId: marcarFormaRevisada
+      summary: Marca una forma del cliente como revisada por un humano
+      description: Registra que un preparador o administrador revisó manualmente esta forma, más allá de que sus campos estén completos.
+      x-required-ability: clientes:write
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Forma marcada como revisada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  forma:
+                    type: string
+                  estado:
+                    $ref: '#/components/schemas/FormState'
+                  revisado_en:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clientes/{cliente}/campos/{campo}:
+    parameters:
+      - $ref: '#/components/parameters/ClienteId'
+      - $ref: '#/components/parameters/CampoNombre'
+      - name: forma
+        in: query
+        required: true
+        description: |
+          Obligatoria: el mismo nombre de campo se repite en formas distintas con
+          significado distinto (ej. `gastos` en `form_1065`, `form_1120`, etc.).
+          Para campos únicos por cliente, usa `transversal`.
+        schema:
+          $ref: '#/components/schemas/FormaAlmacen'
+    get:
+      tags: [Campos]
+      operationId: historialCampo
+      summary: Historial de cambios de un campo
+      description: |
+        **Los valores de este endpoint no se enmascaran** aunque el campo sea
+        sensible — a diferencia del detalle del cliente, `valor_anterior` y
+        `valor_nuevo` viajan en texto plano. Requiere `clientes:read`.
+      x-required-ability: clientes:read
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Historial de cambios, más reciente primero.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HistorialEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Campos]
+      operationId: corregirCampo
+      summary: Corrección manual de un campo por un preparador/administrador
+      description: |
+        Acepta el mismo shape que un evento (`modo` + `tipo_dato`/`contenido`, o
+        `file`). Queda registrada en el historial con `source: "preparador"` o
+        `"administrador"`. El límite de archivo es **10 MB** (más chico que
+        `POST /eventos`, a propósito: es para correcciones puntuales, no la
+        carga inicial del agente).
+      x-required-ability: clientes:write
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorreccionTexto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CorreccionArchivo'
+      responses:
+        '200':
+          description: Campo corregido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  campo:
+                    type: string
+                  estado:
+                    $ref: '#/components/schemas/FieldState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationErrorResponse'
+
+    delete:
+      tags: [Campos]
+      operationId: eliminarCampo
+      summary: Elimina un campo cargado por error
+      description: 'Borra el documento/archivo asociado si lo tenía. Agrega una entrada final al historial con `valor_nuevo: null` — no se pierde trazabilidad.'
+      x-required-ability: clientes:write
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Campo eliminado, sin contenido.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: "Laravel Sanctum personal access token"
+      description: |
+        Token personal creado desde **Settings → API Tokens** en la sesión web.
+        Cada token declara sus abilities al crearse:
+
+        | Ability | Habilita |
+        |---|---|
+        | `eventos:write` | `POST /eventos` — pensado para un token de servicio de un solo propósito, dedicado al agente conversacional. |
+        | `clientes:read` | Listar/ver clientes, historial de campos, documentos, export. |
+        | `clientes:write` | Alta de cliente, corrección de campos, marcar revisado, borrado de campo. |
+        | `clientes:reveal-sensitive` | Reservado para uso futuro — hoy "reveal" solo existe en el panel web con sesión. |
+
+        Un endpoint que requiera una ability que el token no tiene responde `403`.
+
+  parameters:
+    ClienteId:
+      name: cliente
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    CampoNombre:
+      name: campo
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    TaxForm:
+      type: string
+      enum: [form_1040, schedule_c, schedule_e, form_1065, form_1120, form_1120_s, schedule_f, form_1041, form_990, form_1040_nr]
+      description: Las 10 formas del IRS soportadas.
+
+    FormaAlmacen:
+      description: Una de las 10 formas, o `transversal` para los campos únicos por cliente.
+      oneOf:
+        - $ref: '#/components/schemas/TaxForm'
+        - type: string
+          enum: [transversal]
+
+    FieldKind:
+      type: string
+      enum: [documento, dato, mixto]
+      description: '`documento` solo admite `modo: archivo`; `dato` solo admite `modo: texto`; `mixto` admite cualquiera.'
+
+    FieldMode:
+      type: string
+      enum: [archivo, texto]
+
+    FieldDataType:
+      type: string
+      enum: [string, number, object, array_string, array_object]
+      description: 'Solo aplica cuando `modo: texto`.'
+
+    FieldState:
+      type: string
+      enum: [pendiente, recibido, invalido]
+
+    FormState:
+      type: string
+      enum: [en_progreso, completo]
+
+    EventSource:
+      type: string
+      enum: [agente_ia, preparador, administrador]
+
+    EventoTexto:
+      type: object
+      description: |
+        Shape para `modo: "texto"`. El catálogo completo de campos válidos por
+        forma (con su `tipo_campo`/`tipo_dato`/`formatos_aceptados` exactos) está
+        en `docs/api.md#catálogo-maestro-de-campos` — son 72 definiciones,
+        administrables desde `/catalogo`, demasiadas para enumerar aquí sin que
+        este archivo quede desactualizado apenas alguien edite el catálogo.
+      properties:
+        cliente_id:
+          type: integer
+          nullable: true
+          description: Vacío/null = primer contacto, la API crea un cliente placeholder.
+        external_ref:
+          type: string
+          maxLength: 255
+          nullable: true
+        phone:
+          type: string
+          maxLength: 32
+          nullable: true
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        campo:
+          type: string
+        tipo_campo:
+          $ref: '#/components/schemas/FieldKind'
+        modo:
+          type: string
+          enum: [texto]
+        tipo_dato:
+          $ref: '#/components/schemas/FieldDataType'
+        contenido:
+          description: string, number, object o array según `tipo_dato` — ver ejemplos.
+        nombre_original:
+          type: string
+          maxLength: 255
+          nullable: true
+      required: [forma, campo, tipo_campo, modo]
+
+    EventoArchivo:
+      type: object
+      description: 'Shape para `modo: archivo` — siempre `multipart/form-data`. Máximo 20 MB.'
+      properties:
+        cliente_id:
+          type: integer
+          nullable: true
+        external_ref:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        campo:
+          type: string
+        tipo_campo:
+          $ref: '#/components/schemas/FieldKind'
+        modo:
+          type: string
+          enum: [archivo]
+        file:
+          type: string
+          format: binary
+        nombre_original:
+          type: string
+          nullable: true
+      required: [forma, campo, tipo_campo, modo, file]
+
+    CorreccionTexto:
+      allOf:
+        - $ref: '#/components/schemas/EventoTexto'
+        - type: object
+          properties:
+            cliente_id: false
+            external_ref: false
+            phone: false
+
+    CorreccionArchivo:
+      allOf:
+        - $ref: '#/components/schemas/EventoArchivo'
+        - type: object
+          description: Igual que `EventoArchivo`, pero el límite es 10 MB, no 20 MB.
+
+    EventoRespuesta:
+      type: object
+      properties:
+        cliente_id:
+          type: integer
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        forma_estado:
+          $ref: '#/components/schemas/FormState'
+          nullable: true
+        campo:
+          type: string
+        estado:
+          $ref: '#/components/schemas/FieldState'
+      required: [cliente_id, forma, campo, estado]
+
+    ClienteResumen:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        estado_general:
+          $ref: '#/components/schemas/FormState'
+          nullable: true
+
+    Forma:
+      type: object
+      properties:
+        forma:
+          $ref: '#/components/schemas/TaxForm'
+        estado:
+          $ref: '#/components/schemas/FormState'
+        revisado_en:
+          type: string
+          format: date-time
+          nullable: true
+
+    Campo:
+      type: object
+      properties:
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        campo:
+          type: string
+        tipo_campo:
+          $ref: '#/components/schemas/FieldKind'
+        modo:
+          $ref: '#/components/schemas/FieldMode'
+        estado:
+          $ref: '#/components/schemas/FieldState'
+        valor:
+          description: |
+            Enmascarado automáticamente si el campo es sensible (ej.
+            `"***-**-6789"`). Revelar el valor real solo es posible desde el
+            panel web con sesión — ver `docs/api.md#revelar-campos-sensibles`.
+        updated_at:
+          type: string
+          format: date-time
+
+    ClienteDetalle:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        formas:
+          type: array
+          items:
+            $ref: '#/components/schemas/Forma'
+        campos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Campo'
+
+    Documento:
+      type: object
+      properties:
+        id:
+          type: integer
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        campo:
+          type: string
+        file_original_name:
+          type: string
+        formato:
+          type: string
+        estado_validacion:
+          $ref: '#/components/schemas/FieldState'
+        download_url:
+          type: string
+          format: uri
+          description: Firmada y temporal — expira a los 10 minutos.
+        created_at:
+          type: string
+          format: date-time
+
+    HistorialEntry:
+      type: object
+      properties:
+        valor_anterior:
+          nullable: true
+          description: Sin enmascarar, incluso para campos sensibles.
+        valor_nuevo:
+          nullable: true
+          description: Sin enmascarar, incluso para campos sensibles.
+        source:
+          $ref: '#/components/schemas/EventSource'
+        modificado_por:
+          type: string
+          nullable: true
+          description: Nombre de quien hizo el cambio (null si `source` es `agente_ia`).
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      required: [message, errors]
+
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido o revocado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Unauthenticated.
+
+    Forbidden:
+      description: Token sin la ability requerida, o el cliente/preparador no tiene acceso a ese recurso.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "El token no tiene la ability requerida: clientes:read"
+
+    NotFound:
+      description: El cliente, campo o documento no existe (o no es visible para este token).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationErrorResponse:
+      description: La request está mal formada.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'

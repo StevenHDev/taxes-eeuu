@@ -23,6 +23,7 @@ class CampoClienteController extends Controller
     public function historial(Request $request, User $cliente, string $campo): JsonResponse
     {
         $this->authorize('view', $cliente);
+        $this->ensureAbility($request, ApiAbility::ClientesRead);
 
         // Normaliza a la forma de almacenamiento: los campos únicos por cliente
         // viven bajo 'transversal', sin importar la forma que llegue en el request.

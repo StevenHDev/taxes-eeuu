@@ -471,6 +471,8 @@
     },
     "apiDocs": {
         "title": "API Documentation",
-        "intro": "How to authenticate and use each endpoint to upload and query tax documents."
+        "intro": "How to authenticate and use each endpoint to upload and query tax documents.",
+        "downloadSpec": "Download OpenAPI spec",
+        "contents": "Contents"
     }
 }

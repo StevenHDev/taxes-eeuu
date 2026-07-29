@@ -31,4 +31,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('documentos.show');
 
     Route::get('api-docs', [ApiDocumentationController::class, 'index'])->name('api-docs.index');
+    Route::get('api-docs/openapi.yaml', [ApiDocumentationController::class, 'openapi'])->name('api-docs.openapi');
 });
