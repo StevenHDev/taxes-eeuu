@@ -6,6 +6,7 @@ use App\Enums\EventSource;
 use App\Enums\FieldState;
 use App\Enums\FormState;
 use App\Enums\TaxForm;
+use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
@@ -22,17 +23,20 @@ use Illuminate\Support\Collection;
 class DashboardSummaryService
 {
     /**
-     * @param  Collection<int, User>  $clientes  con `formasCliente` ya cargada
+     * @param  Collection<int, User>  $clientes  con `formasCliente` ya cargada (escopada al mismo `$taxYear`)
      * @return array<string, mixed>
      */
-    public function resumenPara(Collection $clientes): array
+    public function resumenPara(Collection $clientes, int $taxYear): array
     {
         $clienteIds = $clientes->pluck('id');
         $todasFormasCliente = $clientes->pluck('formasCliente')->flatten();
 
         return [
+            // Actividad y pendientes de revisión cruzan años a propósito: un
+            // preparador quiere ver "qué pasó recientemente" sin importar de
+            // qué año fiscal es cada cambio.
             'actividad_por_dia' => $this->actividadPorDia($clienteIds),
-            'campos_recibidos_porcentaje' => $this->camposRecibidosPorcentaje($clienteIds, $todasFormasCliente),
+            'campos_recibidos_porcentaje' => $this->camposRecibidosPorcentaje($clienteIds, $todasFormasCliente, $taxYear),
             'formas_completas_porcentaje' => $this->formasCompletasPorcentaje($todasFormasCliente),
             'distribucion_por_forma' => $this->distribucionPorForma($todasFormasCliente),
             'pendientes_revisar' => $this->pendientesRevisar($clienteIds),
@@ -71,10 +75,10 @@ class DashboardSummaryService
      * @param  Collection<int, int>  $clienteIds
      * @param  Collection<int, FormaCliente>  $todasFormasCliente
      */
-    private function camposRecibidosPorcentaje(Collection $clienteIds, Collection $todasFormasCliente): int
+    private function camposRecibidosPorcentaje(Collection $clienteIds, Collection $todasFormasCliente, int $taxYear): int
     {
         $esperados = $todasFormasCliente->sum(
-            fn (FormaCliente $f) => \count(TaxFieldCatalog::requiredFieldsFor(TaxForm::from($f->forma))),
+            fn (FormaCliente $f) => \count(TaxFieldCatalog::requiredFieldsFor($taxYear, TaxForm::from($f->forma))),
         );
 
         if ($esperados === 0) {
@@ -83,6 +87,7 @@ class DashboardSummaryService
 
         $recibidos = CampoCliente::query()
             ->whereIn('user_id', $clienteIds)
+            ->where('tax_year', $taxYear)
             ->where('estado', FieldState::Recibido)
             ->count();
 
@@ -162,11 +167,23 @@ class DashboardSummaryService
             ->get()
             ->map(fn (HistorialCambio $h) => [
                 'campo' => $h->campo,
-                'forma_label' => TaxForm::from($h->forma)->label(),
+                'forma_label' => $this->formaLabel($h->forma),
                 'cliente_nombre' => $h->user->name,
                 'source' => $h->source,
                 'created_at' => $h->created_at,
             ])
             ->all();
+    }
+
+    /**
+     * `historial_cambios.forma` puede valer 'transversal' (campos únicos por
+     * cliente, ver TaxFieldCatalog::formaAlmacen) — eso no es una TaxForm real,
+     * así que `TaxForm::from()` no puede resolverlo directamente.
+     */
+    private function formaLabel(string $forma): string
+    {
+        return $forma === CampoCatalogo::TRANSVERSAL
+            ? 'Datos del cliente'
+            : TaxForm::from($forma)->label();
     }
 }

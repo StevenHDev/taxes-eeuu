@@ -87,6 +87,7 @@ export type CatalogoDisponibleItem = {
 export type CampoCatalogo = {
     id: number;
     forma: string;
+    tax_year: number;
     clave: string;
     tipo_campo: 'documento' | 'dato' | 'mixto';
     tipo_dato:

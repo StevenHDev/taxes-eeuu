@@ -74,4 +74,27 @@ class DashboardTest extends TestCase
                 ->where('resumen.ultimos_clientes.0.id', $propio->id)
                 ->has('resumen.actividad_por_dia', 7));
     }
+
+    public function test_actividad_reciente_no_falla_con_un_campo_unico_por_cliente(): void
+    {
+        // Los campos únicos por cliente (SSN, cónyuge, dependientes) se auditan
+        // con forma='transversal' — no es una TaxForm real, así que el resumen
+        // no puede llamar TaxForm::from() a ciegas sobre este dato.
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        HistorialCambio::query()->create([
+            'user_id' => $cliente->id,
+            'forma' => 'transversal',
+            'campo' => 'identificacion_ssn_itin',
+            'valor_nuevo' => '123456789',
+            'source' => 'agente_ia',
+        ]);
+
+        $this->actingAs($preparador)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('resumen.actividad_reciente.0.forma_label', 'Datos del cliente'));
+    }
 }

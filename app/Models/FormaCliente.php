@@ -12,11 +12,12 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property string $forma
+ * @property int $tax_year
  * @property FormState $estado
  * @property Carbon|null $revisado_en
  * @property int|null $revisado_por
  */
-#[Fillable(['user_id', 'forma', 'estado', 'revisado_en', 'revisado_por'])]
+#[Fillable(['user_id', 'forma', 'tax_year', 'estado', 'revisado_en', 'revisado_por'])]
 class FormaCliente extends Model
 {
     /**

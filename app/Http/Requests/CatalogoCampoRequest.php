@@ -36,6 +36,7 @@ class CatalogoCampoRequest extends FormRequest
 
         return [
             'forma' => ['required', Rule::in($formasValidas)],
+            'tax_year' => ['required', 'integer', 'digits:4'],
             'clave' => [
                 'required',
                 'string',
@@ -43,6 +44,7 @@ class CatalogoCampoRequest extends FormRequest
                 'regex:/^[a-z0-9_]+$/',
                 Rule::unique('catalogo_campos', 'clave')
                     ->where('forma', $this->input('forma'))
+                    ->where('tax_year', $this->input('tax_year'))
                     ->ignore($campoActual instanceof CampoCatalogo ? $campoActual->id : null),
             ],
             'tipo_campo' => ['required', Rule::enum(FieldKind::class)],

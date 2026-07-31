@@ -30,6 +30,7 @@ import {
     destroy as clienteDestroy,
     exportMethod as clienteExport,
     marcarRevisado,
+    show as clienteShowRoute,
 } from '@/routes/clientes';
 import {
     destroy as campoDestroy,
@@ -838,9 +839,11 @@ function DocumentoViewerDialog({ documento }: { documento: CampoDocumento }) {
 // el mismo endpoint de corrección manual en modo "archivo".
 function SubirDocumentoDialog({
     clienteId,
+    taxYear,
     campo,
 }: {
     clienteId: number;
+    taxYear: number;
     campo: CampoCliente;
 }) {
     const { t } = useTranslation();
@@ -848,7 +851,7 @@ function SubirDocumentoDialog({
     const yaHayArchivo = campo.documento !== null;
     const url =
         campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
-        `?forma=${campo.forma}`;
+        `?forma=${campo.forma}&tax_year=${taxYear}`;
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -888,10 +891,12 @@ function SubirDocumentoDialog({
 
 function EditCampoDialog({
     clienteId,
+    taxYear,
     campo,
     formaLabel,
 }: {
     clienteId: number;
+    taxYear: number;
     campo: CampoCliente;
     formaLabel: string;
 }) {
@@ -909,7 +914,7 @@ function EditCampoDialog({
     const submit = () => {
         router.patch(
             campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
-                `?forma=${campo.forma}`,
+                `?forma=${campo.forma}&tax_year=${taxYear}`,
             {
                 modo: 'texto',
                 tipo_dato: guessTipoDato(contenido),
@@ -958,9 +963,11 @@ function EditCampoDialog({
 
 function AgregarCampoDialog({
     clienteId,
+    taxYear,
     disponibles,
 }: {
     clienteId: number;
+    taxYear: number;
     disponibles: CatalogoDisponibleItem[];
 }) {
     const { t } = useTranslation();
@@ -979,7 +986,8 @@ function AgregarCampoDialog({
     );
     const esArchivo = seleccionado?.tipo_campo === 'documento';
     const url =
-        campoUpdate({ cliente: clienteId, campo }).url + `?forma=${forma}`;
+        campoUpdate({ cliente: clienteId, campo }).url +
+        `?forma=${forma}&tax_year=${taxYear}`;
 
     const cambiarForma = (nuevaForma: string) => {
         setForma(nuevaForma);
@@ -1086,9 +1094,11 @@ function AgregarCampoDialog({
 
 function EliminarCampoButton({
     clienteId,
+    taxYear,
     campo,
 }: {
     clienteId: number;
+    taxYear: number;
     campo: CampoCliente;
 }) {
     const { t } = useTranslation();
@@ -1115,7 +1125,8 @@ function EliminarCampoButton({
                                 campoDestroy({
                                     cliente: clienteId,
                                     campo: campo.campo,
-                                }).url + `?forma=${campo.forma}`,
+                                }).url +
+                                    `?forma=${campo.forma}&tax_year=${taxYear}`,
                                 { preserveScroll: true },
                             )
                         }
@@ -1139,9 +1150,11 @@ const SOURCE_VARIANT: Record<
 
 function HistorialDialog({
     clienteId,
+    taxYear,
     campo,
 }: {
     clienteId: number;
+    taxYear: number;
     campo: CampoCliente;
 }) {
     const { t, i18n } = useTranslation();
@@ -1167,7 +1180,7 @@ function HistorialDialog({
     const load = async () => {
         const response = await fetch(
             campoHistorial({ cliente: clienteId, campo: campo.campo }).url +
-                `?forma=${campo.forma}`,
+                `?forma=${campo.forma}&tax_year=${taxYear}`,
             { headers: { Accept: 'application/json' } },
         );
         const json = await response.json();
@@ -1245,10 +1258,12 @@ function HistorialDialog({
 // popup ordenado. Integra el "Revelar" de los campos sensibles.
 function ValorCampo({
     clienteId,
+    taxYear,
     campo,
     formaLabel,
 }: {
     clienteId: number;
+    taxYear: number;
     campo: CampoCliente;
     formaLabel: string;
 }) {
@@ -1259,7 +1274,7 @@ function ValorCampo({
     const reveal = async () => {
         const response = await fetch(
             campoReveal({ cliente: clienteId, campo: campo.campo }).url +
-                `?forma=${campo.forma}`,
+                `?forma=${campo.forma}&tax_year=${taxYear}`,
             {
                 method: 'POST',
                 headers: {
@@ -1357,6 +1372,7 @@ function ValorCampo({
 // donde la forma es una columna más que hay que ir leyendo fila por fila.
 function FormaSection({
     clienteId,
+    taxYear,
     forma,
     label,
     info,
@@ -1364,6 +1380,7 @@ function FormaSection({
     faltantes,
 }: {
     clienteId: number;
+    taxYear: number;
     forma: string;
     label: string;
     info: ClienteForma | undefined;
@@ -1449,6 +1466,7 @@ function FormaSection({
                                             cliente: clienteId,
                                             forma,
                                         }).url,
+                                        { tax_year: taxYear },
                                     )
                                 }
                             >
@@ -1499,6 +1517,7 @@ function FormaSection({
                                 ) : (
                                     <ValorCampo
                                         clienteId={clienteId}
+                                        taxYear={taxYear}
                                         campo={campo}
                                         formaLabel={label}
                                     />
@@ -1510,12 +1529,14 @@ function FormaSection({
                             <TableCell className="text-right align-top">
                                 <HistorialDialog
                                     clienteId={clienteId}
+                                    taxYear={taxYear}
                                     campo={campo}
                                 />
                                 {(campo.tipo_campo === 'documento' ||
                                     campo.tipo_campo === 'mixto') && (
                                     <SubirDocumentoDialog
                                         clienteId={clienteId}
+                                        taxYear={taxYear}
                                         campo={campo}
                                     />
                                 )}
@@ -1523,12 +1544,14 @@ function FormaSection({
                                     campo.tipo_campo === 'mixto') && (
                                     <EditCampoDialog
                                         clienteId={clienteId}
+                                        taxYear={taxYear}
                                         campo={campo}
                                         formaLabel={label}
                                     />
                                 )}
                                 <EliminarCampoButton
                                     clienteId={clienteId}
+                                    taxYear={taxYear}
                                     campo={campo}
                                 />
                             </TableCell>
@@ -1545,15 +1568,31 @@ export default function ClienteShow({
     formas,
     campos,
     catalogoDisponible,
+    taxYearActual,
 }: {
     cliente: { id: number; name: string; email: string; phone: string | null };
     formas: ClienteForma[];
     campos: CampoCliente[];
     catalogoDisponible: CatalogoDisponibleItem[];
+    taxYearActual: number;
 }) {
     const { t } = useTranslation();
     const { auth } = usePage<PageProps>().props;
     const esAdministrador = auth.user.role === 'administrator';
+
+    // Rango simple alrededor del año actual — alcanza para elegir un año
+    // distinto al que trae el backend sin depender de otro prop adicional.
+    const anosSeleccionables = Array.from(
+        new Set([taxYearActual - 1, taxYearActual, taxYearActual + 1]),
+    ).sort((a, b) => b - a);
+
+    const cambiarAno = (nuevoAno: number) => {
+        router.get(
+            clienteShowRoute(cliente.id).url,
+            { tax_year: nuevoAno },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
 
     const formaLabel = (forma: string) =>
         forma === TRANSVERSAL
@@ -1611,8 +1650,32 @@ export default function ClienteShow({
                             {cliente.phone ? ` · ${cliente.phone}` : ''}
                         </p>
                     </div>
-                    <div className="flex gap-2">
-                        <a href={clienteExport(cliente.id).url}>
+                    <div className="flex items-end gap-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor="tax_year_selector">
+                                {t('catalogo.form.taxYear')}
+                            </Label>
+                            <select
+                                id="tax_year_selector"
+                                className="rounded border bg-background p-2 text-sm"
+                                value={taxYearActual}
+                                onChange={(e) =>
+                                    cambiarAno(Number(e.target.value))
+                                }
+                            >
+                                {anosSeleccionables.map((ano) => (
+                                    <option key={ano} value={ano}>
+                                        {ano}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <a
+                            href={
+                                clienteExport(cliente.id).url +
+                                `?tax_year=${taxYearActual}`
+                            }
+                        >
                             <Button variant="secondary">
                                 {t('clienteShow.exportZip')}
                             </Button>
@@ -1659,6 +1722,7 @@ export default function ClienteShow({
                 <div className="flex justify-end">
                     <AgregarCampoDialog
                         clienteId={cliente.id}
+                        taxYear={taxYearActual}
                         disponibles={catalogoDisponible}
                     />
                 </div>
@@ -1673,6 +1737,7 @@ export default function ClienteShow({
                             <FormaSection
                                 key={forma}
                                 clienteId={cliente.id}
+                                taxYear={taxYearActual}
                                 forma={forma}
                                 label={formaLabel(forma)}
                                 info={formas.find((f) => f.forma === forma)}

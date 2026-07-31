@@ -42,6 +42,7 @@ class EventoRecoleccionService
 
             return $this->aplicarCambio(
                 cliente: $cliente,
+                taxYear: (int) $request->validated('tax_year'),
                 forma: (string) $request->validated('forma'),
                 campo: (string) $request->validated('campo'),
                 tipoCampo: (string) $request->validated('tipo_campo'),
@@ -64,6 +65,7 @@ class EventoRecoleccionService
      */
     public function corregirManualmente(
         User $cliente,
+        int $taxYear,
         string $forma,
         string $campo,
         string $tipoCampo,
@@ -76,6 +78,7 @@ class EventoRecoleccionService
     ): array {
         return DB::transaction(fn () => $this->aplicarCambio(
             cliente: $cliente,
+            taxYear: $taxYear,
             forma: $forma,
             campo: $campo,
             tipoCampo: $tipoCampo,
@@ -94,6 +97,7 @@ class EventoRecoleccionService
      */
     private function aplicarCambio(
         User $cliente,
+        int $taxYear,
         string $forma,
         string $campo,
         string $tipoCampo,
@@ -105,18 +109,18 @@ class EventoRecoleccionService
         User $actor,
         EventSource $source,
     ): array {
-        $field = TaxFieldCatalog::find($forma, $campo);
+        $field = TaxFieldCatalog::find($taxYear, $forma, $campo);
 
         // Los campos únicos por cliente se guardan bajo la forma canónica
         // 'transversal' — una sola fila compartida por todas las formas — para no
         // duplicar el mismo dato personal (SSN, cónyuge, dependientes) por forma.
-        $formaAlmacen = TaxFieldCatalog::formaAlmacen($campo, $forma);
+        $formaAlmacen = TaxFieldCatalog::formaAlmacen($taxYear, $campo, $forma);
 
         $documento = null;
         $valor = null;
 
         if ($modo === FieldMode::Archivo) {
-            [$documento, $estado] = $this->procesarArchivo($file, $cliente, $formaAlmacen, $campo, $nombreOriginal, $field['formatos_aceptados'] ?? []);
+            [$documento, $estado] = $this->procesarArchivo($file, $cliente, $taxYear, $formaAlmacen, $campo, $nombreOriginal, $field['formatos_aceptados'] ?? []);
         } else {
             $valor = $contenido;
             $estado = $this->validarContenido($campo, $tipoDato, $field['subcampos'] ?? null, $valor);
@@ -126,6 +130,7 @@ class EventoRecoleccionService
             ->where('user_id', $cliente->id)
             ->where('forma', $formaAlmacen)
             ->where('campo', $campo)
+            ->where('tax_year', $taxYear)
             ->first();
 
         if ($documento && $anterior?->documento_id && $anterior->documento_id !== $documento->id) {
@@ -134,7 +139,7 @@ class EventoRecoleccionService
 
         /** @var CampoCliente $campoCliente */
         $campoCliente = CampoCliente::query()->updateOrCreate(
-            ['user_id' => $cliente->id, 'forma' => $formaAlmacen, 'campo' => $campo],
+            ['user_id' => $cliente->id, 'forma' => $formaAlmacen, 'campo' => $campo, 'tax_year' => $taxYear],
             [
                 'tipo_campo' => $tipoCampo,
                 'modo' => $modo,
@@ -149,6 +154,7 @@ class EventoRecoleccionService
         HistorialCambio::query()->create([
             'user_id' => $cliente->id,
             'forma' => $formaAlmacen,
+            'tax_year' => $taxYear,
             'campo' => $campo,
             'valor_anterior' => $anterior?->valor_texto,
             'valor_nuevo' => $modo === FieldMode::Texto ? $valor : $documento->only(['file_original_name', 'formato']),
@@ -156,7 +162,7 @@ class EventoRecoleccionService
             'modificado_por' => $actor->id,
         ]);
 
-        $formaCliente = $this->recalcularAfectadas($cliente, $forma, $campo);
+        $formaCliente = $this->recalcularAfectadas($cliente, $taxYear, $forma, $campo);
 
         return ['cliente' => $cliente, 'campo_cliente' => $campoCliente, 'forma_cliente' => $formaCliente];
     }
@@ -167,15 +173,16 @@ class EventoRecoleccionService
      * (con `valor_nuevo: null`) para trazabilidad; lo que se borra es la fila
      * "actual" en `campos_cliente` y, si correspondía, el documento y su archivo.
      */
-    public function eliminarCampo(User $cliente, string $forma, string $campo, User $actor): void
+    public function eliminarCampo(User $cliente, int $taxYear, string $forma, string $campo, User $actor): void
     {
-        DB::transaction(function () use ($cliente, $forma, $campo, $actor) {
-            $formaAlmacen = TaxFieldCatalog::formaAlmacen($campo, $forma);
+        DB::transaction(function () use ($cliente, $taxYear, $forma, $campo, $actor) {
+            $formaAlmacen = TaxFieldCatalog::formaAlmacen($taxYear, $campo, $forma);
 
             $campoCliente = CampoCliente::query()
                 ->where('user_id', $cliente->id)
                 ->where('forma', $formaAlmacen)
                 ->where('campo', $campo)
+                ->where('tax_year', $taxYear)
                 ->first();
 
             if (! $campoCliente) {
@@ -187,6 +194,7 @@ class EventoRecoleccionService
             HistorialCambio::query()->create([
                 'user_id' => $cliente->id,
                 'forma' => $formaAlmacen,
+                'tax_year' => $taxYear,
                 'campo' => $campo,
                 'valor_anterior' => $campoCliente->valor_texto,
                 'valor_nuevo' => null,
@@ -200,7 +208,7 @@ class EventoRecoleccionService
 
             $campoCliente->delete();
 
-            $this->recalcularAfectadas($cliente, $forma, $campo);
+            $this->recalcularAfectadas($cliente, $taxYear, $forma, $campo);
         });
     }
 
@@ -267,7 +275,7 @@ class EventoRecoleccionService
      * @param  array<int, string>  $formatosAceptados
      * @return array{0: Documento, 1: FieldState}
      */
-    private function procesarArchivo(UploadedFile $file, User $cliente, string $forma, string $campo, ?string $nombreOriginal, array $formatosAceptados): array
+    private function procesarArchivo(UploadedFile $file, User $cliente, int $taxYear, string $forma, string $campo, ?string $nombreOriginal, array $formatosAceptados): array
     {
         $extension = strtolower((string) $file->getClientOriginalExtension());
 
@@ -288,6 +296,7 @@ class EventoRecoleccionService
         $documento = Documento::query()->create([
             'user_id' => $cliente->id,
             'forma' => $forma,
+            'tax_year' => $taxYear,
             'campo' => $campo,
             'file_path' => $path,
             'file_original_name' => $nombreOriginal ?? $file->getClientOriginalName(),
@@ -360,11 +369,13 @@ class EventoRecoleccionService
     }
 
     /**
-     * Recalcula la completitud de las formas afectadas por un cambio. Para un campo
-     * normal, solo su forma; para un campo único por cliente, además todas las
-     * formas del cliente (porque ese dato cuenta para la completitud de todas).
+     * Recalcula la completitud de las formas afectadas por un cambio, para un
+     * año fiscal dado. Para un campo normal, solo su forma; para un campo único
+     * por cliente, además todas las formas de ese cliente EN ESE MISMO AÑO
+     * (porque ese dato cuenta para la completitud de todas las formas del año,
+     * pero nunca para las de otro año fiscal).
      */
-    private function recalcularAfectadas(User $cliente, string $forma, string $campo): ?FormaCliente
+    private function recalcularAfectadas(User $cliente, int $taxYear, string $forma, string $campo): ?FormaCliente
     {
         $formaReal = TaxForm::tryFrom($forma);
 
@@ -374,9 +385,14 @@ class EventoRecoleccionService
             $formas->push($formaReal->value);
         }
 
-        if (TaxFieldCatalog::isUnicoPorCliente($campo)) {
+        if (TaxFieldCatalog::isUnicoPorCliente($taxYear, $campo)) {
             $formas = $formas
-                ->merge(FormaCliente::query()->where('user_id', $cliente->id)->pluck('forma'))
+                ->merge(
+                    FormaCliente::query()
+                        ->where('user_id', $cliente->id)
+                        ->where('tax_year', $taxYear)
+                        ->pluck('forma'),
+                )
                 ->unique()
                 ->values();
         }
@@ -384,7 +400,7 @@ class EventoRecoleccionService
         $resultados = [];
 
         foreach ($formas as $f) {
-            $resultados[$f] = $this->recalcularCompletitud($cliente, $f);
+            $resultados[$f] = $this->recalcularCompletitud($cliente, $taxYear, $f);
         }
 
         if ($formaReal && isset($resultados[$formaReal->value])) {
@@ -394,15 +410,16 @@ class EventoRecoleccionService
         return $resultados === [] ? null : reset($resultados);
     }
 
-    private function recalcularCompletitud(User $cliente, string $forma): FormaCliente
+    private function recalcularCompletitud(User $cliente, int $taxYear, string $forma): FormaCliente
     {
         $taxForm = TaxForm::from($forma);
-        $requeridos = collect(TaxFieldCatalog::requiredFieldsFor($taxForm))->pluck('campo');
+        $requeridos = collect(TaxFieldCatalog::requiredFieldsFor($taxYear, $taxForm))->pluck('campo');
 
         // Cuenta los recibidos de la forma más los transversales/únicos por cliente
-        // (guardados bajo 'transversal'), que aplican a todas las formas.
+        // (guardados bajo 'transversal'), que aplican a todas las formas del mismo año.
         $recibidos = CampoCliente::query()
             ->where('user_id', $cliente->id)
+            ->where('tax_year', $taxYear)
             ->whereIn('forma', [$forma, CampoCatalogo::TRANSVERSAL])
             ->where('estado', FieldState::Recibido)
             ->pluck('campo');
@@ -410,7 +427,7 @@ class EventoRecoleccionService
         $completo = $requeridos->diff($recibidos)->isEmpty();
 
         return FormaCliente::query()->updateOrCreate(
-            ['user_id' => $cliente->id, 'forma' => $forma],
+            ['user_id' => $cliente->id, 'forma' => $forma, 'tax_year' => $taxYear],
             ['estado' => $completo ? FormState::Completo : FormState::EnProgreso],
         );
     }

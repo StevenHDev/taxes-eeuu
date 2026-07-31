@@ -22,11 +22,13 @@ class CampoClienteController extends Controller
     public function update(CampoClienteUpdateRequest $request, User $cliente): RedirectResponse
     {
         $forma = $request->forma();
+        $taxYear = $request->taxYear();
         $campo = $request->campoNombre();
-        $field = TaxFieldCatalog::find($forma, $campo);
+        $field = TaxFieldCatalog::find($taxYear, $forma, $campo);
 
         $this->eventos->corregirManualmente(
             cliente: $cliente,
+            taxYear: $taxYear,
             forma: $forma,
             campo: $campo,
             tipoCampo: $field['tipo']->value,
@@ -45,9 +47,15 @@ class CampoClienteController extends Controller
     {
         $this->authorize('update', $cliente);
 
-        $forma = (string) $request->query('forma');
+        $request->validate([
+            'forma' => ['required', 'string'],
+            'tax_year' => ['required', 'integer', 'digits:4'],
+        ]);
 
-        $this->eventos->eliminarCampo($cliente, $forma, $campo, $request->user());
+        $forma = (string) $request->query('forma');
+        $taxYear = (int) $request->query('tax_year');
+
+        $this->eventos->eliminarCampo($cliente, $taxYear, $forma, $campo, $request->user());
 
         return back();
     }
@@ -57,8 +65,9 @@ class CampoClienteController extends Controller
         $this->authorize('view', $cliente);
 
         $forma = (string) $request->query('forma');
+        $taxYear = (int) $request->query('tax_year');
 
-        $campoCliente = $this->buscarCampoCliente($cliente, $forma, $campo);
+        $campoCliente = $this->buscarCampoCliente($cliente, $taxYear, $forma, $campo);
 
         return response()->json([
             'historial' => $campoCliente->historial()->get()->map(fn (HistorialCambio $h) => [
@@ -76,8 +85,9 @@ class CampoClienteController extends Controller
         $this->authorize('view', $cliente);
 
         $forma = (string) $request->query('forma');
+        $taxYear = (int) $request->query('tax_year');
 
-        $campoCliente = $this->buscarCampoCliente($cliente, $forma, $campo);
+        $campoCliente = $this->buscarCampoCliente($cliente, $taxYear, $forma, $campo);
 
         CampoReveal::query()->create([
             'campo_cliente_id' => $campoCliente->id,
@@ -88,16 +98,17 @@ class CampoClienteController extends Controller
         return response()->json(['valor' => $campoCliente->valor_texto]);
     }
 
-    private function buscarCampoCliente(User $cliente, string $forma, string $campo): CampoCliente
+    private function buscarCampoCliente(User $cliente, int $taxYear, string $forma, string $campo): CampoCliente
     {
         // Normaliza a la forma de almacenamiento: los campos únicos por cliente
         // viven bajo 'transversal', sin importar la forma que llegue en el request.
-        $formaAlmacen = TaxFieldCatalog::formaAlmacen($campo, $forma);
+        $formaAlmacen = TaxFieldCatalog::formaAlmacen($taxYear, $campo, $forma);
 
         return CampoCliente::query()
             ->where('user_id', $cliente->id)
             ->where('forma', $formaAlmacen)
             ->where('campo', $campo)
+            ->where('tax_year', $taxYear)
             ->firstOrFail();
     }
 }

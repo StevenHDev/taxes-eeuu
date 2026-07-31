@@ -31,6 +31,7 @@ class CatalogoPanelTest extends TestCase
 
         $this->actingAs($admin)->post(route('catalogo.store'), [
             'forma' => 'form_1040',
+            'tax_year' => 2025,
             'clave' => 'campo_de_prueba',
             'tipo_campo' => 'dato',
             'tipo_dato' => 'string',
@@ -38,10 +39,43 @@ class CatalogoPanelTest extends TestCase
             'sensible' => false,
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('catalogo_campos', ['forma' => 'form_1040', 'clave' => 'campo_de_prueba']);
+        $this->assertDatabaseHas('catalogo_campos', ['forma' => 'form_1040', 'tax_year' => 2025, 'clave' => 'campo_de_prueba']);
 
-        $encontrado = TaxFieldCatalog::find('form_1040', 'campo_de_prueba');
+        $encontrado = TaxFieldCatalog::find(2025, 'form_1040', 'campo_de_prueba');
         $this->assertNotNull($encontrado, 'La caché debe invalidarse al crear un campo.');
+    }
+
+    public function test_el_mismo_campo_puede_existir_en_dos_anos_fiscales_distintos(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+
+        $this->actingAs($admin)->post(route('catalogo.store'), [
+            'forma' => 'form_1040',
+            'tax_year' => 2026,
+            'clave' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'tipo_dato' => 'number',
+            'obligatorio' => true,
+            'sensible' => false,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('catalogo_campos', ['forma' => 'form_1040', 'tax_year' => 2025, 'clave' => 'ingresos']);
+        $this->assertDatabaseHas('catalogo_campos', ['forma' => 'form_1040', 'tax_year' => 2026, 'clave' => 'ingresos']);
+    }
+
+    public function test_duplicar_el_mismo_campo_dentro_del_mismo_ano_falla(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+
+        $this->actingAs($admin)->post(route('catalogo.store'), [
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'clave' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'tipo_dato' => 'number',
+            'obligatorio' => true,
+            'sensible' => false,
+        ])->assertSessionHasErrors('clave');
     }
 
     public function test_un_administrador_puede_editar_una_definicion(): void
@@ -51,6 +85,7 @@ class CatalogoPanelTest extends TestCase
 
         $this->actingAs($admin)->patch(route('catalogo.update', $campo), [
             'forma' => 'form_1040',
+            'tax_year' => 2025,
             'clave' => 'ingresos',
             'tipo_campo' => 'dato',
             'tipo_dato' => 'number',
@@ -70,6 +105,7 @@ class CatalogoPanelTest extends TestCase
         CampoCliente::query()->create([
             'user_id' => $cliente->id,
             'forma' => 'form_1040',
+            'tax_year' => 2025,
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
@@ -82,7 +118,7 @@ class CatalogoPanelTest extends TestCase
 
         $this->assertDatabaseMissing('catalogo_campos', ['id' => $campo->id]);
         $this->assertDatabaseHas('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'ingresos']);
-        $this->assertNull(TaxFieldCatalog::find('form_1040', 'ingresos'));
+        $this->assertNull(TaxFieldCatalog::find(2025, 'form_1040', 'ingresos'));
     }
 
     public function test_un_preparador_no_puede_modificar_el_catalogo(): void

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\URL;
  * @property int $id
  * @property int $user_id
  * @property string $forma
+ * @property int $tax_year
  * @property string $campo
  * @property string $file_path
  * @property string $file_original_name
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\URL;
 #[Fillable([
     'user_id',
     'forma',
+    'tax_year',
     'campo',
     'file_path',
     'file_original_name',

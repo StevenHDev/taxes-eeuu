@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $user_id
  * @property string $forma
+ * @property int $tax_year
  * @property string $campo
  * @property FieldKind $tipo_campo
  * @property FieldMode $modo
@@ -30,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'user_id',
     'forma',
+    'tax_year',
     'campo',
     'tipo_campo',
     'modo',
@@ -107,12 +109,13 @@ class CampoCliente extends Model
             ->where('user_id', $this->user_id)
             ->where('forma', $this->forma)
             ->where('campo', $this->campo)
+            ->where('tax_year', $this->tax_year)
             ->latest('created_at');
     }
 
     public function esSensible(): bool
     {
-        return TaxFieldCatalog::isSensible($this->campo);
+        return TaxFieldCatalog::isSensible($this->tax_year, $this->campo);
     }
 
     /**

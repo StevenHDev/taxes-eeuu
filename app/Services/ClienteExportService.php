@@ -14,9 +14,9 @@ use ZipArchive;
  */
 class ClienteExportService
 {
-    public function exportarZip(User $cliente): string
+    public function exportarZip(User $cliente, int $taxYear): string
     {
-        $cliente->load(['camposCliente.documento']);
+        $cliente->load(['camposCliente' => fn ($query) => $query->where('tax_year', $taxYear)->with('documento')]);
 
         $zipPath = storage_path('app/private/exports/'.Str::uuid().'.zip');
 

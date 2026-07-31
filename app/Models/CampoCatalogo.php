@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @property int $id
  * @property string $forma
+ * @property int $tax_year
  * @property string $clave
  * @property FieldKind $tipo_campo
  * @property FieldDataType|null $tipo_dato
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $sensible
  * @property bool $unico_por_cliente
  */
-#[Fillable(['forma', 'clave', 'tipo_campo', 'tipo_dato', 'formatos_aceptados', 'subcampos', 'obligatorio', 'sensible', 'unico_por_cliente'])]
+#[Fillable(['forma', 'tax_year', 'clave', 'tipo_campo', 'tipo_dato', 'formatos_aceptados', 'subcampos', 'obligatorio', 'sensible', 'unico_por_cliente'])]
 class CampoCatalogo extends Model
 {
     public const TRANSVERSAL = 'transversal';
@@ -62,6 +63,7 @@ class CampoCatalogo extends Model
     {
         return [
             'campo' => $this->clave,
+            'tax_year' => $this->tax_year,
             'tipo' => $this->tipo_campo,
             'tipo_dato' => $this->tipo_dato,
             'formatos_aceptados' => $this->formatos_aceptados,

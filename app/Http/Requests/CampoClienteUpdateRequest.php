@@ -57,6 +57,7 @@ class CampoClienteUpdateRequest extends FormRequest
             // Además de las 10 formas, se acepta 'transversal': los campos únicos por
             // cliente (SSN, cónyuge, dependientes) se guardan bajo esa forma canónica.
             'forma' => ['required', Rule::in($formasValidas)],
+            'tax_year' => ['required', 'integer', 'digits:4'],
             'modo' => ['required', Rule::enum(FieldMode::class)],
             'tipo_dato' => [
                 Rule::requiredIf($modo === FieldMode::Texto->value),
@@ -88,6 +89,7 @@ class CampoClienteUpdateRequest extends FormRequest
     {
         return array_merge(parent::validationData(), [
             'forma' => $this->query('forma'),
+            'tax_year' => $this->query('tax_year'),
         ]);
     }
 
@@ -100,7 +102,7 @@ class CampoClienteUpdateRequest extends FormRequest
                 return;
             }
 
-            $field = TaxFieldCatalog::find($forma, (string) $this->route('campo'));
+            $field = TaxFieldCatalog::find((int) $this->query('tax_year'), $forma, (string) $this->route('campo'));
 
             if (! $field) {
                 $validator->errors()->add('campo', 'El campo indicado no existe en el catálogo para esa forma.');
@@ -139,6 +141,11 @@ class CampoClienteUpdateRequest extends FormRequest
     public function forma(): string
     {
         return (string) $this->query('forma');
+    }
+
+    public function taxYear(): int
+    {
+        return (int) $this->query('tax_year');
     }
 
     public function campoNombre(): string

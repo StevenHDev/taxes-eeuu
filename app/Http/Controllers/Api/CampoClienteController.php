@@ -25,14 +25,17 @@ class CampoClienteController extends Controller
         $this->authorize('view', $cliente);
         $this->ensureAbility($request, ApiAbility::ClientesRead);
 
+        $taxYear = (int) $request->query('tax_year');
+
         // Normaliza a la forma de almacenamiento: los campos únicos por cliente
         // viven bajo 'transversal', sin importar la forma que llegue en el request.
-        $forma = TaxFieldCatalog::formaAlmacen($campo, (string) $request->query('forma'));
+        $forma = TaxFieldCatalog::formaAlmacen($taxYear, $campo, (string) $request->query('forma'));
 
         $campoCliente = CampoCliente::query()
             ->where('user_id', $cliente->id)
             ->where('forma', $forma)
             ->where('campo', $campo)
+            ->where('tax_year', $taxYear)
             ->firstOrFail();
 
         return response()->json([
@@ -49,11 +52,13 @@ class CampoClienteController extends Controller
     public function update(CampoClienteUpdateRequest $request, User $cliente): JsonResponse
     {
         $forma = $request->forma();
+        $taxYear = $request->taxYear();
         $campo = $request->campoNombre();
-        $field = TaxFieldCatalog::find($forma, $campo);
+        $field = TaxFieldCatalog::find($taxYear, $forma, $campo);
 
         $resultado = $this->eventos->corregirManualmente(
             cliente: $cliente,
+            taxYear: $taxYear,
             forma: $forma,
             campo: $campo,
             tipoCampo: $field['tipo']->value,
@@ -76,9 +81,15 @@ class CampoClienteController extends Controller
         $this->authorize('update', $cliente);
         $this->ensureAbility($request, ApiAbility::ClientesWrite);
 
-        $forma = (string) $request->query('forma');
+        $request->validate([
+            'forma' => ['required', 'string'],
+            'tax_year' => ['required', 'integer', 'digits:4'],
+        ]);
 
-        $this->eventos->eliminarCampo($cliente, $forma, $campo, $request->user());
+        $forma = (string) $request->query('forma');
+        $taxYear = (int) $request->query('tax_year');
+
+        $this->eventos->eliminarCampo($cliente, $taxYear, $forma, $campo, $request->user());
 
         return response()->json(status: 204);
     }

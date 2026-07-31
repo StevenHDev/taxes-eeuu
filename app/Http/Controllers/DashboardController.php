@@ -23,7 +23,11 @@ class DashboardController extends Controller
             return Inertia::render('dashboard', ['resumen' => null]);
         }
 
-        $clientes = $this->clientesVisiblesPara($user)->with('formasCliente')->get();
+        $taxYear = (int) request()->query('tax_year', config('tax.current_tax_year'));
+
+        $clientes = $this->clientesVisiblesPara($user)
+            ->with(['formasCliente' => fn ($query) => $query->where('tax_year', $taxYear)])
+            ->get();
 
         $porEstado = $clientes
             ->map(fn (User $cliente) => $this->estadoGeneralDe($cliente))
@@ -35,8 +39,9 @@ class DashboardController extends Controller
                 'sin_iniciar' => $porEstado->get('sin_iniciar', 0),
                 'en_progreso' => $porEstado->get('en_progreso', 0),
                 'completo' => $porEstado->get('completo', 0),
-                ...$this->summary->resumenPara($clientes),
+                ...$this->summary->resumenPara($clientes, $taxYear),
             ],
+            'taxYearActual' => $taxYear,
         ]);
     }
 }

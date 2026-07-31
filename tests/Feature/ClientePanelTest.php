@@ -27,7 +27,8 @@ class ClientePanelTest extends TestCase
             'user_id' => $cliente->id,
             // Los campos únicos por cliente (SSN, cónyuge, dependientes) se guardan
             // bajo la forma canónica 'transversal'.
-            'forma' => TaxFieldCatalog::formaAlmacen($campo, 'form_1040'),
+            'forma' => TaxFieldCatalog::formaAlmacen(2025, $campo, 'form_1040'),
+            'tax_year' => 2025,
             'campo' => $campo,
             'tipo_campo' => 'dato',
             'modo' => 'texto',
@@ -97,7 +98,7 @@ class ClientePanelTest extends TestCase
         $this->crearCampo($cliente);
 
         $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040', [
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
                 'forma' => 'form_1040',
                 'modo' => 'texto',
                 'tipo_dato' => 'number',
@@ -121,7 +122,7 @@ class ClientePanelTest extends TestCase
         $this->crearCampo($ajeno);
 
         $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $ajeno, 'campo' => 'ingresos']).'?forma=form_1040', [
+            ->patch(route('clientes.campos.update', ['cliente' => $ajeno, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
                 'forma' => 'form_1040',
                 'modo' => 'texto',
                 'tipo_dato' => 'number',
@@ -139,7 +140,7 @@ class ClientePanelTest extends TestCase
         // Subida real del navegador: POST con _method=patch (method spoofing) para
         // que PHP parsee el multipart; un PATCH multipart directo no expone $_FILES.
         $this->actingAs($preparador)
-            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040', [
+            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040&tax_year=2025', [
                 '_method' => 'patch',
                 'forma' => 'form_1040',
                 'modo' => 'archivo',
@@ -161,7 +162,7 @@ class ClientePanelTest extends TestCase
 
         $this->actingAs($preparador)
             ->from(route('clientes.show', $cliente))
-            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040', [
+            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040&tax_year=2025', [
                 '_method' => 'patch',
                 'forma' => 'form_1040',
                 'modo' => 'archivo',
@@ -181,7 +182,7 @@ class ClientePanelTest extends TestCase
         // w2 solo acepta pdf/jpg/png/heic; un .txt debe rechazarse.
         $this->actingAs($preparador)
             ->from(route('clientes.show', $cliente))
-            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040', [
+            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040&tax_year=2025', [
                 '_method' => 'patch',
                 'forma' => 'form_1040',
                 'modo' => 'archivo',
@@ -196,10 +197,10 @@ class ClientePanelTest extends TestCase
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'estado' => 'en_progreso']);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
 
         $this->actingAs($preparador)
-            ->post(route('clientes.marcar-revisado', ['cliente' => $cliente, 'forma' => 'form_1040']))
+            ->post(route('clientes.marcar-revisado', ['cliente' => $cliente, 'forma' => 'form_1040']), ['tax_year' => 2025])
             ->assertRedirect();
 
         $forma = FormaCliente::query()->where('user_id', $cliente->id)->first();
@@ -215,7 +216,7 @@ class ClientePanelTest extends TestCase
 
         $this->actingAs($preparador)
             ->post(
-                route('clientes.campos.reveal', ['cliente' => $cliente, 'campo' => 'identificacion_ssn_itin']).'?forma=form_1040',
+                route('clientes.campos.reveal', ['cliente' => $cliente, 'campo' => 'identificacion_ssn_itin']).'?forma=form_1040&tax_year=2025',
                 [],
                 ['Accept' => 'application/json'],
             )
@@ -225,7 +226,7 @@ class ClientePanelTest extends TestCase
 
         $this->actingAs($preparador)
             ->withSession(['auth.password_confirmed_at' => time()])
-            ->post(route('clientes.campos.reveal', ['cliente' => $cliente, 'campo' => 'identificacion_ssn_itin']).'?forma=form_1040')
+            ->post(route('clientes.campos.reveal', ['cliente' => $cliente, 'campo' => 'identificacion_ssn_itin']).'?forma=form_1040&tax_year=2025')
             ->assertOk()
             ->assertJson(['valor' => '123456789']);
 
@@ -275,7 +276,7 @@ class ClientePanelTest extends TestCase
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 
         $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040', [
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
                 'forma' => 'form_1040',
                 'modo' => 'texto',
                 'tipo_dato' => 'number',
@@ -295,7 +296,7 @@ class ClientePanelTest extends TestCase
         $this->crearCampo($cliente);
 
         $this->actingAs($preparador)
-            ->delete(route('clientes.campos.destroy', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040')
+            ->delete(route('clientes.campos.destroy', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025')
             ->assertRedirect();
 
         $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'ingresos']);

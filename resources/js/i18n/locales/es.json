@@ -391,7 +391,8 @@
             "acceptedFormats": "Formatos aceptados (separados por coma)",
             "subfields": "Subcampos (opcional, para object/array_object)",
             "required": "Obligatorio para completar la forma",
-            "sensitive": "Sensible (se cifra y se enmascara)"
+            "sensitive": "Sensible (se cifra y se enmascara)",
+            "taxYear": "Año fiscal"
         },
         "actions": {
             "new": "Nuevo campo",

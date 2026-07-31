@@ -43,10 +43,12 @@ type Errors = Partial<
 
 function CampoForm({
     forma,
+    taxYear,
     campo,
     onDone,
 }: {
     forma: string;
+    taxYear: number;
     campo?: CampoCatalogo;
     onDone: () => void;
 }) {
@@ -70,6 +72,7 @@ function CampoForm({
 
         const payload = {
             forma,
+            tax_year: taxYear,
             clave,
             tipo_campo: tipoCampo,
             tipo_dato: tipoCampo === 'documento' ? null : tipoDato,
@@ -246,6 +249,7 @@ function CampoRowActions({ campo }: { campo: CampoCatalogo }) {
                     </DialogTitle>
                     <CampoForm
                         forma={campo.forma}
+                        taxYear={campo.tax_year}
                         campo={campo}
                         onDone={() => setEditar(false)}
                     />
@@ -275,9 +279,11 @@ function CampoRowActions({ campo }: { campo: CampoCatalogo }) {
 
 function FormaSection({
     forma,
+    taxYear,
     campos,
 }: {
     forma: FormaOption;
+    taxYear: number;
     campos: CampoCatalogo[];
 }) {
     const { t } = useTranslation();
@@ -306,6 +312,7 @@ function FormaSection({
                         </DialogTitle>
                         <CampoForm
                             forma={String(forma.value)}
+                            taxYear={taxYear}
                             onDone={() => setNuevo(false)}
                         />
                     </DialogContent>
@@ -399,30 +406,69 @@ function FormaSection({
 export default function CatalogoIndex({
     formas,
     campos,
+    taxYearActual,
+    anosDisponibles,
 }: {
     formas: FormaOption[];
     campos: CampoCatalogo[];
+    taxYearActual: number;
+    anosDisponibles: number[];
 }) {
     const { t } = useTranslation();
+
+    const anos = Array.from(
+        new Set([...(anosDisponibles ?? []), taxYearActual]),
+    ).sort((a, b) => b - a);
+
+    const cambiarAno = (nuevoAno: number) => {
+        router.get(
+            catalogoIndex().url,
+            { tax_year: nuevoAno },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
 
     return (
         <>
             <Head title={t('catalogo.title')} />
 
             <div className="space-y-8 p-4">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-xl font-semibold">
-                        {t('catalogo.title')}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {t('catalogo.subtitle')}
-                    </p>
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                    <div className="flex flex-col gap-1">
+                        <h1 className="text-xl font-semibold">
+                            {t('catalogo.title')}
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            {t('catalogo.subtitle')}
+                        </p>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="tax_year_selector">
+                            {t('catalogo.form.taxYear')}
+                        </Label>
+                        <select
+                            id="tax_year_selector"
+                            className="rounded border bg-background p-2 text-sm"
+                            value={taxYearActual}
+                            onChange={(e) =>
+                                cambiarAno(Number(e.target.value))
+                            }
+                        >
+                            {anos.map((ano) => (
+                                <option key={ano} value={ano}>
+                                    {ano}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {(formas ?? []).map((forma) => (
                     <FormaSection
                         key={String(forma.value)}
                         forma={forma}
+                        taxYear={taxYearActual}
                         campos={(campos ?? []).filter(
                             (c) => c.forma === forma.value,
                         )}

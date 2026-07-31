@@ -50,6 +50,9 @@ class EventoRequest extends FormRequest
             // cliente (SSN, cónyuge, dependientes, W-2, 1099-NEC, declaración
             // anterior) — que no pertenecen a una forma en particular.
             'forma' => ['required', Rule::in([...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), CampoCatalogo::TRANSVERSAL])],
+            // Sin default: el agente conversacional externo siempre debe declarar
+            // explícitamente para qué año fiscal es el dato (nunca se asume).
+            'tax_year' => ['required', 'integer', 'digits:4'],
             'campo' => ['required', 'string'],
             'tipo_campo' => ['required', Rule::enum(FieldKind::class)],
             'modo' => ['required', Rule::enum(FieldMode::class)],
@@ -85,7 +88,7 @@ class EventoRequest extends FormRequest
                 return;
             }
 
-            $field = TaxFieldCatalog::find($forma, (string) $this->input('campo'));
+            $field = TaxFieldCatalog::find((int) $this->input('tax_year'), $forma, (string) $this->input('campo'));
 
             if (! $field) {
                 $validator->errors()->add('campo', 'El campo indicado no existe en el catálogo para esa forma.');

@@ -16,6 +16,16 @@ use Illuminate\Database\Seeder;
  */
 class CatalogoCamposSeeder extends Seeder
 {
+    /**
+     * Año fiscal del baseline que siembra este seeder. Hardcodeado a propósito
+     * (no leído de config('tax.current_tax_year')): un seeder reproduce un
+     * punto fijo en el tiempo, y acoplarlo al config actual haría que
+     * `migrate:fresh --seed` corrido en 2026 —antes de que alguien construya
+     * el catálogo real de 2026— sembrara filas 2026 con las definiciones de
+     * 2025 mal etiquetadas.
+     */
+    private const BASELINE_YEAR = 2025;
+
     public function run(): void
     {
         foreach ($this->transversales() as $campo) {
@@ -42,7 +52,7 @@ class CatalogoCamposSeeder extends Seeder
     private function crear(string $forma, array $campo): void
     {
         CampoCatalogo::query()->firstOrCreate(
-            ['forma' => $forma, 'clave' => $campo['campo']],
+            ['forma' => $forma, 'clave' => $campo['campo'], 'tax_year' => self::BASELINE_YEAR],
             [
                 'tipo_campo' => $campo['tipo'],
                 'tipo_dato' => $campo['tipo_dato'] ?? null,

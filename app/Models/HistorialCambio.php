@@ -12,6 +12,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property string $forma
+ * @property int $tax_year
  * @property string $campo
  * @property mixed $valor_anterior
  * @property mixed $valor_nuevo
@@ -22,6 +23,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'user_id',
     'forma',
+    'tax_year',
     'campo',
     'valor_anterior',
     'valor_nuevo',

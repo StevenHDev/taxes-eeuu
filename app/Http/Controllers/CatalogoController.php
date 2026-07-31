@@ -7,16 +7,21 @@ use App\Http\Requests\CatalogoCampoRequest;
 use App\Models\CampoCatalogo;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CatalogoController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', CampoCatalogo::class);
 
-        $campos = CampoCatalogo::query()->orderBy('forma')->orderBy('clave')->get();
+        // Superficie humana (admin navegando el panel): un default de conveniencia
+        // es apropiado acá, a diferencia del camino del agente externo.
+        $taxYear = (int) $request->query('tax_year', config('tax.current_tax_year'));
+
+        $campos = CampoCatalogo::query()->where('tax_year', $taxYear)->orderBy('forma')->orderBy('clave')->get();
 
         return Inertia::render('catalogo/index', [
             'formas' => [
@@ -24,6 +29,8 @@ class CatalogoController extends Controller
                 ...array_map(fn (TaxForm $f) => ['value' => $f->value, 'label' => $f->label()], TaxForm::cases()),
             ],
             'campos' => $campos,
+            'taxYearActual' => $taxYear,
+            'anosDisponibles' => CampoCatalogo::query()->distinct()->orderByDesc('tax_year')->pluck('tax_year'),
         ]);
     }
 

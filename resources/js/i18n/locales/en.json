@@ -391,7 +391,8 @@
             "acceptedFormats": "Accepted formats (comma-separated)",
             "subfields": "Subfields (optional, for object/array_object)",
             "required": "Required to complete the form",
-            "sensitive": "Sensitive (encrypted and masked)"
+            "sensitive": "Sensitive (encrypted and masked)",
+            "taxYear": "Tax year"
         },
         "actions": {
             "new": "New field",

@@ -29,10 +29,12 @@ class ClienteController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
+        $taxYear = (int) $request->query('tax_year', config('tax.current_tax_year'));
+
         // Colección completa (scopeada por rol): el filtrado, orden y paginado
         // se hacen client-side con el DataTable de TanStack en el navegador.
         $clientes = $this->clientesVisiblesPara($request->user())
-            ->with(['formasCliente'])
+            ->with(['formasCliente' => fn ($query) => $query->where('tax_year', $taxYear)])
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (User $cliente) => [
@@ -55,6 +57,7 @@ class ClienteController extends Controller
                 fn (TaxForm $f) => ['value' => $f->value, 'label' => $f->label()],
                 TaxForm::cases(),
             ),
+            'taxYearActual' => $taxYear,
         ]);
     }
 
@@ -84,26 +87,30 @@ class ClienteController extends Controller
         return to_route('clientes.index');
     }
 
-    public function show(User $cliente): Response
+    public function show(Request $request, User $cliente): Response
     {
         $this->authorize('view', $cliente);
 
+        // Superficie humana (preparador navegando el panel): default al año
+        // fiscal actual cuando no se especifica, con opción de cambiarlo.
+        $taxYear = (int) $request->query('tax_year', config('tax.current_tax_year'));
+
         $cliente->load([
-            'formasCliente',
-            'camposCliente' => fn ($query) => $query->with('documento')->orderBy('campo'),
+            'formasCliente' => fn ($query) => $query->where('tax_year', $taxYear),
+            'camposCliente' => fn ($query) => $query->where('tax_year', $taxYear)->with('documento')->orderBy('campo'),
         ]);
 
         $camposCargados = $cliente->camposCliente->map(fn ($c) => "{$c->forma}:{$c->campo}");
         $unicosCargados = $cliente->camposCliente
-            ->filter(fn ($c) => TaxFieldCatalog::isUnicoPorCliente($c->campo))
+            ->filter(fn ($c) => TaxFieldCatalog::isUnicoPorCliente($taxYear, $c->campo))
             ->pluck('campo');
 
         // Por cada forma real, sus campos propios + transversales-por-forma que el
         // cliente aún no tiene cargados — excluyendo los únicos por cliente, que se
         // agregan una sola vez aparte (no por forma).
         $disponiblePorForma = collect(TaxForm::cases())
-            ->flatMap(fn (TaxForm $forma) => collect(TaxFieldCatalog::fieldsFor($forma))
-                ->reject(fn (array $campo) => TaxFieldCatalog::isUnicoPorCliente($campo['campo'])
+            ->flatMap(fn (TaxForm $forma) => collect(TaxFieldCatalog::fieldsFor($taxYear, $forma))
+                ->reject(fn (array $campo) => TaxFieldCatalog::isUnicoPorCliente($taxYear, $campo['campo'])
                     || $camposCargados->contains("{$forma->value}:{$campo['campo']}"))
                 ->map(fn (array $campo) => [
                     'forma' => $forma->value,
@@ -116,6 +123,7 @@ class ClienteController extends Controller
         // bajo la forma canónica 'transversal', si no están ya cargados.
         $disponibleUnicos = CampoCatalogo::query()
             ->where('unico_por_cliente', true)
+            ->where('tax_year', $taxYear)
             ->orderBy('clave')
             ->get()
             ->reject(fn (CampoCatalogo $c) => $unicosCargados->contains($c->clave))
@@ -133,6 +141,7 @@ class ClienteController extends Controller
                 'email' => $cliente->email,
                 'phone' => $cliente->phone,
             ],
+            'taxYearActual' => $taxYear,
             'catalogoDisponible' => $disponiblePorForma
                 ->concat($disponibleUnicos)
                 ->values(),
@@ -150,7 +159,7 @@ class ClienteController extends Controller
                 'estado' => $c->estado,
                 'valor' => $c->valor,
                 'es_sensible' => $c->esSensible(),
-                'formatos_aceptados' => TaxFieldCatalog::find($c->forma, $c->campo)['formatos_aceptados'] ?? null,
+                'formatos_aceptados' => TaxFieldCatalog::find($taxYear, $c->forma, $c->campo)['formatos_aceptados'] ?? null,
                 'documento' => $c->documento ? [
                     'id' => $c->documento->id,
                     'file_original_name' => $c->documento->file_original_name,
@@ -165,15 +174,20 @@ class ClienteController extends Controller
         ]);
     }
 
-    public function marcarRevisado(User $cliente, string $forma): RedirectResponse
+    public function marcarRevisado(Request $request, User $cliente, string $forma): RedirectResponse
     {
         $this->authorize('update', $cliente);
+
+        // Acción mutante con consecuencias de auditoría: requerida explícita,
+        // sin default de config — el preparador debe declarar qué año revisó.
+        $request->validate(['tax_year' => ['required', 'integer', 'digits:4']]);
 
         $taxForm = TaxForm::from($forma);
 
         $formaCliente = FormaCliente::query()
             ->where('user_id', $cliente->id)
             ->where('forma', $taxForm->value)
+            ->where('tax_year', $request->integer('tax_year'))
             ->firstOrFail();
 
         $formaCliente->marcarRevisado(request()->user());
@@ -181,12 +195,14 @@ class ClienteController extends Controller
         return back();
     }
 
-    public function export(User $cliente): BinaryFileResponse
+    public function export(Request $request, User $cliente): BinaryFileResponse
     {
         $this->authorize('view', $cliente);
 
-        $zipPath = $this->export->exportarZip($cliente);
+        $taxYear = (int) $request->query('tax_year', config('tax.current_tax_year'));
 
-        return response()->download($zipPath, "cliente-{$cliente->id}.zip")->deleteFileAfterSend();
+        $zipPath = $this->export->exportarZip($cliente, $taxYear);
+
+        return response()->download($zipPath, "cliente-{$cliente->id}-{$taxYear}.zip")->deleteFileAfterSend();
     }
 }
