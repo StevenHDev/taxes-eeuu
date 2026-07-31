@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Database\Seeders\CatalogoCamposSeeder;
+use Database\Seeders\ParametrosFiscalesSeeder;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -22,6 +23,10 @@ abstract class TestCase extends BaseTestCase
 
         if (Schema::hasTable('catalogo_campos')) {
             $this->seed(CatalogoCamposSeeder::class);
+        }
+
+        if (Schema::hasTable('parametros_fiscales')) {
+            $this->seed(ParametrosFiscalesSeeder::class);
         }
     }
 

@@ -37,6 +37,18 @@ Un endpoint que requiera un permiso que el token no tiene responde `403 Forbidde
 - Un cliente (`role = client`) no tiene acceso a estos endpoints — el panel es exclusivamente interno.
 - El endpoint `POST /eventos` es la excepción: el token del agente conversacional puede escribir sobre **cualquier** `cliente_id`, porque el agente no conoce asignaciones de preparador. Por eso ese token debe ser de un solo propósito (`eventos:write` únicamente) y no compartirse con un preparador.
 
+## Año fiscal (`tax_year`)
+
+Desde la Fase 1 (2026-07-31), el catálogo de campos y todos los datos de cliente están versionados por año fiscal (`tax_year`, entero de 4 dígitos, ej. `2025`) — porque los montos de créditos, límites y reglas de dependientes cambian cada año, un mismo campo puede tener una definición distinta año a año, y los datos de un cliente para 2025 son completamente independientes de sus datos para 2026.
+
+Impacto concreto en la API:
+
+- **`POST /api/eventos`** exige `tax_year` en el body, siempre, sin default — un evento sin `tax_year` responde `422`.
+- **`GET/PATCH/DELETE /api/clientes/{id}/campos/{campo}`** exigen también `?tax_year=` en el query string, igual que ya exigían `?forma=`.
+- **`POST /api/clientes/{id}/marcar-revisado/{forma}`** exige `tax_year` en el body — es una acción mutante, tampoco tiene default.
+- **`GET /api/clientes`** y **`GET /api/clientes/{id}`** aceptan `?tax_year=` **opcional**: si se omite, usan el año fiscal actual configurado en la plataforma (`2025` hoy) como default de conveniencia para un humano navegando el panel. A diferencia de los endpoints de arriba, acá sí hay default — son lecturas, no escrituras del agente.
+- El catálogo también está versionado por año: un campo puede existir para `tax_year: 2025` y todavía no existir para `2026` hasta que un administrador lo agregue desde `/catalogo` para ese año.
+
 ## Catálogo maestro de campos
 
 Cada campo pertenece a una de dos categorías:
@@ -45,6 +57,8 @@ Cada campo pertenece a una de dos categorías:
 - **Campos por forma**: pertenecen a una **forma específica** (`form_1040`, `schedule_c`, `schedule_e`, `form_1065`, `form_1120`, `form_1120_s`, `schedule_f`, `form_1041`, `form_990`, `form_1040_nr`). Un mismo campo puede pedirse en varias formas y tener **un valor distinto en cada una** (ej. `estados_bancarios`, `gastos`, `activos`).
 
 El catálogo completo (fuente de verdad) vive en `catalogo_campos` (administrable desde `/catalogo`) y se lee vía `App\Support\TaxFieldCatalog`; las tablas de abajo son su documentación exhaustiva, campo por campo — si cambia el catálogo, hay que actualizar esta sección también.
+
+**Las tablas de abajo documentan el catálogo del año fiscal `2025`** (el baseline sembrado por el seeder — ver [Año fiscal](#año-fiscal-taxyear)). Un año fiscal distinto puede tener campos adicionales, faltantes, o con reglas distintas — consulta `/catalogo?tax_year=` para el año que te interese antes de asumir que esta tabla aplica igual.
 
 Qué significa cada columna:
 
@@ -63,22 +77,25 @@ Qué significa cada columna:
 |---|---|---|---|---|---|
 | `identificacion_ssn_itin` | dato | `string` (SSN/ITIN, 9 dígitos) | — | sí | sí |
 | `info_conyuge` | dato | `object` (`nombre_completo`, `fecha_nacimiento`, `ssn`) | — | sí | sí |
-| `info_dependientes` | dato | `array_object` (`nombre_completo`, `fecha_nacimiento`, `ssn`) | — | sí | sí |
+| `info_dependientes` | dato | `array_object` (`nombre_completo`, `fecha_nacimiento`, `ssn`, `relacion`, `meses_en_hogar`, `estudiante_tiempo_completo`, `discapacitado`, `provee_mas_50_soporte_propio`, `ingreso_bruto_anual`, `custodia_compartida_sin_conflicto`) | — | sí | sí |
 | `w2` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
 | `form_1099_nec` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
 | `declaracion_anio_anterior` | documento | — | `pdf` | **no** | no |
+| `estado_civil` | dato | `object` (`casado_al_31_dic`, `convivio_conyuge_ultimos_6_meses`, `costeo_mas_mitad_hogar`, `existe_persona_calificable`, `conyuge_fallecio_en_anio`, `anio_fallecimiento_conyuge`) | — | sí | no |
 
-Estos 6 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)).
+Estos 7 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). Los subcampos ampliados de `info_dependientes` y el campo nuevo `estado_civil` (Fase 2) alimentan el motor de reglas — capturan **hechos**, no conclusiones: nunca se le pregunta al cliente su filing status directamente, se deriva de estos datos.
 
 ### `form_1040`
 
 | Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
-| `ingresos` | dato | `number` | — | sí | no |
+| `ingresos` | dato | `object` (`salarios`, `intereses_dividendos`, `ganancias_capital`, `ingresos_jubilacion`, `otros_ingresos`, `ajustes_ingreso`) | — | sí | no |
 | `deducciones` | mixto | `number` | `pdf`, `jpg` | sí | no |
-| `creditos` | dato | `array_string` | — | sí | no |
+| `gastos_cuidado_dependientes` | mixto | `object` (`proveedor_nombre`, `proveedor_ssn_ein`, `monto_anual`, `dependiente_relacionado`) | `pdf`, `jpg` | **no** | sí |
 | `impuestos_retenidos` | dato | `number` | — | sí | no |
 | `info_bancaria` | dato | `object` (`banco`, `tipo_cuenta`, `numero_cuenta`, `routing_number`) | — | sí | sí |
+
+**`creditos` ya no existe en el catálogo** (Fase 2, Decisión A): pasó de ser un dato que se recolectaba (`array_string`) a ser 100% un resultado calculado por el motor de reglas (filing status, calificación de dependientes, AGI y créditos elegibles) — ver [Motor de reglas fiscales](#motor-de-reglas-fiscales-fase-2) más abajo. Ya no se pide ni se guarda vía `POST /api/eventos`.
 
 ### `schedule_c`
 
@@ -190,7 +207,7 @@ Estos 6 cuentan para la completitud de **todas** las formas del cliente (basta c
 
 Los 6 campos marcados `unico_por_cliente` (identificación, cónyuge, dependientes, W-2, 1099-NEC, declaración del año anterior) son datos de la **persona**, no de una forma. Antes se guardaban con la `forma` de cada evento, así que el mismo dato quedaba **duplicado** si llegaba en el contexto de dos formas distintas (ej. un SSN en `form_1040` y otro en `schedule_c`). Ahora:
 
-- Se guardan **una sola vez** por cliente, bajo la forma canónica **`transversal`** (`campos_cliente.forma = "transversal"`), sin importar en qué `forma` llegó el evento.
+- Se guardan **una sola vez por cliente y por año fiscal**, bajo la forma canónica **`transversal`** (`campos_cliente.forma = "transversal"`), sin importar en qué `forma` llegó el evento. El mismo campo para dos `tax_year` distintos son dos filas independientes — ver [Año fiscal](#año-fiscal-taxyear).
 - Al emitir el evento, envía **`forma: "transversal"`** (recomendado, es lo semánticamente correcto para un dato de la persona). También se acepta una forma real (ej. `form_1040`): la API la reubica igual bajo `transversal`. La respuesta del evento devuelve la `forma` que enviaste.
 - Cuentan para la **completitud de todas** las formas del cliente: basta cargarlos una vez para que todas sus formas los den por recibidos.
 - Reenviar uno de estos campos (en cualquier forma) **sobrescribe la única fila existente** — no crea una nueva por forma.
@@ -201,7 +218,7 @@ Los demás campos (los que pertenecen a una forma) siguen guardándose por `(cli
 
 ## Emitir un evento (`POST /api/eventos`)
 
-Requiere ability `eventos:write`. Un evento = un solo campo, nunca varios juntos.
+Requiere ability `eventos:write`. Un evento = un solo campo, nunca varios juntos. **`tax_year` es obligatorio en todos los casos** (ver [Año fiscal](#año-fiscal-taxyear)) — se omitió de los ejemplos de versiones anteriores de este documento, pero la API lo exige desde la Fase 1.
 
 Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `array_object`) el body se puede mandar como **JSON puro** (`Content-Type: application/json`) — Laravel lee los campos igual, sea form-data o JSON. Para `modo: "archivo"` **no hay opción**: un archivo binario no entra en un JSON, así que ese caso siempre va como `multipart/form-data` (el archivo se sube directo en el mismo request — no existe un endpoint de subida separado).
 
@@ -213,6 +230,7 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
 {
   "cliente_id": 42,
   "forma": "transversal",
+  "tax_year": 2025,
   "campo": "identificacion_ssn_itin",
   "tipo_campo": "dato",
   "modo": "texto",
@@ -223,17 +241,18 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
 
 > `identificacion_ssn_itin` es un dato **único por cliente**, así que su `forma` es `transversal` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). También se aceptaría una forma real (ej. `form_1040`): la API lo reubica igual bajo `transversal`.
 
-**`number`** — ej. `ingresos`:
+**`number`** — ej. `impuestos_retenidos`:
 
 ```json
 {
   "cliente_id": 42,
   "forma": "form_1040",
-  "campo": "ingresos",
+  "tax_year": 2025,
+  "campo": "impuestos_retenidos",
   "tipo_campo": "dato",
   "modo": "texto",
   "tipo_dato": "number",
-  "contenido": 52000
+  "contenido": 5200
 }
 ```
 
@@ -243,6 +262,7 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
 {
   "cliente_id": 42,
   "forma": "transversal",
+  "tax_year": 2025,
   "campo": "info_conyuge",
   "tipo_campo": "dato",
   "modo": "texto",
@@ -255,38 +275,126 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
 }
 ```
 
-**`array_string`** — ej. `creditos`:
+**`object` — `ingresos` (Fase 2, desglosado — reemplaza al `number` suelto que tenía antes)**, siempre con las 6 claves presentes, `0` en las que no apliquen:
 
 ```json
 {
   "cliente_id": 42,
   "forma": "form_1040",
-  "campo": "creditos",
+  "tax_year": 2025,
+  "campo": "ingresos",
   "tipo_campo": "dato",
   "modo": "texto",
-  "tipo_dato": "array_string",
-  "contenido": ["child_tax_credit", "education_credit"]
+  "tipo_dato": "object",
+  "contenido": {
+    "salarios": 52000,
+    "intereses_dividendos": 0,
+    "ganancias_capital": 0,
+    "ingresos_jubilacion": 0,
+    "otros_ingresos": 0,
+    "ajustes_ingreso": 0
+  }
 }
 ```
 
-**`array_object`** — ej. `info_dependientes` (siempre con el **arreglo acumulado completo**, no solo el elemento nuevo — ver nota más abajo):
+**`object` — `estado_civil` (Fase 2, transversal — único por cliente)**: captura **hechos**, nunca la conclusión — nunca le preguntes al cliente "¿cuál es tu filing status?"; la plataforma lo calcula a partir de estos 6 valores:
 
 ```json
 {
   "cliente_id": 42,
   "forma": "transversal",
+  "tax_year": 2025,
+  "campo": "estado_civil",
+  "tipo_campo": "dato",
+  "modo": "texto",
+  "tipo_dato": "object",
+  "contenido": {
+    "casado_al_31_dic": false,
+    "convivio_conyuge_ultimos_6_meses": false,
+    "costeo_mas_mitad_hogar": true,
+    "existe_persona_calificable": true,
+    "conyuge_fallecio_en_anio": false,
+    "anio_fallecimiento_conyuge": null
+  }
+}
+```
+
+**`mixto` como dato — `gastos_cuidado_dependientes` (Fase 2, `form_1040`, opcional)**: si el cliente no tuvo estos gastos, no se pide nada — no insistir.
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "form_1040",
+  "tax_year": 2025,
+  "campo": "gastos_cuidado_dependientes",
+  "tipo_campo": "mixto",
+  "modo": "texto",
+  "tipo_dato": "object",
+  "contenido": {
+    "proveedor_nombre": "Guardería Sol",
+    "proveedor_ssn_ein": "12-3456789",
+    "monto_anual": 4800,
+    "dependiente_relacionado": "Kid One"
+  }
+}
+```
+
+**`array_string`**: hoy **ningún campo del catálogo usa este tipo** (el único que lo usaba, `creditos`, se eliminó en la Fase 2 — ver [Motor de reglas fiscales](#motor-de-reglas-fiscales-fase-2)). Se documenta la forma igual, por si se agrega un campo nuevo de este tipo más adelante:
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "form_1040",
+  "tax_year": 2025,
+  "campo": "algun_campo_array_string",
+  "tipo_campo": "dato",
+  "modo": "texto",
+  "tipo_dato": "array_string",
+  "contenido": ["valor_uno", "valor_dos"]
+}
+```
+
+**`array_object`** — `info_dependientes` (transversal, único por cliente): siempre con el **arreglo acumulado completo**, no solo el elemento nuevo (ver nota más abajo), y con los **10 subcampos** completos por dependiente (los 7 nuevos de la Fase 2 se agregan a los 3 que ya existían — nunca omitir una clave, usar `false`/`0`/`""` cuando no aplique):
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "transversal",
+  "tax_year": 2025,
   "campo": "info_dependientes",
   "tipo_campo": "dato",
   "modo": "texto",
   "tipo_dato": "array_object",
   "contenido": [
-    { "nombre_completo": "Kid One", "fecha_nacimiento": "2015-03-01", "ssn": "111-22-3333" },
-    { "nombre_completo": "Kid Two", "fecha_nacimiento": "2018-09-20", "ssn": "444-55-6666" }
+    {
+      "nombre_completo": "Kid One",
+      "fecha_nacimiento": "2015-03-01",
+      "ssn": "111-22-3333",
+      "relacion": "hija",
+      "meses_en_hogar": 12,
+      "estudiante_tiempo_completo": false,
+      "discapacitado": false,
+      "provee_mas_50_soporte_propio": false,
+      "ingreso_bruto_anual": 0,
+      "custodia_compartida_sin_conflicto": false
+    },
+    {
+      "nombre_completo": "Kid Two",
+      "fecha_nacimiento": "2018-09-20",
+      "ssn": "444-55-6666",
+      "relacion": "hijo",
+      "meses_en_hogar": 12,
+      "estudiante_tiempo_completo": false,
+      "discapacitado": false,
+      "provee_mas_50_soporte_propio": false,
+      "ingreso_bruto_anual": 0,
+      "custodia_compartida_sin_conflicto": false
+    }
   ]
 }
 ```
 
-Cualquiera de los cinco de arriba se envía así con curl:
+Cualquiera de los de arriba se envía así con curl:
 
 ```bash
 curl -X POST https://tu-dominio/api/eventos \
@@ -304,6 +412,7 @@ curl -X POST https://tu-dominio/api/eventos \
   -H "Accept: application/json" \
   -F "cliente_id=42" \
   -F "forma=transversal" \
+  -F "tax_year=2025" \
   -F "campo=w2" \
   -F "tipo_campo=documento" \
   -F "modo=archivo" \
@@ -330,7 +439,7 @@ Notas:
 - **`external_ref`** (opcional, extensión sobre el contrato original): identificador estable de la conversación externa (ej. el id de sesión del agente). Si lo envías la primera vez que `cliente_id` es null, y luego lo repites, la API reconoce que es el mismo cliente en vez de crear uno duplicado — protección recomendada si tu agente puede perder el `cliente_id` entre turnos.
 - **`phone`** (opcional, extensión sobre el contrato original): teléfono del cliente. Si lo envías cuando `cliente_id` es null y ya existe un cliente con ese teléfono, la API reutiliza ese cliente en vez de crear uno duplicado — es un identificador más estable que `external_ref` para esto, y además queda guardado para poder [buscar al cliente por teléfono](#buscar-un-cliente-por-id-o-por-telefono) más adelante.
 - El `estado` que envíes (si lo envías) se ignora: **la API siempre calcula `estado` del lado del servidor** validando el contenido (SSN de 9 dígitos, fecha válida, número ≥ 0, formato de archivo aceptado, archivo legible). Un evento con contenido inválido igual se acepta y persiste con `estado: "invalido"` — no se rechaza con 422, salvo que la forma del evento esté mal (campo inexistente, `tipo_campo`/`modo` inconsistente con el catálogo, etc.).
-- Reenviar el mismo `(cliente_id, forma, campo)` sobrescribe el valor anterior (idempotencia) y queda registrado en el historial de cambios. Para los campos `unico_por_cliente` la unicidad es por `(cliente_id, campo)` — reenviarlos en cualquier `forma` sobrescribe la misma fila única (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)).
+- Reenviar el mismo `(cliente_id, forma, campo, tax_year)` sobrescribe el valor anterior (idempotencia) y queda registrado en el historial de cambios. Para los campos `unico_por_cliente` la unicidad es por `(cliente_id, campo, tax_year)` — reenviarlos en cualquier `forma` sobrescribe la misma fila única (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). **`tax_year` es parte de la identidad del dato**: el mismo campo enviado para dos años fiscales distintos crea **dos filas independientes**, no se sobrescriben entre sí.
 - Para campos `array_object`/`array_string` (ej. `info_dependientes`), reenvía siempre el **arreglo acumulado completo** — la API sobrescribe, no hace merge parcial.
 
 ## Endpoints del panel
@@ -338,24 +447,26 @@ Notas:
 Requieren ability `clientes:read` (lectura) o `clientes:write` (escritura).
 
 ```
-GET    /api/clientes                              — lista paginada de clientes visibles para el token
-POST   /api/clientes                              — alta de un cliente (mismas reglas que /clientes web)
-GET    /api/clientes/buscar?id= | ?phone= | ?email= — busca un cliente por id, teléfono o email (ver abajo)
-GET    /api/clientes/{id}                         — detalle: formas aplicables + todos los campos y su estado
-GET    /api/clientes/{id}/documentos              — documentos subidos, con URL de descarga firmada y temporal
-GET    /api/clientes/{id}/export                  — descarga un ZIP con documentos + JSON de campos
-GET    /api/clientes/{id}/campos/{campo}?forma=   — historial de cambios de un campo (forma es obligatoria)
-PATCH  /api/clientes/{id}/campos/{campo}?forma=   — corrección manual de un campo por un preparador/administrador
-DELETE /api/clientes/{id}/campos/{campo}?forma=   — elimina un campo cargado por error (conserva el historial)
-POST   /api/clientes/{id}/marcar-revisado/{forma} — marca una forma como revisada por un humano
+GET    /api/clientes?tax_year=                              — lista paginada de clientes visibles (tax_year opcional, default = año actual)
+POST   /api/clientes                                         — alta de un cliente (mismas reglas que /clientes web)
+GET    /api/clientes/buscar?id=|phone=|email=&tax_year=      — busca un cliente por id, teléfono o email (ver abajo)
+GET    /api/clientes/{id}?tax_year=                          — detalle: formas aplicables + todos los campos y su estado (tax_year opcional, default = año actual)
+GET    /api/clientes/{id}/documentos?tax_year=               — documentos subidos, con URL de descarga firmada y temporal (tax_year opcional)
+GET    /api/clientes/{id}/export?tax_year=                   — descarga un ZIP con documentos + JSON de campos de ese año (tax_year opcional)
+GET    /api/clientes/{id}/campos/{campo}?forma=&tax_year=    — historial de cambios de un campo (forma y tax_year obligatorios)
+PATCH  /api/clientes/{id}/campos/{campo}?forma=&tax_year=    — corrección manual de un campo por un preparador/administrador (forma y tax_year obligatorios)
+DELETE /api/clientes/{id}/campos/{campo}?forma=&tax_year=    — elimina un campo cargado por error (forma y tax_year obligatorios; conserva el historial)
+POST   /api/clientes/{id}/marcar-revisado/{forma}            — marca una forma como revisada por un humano (tax_year obligatorio en el body)
 ```
+
+`tax_year` en los endpoints de **lectura** (`GET`) es opcional: si se omite, usa el año fiscal actual configurado en la plataforma. En los que identifican/modifican un campo puntual (`campos/{campo}`, `marcar-revisado`) es **obligatorio** — ver [Año fiscal](#año-fiscal-taxyear).
 
 ### Listar clientes (`GET /api/clientes`)
 
-Paginado, 20 por página. Acepta `?search=` (busca por nombre, email o teléfono) y `?page=`.
+Paginado, 20 por página. Acepta `?search=` (busca por nombre, email o teléfono), `?page=`, y `?tax_year=` (opcional — `estado_general` de cada cliente se calcula sobre las formas de ese año; si se omite, usa el año fiscal actual de la plataforma).
 
 ```bash
-curl -s "https://tu-dominio/api/clientes?search=lopez&page=2" \
+curl -s "https://tu-dominio/api/clientes?search=lopez&page=2&tax_year=2025" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Accept: application/json"
 ```
@@ -365,7 +476,8 @@ curl -s "https://tu-dominio/api/clientes?search=lopez&page=2" \
   "data": [
     { "id": 42, "name": "María López", "email": "maria@ejemplo.com", "phone": "+15551234567", "estado_general": "en_progreso" }
   ],
-  "meta": { "current_page": 2, "last_page": 5 }
+  "meta": { "current_page": 2, "last_page": 5 },
+  "tax_year": 2025
 }
 ```
 
@@ -381,15 +493,17 @@ curl -X POST https://tu-dominio/api/clientes \
   -d '{ "name": "María López", "email": "maria@ejemplo.com", "phone": "+15551234567" }'
 ```
 
-Responde `201` con el mismo shape que `GET /api/clientes/{id}` (ver más abajo).
+Responde `201` con el mismo shape que `GET /api/clientes/{id}` (ver más abajo) — que ahora incluye `tax_year` en el nivel superior de la respuesta, con el año usado para resolver `formas`/`campos` (el actual de la plataforma, ya que la creación no recibe `tax_year` propio).
 
-La corrección manual (`PATCH`) acepta el mismo shape que un evento de texto/archivo (`modo`, `tipo_dato`+`contenido`, o `file` — máx. **10 MB**, ver nota en [Emitir eventos](#emitir-un-evento-post-apieventos)), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`). Responde `200` con `{ "campo": "...", "estado": "..." }`.
+La corrección manual (`PATCH`) requiere `?forma=` **y `?tax_year=`** en el query string (ambos obligatorios, sin default), acepta el mismo shape que un evento de texto/archivo (`modo`, `tipo_dato`+`contenido`, o `file` — máx. **10 MB**, ver nota en [Emitir eventos](#emitir-un-evento-post-apieventos)), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`). Responde `200` con `{ "campo": "...", "estado": "..." }`.
 
-`DELETE` borra la fila de `campos_cliente` (y el documento/archivo si era de tipo `documento`), pero agrega una entrada final al historial con `valor_nuevo: null` — nada se pierde de la trazabilidad. Responde `204` sin body.
+`DELETE` también requiere `?forma=` **y `?tax_year=`**. Borra la fila de `campos_cliente` (y el documento/archivo si era de tipo `documento`), pero agrega una entrada final al historial con `valor_nuevo: null` — nada se pierde de la trazabilidad. Responde `204` sin body.
 
-`POST .../marcar-revisado/{forma}` responde `200` con `{ "forma": "form_1040", "estado": "completo", "revisado_en": "2025-01-15T10:30:00Z" }`.
+`POST .../marcar-revisado/{forma}` requiere `tax_year` en el body (obligatorio, sin default — es una acción mutante). Responde `200` con `{ "forma": "form_1040", "estado": "completo", "revisado_en": "2025-01-15T10:30:00Z" }`.
 
-### Historial de un campo (`GET /api/clientes/{id}/campos/{campo}?forma=`)
+### Historial de un campo (`GET /api/clientes/{id}/campos/{campo}?forma=&tax_year=`)
+
+`forma` y `tax_year` son ambos obligatorios (sin default) — identifican de forma única a qué instancia del campo corresponde el historial.
 
 ```json
 {
@@ -412,20 +526,31 @@ La corrección manual (`PATCH`) acepta el mismo shape que un evento de texto/arc
 Útil para que el agente conversacional resuelva el `cliente_id` a partir del teléfono o el email antes de emitir eventos, en vez de depender de `external_ref`:
 
 ```bash
-curl -s "https://tu-dominio/api/clientes/buscar?phone=%2B15551234567" \
+curl -s "https://tu-dominio/api/clientes/buscar?phone=%2B15551234567&tax_year=2025" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Accept: application/json"
 ```
 
-Se le puede pasar `id` o `email` en vez de `phone` (`?id=42`, `?email=maria@ejemplo.com`) — hace falta exactamente uno de los tres. Devuelve el mismo shape que `GET /api/clientes/{id}` (incluye `phone`), respetando el mismo alcance de datos que el resto de la API: un preparador solo encuentra a sus clientes asignados. Si no hay ningún cliente visible con ese id/teléfono/email, responde `404`.
+Se le puede pasar `id` o `email` en vez de `phone` (`?id=42`, `?email=maria@ejemplo.com`) — hace falta exactamente uno de los tres. `tax_year` es opcional (default = año actual de la plataforma), igual que en `GET /api/clientes/{id}`. Devuelve el mismo shape que `GET /api/clientes/{id}` (incluye `phone`), respetando el mismo alcance de datos que el resto de la API: un preparador solo encuentra a sus clientes asignados. Si no hay ningún cliente visible con ese id/teléfono/email, responde `404`.
 
 ## Panel de administración (solo web, sin API de token)
 
 Tres áreas exclusivamente del panel web (sesión), sin equivalente sobre token — pensadas para el equipo interno, no para integraciones externas:
 
 - **`/clientes`**: además de listar/ver, un preparador o administrador puede dar de alta un cliente manualmente (`POST /clientes`) y un administrador puede eliminarlo (`DELETE /clientes/{id}`, borra en cascada todos sus datos y archivos).
-- **`/catalogo`** (solo administrador): CRUD de qué campos pide cada formulario — alta, edición y baja de definiciones (`tipo_campo`, `tipo_dato`, `formatos_aceptados`, `obligatorio`, `sensible`). Las 10 formas en sí son fijas; solo los campos dentro de cada una son editables. Borrar una definición no borra los datos de clientes ya cargados con ese campo — solo deja de pedirse/contar a futuro.
+- **`/catalogo?tax_year=`** (solo administrador): CRUD de qué campos pide cada formulario, **por año fiscal** — alta, edición y baja de definiciones (`tipo_campo`, `tipo_dato`, `formatos_aceptados`, `obligatorio`, `sensible`, `tax_year`). Las 10 formas en sí son fijas; los campos dentro de cada una, y el año fiscal al que pertenecen, son editables. Un campo nuevo se crea para el año seleccionado en el selector del panel — no se copia automáticamente a otros años. Borrar una definición no borra los datos de clientes ya cargados con ese campo — solo deja de pedirse/contar a futuro (para ese año).
 - **`/usuarios`** (solo administrador): alta, edición y baja de cualquier usuario (cliente, preparador o administrador), incluida la asignación/reasignación de preparador de un cliente. Un administrador no puede eliminarse a sí mismo.
+- **`POST /clientes/{cliente}/determinaciones`** (`tax_year` requerido en el body): dispara el motor de reglas fiscales para ese cliente y año — ver [Motor de reglas fiscales](#motor-de-reglas-fiscales-fase-2) abajo.
+
+## Motor de reglas fiscales (Fase 2)
+
+A partir de la Fase 2, la plataforma **calcula** (no solo recolecta) cuatro determinaciones fiscales por cliente y año: **filing status**, **calificación de dependientes** (qualifying child / qualifying relative), **AGI**, y **créditos elegibles** (Child Tax Credit, Credit for Other Dependents, crédito de cuidado de dependientes). El cálculo:
+
+- Es **on-demand**, no automático: un preparador dispara `POST /clientes/{cliente}/determinaciones` (solo panel web, sesión — sin equivalente sobre token de agente) desde la ficha del cliente.
+- Lee los datos ya recolectados (`estado_civil`, `info_dependientes`, `ingresos`, `gastos_cuidado_dependientes`) y persiste el resultado en `determinaciones_fiscales`, **separado** de `campos_cliente` — nunca se mezcla "lo que dijo el cliente" con "lo que calculó el sistema".
+- Si falta un dato de entrada (ej. `estado_civil` nunca capturado), la determinación correspondiente queda con `disponible: false` y un `motivo_no_disponible` — nunca lanza un error 500 por datos incompletos.
+- Los montos y umbrales del IRS (`parametros_fiscales`) están versionados por `tax_year`, igual que el catálogo — hoy sembrados con cifras de 2025 confirmadas por fuente pública (Child Tax Credit $2,200, phase-out $200k/$400k, límite de ingreso "qualifying relative" $5,200, entre otros). El porcentaje del crédito de cuidado de dependientes se aproxima linealmente entre 35% y 20% — es una simplificación documentada de la tabla escalonada real del IRS, no el valor exacto.
+- **Estas cifras no reemplazan el criterio de un CPA** — están pensadas como apoyo al preparador, no como fuente final de verdad para presentar una declaración real.
 
 ## Revelar campos sensibles
 
@@ -438,6 +563,6 @@ Los campos marcados como sensibles en el catálogo (`identificacion_ssn_itin`, `
 | `401` | Token ausente, inválido o revocado. |
 | `403` | Token sin la ability requerida, o el cliente/preparador no tiene acceso a ese recurso. |
 | `404` | El cliente, campo o documento no existe (o no es visible para este token). |
-| `422` | El evento/corrección está mal formado: campo inexistente en el catálogo para esa forma, `tipo_campo`/`modo` inconsistente, falta un campo requerido de la request, o el archivo supera el límite de tamaño (ver [Emitir eventos](#emitir-un-evento-post-apieventos) y [Endpoints del panel](#endpoints-del-panel)). |
+| `422` | El evento/corrección está mal formado: falta `tax_year` (ver [Año fiscal](#año-fiscal-taxyear)), campo inexistente en el catálogo **para ese `tax_year` y esa forma** (puede existir en otro año y no en este), `tipo_campo`/`modo` inconsistente, falta un campo requerido de la request, o el archivo supera el límite de tamaño (ver [Emitir eventos](#emitir-un-evento-post-apieventos) y [Endpoints del panel](#endpoints-del-panel)). |
 
 Ningún endpoint bajo `/api/*` tiene rate limiting hoy — un token puede llamarlos sin límite de tasa. (El `429` solo existe en `POST /clientes/{cliente}/campos/{campo}/reveal`, que es exclusivo del panel web con sesión, no un endpoint de esta API — ver [Revelar campos sensibles](#revelar-campos-sensibles).)

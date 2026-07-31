@@ -73,10 +73,20 @@ class CatalogoCamposSeeder extends Seeder
         return [
             $this->campo('identificacion_ssn_itin', FieldKind::Dato, tipoDato: FieldDataType::String, sensible: true, unicoPorCliente: true),
             $this->campo('info_conyuge', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: ['nombre_completo', 'fecha_nacimiento', 'ssn'], sensible: true, unicoPorCliente: true),
-            $this->campo('info_dependientes', FieldKind::Dato, tipoDato: FieldDataType::ArrayObject, subcampos: ['nombre_completo', 'fecha_nacimiento', 'ssn'], sensible: true, unicoPorCliente: true),
+            $this->campo('info_dependientes', FieldKind::Dato, tipoDato: FieldDataType::ArrayObject, subcampos: [
+                'nombre_completo', 'fecha_nacimiento', 'ssn',
+                'relacion', 'meses_en_hogar', 'estudiante_tiempo_completo', 'discapacitado',
+                'provee_mas_50_soporte_propio', 'ingreso_bruto_anual', 'custodia_compartida_sin_conflicto',
+            ], sensible: true, unicoPorCliente: true),
             $this->campo('w2', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], unicoPorCliente: true),
             $this->campo('form_1099_nec', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], unicoPorCliente: true),
             $this->campo('declaracion_anio_anterior', FieldKind::Documento, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
+            // Hechos crudos (no la conclusión) para que el motor de reglas calcule
+            // el filing status — ver App\Services\Reglas\FilingStatusCalculator.
+            $this->campo('estado_civil', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
+                'casado_al_31_dic', 'convivio_conyuge_ultimos_6_meses', 'costeo_mas_mitad_hogar',
+                'existe_persona_calificable', 'conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge',
+            ], unicoPorCliente: true),
         ];
     }
 
@@ -87,11 +97,21 @@ class CatalogoCamposSeeder extends Seeder
     {
         return [
             TaxForm::Form1040->value => [
-                $this->campo('ingresos', FieldKind::Dato, tipoDato: FieldDataType::Number),
+                // Desglosado (no un Number suelto): sin esto no se puede calcular
+                // AGI — ver App\Services\Reglas\AgiCalculator.
+                $this->campo('ingresos', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
+                    'salarios', 'intereses_dividendos', 'ganancias_capital',
+                    'ingresos_jubilacion', 'otros_ingresos', 'ajustes_ingreso',
+                ]),
                 $this->campo('deducciones', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg']),
-                $this->campo('creditos', FieldKind::Dato, tipoDato: FieldDataType::ArrayString),
                 $this->campo('impuestos_retenidos', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('info_bancaria', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: ['banco', 'tipo_cuenta', 'numero_cuenta', 'routing_number'], sensible: true),
+                // Alimenta el Child and Dependent Care Credit (Form 2441) — ver
+                // App\Services\Reglas\CreditEligibilityCalculator. No todos los
+                // clientes tienen gastos de cuidado, por eso obligatorio: false.
+                $this->campo('gastos_cuidado_dependientes', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'jpg'], subcampos: [
+                    'proveedor_nombre', 'proveedor_ssn_ein', 'monto_anual', 'dependiente_relacionado',
+                ], obligatorio: false, sensible: true),
             ],
             TaxForm::ScheduleC->value => [
                 $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),

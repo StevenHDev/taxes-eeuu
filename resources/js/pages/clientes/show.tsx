@@ -3,8 +3,10 @@ import { AlertTriangle, Check, Circle, Upload } from 'lucide-react';
 import { Fragment, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
+import { DeterminacionFiscalPanel } from '@/components/determinacion-fiscal-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -43,6 +45,7 @@ import type {
     CampoDocumento,
     CatalogoDisponibleItem,
     ClienteForma,
+    Determinacion,
     HistorialCambio,
 } from '@/types';
 
@@ -138,14 +141,6 @@ function guessTipoDato(valor: unknown): string {
 }
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
-
-function parseContenido(raw: string): Json {
-    try {
-        return JSON.parse(raw) as Json;
-    } catch {
-        return raw;
-    }
-}
 
 // Convierte una clave técnica (snake_case) en una etiqueta legible:
 // "nombre_completo" -> "Nombre completo", "ssn" -> "SSN", "w2" -> "W2".
@@ -314,11 +309,30 @@ function esObjetoPlano(v: unknown): boolean {
 type EditorKind =
     'scalar' | 'stringList' | 'object' | 'objectList' | 'advanced';
 
-// Elige el editor más amigable según la forma del valor actual:
-// escalar -> un campo de texto; lista simple -> uno por línea; objeto plano ->
-// un campo por atributo; lista de objetos -> una card por registro; datos
-// anidados -> editor JSON avanzado.
-function editorKindFor(v: unknown): EditorKind {
+// Elige el editor más amigable. Prioriza el `tipo_dato` del catálogo (siempre
+// que se conozca) por sobre la forma del valor actual — un objeto/array vacío
+// o recién creado no tiene forma de la que inferir nada, así que confiar solo
+// en la forma del valor dejaba sin editor utilizable a un campo nuevo o a uno
+// cuyo único dato cargado hasta ahora fuera una lista vacía.
+function editorKindFor(v: unknown, tipoDato?: string | null): EditorKind {
+    if (tipoDato === 'object') {
+        return 'object';
+    }
+
+    if (tipoDato === 'array_object') {
+        return 'objectList';
+    }
+
+    if (tipoDato === 'array_string') {
+        return 'stringList';
+    }
+
+    if (tipoDato === 'number' || tipoDato === 'string') {
+        return 'scalar';
+    }
+
+    // Sin tipo_dato conocido: se infiere de la forma del valor (comportamiento
+    // anterior, como red de seguridad).
     if (v === null || v === undefined || typeof v !== 'object') {
         return 'scalar';
     }
@@ -342,56 +356,179 @@ function scalarToString(v: unknown): string {
     return String(v);
 }
 
-function objToStrings(v: unknown): Record<string, string> {
-    if (!v || typeof v !== 'object' || Array.isArray(v)) {
-        return {};
+// Algunos subcampos (estado_civil, info_dependientes) son booleanos o
+// numéricos, no texto — el catálogo hoy no trae el tipo de cada subcampo
+// (solo su nombre), así que se resuelve por nombre conocido, con el tipo del
+// valor ya cargado como respaldo para cualquier subcampo futuro no listado acá.
+const SUBCAMPO_TIPO_CONOCIDO: Record<string, 'boolean' | 'number'> = {
+    casado_al_31_dic: 'boolean',
+    convivio_conyuge_ultimos_6_meses: 'boolean',
+    costeo_mas_mitad_hogar: 'boolean',
+    existe_persona_calificable: 'boolean',
+    conyuge_fallecio_en_anio: 'boolean',
+    anio_fallecimiento_conyuge: 'number',
+    meses_en_hogar: 'number',
+    estudiante_tiempo_completo: 'boolean',
+    discapacitado: 'boolean',
+    provee_mas_50_soporte_propio: 'boolean',
+    ingreso_bruto_anual: 'number',
+};
+
+type FieldPrimitive = string | number | boolean;
+type FieldRecord = Record<string, FieldPrimitive>;
+
+function tipoDeSubcampo(
+    clave: string,
+    actual: unknown,
+): 'boolean' | 'number' | 'string' {
+    if (SUBCAMPO_TIPO_CONOCIDO[clave]) {
+        return SUBCAMPO_TIPO_CONOCIDO[clave];
     }
 
-    const out: Record<string, string> = {};
+    if (typeof actual === 'boolean') {
+        return 'boolean';
+    }
 
-    for (const [k, val] of Object.entries(v)) {
-        out[k] = val === null || val === undefined ? '' : String(val);
+    if (typeof actual === 'number') {
+        return 'number';
+    }
+
+    return 'string';
+}
+
+function valorPorDefecto(tipo: 'boolean' | 'number' | 'string'): FieldPrimitive {
+    return tipo === 'boolean' ? false : '';
+}
+
+// Construye un registro con TODAS las claves de la plantilla (el catálogo),
+// tomando el valor ya cargado cuando existe y un default por tipo cuando no
+// — así un subcampo agregado al catálogo después de que el cliente ya tenía
+// datos cargados aparece igual, en vez de quedar invisible.
+function objToRecord(v: unknown, plantilla: string[]): FieldRecord {
+    const existente = (
+        v && typeof v === 'object' && !Array.isArray(v) ? v : {}
+    ) as Record<string, unknown>;
+    const claves = plantilla.length > 0 ? plantilla : Object.keys(existente);
+    const out: FieldRecord = {};
+
+    for (const k of claves) {
+        const val = existente[k];
+
+        if (val === undefined || val === null) {
+            out[k] = valorPorDefecto(tipoDeSubcampo(k, val));
+        } else if (typeof val === 'boolean' || typeof val === 'number') {
+            out[k] = val;
+        } else {
+            out[k] = String(val);
+        }
     }
 
     return out;
+}
+
+// Campo booleano o numérico dentro de un editor de objeto/lista de objetos.
+function CampoSubcampo({
+    id,
+    clave,
+    valor,
+    onChange,
+}: {
+    id: string;
+    clave: string;
+    valor: FieldPrimitive;
+    onChange: (v: FieldPrimitive) => void;
+}) {
+    const tipo = tipoDeSubcampo(clave, valor);
+
+    if (tipo === 'boolean') {
+        return (
+            <div className="flex items-center gap-2">
+                <Checkbox
+                    id={id}
+                    checked={valor === true}
+                    onCheckedChange={(checked) => onChange(checked === true)}
+                />
+                <Label htmlFor={id}>{humanizarClave(clave)}</Label>
+            </div>
+        );
+    }
+
+    return (
+        <div className="grid gap-1.5">
+            <Label htmlFor={id}>{humanizarClave(clave)}</Label>
+            <Input
+                id={id}
+                type={tipo === 'number' ? 'number' : 'text'}
+                value={String(valor)}
+                onChange={(e) =>
+                    onChange(
+                        tipo === 'number'
+                            ? e.target.value === ''
+                                ? ''
+                                : Number(e.target.value)
+                            : e.target.value,
+                    )
+                }
+            />
+        </div>
+    );
 }
 
 // Editor de valores que reporta el contenido editado (y su validez) al padre.
 // Evita exponer JSON al usuario salvo en datos anidados (caso "advanced").
 function ValueEditor({
     initial,
+    tipoDato,
+    subcampos,
     onChange,
     onValidityChange,
 }: {
     initial: unknown;
+    tipoDato?: string | null;
+    subcampos?: string[] | null;
     onChange: (v: Json) => void;
     onValidityChange: (ok: boolean) => void;
 }) {
     const { t } = useTranslation();
-    const [kind] = useState<EditorKind>(() => editorKindFor(initial));
+    const [kind] = useState<EditorKind>(() => editorKindFor(initial, tipoDato));
     const [scalar, setScalar] = useState(() => scalarToString(initial));
     const [list, setList] = useState(() =>
         Array.isArray(initial) ? initial.map((x) => String(x)).join('\n') : '',
     );
-    const [obj, setObj] = useState<Record<string, string>>(() =>
-        objToStrings(initial),
-    );
-    const [items, setItems] = useState<Record<string, string>[]>(() =>
-        Array.isArray(initial) ? initial.map((x) => objToStrings(x)) : [],
-    );
-    // Claves de cada registro de la lista, inferidas del valor inicial. Sirven
-    // de plantilla al agregar un registro nuevo (vacío).
+    // Plantilla de claves: el catálogo (`subcampos`) manda siempre que se
+    // conozca; solo se infiere del valor actual cuando no hay catálogo que
+    // consultar (fallback defensivo, no el camino normal).
     const [plantilla] = useState<string[]>(() => {
-        const claves = new Set<string>();
+        if (subcampos && subcampos.length > 0) {
+            return subcampos;
+        }
 
-        (Array.isArray(initial) ? initial : []).forEach((x) => {
-            if (x && typeof x === 'object' && !Array.isArray(x)) {
-                Object.keys(x).forEach((k) => claves.add(k));
-            }
-        });
+        if (Array.isArray(initial)) {
+            const claves = new Set<string>();
 
-        return [...claves];
+            initial.forEach((x) => {
+                if (x && typeof x === 'object' && !Array.isArray(x)) {
+                    Object.keys(x).forEach((k) => claves.add(k));
+                }
+            });
+
+            return [...claves];
+        }
+
+        if (initial && typeof initial === 'object') {
+            return Object.keys(initial);
+        }
+
+        return [];
     });
+    const [obj, setObj] = useState<FieldRecord>(() =>
+        objToRecord(initial, plantilla),
+    );
+    const [items, setItems] = useState<FieldRecord[]>(() =>
+        Array.isArray(initial)
+            ? initial.map((x) => objToRecord(x, plantilla))
+            : [],
+    );
     const [raw, setRaw] = useState(() =>
         initial === null || initial === undefined
             ? ''
@@ -426,7 +563,7 @@ function ValueEditor({
             return;
         }
 
-        onChange(obj);
+        onChange(obj as Json);
         onValidityChange(true);
     }, [kind, obj, onChange, onValidityChange]);
 
@@ -435,7 +572,7 @@ function ValueEditor({
             return;
         }
 
-        onChange(items);
+        onChange(items as Json);
         onValidityChange(true);
     }, [kind, items, onChange, onValidityChange]);
 
@@ -481,29 +618,23 @@ function ValueEditor({
     if (kind === 'object') {
         return (
             <div className="grid gap-3">
-                {Object.keys(obj).map((k) => (
-                    <div key={k} className="grid gap-1.5">
-                        <Label htmlFor={`campo-${k}`}>
-                            {humanizarClave(k)}
-                        </Label>
-                        <Input
-                            id={`campo-${k}`}
-                            value={obj[k]}
-                            onChange={(e) =>
-                                setObj((prev) => ({
-                                    ...prev,
-                                    [k]: e.target.value,
-                                }))
-                            }
-                        />
-                    </div>
+                {plantilla.map((k) => (
+                    <CampoSubcampo
+                        key={k}
+                        id={`campo-${k}`}
+                        clave={k}
+                        valor={obj[k]}
+                        onChange={(v) =>
+                            setObj((prev) => ({ ...prev, [k]: v }))
+                        }
+                    />
                 ))}
             </div>
         );
     }
 
     if (kind === 'objectList') {
-        const actualizar = (idx: number, clave: string, valor: string) =>
+        const actualizar = (idx: number, clave: string, valor: FieldPrimitive) =>
             setItems((prev) =>
                 prev.map((registro, i) =>
                     i === idx ? { ...registro, [clave]: valor } : registro,
@@ -514,7 +645,7 @@ function ValueEditor({
         const agregar = () =>
             setItems((prev) => [
                 ...prev,
-                Object.fromEntries(plantilla.map((k) => [k, ''])),
+                objToRecord({}, plantilla),
             ]);
 
         return (
@@ -535,18 +666,13 @@ function ValueEditor({
                             </Button>
                         </div>
                         {plantilla.map((k) => (
-                            <div key={k} className="grid gap-1.5">
-                                <Label htmlFor={`item-${idx}-${k}`}>
-                                    {humanizarClave(k)}
-                                </Label>
-                                <Input
-                                    id={`item-${idx}-${k}`}
-                                    value={registro[k] ?? ''}
-                                    onChange={(e) =>
-                                        actualizar(idx, k, e.target.value)
-                                    }
-                                />
-                            </div>
+                            <CampoSubcampo
+                                key={k}
+                                id={`item-${idx}-${k}`}
+                                clave={k}
+                                valor={registro[k]}
+                                onChange={(v) => actualizar(idx, k, v)}
+                            />
                         ))}
                     </div>
                 ))}
@@ -917,7 +1043,10 @@ function EditCampoDialog({
                 `?forma=${campo.forma}&tax_year=${taxYear}`,
             {
                 modo: 'texto',
-                tipo_dato: guessTipoDato(contenido),
+                // El tipo_dato del catálogo manda siempre que se conozca — el
+                // backend ahora rechaza (422) un tipo_dato que no coincida
+                // exactamente con el catálogo (ver Fase 2).
+                tipo_dato: campo.tipo_dato ?? guessTipoDato(contenido),
                 contenido,
             },
             { preserveScroll: true, onSuccess: () => setOpen(false) },
@@ -946,6 +1075,8 @@ function EditCampoDialog({
                     <ValueEditor
                         key={open ? 'abierto' : 'cerrado'}
                         initial={campo.valor}
+                        tipoDato={campo.tipo_dato}
+                        subcampos={campo.subcampos}
                         onChange={onChange}
                         onValidityChange={onValidityChange}
                     />
@@ -975,7 +1106,10 @@ function AgregarCampoDialog({
     const [forma, setForma] = useState<string>(disponibles[0]?.forma ?? '');
     const camposDeForma = disponibles.filter((d) => d.forma === forma);
     const [campo, setCampo] = useState(camposDeForma[0]?.campo ?? '');
-    const [raw, setRaw] = useState('');
+    const [contenido, setContenido] = useState<Json>('');
+    const [valido, setValido] = useState(true);
+    const onChangeContenido = useCallback((v: Json) => setContenido(v), []);
+    const onValidityChange = useCallback((ok: boolean) => setValido(ok), []);
 
     if (disponibles.length === 0) {
         return null;
@@ -996,13 +1130,11 @@ function AgregarCampoDialog({
     };
 
     const submitTexto = () => {
-        const contenido = parseContenido(raw);
-
         router.patch(
             url,
             {
                 modo: 'texto',
-                tipo_dato: guessTipoDato(contenido),
+                tipo_dato: seleccionado?.tipo_dato ?? guessTipoDato(contenido),
                 contenido,
             },
             { preserveScroll: true, onSuccess: () => setOpen(false) },
@@ -1072,15 +1204,28 @@ function AgregarCampoDialog({
                         />
                     ) : (
                         <>
-                            <Textarea
-                                value={raw}
-                                onChange={(e) => setRaw(e.target.value)}
-                                placeholder={t('clienteShow.edit.placeholder')}
-                                rows={4}
+                            {/* key: al cambiar de campo, reinicia el editor en blanco */}
+                            <ValueEditor
+                                key={`${forma}:${campo}`}
+                                initial={
+                                    seleccionado?.tipo_dato === 'array_string' ||
+                                    seleccionado?.tipo_dato === 'array_object'
+                                        ? []
+                                        : seleccionado?.tipo_dato === 'object'
+                                          ? {}
+                                          : ''
+                                }
+                                tipoDato={seleccionado?.tipo_dato}
+                                subcampos={seleccionado?.subcampos}
+                                onChange={onChangeContenido}
+                                onValidityChange={onValidityChange}
                             />
 
                             <DialogFooter className="mt-4">
-                                <Button onClick={submitTexto}>
+                                <Button
+                                    onClick={submitTexto}
+                                    disabled={!valido}
+                                >
                                     {t('common.save')}
                                 </Button>
                             </DialogFooter>
@@ -1569,12 +1714,14 @@ export default function ClienteShow({
     campos,
     catalogoDisponible,
     taxYearActual,
+    determinaciones,
 }: {
     cliente: { id: number; name: string; email: string; phone: string | null };
     formas: ClienteForma[];
     campos: CampoCliente[];
     catalogoDisponible: CatalogoDisponibleItem[];
     taxYearActual: number;
+    determinaciones: Determinacion[];
 }) {
     const { t } = useTranslation();
     const { auth } = usePage<PageProps>().props;
@@ -1718,6 +1865,12 @@ export default function ClienteShow({
                         )}
                     </div>
                 </div>
+
+                <DeterminacionFiscalPanel
+                    clienteId={cliente.id}
+                    taxYear={taxYearActual}
+                    determinaciones={determinaciones}
+                />
 
                 <div className="flex justify-end">
                     <AgregarCampoDialog

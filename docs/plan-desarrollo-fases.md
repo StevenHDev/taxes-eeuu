@@ -30,9 +30,11 @@ Prerrequisito técnico de las fases 2 y 3: los límites de créditos y reglas de
 
 > **Nota — 2 fallos preexistentes encontrados, no introducidos por esta fase:** `ExampleTest::test_returns_a_successful_response` (la ruta `home` redirige — probablemente requiere sesión) y `ClientePanelTest::test_el_buscador_filtra_clientes_por_nombre_email_o_telefono` (el `ClienteController::index` web nunca implementó el filtro por `search` que ese test espera — el filtrado real hoy es client-side). Ninguno de los dos toca código de esta fase; quedan para revisar aparte.
 
-## 2. Fase 2 — Ampliación del catálogo con lógica tributaria
+## 2. Fase 2 — Ampliación del catálogo con lógica tributaria ✅ COMPLETA (2026-07-31)
 
-Antes de construir el motor de reglas en sí, el catálogo necesita campos que hoy no existen (confirmado por inspección directa del seeder — ver hallazgos 2026-07-31). Diseño cerrado 2026-07-31.
+Antes de construir el motor de reglas en sí, el catálogo necesita campos que hoy no existen (confirmado por inspección directa del seeder — ver hallazgos 2026-07-31). Diseño cerrado 2026-07-31, implementado el mismo día.
+
+**Cifras del IRS usadas (tax_year 2025), confirmadas por búsqueda web, no inventadas:** Child Tax Credit $2,200/dependiente calificado, phase-out desde $200,000 (soltero/HOH) o $400,000 (MFJ) a $50 por cada $1,000 de exceso; Credit for Other Dependents $500/dependiente, mismo phase-out; límite de ingreso bruto "qualifying relative" $5,200; Form 2441 (cuidado de dependientes) tope $3,000/$6,000, porcentaje 35%→20% entre AGI $15k–$43k (interpolado linealmente — simplificación documentada de la tabla escalonada real del IRS, no el valor exacto). Un CPA debe validar estas cifras antes de usarlas en una declaración real.
 
 ### 2.1 Decisiones cerradas
 
@@ -41,24 +43,30 @@ Antes de construir el motor de reglas en sí, el catálogo necesita campos que h
 
 ### 2.2 Campos nuevos/ampliados del catálogo
 
-- [ ] Nuevo campo transversal `estado_civil` (Dato, Object, obligatorio, único por cliente) — guarda los **hechos**, no la conclusión, para que el motor calcule el filing status:
+- [x] Nuevo campo transversal `estado_civil` (Dato, Object, obligatorio, único por cliente) — guarda los **hechos**, no la conclusión, para que el motor calcule el filing status:
   `casado_al_31_dic, convivio_conyuge_ultimos_6_meses, costeo_mas_mitad_hogar, existe_persona_calificable, conyuge_fallecio_en_anio, anio_fallecimiento_conyuge`.
-- [ ] Ampliar subcampos de `info_dependientes` (hoy solo `nombre_completo`, `fecha_nacimiento`, `ssn`): agregar `relacion`, `meses_en_hogar`, `estudiante_tiempo_completo`, `discapacitado`, `provee_mas_50_soporte_propio`, `ingreso_bruto_anual`, `custodia_compartida_sin_conflicto`.
-- [ ] `ingresos` en `form_1040` pasa de `Number` suelto a `Object` desglosado (mismo patrón que `info_bancaria`/`info_conyuge`): `salarios, intereses_dividendos, ganancias_capital, ingresos_jubilacion, otros_ingresos, ajustes_ingreso`. Sin esto no se puede calcular AGI.
-- [ ] Nuevo campo `gastos_cuidado_dependientes` en `form_1040` (Mixto, Object, formatos pdf/jpg) — alimenta Form 2441/Child and Dependent Care Credit: `proveedor_nombre, proveedor_ssn_ein, monto_anual, dependiente_relacionado`.
-- [ ] Eliminar el campo `creditos` (`array_string`) del catálogo de `form_1040` — ver Decisión A.
+- [x] Ampliar subcampos de `info_dependientes` (hoy solo `nombre_completo`, `fecha_nacimiento`, `ssn`): agregar `relacion`, `meses_en_hogar`, `estudiante_tiempo_completo`, `discapacitado`, `provee_mas_50_soporte_propio`, `ingreso_bruto_anual`, `custodia_compartida_sin_conflicto`.
+- [x] `ingresos` en `form_1040` pasa de `Number` suelto a `Object` desglosado (mismo patrón que `info_bancaria`/`info_conyuge`): `salarios, intereses_dividendos, ganancias_capital, ingresos_jubilacion, otros_ingresos, ajustes_ingreso`. Sin esto no se puede calcular AGI.
+- [x] Nuevo campo `gastos_cuidado_dependientes` en `form_1040` (Mixto, Object, formatos pdf/jpg, **obligatorio: false** — no todos los clientes tienen estos gastos) — alimenta Form 2441/Child and Dependent Care Credit: `proveedor_nombre, proveedor_ssn_ein, monto_anual, dependiente_relacionado`.
+- [x] Eliminar el campo `creditos` (`array_string`) del catálogo de `form_1040` — ver Decisión A.
 
 ### 2.3 Arquitectura del motor de reglas
 
 Principio central: separar **la forma de la regla** (el árbol de lógica del IRS — estable, casi no cambia de año en año, vive en código) de **los parámetros de la regla** (montos y umbrales en dólares — cambian cada año, viven en tabla versionada). Nunca hardcodear un monto/umbral en el código del motor.
 
-- [ ] Tabla nueva `parametros_fiscales` (`tax_year`, `categoria` — ej. `credito_ctc`, `deduccion_estandar`, `limite_ingreso_qualifying_relative` —, `clave`, `valor` JSON). Una tabla genérica versionada en vez de una tabla dedicada por crédito, para no migrar el schema cada vez que se agregue un crédito nuevo.
-- [ ] Tabla nueva `determinaciones_fiscales` (ver Decisión B) para los resultados calculados.
-- [ ] `FilingStatusCalculator` — evalúa `estado_civil` (los 6 hechos) → Single/MFJ/MFS/HOH/QSS. Lógica fija en código, sin parámetros por año.
-- [ ] `DependentQualificationCalculator` — corre la prueba de qualifying child / qualifying relative por cada dependiente, usando los umbrales de edad/ingreso del `tax_year` desde `parametros_fiscales`.
-- [ ] `AgiCalculator` — suma los subcampos de `ingresos` menos `ajustes_ingreso`.
-- [ ] `CreditEligibilityCalculator` — por cada crédito definido en `parametros_fiscales` para el `tax_year`, evalúa elegibilidad (filing status, dependientes calificados, AGI) y aplica la fórmula de phase-out para el monto final.
-- [ ] Definir cuándo corre el cálculo: **on-demand** (el preparador lo dispara, o se dispara al marcar una forma como completa) — no recalcular en cada guardado de campo individual, por costo y ruido. Si algo descalifica a un dependiente o no cuadra, generar alerta para revisión humana en vez de fallar en silencio.
+- [x] Tabla nueva `parametros_fiscales` (`tax_year`, `categoria`, `clave`, `valor` JSON, `unique(tax_year,categoria,clave)`) + soporte `App\Support\ParametrosFiscales` (mismo diseño de caché que `TaxFieldCatalog`) + `ParametrosFiscalesSeeder` con las cifras 2025.
+- [x] Tabla nueva `determinaciones_fiscales` (`user_id`, `tax_year`, `tipo`, `resultado` cifrado, `version_reglas`, `calculado_en`, `unique(user_id,tax_year,tipo)`) + modelo `DeterminacionFiscal` + relación `User::determinacionesFiscales()`.
+- [x] `App\Services\Reglas\FilingStatusCalculator` — evalúa `estado_civil` → MFJ/HOH/QSS/Single (MFS por elección del contribuyente queda fuera, documentado como limitación). Recibe además si existe un qualifying child / algún dependiente calificado, **calculado por `DependentQualificationCalculator`** (no el flag auto-reportado del agente, para que agente y cálculo real no queden inconsistentes). Maneja correctamente el año exacto de fallecimiento del cónyuge (el año de la muerte sigue siendo MFJ; QSS solo aplica a los 2 años siguientes).
+- [x] `App\Services\Reglas\DependentQualificationCalculator` — corre **primero** (alimenta a FilingStatus). Edad calculada contra el 31/dic real del año (`Carbon::diffInYears`, nunca restando años de nacimiento). Qualifying child / qualifying relative, más los conteos que necesita el cálculo de créditos (`conteo_ctc`, `conteo_odc`, `conteo_cuidado`).
+- [x] `App\Services\Reglas\AgiCalculator` — suma los subcampos de `ingresos` menos `ajustes_ingreso`. AGI negativo permitido a propósito (pérdida de capital grande), no se fuerza a 0.
+- [x] `App\Services\Reglas\CreditEligibilityCalculator` — **phase-out combinado de CTC+ODC** (no independiente por crédito — un phase-out separado subestimaría el crédito cuando cada tentativo es menor que la reducción pero la suma no), redondeo del exceso **hacia arriba** (ceil, no floor — $1 de exceso ya cuesta la reducción completa de $1,000). Crédito de cuidado de dependientes con interpolación lineal documentada del porcentaje real (escalonado en el IRS).
+- [x] `App\Services\DeterminacionFiscalService::calcularPara()` — orquesta las 4 calculadoras, lee `campos_cliente` con `estado=Recibido` únicamente y siempre `valor_texto` (nunca el accessor `->valor`, que enmascara sensibles), persiste 4 filas (`updateOrCreate` por `tipo`) envuelto en `DB::transaction`. Si falta un input, la determinación queda `disponible:false` con `motivo_no_disponible`, sin excepción.
+- [x] Cuándo corre el cálculo: **on-demand**, vía botón "Calcular"/"Recalcular" en la ficha del cliente (`POST /clientes/{cliente}/determinaciones`, panel web, `tax_year` requerido en el body) — no se recalcula automáticamente en cada guardado de campo.
+- [x] Panel nuevo `resources/js/components/determinacion-fiscal-panel.tsx` en `clientes/show.tsx`: filing status, AGI y total de créditos (reutilizando `Card`/`StatCard`/`Badge` ya existentes, sin inventar una escala de colores nueva), lista de dependientes con badge CTC/ODC/no-calificado, y desglose de créditos.
+- [x] Corrección de un gap activado por este cambio: `EventoRequest`/`CampoClienteUpdateRequest` ahora también validan que `tipo_dato` coincida con el catálogo (antes solo validaban `tipo_campo`) — sin esto, una integración desactualizada podría seguir mandando `ingresos` como `number` y corromper el AGI en silencio.
+- [x] Tests: 26 casos unitarios nuevos para las 4 calculadoras (`tests/Unit/Services/Reglas/`, primeras pruebas unitarias de un Service en este repo) + 7 casos de feature para el endpoint de cálculo (`tests/Feature/DeterminacionFiscalTest.php`) + actualización de los tests existentes rotos por el cambio de catálogo (`EventoRecoleccionTest`, `ClientePanelTest`). Suite completa: 139 passed, 2 skipped, mismos 2 fallos preexistentes de la Fase 1 (no relacionados).
+
+**Fuera de esta fase, documentado como limitación conocida (no bug):** MFS por elección del contribuyente; tope de "earned income" por cónyuge en el crédito de cuidado de dependientes; `custodia_compartida_sin_conflicto` es no-op (capturado, sin lógica todavía).
 
 ## 3. Fase 3 — Integración TaxWise (diferida, no se trabaja todavía)
 

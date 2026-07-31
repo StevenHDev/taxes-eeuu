@@ -234,6 +234,24 @@
             "submit": "Crear"
         }
     },
+    "determinacionFiscal": {
+        "title": "Determinación fiscal {{year}}",
+        "lastCalculated": "Última vez calculado: {{date}}",
+        "neverCalculated": "Nunca se ha calculado",
+        "calculateNow": "Calcular ahora",
+        "recalculate": "Recalcular",
+        "emptyState": "Todavía no hay una determinación calculada para este año. Carga el estado civil, los dependientes y los ingresos del cliente, y presiona «Calcular ahora».",
+        "filingStatus": "Estado civil",
+        "agi": "AGI",
+        "totalCredits": "Créditos totales",
+        "dependents": "Dependientes",
+        "unnamedDependent": "Dependiente sin nombre",
+        "notQualified": "No califica",
+        "creditBreakdown": "Desglose de créditos",
+        "dependentCare": "Cuidado de dependientes",
+        "agiReduction": "Reducción por AGI",
+        "total": "Total"
+    },
     "clienteShow": {
         "viewer": {
             "viewTitle": "Ver {{name}}",

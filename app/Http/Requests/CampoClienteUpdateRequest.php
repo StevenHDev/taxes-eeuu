@@ -120,6 +120,17 @@ class CampoClienteUpdateRequest extends FormRequest
                 $validator->errors()->add('modo', 'Este campo solo admite modo "texto".');
             }
 
+            // Ver EventoRequest: sin este chequeo, un campo cuyo tipo_dato
+            // cambió en el catálogo seguiría aceptando en silencio el shape
+            // viejo, corrompiendo cualquier cálculo que dependa de ese dato.
+            if ($modo === FieldMode::Texto && $field['tipo_dato'] !== null) {
+                $tipoDatoEnviado = FieldDataType::tryFrom((string) $this->input('tipo_dato'));
+
+                if ($tipoDatoEnviado !== $field['tipo_dato']) {
+                    $validator->errors()->add('tipo_dato', 'El tipo_dato no coincide con el catálogo maestro para este campo.');
+                }
+            }
+
             if ($modo === FieldMode::Archivo && $this->hasFile('file')) {
                 $extension = strtolower((string) $this->file('file')->getClientOriginalExtension());
                 $formatos = $field['formatos_aceptados'] ?? [];

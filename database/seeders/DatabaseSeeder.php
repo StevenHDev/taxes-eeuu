@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(CatalogoCamposSeeder::class);
+        $this->call(ParametrosFiscalesSeeder::class);
 
         // Usuario administrador. Se crea sin factory (no depende de faker, que
         // es require-dev y no existe en producción con --no-dev). Es idempotente

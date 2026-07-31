@@ -62,26 +62,29 @@ paths:
                 value:
                   cliente_id: 42
                   forma: transversal
+                  tax_year: 2025
                   campo: identificacion_ssn_itin
                   tipo_campo: dato
                   modo: texto
                   tipo_dato: string
                   contenido: "123-45-6789"
               number:
-                summary: Dato numérico — ingresos
+                summary: Dato numérico — impuestos_retenidos
                 value:
                   cliente_id: 42
                   forma: form_1040
-                  campo: ingresos
+                  tax_year: 2025
+                  campo: impuestos_retenidos
                   tipo_campo: dato
                   modo: texto
                   tipo_dato: number
-                  contenido: 52000
+                  contenido: 5200
               object:
                 summary: Objeto — info_conyuge
                 value:
                   cliente_id: 42
                   forma: transversal
+                  tax_year: 2025
                   campo: info_conyuge
                   tipo_campo: dato
                   modo: texto
@@ -90,11 +93,29 @@ paths:
                     nombre_completo: Jane Doe
                     fecha_nacimiento: "1990-05-14"
                     ssn: "987-65-4321"
+              object_ingresos:
+                summary: Objeto desglosado — ingresos (Fase 2)
+                value:
+                  cliente_id: 42
+                  forma: form_1040
+                  tax_year: 2025
+                  campo: ingresos
+                  tipo_campo: dato
+                  modo: texto
+                  tipo_dato: object
+                  contenido:
+                    salarios: 52000
+                    intereses_dividendos: 0
+                    ganancias_capital: 0
+                    ingresos_jubilacion: 0
+                    otros_ingresos: 0
+                    ajustes_ingreso: 0
               array_object:
-                summary: Lista de objetos — info_dependientes (arreglo acumulado completo)
+                summary: Lista de objetos — info_dependientes (arreglo acumulado completo, 10 subcampos desde Fase 2)
                 value:
                   cliente_id: 42
                   forma: transversal
+                  tax_year: 2025
                   campo: info_dependientes
                   tipo_campo: dato
                   modo: texto
@@ -103,6 +124,45 @@ paths:
                     - nombre_completo: Kid One
                       fecha_nacimiento: "2015-03-01"
                       ssn: "111-22-3333"
+                      relacion: hija
+                      meses_en_hogar: 12
+                      estudiante_tiempo_completo: false
+                      discapacitado: false
+                      provee_mas_50_soporte_propio: false
+                      ingreso_bruto_anual: 0
+                      custodia_compartida_sin_conflicto: false
+              estado_civil:
+                summary: Objeto — estado_civil (Fase 2, transversal — hechos, no la conclusión de filing status)
+                value:
+                  cliente_id: 42
+                  forma: transversal
+                  tax_year: 2025
+                  campo: estado_civil
+                  tipo_campo: dato
+                  modo: texto
+                  tipo_dato: object
+                  contenido:
+                    casado_al_31_dic: false
+                    convivio_conyuge_ultimos_6_meses: false
+                    costeo_mas_mitad_hogar: true
+                    existe_persona_calificable: true
+                    conyuge_fallecio_en_anio: false
+                    anio_fallecimiento_conyuge: null
+              gastos_cuidado_dependientes:
+                summary: Objeto — gastos_cuidado_dependientes (Fase 2, mixto — dato + documento opcional)
+                value:
+                  cliente_id: 42
+                  forma: form_1040
+                  tax_year: 2025
+                  campo: gastos_cuidado_dependientes
+                  tipo_campo: dato
+                  modo: texto
+                  tipo_dato: object
+                  contenido:
+                    proveedor_nombre: Guardería Los Pinitos
+                    proveedor_ssn_ein: "12-3456789"
+                    monto_anual: 4800
+                    dependiente_relacionado: Kid One
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/EventoArchivo'
@@ -119,9 +179,10 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '422':
           description: |
-            La FORMA del evento está mal (no el contenido): campo inexistente en
-            el catálogo para esa forma, `tipo_campo`/`modo` inconsistente, falta
-            un campo requerido, o el archivo supera 20 MB.
+            La FORMA del evento está mal (no el contenido): falta `tax_year`,
+            campo inexistente en el catálogo para esa forma **y ese año fiscal**,
+            `tipo_campo`/`modo` inconsistente, falta un campo requerido, o el
+            archivo supera 20 MB.
           content:
             application/json:
               schema:
@@ -148,6 +209,15 @@ paths:
             type: integer
             minimum: 1
             default: 1
+        - name: tax_year
+          in: query
+          description: |
+            Opcional. Escopea `estado_general` de cada cliente a las formas de
+            ese año fiscal. Si se omite, usa el año fiscal actual configurado
+            en la plataforma (default de conveniencia, no aplica al camino del
+            agente conversacional — ver `docs/api.md#año-fiscal-taxyear`).
+          schema:
+            type: integer
       responses:
         '200':
           description: Página de clientes.
@@ -168,7 +238,10 @@ paths:
                       last_page:
                         type: integer
                     required: [current_page, last_page]
-                required: [data, meta]
+                  tax_year:
+                    type: integer
+                    description: El año fiscal efectivamente usado (el pasado, o el default si se omitió).
+                required: [data, meta, tax_year]
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -248,6 +321,11 @@ paths:
           schema:
             type: string
             format: email
+        - name: tax_year
+          in: query
+          description: Opcional — default = año fiscal actual de la plataforma. Ver `docs/api.md#año-fiscal-taxyear`.
+          schema:
+            type: integer
       responses:
         '200':
           description: Cliente encontrado.
@@ -269,10 +347,16 @@ paths:
       tags: [Clientes]
       operationId: obtenerCliente
       summary: Detalle de un cliente — formas + todos sus campos y estado
-      description: Incluye todas las formas aplicables y todos los campos cargados, con su valor (enmascarado si es sensible) y estado.
+      description: Incluye todas las formas aplicables y todos los campos cargados, con su valor (enmascarado si es sensible) y estado, escopeados al año fiscal resuelto.
       x-required-ability: clientes:read
       security:
         - BearerAuth: []
+      parameters:
+        - name: tax_year
+          in: query
+          description: Opcional — default = año fiscal actual de la plataforma. Ver `docs/api.md#año-fiscal-taxyear`.
+          schema:
+            type: integer
       responses:
         '200':
           description: Detalle del cliente.
@@ -294,10 +378,16 @@ paths:
       tags: [Clientes]
       operationId: listarDocumentos
       summary: Documentos subidos por el cliente
-      description: Cada documento incluye una URL de descarga firmada y temporal (10 minutos).
+      description: Cada documento incluye una URL de descarga firmada y temporal (10 minutos), escopeado al año fiscal resuelto.
       x-required-ability: clientes:read
       security:
         - BearerAuth: []
+      parameters:
+        - name: tax_year
+          in: query
+          description: Opcional — default = año fiscal actual de la plataforma. Ver `docs/api.md#año-fiscal-taxyear`.
+          schema:
+            type: integer
       responses:
         '200':
           description: Lista de documentos.
@@ -324,10 +414,16 @@ paths:
       tags: [Clientes]
       operationId: exportarCliente
       summary: Descarga un ZIP con documentos + JSON de campos del cliente
-      description: El ZIP incluye todos los documentos subidos más un archivo JSON con el detalle de todos los campos.
+      description: El ZIP incluye los documentos y el JSON de campos de un año fiscal — no de todos los años del cliente mezclados.
       x-required-ability: clientes:read
       security:
         - BearerAuth: []
+      parameters:
+        - name: tax_year
+          in: query
+          description: Opcional — default = año fiscal actual de la plataforma. Ver `docs/api.md#año-fiscal-taxyear`.
+          schema:
+            type: integer
       responses:
         '200':
           description: Archivo ZIP.
@@ -355,10 +451,24 @@ paths:
       tags: [Clientes]
       operationId: marcarFormaRevisada
       summary: Marca una forma del cliente como revisada por un humano
-      description: Registra que un preparador o administrador revisó manualmente esta forma, más allá de que sus campos estén completos.
+      description: |
+        Registra que un preparador o administrador revisó manualmente esta forma,
+        más allá de que sus campos estén completos. `tax_year` es obligatorio en
+        el body — es una acción mutante con consecuencias de auditoría, no tiene
+        default (ver `docs/api.md#año-fiscal-taxyear`).
       x-required-ability: clientes:write
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tax_year:
+                  type: integer
+              required: [tax_year]
       responses:
         '200':
           description: Forma marcada como revisada.
@@ -394,6 +504,15 @@ paths:
           Para campos únicos por cliente, usa `transversal`.
         schema:
           $ref: '#/components/schemas/FormaAlmacen'
+      - name: tax_year
+        in: query
+        required: true
+        description: |
+          Obligatoria, igual que `forma`: identifica de forma única a qué año
+          fiscal corresponde esta instancia del campo — no tiene default (ver
+          `docs/api.md#año-fiscal-taxyear`).
+        schema:
+          type: integer
     get:
       tags: [Campos]
       operationId: historialCampo
@@ -581,6 +700,11 @@ components:
           nullable: true
         forma:
           $ref: '#/components/schemas/FormaAlmacen'
+        tax_year:
+          type: integer
+          description: |
+            Año fiscal, obligatorio y sin default — el catálogo y los datos del
+            cliente están versionados por año (ver `docs/api.md#año-fiscal-taxyear`).
         campo:
           type: string
         tipo_campo:
@@ -596,7 +720,7 @@ components:
           type: string
           maxLength: 255
           nullable: true
-      required: [forma, campo, tipo_campo, modo]
+      required: [forma, tax_year, campo, tipo_campo, modo]
 
     EventoArchivo:
       type: object
@@ -613,6 +737,9 @@ components:
           nullable: true
         forma:
           $ref: '#/components/schemas/FormaAlmacen'
+        tax_year:
+          type: integer
+          description: Año fiscal, obligatorio y sin default — ver `docs/api.md#año-fiscal-taxyear`.
         campo:
           type: string
         tipo_campo:
@@ -626,7 +753,7 @@ components:
         nombre_original:
           type: string
           nullable: true
-      required: [forma, campo, tipo_campo, modo, file]
+      required: [forma, tax_year, campo, tipo_campo, modo, file]
 
     CorreccionTexto:
       allOf:
@@ -721,6 +848,9 @@ components:
         phone:
           type: string
           nullable: true
+        tax_year:
+          type: integer
+          description: Año fiscal al que corresponden `formas` y `campos` — el pasado por `?tax_year=`, o el default de la plataforma si se omitió.
         formas:
           type: array
           items:

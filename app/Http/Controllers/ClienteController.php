@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
 use App\Http\Requests\ClienteStoreRequest;
 use App\Models\CampoCatalogo;
+use App\Models\DeterminacionFiscal;
 use App\Models\FormaCliente;
 use App\Models\User;
 use App\Services\ClienteExportService;
@@ -98,6 +99,7 @@ class ClienteController extends Controller
         $cliente->load([
             'formasCliente' => fn ($query) => $query->where('tax_year', $taxYear),
             'camposCliente' => fn ($query) => $query->where('tax_year', $taxYear)->with('documento')->orderBy('campo'),
+            'determinacionesFiscales' => fn ($query) => $query->where('tax_year', $taxYear),
         ]);
 
         $camposCargados = $cliente->camposCliente->map(fn ($c) => "{$c->forma}:{$c->campo}");
@@ -116,6 +118,8 @@ class ClienteController extends Controller
                     'forma' => $forma->value,
                     'campo' => $campo['campo'],
                     'tipo_campo' => $campo['tipo']->value,
+                    'tipo_dato' => $campo['tipo_dato']?->value,
+                    'subcampos' => $campo['subcampos'] ?? null,
                     'formatos_aceptados' => $campo['formatos_aceptados'] ?? null,
                 ]));
 
@@ -131,6 +135,8 @@ class ClienteController extends Controller
                 'forma' => CampoCatalogo::TRANSVERSAL,
                 'campo' => $c->clave,
                 'tipo_campo' => $c->tipo_campo->value,
+                'tipo_dato' => $c->tipo_dato?->value,
+                'subcampos' => $c->subcampos,
                 'formatos_aceptados' => $c->formatos_aceptados,
             ]);
 
@@ -151,25 +157,37 @@ class ClienteController extends Controller
                 'estado' => $f->estado,
                 'revisado_en' => $f->revisado_en,
             ]),
-            'campos' => $cliente->camposCliente->map(fn ($c) => [
-                'forma' => $c->forma,
-                'campo' => $c->campo,
-                'tipo_campo' => $c->tipo_campo,
-                'modo' => $c->modo,
-                'estado' => $c->estado,
-                'valor' => $c->valor,
-                'es_sensible' => $c->esSensible(),
-                'formatos_aceptados' => TaxFieldCatalog::find($taxYear, $c->forma, $c->campo)['formatos_aceptados'] ?? null,
-                'documento' => $c->documento ? [
-                    'id' => $c->documento->id,
-                    'file_original_name' => $c->documento->file_original_name,
-                    'file_mime_type' => $c->documento->file_mime_type,
-                    'formato' => $c->documento->formato,
-                    'estado_validacion' => $c->documento->estado_validacion,
-                    'download_url' => $c->documento->downloadUrl(),
-                    'preview_url' => $c->documento->previewUrl(),
-                ] : null,
-                'updated_at' => $c->updated_at,
+            'campos' => $cliente->camposCliente->map(function ($c) use ($taxYear) {
+                $definicion = TaxFieldCatalog::find($taxYear, $c->forma, $c->campo);
+
+                return [
+                    'forma' => $c->forma,
+                    'campo' => $c->campo,
+                    'tipo_campo' => $c->tipo_campo,
+                    'tipo_dato' => $definicion['tipo_dato']?->value,
+                    'subcampos' => $definicion['subcampos'] ?? null,
+                    'modo' => $c->modo,
+                    'estado' => $c->estado,
+                    'valor' => $c->valor,
+                    'es_sensible' => $c->esSensible(),
+                    'formatos_aceptados' => $definicion['formatos_aceptados'] ?? null,
+                    'documento' => $c->documento ? [
+                        'id' => $c->documento->id,
+                        'file_original_name' => $c->documento->file_original_name,
+                        'file_mime_type' => $c->documento->file_mime_type,
+                        'formato' => $c->documento->formato,
+                        'estado_validacion' => $c->documento->estado_validacion,
+                        'download_url' => $c->documento->downloadUrl(),
+                        'preview_url' => $c->documento->previewUrl(),
+                    ] : null,
+                    'updated_at' => $c->updated_at,
+                ];
+            }),
+            'determinaciones' => $cliente->determinacionesFiscales->map(fn (DeterminacionFiscal $d) => [
+                'tipo' => $d->tipo,
+                'resultado' => $d->resultado,
+                'version_reglas' => $d->version_reglas,
+                'calculado_en' => $d->calculado_en,
             ]),
         ]);
     }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\ApiDocumentationController;
 use App\Http\Controllers\CampoClienteController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\DeterminacionFiscalController;
 use App\Http\Controllers\DocumentoController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('clientes/{cliente}/export', [ClienteController::class, 'export'])->name('clientes.export');
     Route::post('clientes/{cliente}/formas/{forma}/marcar-revisado', [ClienteController::class, 'marcarRevisado'])
         ->name('clientes.marcar-revisado');
+    Route::post('clientes/{cliente}/determinaciones', [DeterminacionFiscalController::class, 'store'])
+        ->name('clientes.determinaciones.store');
 
     Route::patch('clientes/{cliente}/campos/{campo}', [CampoClienteController::class, 'update'])
         ->name('clientes.campos.update');

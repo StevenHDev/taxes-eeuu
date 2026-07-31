@@ -21,7 +21,7 @@ class ClientePanelTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function crearCampo(User $cliente, string $campo = 'ingresos', array $overrides = []): CampoCliente
+    private function crearCampo(User $cliente, string $campo = 'impuestos_retenidos', array $overrides = []): CampoCliente
     {
         return CampoCliente::query()->create(array_merge([
             'user_id' => $cliente->id,
@@ -91,6 +91,41 @@ class ClientePanelTest extends TestCase
         $this->assertSame('*******6789', $conyuge['valor']['ssn']);
     }
 
+    public function test_el_detalle_expone_subcampos_y_tipo_dato_para_editar_objetos_correctamente(): void
+    {
+        // Regresión: sin esto, el editor genérico del panel no tenía forma de
+        // saber qué subcampos existen para un objeto/array_object (ej. los
+        // nuevos de info_dependientes/estado_civil de la Fase 2), y los
+        // omitía por completo del formulario de edición.
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->crearCampo($cliente, 'info_dependientes', [
+            'forma' => 'transversal',
+            'valor_texto' => [['nombre_completo' => 'Kid One', 'fecha_nacimiento' => '2015-01-01', 'ssn' => '111-22-3333']],
+        ]);
+
+        $respuesta = $this->actingAs($admin)
+            ->withHeaders([
+                'X-Inertia' => 'true',
+                'X-Inertia-Version' => app(HandleInertiaRequests::class)->version(request()),
+            ])
+            ->get(route('clientes.show', $cliente))
+            ->assertOk();
+
+        // Campo ya cargado: 'campos' trae sus subcampos completos (no solo los 3 viejos).
+        $dependientes = collect($respuesta->json('props.campos'))->firstWhere('campo', 'info_dependientes');
+        $this->assertContains('relacion', $dependientes['subcampos']);
+        $this->assertContains('meses_en_hogar', $dependientes['subcampos']);
+        $this->assertSame('array_object', $dependientes['tipo_dato']);
+
+        // Campo nunca cargado (estado_civil): 'catalogoDisponible' también trae subcampos.
+        $estadoCivil = collect($respuesta->json('props.catalogoDisponible'))->firstWhere('campo', 'estado_civil');
+        $this->assertNotNull($estadoCivil);
+        $this->assertContains('casado_al_31_dic', $estadoCivil['subcampos']);
+        $this->assertSame('object', $estadoCivil['tipo_dato']);
+    }
+
     public function test_un_preparador_puede_corregir_un_campo_manualmente_y_queda_en_el_historial(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
@@ -98,7 +133,7 @@ class ClientePanelTest extends TestCase
         $this->crearCampo($cliente);
 
         $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025', [
                 'forma' => 'form_1040',
                 'modo' => 'texto',
                 'tipo_dato' => 'number',
@@ -106,13 +141,58 @@ class ClientePanelTest extends TestCase
             ])
             ->assertRedirect();
 
-        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
         $this->assertSame(9999, $campo->valor);
         $this->assertSame('preparador', $campo->source->value);
 
-        $historial = HistorialCambio::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
+        $historial = HistorialCambio::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
         $this->assertNotNull($historial);
         $this->assertSame('preparador', $historial->source->value);
+    }
+
+    public function test_un_preparador_puede_corregir_ingresos_con_su_shape_de_objeto(): void
+    {
+        // ingresos pasó de number a object desglosado en la Fase 2 — la
+        // corrección manual del preparador debe aceptar (y validar) ese shape.
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->actingAs($preparador)
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
+                'forma' => 'form_1040',
+                'modo' => 'texto',
+                'tipo_dato' => 'object',
+                'contenido' => [
+                    'salarios' => 60000,
+                    'intereses_dividendos' => 500,
+                    'ganancias_capital' => 0,
+                    'ingresos_jubilacion' => 0,
+                    'otros_ingresos' => 0,
+                    'ajustes_ingreso' => 1000,
+                ],
+            ])
+            ->assertRedirect();
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
+        $this->assertSame('recibido', $campo->estado->value);
+        $this->assertSame(60000, $campo->valor['salarios']);
+    }
+
+    public function test_corregir_ingresos_con_el_shape_viejo_number_falla_la_validacion(): void
+    {
+        // Regresión: una integración desactualizada que siga mandando el shape
+        // number viejo debe rechazarse, no corromper el AGI calculado en silencio.
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->actingAs($preparador)
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
+                'forma' => 'form_1040',
+                'modo' => 'texto',
+                'tipo_dato' => 'number',
+                'contenido' => 52000,
+            ])
+            ->assertSessionHasErrors('tipo_dato');
     }
 
     public function test_un_preparador_no_puede_corregir_campos_de_un_cliente_ajeno(): void
@@ -122,7 +202,7 @@ class ClientePanelTest extends TestCase
         $this->crearCampo($ajeno);
 
         $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $ajeno, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
+            ->patch(route('clientes.campos.update', ['cliente' => $ajeno, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025', [
                 'forma' => 'form_1040',
                 'modo' => 'texto',
                 'tipo_dato' => 'number',
@@ -276,7 +356,7 @@ class ClientePanelTest extends TestCase
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 
         $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025', [
                 'forma' => 'form_1040',
                 'modo' => 'texto',
                 'tipo_dato' => 'number',
@@ -284,7 +364,7 @@ class ClientePanelTest extends TestCase
             ])
             ->assertRedirect();
 
-        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
         $this->assertNotNull($campo);
         $this->assertSame(4500, $campo->valor);
     }
@@ -296,14 +376,14 @@ class ClientePanelTest extends TestCase
         $this->crearCampo($cliente);
 
         $this->actingAs($preparador)
-            ->delete(route('clientes.campos.destroy', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025')
+            ->delete(route('clientes.campos.destroy', ['cliente' => $cliente, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025')
             ->assertRedirect();
 
-        $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'ingresos']);
+        $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'impuestos_retenidos']);
 
         $historial = HistorialCambio::query()
             ->where('user_id', $cliente->id)
-            ->where('campo', 'ingresos')
+            ->where('campo', 'impuestos_retenidos')
             ->latest('id')
             ->first();
 

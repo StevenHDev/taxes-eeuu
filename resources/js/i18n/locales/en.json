@@ -234,6 +234,24 @@
             "submit": "Create"
         }
     },
+    "determinacionFiscal": {
+        "title": "Tax determination {{year}}",
+        "lastCalculated": "Last calculated: {{date}}",
+        "neverCalculated": "Never calculated",
+        "calculateNow": "Calculate now",
+        "recalculate": "Recalculate",
+        "emptyState": "There's no calculated determination for this year yet. Load the client's marital status, dependents, and income, then press \"Calculate now\".",
+        "filingStatus": "Filing status",
+        "agi": "AGI",
+        "totalCredits": "Total credits",
+        "dependents": "Dependents",
+        "unnamedDependent": "Unnamed dependent",
+        "notQualified": "Not qualified",
+        "creditBreakdown": "Credit breakdown",
+        "dependentCare": "Dependent care",
+        "agiReduction": "AGI reduction",
+        "total": "Total"
+    },
     "clienteShow": {
         "viewer": {
             "viewTitle": "View {{name}}",

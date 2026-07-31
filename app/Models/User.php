@@ -36,6 +36,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property Carbon|null $updated_at
  * @property-read Collection<int, FormaCliente> $formasCliente
  * @property-read Collection<int, CampoCliente> $camposCliente
+ * @property-read Collection<int, DeterminacionFiscal> $determinacionesFiscales
  */
 #[Fillable(['name', 'email', 'phone', 'password', 'role', 'preparer_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -93,5 +94,13 @@ class User extends Authenticatable implements PasskeyUser
     public function camposCliente(): HasMany
     {
         return $this->hasMany(CampoCliente::class);
+    }
+
+    /**
+     * @return HasMany<DeterminacionFiscal, $this>
+     */
+    public function determinacionesFiscales(): HasMany
+    {
+        return $this->hasMany(DeterminacionFiscal::class);
     }
 }

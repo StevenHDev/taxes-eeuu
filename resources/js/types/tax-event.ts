@@ -60,6 +60,9 @@ export type CampoCliente = {
     forma: FormaAlmacen;
     campo: string;
     tipo_campo: 'documento' | 'dato' | 'mixto';
+    tipo_dato:
+        'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
+    subcampos: string[] | null;
     modo: 'archivo' | 'texto';
     estado: FieldState;
     valor: unknown;
@@ -81,6 +84,9 @@ export type CatalogoDisponibleItem = {
     forma: FormaAlmacen;
     campo: string;
     tipo_campo: 'documento' | 'dato' | 'mixto';
+    tipo_dato:
+        'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
+    subcampos: string[] | null;
     formatos_aceptados: string[] | null;
 };
 
@@ -96,6 +102,73 @@ export type CampoCatalogo = {
     subcampos: string[] | null;
     obligatorio: boolean;
     sensible: boolean;
+};
+
+export type TipoDeterminacion =
+    | 'filing_status'
+    | 'dependientes'
+    | 'agi'
+    | 'creditos';
+
+export type FilingStatusValue = 'mfj' | 'single' | 'hoh' | 'qss';
+
+export type FilingStatusResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | { disponible: true; motivo_no_disponible: null; estado: FilingStatusValue };
+
+export type DependienteResultado = {
+    nombre_completo: string | null;
+    calificacion: 'qualifying_child' | 'qualifying_relative' | 'ninguna';
+    edad_fin_anio: number | null;
+    elegible_ctc: boolean;
+    elegible_odc: boolean;
+    elegible_cuidado: boolean;
+};
+
+export type DependientesResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          dependientes: DependienteResultado[];
+          conteo_qualifying_child: number;
+          conteo_qualifying_relative: number;
+          conteo_ctc: number;
+          conteo_odc: number;
+          conteo_cuidado: number;
+      };
+
+export type AgiResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          agi: number;
+          ingreso_bruto_total: number;
+          ajustes: number;
+      };
+
+export type CreditosResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          ctc: number;
+          odc: number;
+          reduccion_por_agi: number;
+          cuidado_dependientes: number;
+          total: number;
+      };
+
+export type Determinacion = {
+    tipo: TipoDeterminacion;
+    resultado:
+        | FilingStatusResultado
+        | DependientesResultado
+        | AgiResultado
+        | CreditosResultado;
+    version_reglas: string;
+    calculado_en: string;
 };
 
 export type Usuario = {

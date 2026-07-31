@@ -60,6 +60,21 @@ class EventoRecoleccionTest extends TestCase
         TaxFieldCatalog::invalidate();
     }
 
+    /**
+     * @return array<string, float>
+     */
+    private function ingresosPayload(float $salarios = 52000): array
+    {
+        return [
+            'salarios' => $salarios,
+            'intereses_dividendos' => 0,
+            'ganancias_capital' => 0,
+            'ingresos_jubilacion' => 0,
+            'otros_ingresos' => 0,
+            'ajustes_ingreso' => 0,
+        ];
+    }
+
     public function test_un_evento_sin_cliente_id_crea_un_cliente_nuevo_y_lo_devuelve(): void
     {
         $this->actingAsAgente();
@@ -70,8 +85,8 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 52000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(),
         ]);
 
         $response->assertCreated();
@@ -93,8 +108,8 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 1000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(1000),
         ])->assertCreated();
 
         $segundo = $this->postJson('/api/eventos', [
@@ -124,8 +139,8 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 1000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(1000),
         ])->assertCreated();
 
         $segundo = $this->postJson('/api/eventos', [
@@ -156,8 +171,8 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 1000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(1000),
         ])->assertCreated();
 
         $this->postJson('/api/eventos', [
@@ -167,18 +182,18 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 2000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(2000),
         ])->assertCreated();
 
         $this->assertSame(1, CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->count());
 
         $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
-        $this->assertSame(2000, $campo->valor);
+        $this->assertSame(2000.0, (float) $campo->valor['salarios']);
 
         $historial = HistorialCambio::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->latest('id')->first();
-        $this->assertSame(1000, $historial->valor_anterior);
-        $this->assertSame(2000, $historial->valor_nuevo);
+        $this->assertSame(1000.0, (float) $historial->valor_anterior['salarios']);
+        $this->assertSame(2000.0, (float) $historial->valor_nuevo['salarios']);
     }
 
     public function test_contenido_invalido_se_persiste_como_invalido_y_no_cuenta_para_completitud(): void
@@ -268,8 +283,8 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 1000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(),
         ])->assertStatus(422)->assertJsonValidationErrors(['campo']);
     }
 
@@ -302,8 +317,8 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 1000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(1000),
         ])->assertCreated();
 
         $forma = FormaCliente::query()->where('user_id', $cliente->id)->where('forma', 'form_1040')->first();
@@ -322,9 +337,12 @@ class EventoRecoleccionTest extends TestCase
                 'nombre_completo' => 'Jane Doe', 'fecha_nacimiento' => '1990-01-01', 'ssn' => '987654321',
             ]],
             ['campo' => 'info_dependientes', 'tipo_campo' => 'dato', 'tipo_dato' => 'array_object', 'contenido' => []],
-            ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 52000],
+            ['campo' => 'estado_civil', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
+                'casado_al_31_dic' => false, 'convivio_conyuge_ultimos_6_meses' => false, 'costeo_mas_mitad_hogar' => false,
+                'existe_persona_calificable' => false, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
+            ]],
+            ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => $this->ingresosPayload()],
             ['campo' => 'deducciones', 'tipo_campo' => 'mixto', 'tipo_dato' => 'number', 'contenido' => 1000],
-            ['campo' => 'creditos', 'tipo_campo' => 'dato', 'tipo_dato' => 'array_string', 'contenido' => []],
             ['campo' => 'impuestos_retenidos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 0],
             ['campo' => 'info_bancaria', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'banco' => 'Banco X', 'tipo_cuenta' => 'checking', 'numero_cuenta' => '123', 'routing_number' => '456',
@@ -446,8 +464,8 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 50000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(50000),
         ])->assertCreated();
 
         $this->extenderCampoAlAno('form_1040', 'ingresos', 2026);
@@ -459,15 +477,15 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 60000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(60000),
         ])->assertCreated();
 
         $filas = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->get();
 
         $this->assertCount(2, $filas);
-        $this->assertSame(50000, $filas->firstWhere('tax_year', 2025)->valor);
-        $this->assertSame(60000, $filas->firstWhere('tax_year', 2026)->valor);
+        $this->assertSame(50000.0, (float) $filas->firstWhere('tax_year', 2025)->valor['salarios']);
+        $this->assertSame(60000.0, (float) $filas->firstWhere('tax_year', 2026)->valor['salarios']);
     }
 
     public function test_la_completitud_de_una_forma_es_independiente_por_ano_fiscal(): void
@@ -482,9 +500,12 @@ class EventoRecoleccionTest extends TestCase
                 'nombre_completo' => 'Jane Doe', 'fecha_nacimiento' => '1990-01-01', 'ssn' => '987654321',
             ]],
             ['campo' => 'info_dependientes', 'tipo_campo' => 'dato', 'tipo_dato' => 'array_object', 'contenido' => []],
-            ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 52000],
+            ['campo' => 'estado_civil', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
+                'casado_al_31_dic' => false, 'convivio_conyuge_ultimos_6_meses' => false, 'costeo_mas_mitad_hogar' => false,
+                'existe_persona_calificable' => false, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
+            ]],
+            ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => $this->ingresosPayload()],
             ['campo' => 'deducciones', 'tipo_campo' => 'mixto', 'tipo_dato' => 'number', 'contenido' => 1000],
-            ['campo' => 'creditos', 'tipo_campo' => 'dato', 'tipo_dato' => 'array_string', 'contenido' => []],
             ['campo' => 'impuestos_retenidos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 0],
             ['campo' => 'info_bancaria', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'banco' => 'Banco X', 'tipo_cuenta' => 'checking', 'numero_cuenta' => '123', 'routing_number' => '456',
@@ -526,8 +547,8 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 60000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(60000),
         ])->assertCreated();
 
         $forma2025 = FormaCliente::query()->where('user_id', $cliente->id)->where('forma', 'form_1040')->where('tax_year', 2025)->first();
@@ -550,8 +571,8 @@ class EventoRecoleccionTest extends TestCase
             'campo' => 'ingresos',
             'tipo_campo' => 'dato',
             'modo' => 'texto',
-            'tipo_dato' => 'number',
-            'contenido' => 50000,
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(50000),
         ])->assertCreated();
 
         $this->postJson('/api/eventos', [
