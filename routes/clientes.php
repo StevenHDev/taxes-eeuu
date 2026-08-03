@@ -18,6 +18,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('clientes.marcar-revisado');
     Route::post('clientes/{cliente}/determinaciones', [DeterminacionFiscalController::class, 'store'])
         ->name('clientes.determinaciones.store');
+    Route::post('clientes/{cliente}/nivel-riesgo', [ClienteController::class, 'establecerNivelRiesgo'])
+        ->name('clientes.nivel-riesgo.store');
+    Route::delete('clientes/{cliente}/nivel-riesgo', [ClienteController::class, 'limpiarNivelRiesgo'])
+        ->name('clientes.nivel-riesgo.destroy');
 
     Route::patch('clientes/{cliente}/campos/{campo}', [CampoClienteController::class, 'update'])
         ->name('clientes.campos.update');

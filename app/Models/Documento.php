@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\URL;
  * @property string $file_mime_type
  * @property int $file_size
  * @property string $formato
+ * @property string|null $hash_contenido
  * @property FieldState $estado_validacion
  */
 #[Fillable([
@@ -31,6 +32,7 @@ use Illuminate\Support\Facades\URL;
     'file_mime_type',
     'file_size',
     'formato',
+    'hash_contenido',
     'estado_validacion',
 ])]
 class Documento extends Model

@@ -2,20 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\NivelRiesgo;
 use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
 use App\Http\Requests\ClienteStoreRequest;
 use App\Models\CampoCatalogo;
 use App\Models\DeterminacionFiscal;
+use App\Models\Documento;
 use App\Models\FormaCliente;
+use App\Models\NivelRiesgoManual;
 use App\Models\User;
 use App\Services\ClienteExportService;
+use App\Services\DocumentoDuplicadoService;
+use App\Services\RiesgoCasoService;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -24,7 +30,11 @@ class ClienteController extends Controller
 {
     use ManagesClientes;
 
-    public function __construct(private readonly ClienteExportService $export) {}
+    public function __construct(
+        private readonly ClienteExportService $export,
+        private readonly DocumentoDuplicadoService $duplicados,
+        private readonly RiesgoCasoService $riesgo,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -38,19 +48,26 @@ class ClienteController extends Controller
             ->with(['formasCliente' => fn ($query) => $query->where('tax_year', $taxYear)])
             ->orderByDesc('created_at')
             ->get()
-            ->map(fn (User $cliente) => [
-                'id' => $cliente->id,
-                'name' => $cliente->name,
-                'email' => $cliente->email,
-                'phone' => $cliente->phone,
-                'estado_general' => $this->estadoGeneralDe($cliente),
-                'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
-                    'forma' => $f->forma,
-                    'forma_label' => TaxForm::from($f->forma)->label(),
-                    'estado' => $f->estado,
-                ]),
-                'created_at' => $cliente->created_at,
-            ]);
+            ->map(function (User $cliente) use ($taxYear) {
+                $riesgo = $this->riesgo->nivelEfectivo($cliente, $taxYear);
+
+                return [
+                    'id' => $cliente->id,
+                    'name' => $cliente->name,
+                    'email' => $cliente->email,
+                    'phone' => $cliente->phone,
+                    'estado_general' => $this->estadoGeneralDe($cliente),
+                    'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
+                        'forma' => $f->forma,
+                        'forma_label' => TaxForm::from($f->forma)->label(),
+                        'estado' => $f->estado,
+                    ]),
+                    'nivel_riesgo' => $riesgo['nivel']->value,
+                    'nivel_riesgo_label' => $riesgo['nivel']->label(),
+                    'nivel_riesgo_fuente' => $riesgo['fuente'],
+                    'created_at' => $cliente->created_at,
+                ];
+            });
 
         return Inertia::render('clientes/index', [
             'clientes' => $clientes,
@@ -148,6 +165,7 @@ class ClienteController extends Controller
                 'phone' => $cliente->phone,
             ],
             'taxYearActual' => $taxYear,
+            'nivelRiesgo' => $this->riesgo->nivelEfectivo($cliente, $taxYear),
             'catalogoDisponible' => $disponiblePorForma
                 ->concat($disponibleUnicos)
                 ->values(),
@@ -157,7 +175,7 @@ class ClienteController extends Controller
                 'estado' => $f->estado,
                 'revisado_en' => $f->revisado_en,
             ]),
-            'campos' => $cliente->camposCliente->map(function ($c) use ($taxYear) {
+            'campos' => $cliente->camposCliente->map(function ($c) use ($taxYear, $request) {
                 $definicion = TaxFieldCatalog::find($taxYear, $c->forma, $c->campo);
 
                 return [
@@ -179,6 +197,7 @@ class ClienteController extends Controller
                         'estado_validacion' => $c->documento->estado_validacion,
                         'download_url' => $c->documento->downloadUrl(),
                         'preview_url' => $c->documento->previewUrl(),
+                        'duplicado' => $this->duplicadoDe($c->documento, $request->user()),
                     ] : null,
                     'updated_at' => $c->updated_at,
                 ];
@@ -190,6 +209,35 @@ class ClienteController extends Controller
                 'calculado_en' => $d->calculado_en,
             ]),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function duplicadoDe(Documento $documento, User $actor): array
+    {
+        $coincidencias = $this->duplicados->buscarCoincidencias($documento);
+
+        $mismoCliente = $coincidencias
+            ->filter(fn (Documento $d) => $d->user_id === $documento->user_id)
+            ->map(fn (Documento $d) => ['forma' => $d->forma, 'campo' => $d->campo])
+            ->values();
+
+        $deOtroCliente = $coincidencias->first(fn (Documento $d) => $d->user_id !== $documento->user_id);
+
+        // El actor solo ve el nombre/forma/campo del otro cliente si tiene
+        // acceso a ese cliente (mismo límite de visibilidad que separa a los
+        // preparadores entre sí) — de lo contrario, solo la señal booleana.
+        $otroClienteDetalle = $deOtroCliente && $actor->can('view', $deOtroCliente->user)
+            ? ['cliente_id' => $deOtroCliente->user_id, 'cliente_nombre' => $deOtroCliente->user->name, 'forma' => $deOtroCliente->forma, 'campo' => $deOtroCliente->campo]
+            : null;
+
+        return [
+            'posible_duplicado' => $coincidencias->isNotEmpty(),
+            'mismo_cliente' => $mismoCliente->isNotEmpty() ? $mismoCliente->all() : null,
+            'otro_cliente' => $deOtroCliente !== null,
+            'otro_cliente_detalle' => $otroClienteDetalle,
+        ];
     }
 
     public function marcarRevisado(Request $request, User $cliente, string $forma): RedirectResponse
@@ -209,6 +257,43 @@ class ClienteController extends Controller
             ->firstOrFail();
 
         $formaCliente->marcarRevisado(request()->user());
+
+        return back();
+    }
+
+    public function establecerNivelRiesgo(Request $request, User $cliente): RedirectResponse
+    {
+        $this->authorize('update', $cliente);
+
+        // Acción mutante con consecuencias de auditoría: requerida explícita,
+        // sin default de config — mismo criterio que marcarRevisado.
+        $request->validate([
+            'tax_year' => ['required', 'integer', 'digits:4'],
+            'nivel' => ['required', Rule::enum(NivelRiesgo::class)],
+        ]);
+
+        NivelRiesgoManual::query()->updateOrCreate(
+            ['user_id' => $cliente->id, 'tax_year' => $request->integer('tax_year')],
+            [
+                'nivel' => $request->enum('nivel', NivelRiesgo::class),
+                'establecido_por' => $request->user()->id,
+                'establecido_en' => now(),
+            ],
+        );
+
+        return back();
+    }
+
+    public function limpiarNivelRiesgo(Request $request, User $cliente): RedirectResponse
+    {
+        $this->authorize('update', $cliente);
+
+        $request->validate(['tax_year' => ['required', 'integer', 'digits:4']]);
+
+        NivelRiesgoManual::query()
+            ->where('user_id', $cliente->id)
+            ->where('tax_year', $request->integer('tax_year'))
+            ->delete();
 
         return back();
     }

@@ -183,6 +183,12 @@
                 "tag": "Revisión",
                 "hint": "Formas completas esperando aprobación.",
                 "hintEmpty": "No hay formas esperando revisión."
+            },
+            "highRisk": {
+                "label": "Alto riesgo",
+                "tag": "Riesgo",
+                "hint": "Casos con nivel de riesgo alto (automático o manual).",
+                "hintEmpty": "Ningún caso con riesgo alto por ahora."
             }
         },
         "recentActivity": {
@@ -215,12 +221,20 @@
         "columns": {
             "client": "Cliente",
             "status": "Estado",
-            "forms": "Formas"
+            "forms": "Formas",
+            "risk": "Riesgo"
         },
         "estado": {
             "sinIniciar": "Sin iniciar",
             "enProgreso": "En progreso",
             "completo": "Completo"
+        },
+        "riesgo": {
+            "bajo": "Bajo",
+            "medio": "Medio",
+            "alto": "Alto",
+            "fuenteManual": "Nivel fijado manualmente",
+            "fuenteAutomatica": "Nivel sugerido automáticamente"
         },
         "filters": {
             "form": "Forma"
@@ -257,6 +271,12 @@
             "viewTitle": "Ver {{name}}",
             "noPreview": "No hay previsualización disponible.",
             "downloadFile": "Descargar el archivo"
+        },
+        "duplicado": {
+            "badge": "Posible duplicado",
+            "mismoCliente": "Este archivo también se subió para: {{campos}}",
+            "otroClienteConDetalle": "Coincide con un archivo de {{cliente}} ({{campo}})",
+            "otroClienteSinDetalle": "Coincide con un archivo de otro cliente fuera de tu alcance"
         },
         "upload": {
             "uploadTitle": "Cargar archivo «{{campo}}»",
@@ -343,6 +363,12 @@
         "transversalLabel": "Datos del cliente",
         "section": {
             "received": "{{recibidos}}/{{total}} recibidos"
+        },
+        "riesgo": {
+            "label": "Nivel de riesgo",
+            "fuenteManual": "Fijado manualmente",
+            "fuenteAutomatica": "Sugerido automáticamente",
+            "quitarOverride": "Quitar override"
         }
     },
     "usuarios": {

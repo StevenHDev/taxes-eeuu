@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import {
+    AlertTriangle,
     ArrowRight,
     Bot,
     CheckCircle2,
@@ -202,7 +203,7 @@ export default function Dashboard({
 
                 {/* ── Fila de KPIs ─────────────────────────────────────── */}
                 <div
-                    className="dash-reveal grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                    className="dash-reveal grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
                     style={{ animationDelay: '160ms' }}
                 >
                     <StatCard
@@ -239,6 +240,28 @@ export default function Dashboard({
                             value={0}
                             tag={t('dashboard.kpi.pendingReview.tag')}
                             hint={t('dashboard.kpi.pendingReview.hintEmpty')}
+                        />
+                    )}
+                    {resumen.casos_alto_riesgo > 0 ? (
+                        <Link
+                            href={clientesIndex()}
+                            className="rounded-xl transition-transform hover:-translate-y-0.5"
+                        >
+                            <StatCard
+                                icon={AlertTriangle}
+                                label={t('dashboard.kpi.highRisk.label')}
+                                value={resumen.casos_alto_riesgo}
+                                tag={t('dashboard.kpi.highRisk.tag')}
+                                hint={t('dashboard.kpi.highRisk.hint')}
+                            />
+                        </Link>
+                    ) : (
+                        <StatCard
+                            icon={AlertTriangle}
+                            label={t('dashboard.kpi.highRisk.label')}
+                            value={0}
+                            tag={t('dashboard.kpi.highRisk.tag')}
+                            hint={t('dashboard.kpi.highRisk.hintEmpty')}
                         />
                     )}
                 </div>

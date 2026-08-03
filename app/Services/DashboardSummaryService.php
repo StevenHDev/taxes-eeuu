@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Enums\EventSource;
 use App\Enums\FieldState;
 use App\Enums\FormState;
+use App\Enums\NivelRiesgo;
 use App\Enums\TaxForm;
 use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\User;
+use App\Services\RiesgoCasoService;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -22,6 +24,8 @@ use Illuminate\Support\Collection;
  */
 class DashboardSummaryService
 {
+    public function __construct(private readonly RiesgoCasoService $riesgo) {}
+
     /**
      * @param  Collection<int, User>  $clientes  con `formasCliente` ya cargada (escopada al mismo `$taxYear`)
      * @return array<string, mixed>
@@ -41,9 +45,24 @@ class DashboardSummaryService
             'distribucion_por_forma' => $this->distribucionPorForma($todasFormasCliente),
             'pendientes_revisar' => $this->pendientesRevisar($clienteIds),
             'actividad_reciente' => $this->actividadReciente($clienteIds),
+            'casos_alto_riesgo' => $this->casosAltoRiesgo($clientes, $taxYear),
             'ultimos_clientes' => $clientes->sortByDesc('created_at')->take(6)->values()
                 ->map(fn (User $c) => ['id' => $c->id, 'name' => $c->name]),
         ];
+    }
+
+    /**
+     * Cuenta, sobre los clientes visibles del año fiscal actual del panel,
+     * cuántos tienen nivel de riesgo efectivo "alto" (manual o automático) —
+     * ver App\Services\RiesgoCasoService.
+     *
+     * @param  Collection<int, User>  $clientes
+     */
+    private function casosAltoRiesgo(Collection $clientes, int $taxYear): int
+    {
+        return $clientes->filter(
+            fn (User $c) => $this->riesgo->nivelEfectivo($c, $taxYear)['nivel'] === NivelRiesgo::Alto,
+        )->count();
     }
 
     /**

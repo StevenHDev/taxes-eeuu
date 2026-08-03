@@ -22,6 +22,13 @@ export type FormaAlmacen = TaxForm | 'transversal';
 export type FieldState = 'recibido' | 'pendiente' | 'invalido';
 export type FormState = 'en_progreso' | 'completo';
 export type EstadoGeneral = 'sin_iniciar' | 'en_progreso' | 'completo';
+export type NivelRiesgo = 'bajo' | 'medio' | 'alto';
+export type NivelRiesgoFuente = 'manual' | 'automatico';
+
+export type NivelRiesgoEfectivo = {
+    nivel: NivelRiesgo;
+    fuente: NivelRiesgoFuente;
+};
 
 export type ClienteFormaResumen = {
     forma: TaxForm;
@@ -36,6 +43,9 @@ export type Cliente = {
     phone: string | null;
     estado_general: EstadoGeneral;
     formas: ClienteFormaResumen[];
+    nivel_riesgo: NivelRiesgo;
+    nivel_riesgo_label: string;
+    nivel_riesgo_fuente: NivelRiesgoFuente;
     created_at: string;
 };
 
@@ -46,6 +56,13 @@ export type ClienteForma = {
     revisado_en: string | null;
 };
 
+export type DocumentoDuplicado = {
+    posible_duplicado: boolean;
+    mismo_cliente: { forma: string; campo: string }[] | null;
+    otro_cliente: boolean;
+    otro_cliente_detalle: { cliente_id: number; cliente_nombre: string; forma: string; campo: string } | null;
+};
+
 export type CampoDocumento = {
     id: number;
     file_original_name: string;
@@ -54,6 +71,7 @@ export type CampoDocumento = {
     estado_validacion: FieldState;
     download_url?: string;
     preview_url?: string;
+    duplicado?: DocumentoDuplicado;
 };
 
 export type CampoCliente = {
@@ -199,6 +217,7 @@ export type DashboardResumen = {
         forma: TaxForm;
         forma_label: string;
     }[];
+    casos_alto_riesgo: number;
     actividad_reciente: {
         campo: string;
         forma_label: string;

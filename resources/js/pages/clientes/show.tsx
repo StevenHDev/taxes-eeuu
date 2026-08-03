@@ -18,6 +18,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     Table,
     TableBody,
     TableCell,
@@ -40,13 +47,20 @@ import {
     reveal as campoReveal,
     update as campoUpdate,
 } from '@/routes/clientes/campos';
+import {
+    destroy as limpiarNivelRiesgo,
+    store as establecerNivelRiesgo,
+} from '@/routes/clientes/nivel-riesgo';
 import type {
     CampoCliente,
     CampoDocumento,
     CatalogoDisponibleItem,
     ClienteForma,
     Determinacion,
+    DocumentoDuplicado,
     HistorialCambio,
+    NivelRiesgo,
+    NivelRiesgoEfectivo,
 } from '@/types';
 
 type PageProps = {
@@ -961,6 +975,35 @@ function DocumentoViewerDialog({ documento }: { documento: CampoDocumento }) {
     );
 }
 
+function DuplicadoBadge({ duplicado }: { duplicado?: DocumentoDuplicado }) {
+    const { t } = useTranslation();
+
+    if (!duplicado?.posible_duplicado) {
+        return null;
+    }
+
+    const detalle = duplicado.otro_cliente_detalle
+        ? t('clienteShow.duplicado.otroClienteConDetalle', {
+              cliente: duplicado.otro_cliente_detalle.cliente_nombre,
+              campo: humanizarClave(duplicado.otro_cliente_detalle.campo),
+          })
+        : duplicado.otro_cliente
+          ? t('clienteShow.duplicado.otroClienteSinDetalle')
+          : duplicado.mismo_cliente
+            ? t('clienteShow.duplicado.mismoCliente', {
+                  campos: duplicado.mismo_cliente
+                      .map((c) => humanizarClave(c.campo))
+                      .join(', '),
+              })
+            : undefined;
+
+    return (
+        <Badge variant="destructive" title={detalle}>
+            {t('clienteShow.duplicado.badge')}
+        </Badge>
+    );
+}
+
 // Carga (o reemplazo) de un documento directamente desde el dashboard. Reutiliza
 // el mismo endpoint de corrección manual en modo "archivo".
 function SubirDocumentoDialog({
@@ -1656,9 +1699,14 @@ function FormaSection({
                             </TableCell>
                             <TableCell className="max-w-sm align-top text-sm">
                                 {campo.documento ? (
-                                    <DocumentoViewerDialog
-                                        documento={campo.documento}
-                                    />
+                                    <div className="flex flex-col items-start gap-1">
+                                        <DocumentoViewerDialog
+                                            documento={campo.documento}
+                                        />
+                                        <DuplicadoBadge
+                                            duplicado={campo.documento.duplicado}
+                                        />
+                                    </div>
                                 ) : (
                                     <ValorCampo
                                         clienteId={clienteId}
@@ -1708,6 +1756,97 @@ function FormaSection({
     );
 }
 
+const RIESGO_VARIANT: Record<NivelRiesgo, 'outline' | 'secondary' | 'destructive'> = {
+    bajo: 'outline',
+    medio: 'secondary',
+    alto: 'destructive',
+};
+
+// Nivel de riesgo del caso (bajo/medio/alto): sugerido automáticamente por una
+// heurística (ver App\Services\RiesgoCasoService), pero un preparador/administrador
+// puede sobreescribirlo — el override manda mientras exista, y "Quitar override"
+// vuelve a mostrar la sugerencia automática.
+function NivelRiesgoControl({
+    clienteId,
+    taxYear,
+    nivelRiesgo,
+}: {
+    clienteId: number;
+    taxYear: number;
+    nivelRiesgo: NivelRiesgoEfectivo;
+}) {
+    const { t } = useTranslation();
+    const [guardando, setGuardando] = useState(false);
+
+    const cambiarNivel = (nivel: string) => {
+        setGuardando(true);
+        router.post(
+            establecerNivelRiesgo({ cliente: clienteId }).url,
+            { tax_year: taxYear, nivel },
+            { preserveScroll: true, onFinish: () => setGuardando(false) },
+        );
+    };
+
+    const quitarOverride = () => {
+        setGuardando(true);
+        router.delete(limpiarNivelRiesgo({ cliente: clienteId }).url, {
+            data: { tax_year: taxYear },
+            preserveScroll: true,
+            onFinish: () => setGuardando(false),
+        });
+    };
+
+    return (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-card p-4">
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">
+                    {t('clienteShow.riesgo.label')}
+                </span>
+                <Badge variant={RIESGO_VARIANT[nivelRiesgo.nivel]}>
+                    {t(`clientesIndex.riesgo.${nivelRiesgo.nivel}`)}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                    {t(
+                        nivelRiesgo.fuente === 'manual'
+                            ? 'clienteShow.riesgo.fuenteManual'
+                            : 'clienteShow.riesgo.fuenteAutomatica',
+                    )}
+                </span>
+            </div>
+            <Select
+                value={nivelRiesgo.nivel}
+                onValueChange={cambiarNivel}
+                disabled={guardando}
+            >
+                <SelectTrigger size="sm" className="w-40">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="bajo">
+                        {t('clientesIndex.riesgo.bajo')}
+                    </SelectItem>
+                    <SelectItem value="medio">
+                        {t('clientesIndex.riesgo.medio')}
+                    </SelectItem>
+                    <SelectItem value="alto">
+                        {t('clientesIndex.riesgo.alto')}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+            {nivelRiesgo.fuente === 'manual' && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={quitarOverride}
+                    disabled={guardando}
+                >
+                    {t('clienteShow.riesgo.quitarOverride')}
+                </Button>
+            )}
+        </div>
+    );
+}
+
 export default function ClienteShow({
     cliente,
     formas,
@@ -1715,6 +1854,7 @@ export default function ClienteShow({
     catalogoDisponible,
     taxYearActual,
     determinaciones,
+    nivelRiesgo,
 }: {
     cliente: { id: number; name: string; email: string; phone: string | null };
     formas: ClienteForma[];
@@ -1722,6 +1862,7 @@ export default function ClienteShow({
     catalogoDisponible: CatalogoDisponibleItem[];
     taxYearActual: number;
     determinaciones: Determinacion[];
+    nivelRiesgo: NivelRiesgoEfectivo;
 }) {
     const { t } = useTranslation();
     const { auth } = usePage<PageProps>().props;
@@ -1865,6 +2006,12 @@ export default function ClienteShow({
                         )}
                     </div>
                 </div>
+
+                <NivelRiesgoControl
+                    clienteId={cliente.id}
+                    taxYear={taxYearActual}
+                    nivelRiesgo={nivelRiesgo}
+                />
 
                 <DeterminacionFiscalPanel
                     clienteId={cliente.id}

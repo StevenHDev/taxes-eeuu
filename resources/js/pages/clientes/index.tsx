@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
 import { index as clientesIndex, show as clienteShow } from '@/routes/clientes';
-import type { Cliente, EstadoGeneral, FormaOption } from '@/types';
+import type { Cliente, EstadoGeneral, FormaOption, NivelRiesgo } from '@/types';
 
 const ESTADO_LABEL_KEY: Record<EstadoGeneral, string> = {
     sin_iniciar: 'clientesIndex.estado.sinIniciar',
@@ -33,6 +33,15 @@ const ESTADO_VARIANT: Record<
     sin_iniciar: 'outline',
     en_progreso: 'secondary',
     completo: 'default',
+};
+
+const RIESGO_VARIANT: Record<
+    NivelRiesgo,
+    'outline' | 'secondary' | 'destructive'
+> = {
+    bajo: 'outline',
+    medio: 'secondary',
+    alto: 'destructive',
 };
 
 function useColumns(): ColumnDef<Cliente>[] {
@@ -83,6 +92,34 @@ function useColumns(): ColumnDef<Cliente>[] {
                 return (
                     <Badge variant={ESTADO_VARIANT[estado]}>
                         {t(ESTADO_LABEL_KEY[estado])}
+                    </Badge>
+                );
+            },
+            filterFn: (row, id, value) =>
+                (value as string[]).includes(row.getValue<string>(id)),
+        },
+        {
+            accessorKey: 'nivel_riesgo',
+            id: 'nivel_riesgo',
+            header: ({ column }) => (
+                <DataTableColumnHeader
+                    column={column}
+                    title={t('clientesIndex.columns.risk')}
+                />
+            ),
+            cell: ({ row }) => {
+                const cliente = row.original;
+
+                return (
+                    <Badge
+                        variant={RIESGO_VARIANT[cliente.nivel_riesgo]}
+                        title={t(
+                            cliente.nivel_riesgo_fuente === 'manual'
+                                ? 'clientesIndex.riesgo.fuenteManual'
+                                : 'clientesIndex.riesgo.fuenteAutomatica',
+                        )}
+                    >
+                        {cliente.nivel_riesgo_label}
                     </Badge>
                 );
             },
@@ -214,6 +251,15 @@ export default function ClientesIndex({
                                     label: t('clientesIndex.estado.completo'),
                                     value: 'completo',
                                 },
+                            ],
+                        },
+                        {
+                            columnId: 'nivel_riesgo',
+                            title: t('clientesIndex.columns.risk'),
+                            options: [
+                                { label: t('clientesIndex.riesgo.bajo'), value: 'bajo' },
+                                { label: t('clientesIndex.riesgo.medio'), value: 'medio' },
+                                { label: t('clientesIndex.riesgo.alto'), value: 'alto' },
                             ],
                         },
                         {

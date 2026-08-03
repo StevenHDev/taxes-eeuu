@@ -183,6 +183,12 @@
                 "tag": "Review",
                 "hint": "Completed forms awaiting approval.",
                 "hintEmpty": "No forms awaiting review."
+            },
+            "highRisk": {
+                "label": "High risk",
+                "tag": "Risk",
+                "hint": "Cases with a high risk level (automatic or manual).",
+                "hintEmpty": "No high-risk cases right now."
             }
         },
         "recentActivity": {
@@ -215,12 +221,20 @@
         "columns": {
             "client": "Client",
             "status": "Status",
-            "forms": "Forms"
+            "forms": "Forms",
+            "risk": "Risk"
         },
         "estado": {
             "sinIniciar": "Not started",
             "enProgreso": "In progress",
             "completo": "Complete"
+        },
+        "riesgo": {
+            "bajo": "Low",
+            "medio": "Medium",
+            "alto": "High",
+            "fuenteManual": "Manually set level",
+            "fuenteAutomatica": "Automatically suggested level"
         },
         "filters": {
             "form": "Form"
@@ -257,6 +271,12 @@
             "viewTitle": "View {{name}}",
             "noPreview": "No preview available.",
             "downloadFile": "Download the file"
+        },
+        "duplicado": {
+            "badge": "Possible duplicate",
+            "mismoCliente": "This file was also uploaded for: {{campos}}",
+            "otroClienteConDetalle": "Matches a file from {{cliente}} ({{campo}})",
+            "otroClienteSinDetalle": "Matches a file from another client outside your access"
         },
         "upload": {
             "uploadTitle": "Upload file «{{campo}}»",
@@ -343,6 +363,12 @@
         "transversalLabel": "Client data",
         "section": {
             "received": "{{recibidos}}/{{total}} received"
+        },
+        "riesgo": {
+            "label": "Risk level",
+            "fuenteManual": "Manually set",
+            "fuenteAutomatica": "Automatically suggested",
+            "quitarOverride": "Remove override"
         }
     },
     "usuarios": {
