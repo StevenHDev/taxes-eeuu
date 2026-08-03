@@ -47,6 +47,8 @@ class DatabaseSeeder extends Seeder
                 'role' => UserRole::Client,
                 'preparer_id' => $preparador->id,
             ]);
+
+            $this->call(ClientesDemoSeeder::class);
         }
     }
 }
