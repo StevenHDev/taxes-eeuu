@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\ApiAbility;
+use App\Enums\FormState;
 use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ClienteFormasRequest;
 use App\Http\Requests\ClienteStoreRequest;
 use App\Models\FormaCliente;
 use App\Models\User;
 use App\Services\ClienteExportService;
+use App\Support\TaxFieldCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -145,6 +148,78 @@ class ClienteController extends Controller
                 'valor' => $c->valor,
                 'updated_at' => $c->updated_at,
             ]),
+        ];
+    }
+
+    /**
+     * Declara las formas aplicables de un cliente (sección 4 del roadmap: el
+     * agente conversacional externo la invoca apenas resuelve, en lenguaje
+     * natural, su propio árbol de determinación de forma). Idempotente: usa
+     * firstOrCreate para no resetear a en_progreso una forma que ya esté
+     * completa si el agente vuelve a declarar formas más adelante en la
+     * conversación (ej. el cliente menciona una situación adicional).
+     */
+    public function formas(ClienteFormasRequest $request, User $cliente): JsonResponse
+    {
+        $taxYear = (int) $request->validated('tax_year');
+
+        foreach ((array) $request->validated('formas') as $forma) {
+            FormaCliente::query()->firstOrCreate(
+                ['user_id' => $cliente->id, 'forma' => $forma, 'tax_year' => $taxYear],
+                ['estado' => FormState::EnProgreso],
+            );
+        }
+
+        return response()->json($this->pendientesEnvelope($cliente, $taxYear));
+    }
+
+    /**
+     * Qué le falta a un cliente por entregar, a través de todas sus formas
+     * declaradas — para que el agente conversacional externo sepa qué pedir a
+     * continuación sin tener que memorizar el catálogo (sustituye el catálogo
+     * hardcodeado que tenía antes en su propio prompt).
+     */
+    public function pendientes(Request $request, User $cliente): JsonResponse
+    {
+        $this->authorize('view', $cliente);
+        $this->ensureAbility($request, ApiAbility::ClientesRead);
+
+        // Acción de lectura consultada por una integración externa: tax_year
+        // explícito siempre, igual que el resto del camino del agente.
+        $request->validate(['tax_year' => ['required', 'integer', 'digits:4']]);
+
+        return response()->json($this->pendientesEnvelope($cliente, (int) $request->query('tax_year')));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function pendientesEnvelope(User $cliente, int $taxYear): array
+    {
+        $formas = FormaCliente::query()
+            ->where('user_id', $cliente->id)
+            ->where('tax_year', $taxYear)
+            ->pluck('forma')
+            ->map(fn (string $forma) => TaxForm::tryFrom($forma))
+            ->filter()
+            ->values()
+            ->all();
+
+        // Los transversales (SSN, cónyuge, dependientes, estado_civil...) no
+        // pertenecen a ninguna forma — se piden sin importar cuál(es) apliquen,
+        // así que aparecen en `pendientes` incluso si el agente todavía no llamó
+        // a /formas (PASO A-D no ha terminado). `completo`, en cambio, sí exige
+        // al menos una forma declarada: sin eso la determinación en sí sigue
+        // pendiente, aunque ya no falte ningún transversal.
+        $pendientes = TaxFieldCatalog::pendientesPara($taxYear, $formas, $cliente->id);
+
+        $siguiente = collect($pendientes)->first(fn (array $p) => $p['obligatorio']);
+
+        return [
+            'tax_year' => $taxYear,
+            'completo' => $formas !== [] && $siguiente === null,
+            'pendientes' => $pendientes,
+            'siguiente' => $siguiente ? ['forma' => $siguiente['forma'], 'campo' => $siguiente['campo']] : null,
         ];
     }
 

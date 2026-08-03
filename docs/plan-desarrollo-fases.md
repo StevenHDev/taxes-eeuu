@@ -75,14 +75,21 @@ Principio central: separar **la forma de la regla** (el árbol de lógica del IR
 - [!] Confirmar con Wolters Kluwer/TaxWise el mecanismo real de integración (API vs. archivo/formato de importación) — bloqueado, requiere contacto con el proveedor, no se puede resolver por investigación interna.
 - [ ] Definir formato de exportación desde la plataforma hacia TaxWise una vez se conozca el mecanismo real.
 
-## 4. Agente conversacional (prompt externo) — mejoras propuestas
+## 4. Fase 4 — Catálogo dinámico vía API para el agente conversacional ✅ COMPLETA (2026-08-02)
 
-El prompt hoy tiene el catálogo completo hardcodeado como texto estático, y la tool `guardar_campo_cliente` no tiene concepto de año fiscal. Ambas cosas quedan obsoletas apenas avancen las fases 1 y 2.
+El prompt (`docs/prompt.md`) tenía el catálogo completo y el árbol de determinación de forma(s) hardcodeados como texto estático — y de hecho ya estaba desincronizado en tres frentes distintos al momento de esta fase: nunca había recibido el parámetro `tax_year` de la Fase 1, nunca reflejó los cambios de catálogo de la Fase 2 (`estado_civil`, `ingresos` desglosado, `gastos_cuidado_dependientes`, `creditos` eliminado), y su sección "CAMPOS POR FORMA DE NEGOCIO" describía 3 campos que nunca existieron de verdad en el catálogo (`pl_balance_general`, `gastos_deducibles`, `activos_depreciacion` — solo `estados_bancarios` es real). Se resolvió de raíz reemplazando el catálogo-como-texto por dos endpoints que el agente consulta en vivo.
 
-- [ ] Agregar parámetro `tax_year` a la tool `guardar_campo_cliente` (depende de Fase 1).
-- [ ] Nuevo paso en el árbol de determinación para confirmar para qué año fiscal es la declaración (no asumirlo por default).
-- [ ] Reemplazar el catálogo hardcodeado del prompt por una tool que lo consulte dinámicamente contra un endpoint real — hoy la ruta `catalogo` es web/sesión (`routes/catalogo.php`), **no existe expuesta bajo `/api` (Sanctum)** para que un agente externo la consuma.
-- [ ] Endpoint nuevo, ej. `GET /api/clientes/{id}/pendientes`, que combine catálogo vigente + datos ya guardados del cliente y devuelva directamente qué campos faltan — así el agente no mantiene el checklist por su cuenta y queda sincronizado automáticamente ante cualquier campo nuevo que se agregue al catálogo en el futuro.
+- [x] Agregar parámetro `tax_year` a la tool `guardar_campo_cliente` (aplicado en `docs/prompt.md`, nunca se había hecho pese a que la Fase 1 ya lo requería del lado de la plataforma).
+- [x] Nuevo paso en el árbol de determinación para confirmar para qué año fiscal es la declaración (PASO 0.5 en `docs/prompt.md`).
+- [x] Reemplazar el catálogo hardcodeado del prompt por una tool que lo consulte dinámicamente: `POST /api/clientes/{cliente}/formas` (declara `formas_aplicables`, idempotente vía `firstOrCreate`) y `GET /api/clientes/{cliente}/pendientes` (checklist de lo que falta, con `tipo_campo`/`tipo_dato`/`subcampos`/`formatos_aceptados` resueltos por campo). Ambas comparten la misma respuesta (`App\Support\TaxFieldCatalog::pendientesPara()`), con `siguiente` como puntero de conveniencia al próximo campo obligatorio.
+- [x] `TaxFieldCatalog::pendientesObligatoriosFor()` extraído como única fuente de verdad de "qué falta", reutilizado tanto por `EventoRecoleccionService::recalcularCompletitud()` (completitud de una forma) como por el nuevo `pendientesPara()` (checklist multi-forma) — evita que ambos cálculos puedan divergir.
+- [x] `docs/prompt.md` reescrito: se eliminaron las secciones "CAMPOS ÚNICOS GLOBALES", "CAMPOS POR FORMA DE NEGOCIO" y "CONTEXTO — CATÁLOGO" (texto estático); se agregaron las tools `declarar_formas_cliente`/`consultar_pendientes_cliente`; de paso quedó al día con `tax_year` (Fase 1) y con el catálogo real de la Fase 2, ya que ninguno de los dos se había aplicado nunca a este archivo.
+- [x] Tests: 16 casos nuevos (`ClienteFormasApiTest`, `ClientePendientesApiTest`, `TaxFieldCatalogPendientesTest`) — idempotencia de `/formas`, deduplicación de transversales, no-deduplicación de campos por forma de negocio (`estados_bancarios` de `schedule_c` y `schedule_e` como pendientes separadas), `completo` calculado solo sobre obligatorios, autorización consistente con el resto de la API. Suite completa: 157 passed, 2 skipped, mismos 2 fallos preexistentes de fases anteriores (no relacionados).
+
+**Fuera de esta fase, documentado como limitación conocida:** no hay estado persistido de "cliente confirmó que esto no aplica" para campos opcionales — si la conversación se reinicia sin memoria del LLM, `/pendientes` puede volver a mostrar un opcional ya declinado (limitación ya existente, no introducida aquí).
+
+**Pendiente, fuera de esta fase (independiente, no bloquea lo anterior):**
+
 - [ ] Nueva sección en el prompt: extracción estructurada por tipo de documento (especialmente `declaracion_anio_anterior`, que puede traer filing status, dependientes, AGI y créditos del año pasado ya estructurados).
 - [ ] Regla de confirmación: todo dato "de situación" extraído de un documento de años anteriores (estado civil, dependientes, cuenta bancaria) debe confirmarse con una pregunta corta antes de guardarse — porque son justo los datos que más cambian de un año a otro. Los datos históricos puramente financieros (AGI, créditos usados) sí se pueden guardar como referencia sin confirmación.
 - [ ] Priorizar la solicitud de `declaracion_anio_anterior` más temprano en el flujo (hoy es casi lo último y opcional) porque resolverlo primero reduce cuántas preguntas nuevas hacen falta después.

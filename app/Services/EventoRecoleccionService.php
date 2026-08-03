@@ -10,7 +10,6 @@ use App\Enums\FormState;
 use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Http\Requests\EventoRequest;
-use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
 use App\Models\ClientIntakeSession;
 use App\Models\Documento;
@@ -413,18 +412,7 @@ class EventoRecoleccionService
     private function recalcularCompletitud(User $cliente, int $taxYear, string $forma): FormaCliente
     {
         $taxForm = TaxForm::from($forma);
-        $requeridos = collect(TaxFieldCatalog::requiredFieldsFor($taxYear, $taxForm))->pluck('campo');
-
-        // Cuenta los recibidos de la forma más los transversales/únicos por cliente
-        // (guardados bajo 'transversal'), que aplican a todas las formas del mismo año.
-        $recibidos = CampoCliente::query()
-            ->where('user_id', $cliente->id)
-            ->where('tax_year', $taxYear)
-            ->whereIn('forma', [$forma, CampoCatalogo::TRANSVERSAL])
-            ->where('estado', FieldState::Recibido)
-            ->pluck('campo');
-
-        $completo = $requeridos->diff($recibidos)->isEmpty();
+        $completo = TaxFieldCatalog::pendientesObligatoriosFor($taxYear, $taxForm, $cliente->id)->isEmpty();
 
         return FormaCliente::query()->updateOrCreate(
             ['user_id' => $cliente->id, 'forma' => $forma, 'tax_year' => $taxYear],

@@ -2,8 +2,10 @@
 
 namespace App\Support;
 
+use App\Enums\FieldState;
 use App\Enums\TaxForm;
 use App\Models\CampoCatalogo;
+use App\Models\CampoCliente;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -124,6 +126,124 @@ class TaxFieldCatalog
             self::fieldsFor($taxYear, $forma),
             fn (array $field) => $field['obligatorio'],
         ));
+    }
+
+    /**
+     * Nombres de los campos obligatorios de una forma que un cliente todavía no
+     * tiene con estado Recibido — incluye los transversales/únicos por cliente,
+     * que cuentan para la completitud de cualquier forma del mismo año. Única
+     * fuente de verdad de "qué falta"; tanto `EventoRecoleccionService` (para
+     * decidir si una forma queda completa) como `pendientesPara()` (para el
+     * endpoint /pendientes del agente externo) la reutilizan, para que ambos
+     * cálculos nunca puedan divergir entre sí.
+     *
+     * @return Collection<int, string>
+     */
+    public static function pendientesObligatoriosFor(int $taxYear, TaxForm $forma, int $clienteId): Collection
+    {
+        $requeridos = collect(self::requiredFieldsFor($taxYear, $forma))->pluck('campo');
+
+        $recibidos = CampoCliente::query()
+            ->where('user_id', $clienteId)
+            ->where('tax_year', $taxYear)
+            ->whereIn('forma', [$forma->value, CampoCatalogo::TRANSVERSAL])
+            ->where('estado', FieldState::Recibido)
+            ->pluck('campo');
+
+        return $requeridos->diff($recibidos)->values();
+    }
+
+    /**
+     * Los campos transversales (únicos por cliente) de un año fiscal — no
+     * pertenecen a ninguna forma en particular, así que a diferencia de
+     * `fieldsFor()` esto no requiere una `TaxForm`.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function transversales(int $taxYear): array
+    {
+        return self::todos()
+            ->filter(fn (array $c) => $c['tax_year'] === $taxYear && $c['forma'] === CampoCatalogo::TRANSVERSAL)
+            ->map(fn (array $c) => $c['definicion'])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Checklist pendiente de un cliente a través de varias formas a la vez —
+     * lo que alimenta el endpoint `GET /api/clientes/{cliente}/pendientes`, para
+     * que el agente conversacional externo sepa qué pedir a continuación sin
+     * tener que memorizar el catálogo. Incluye campos obligatorios y opcionales
+     * (cada uno con su propio flag `obligatorio`); el llamador decide si
+     * considera "completo" solo a partir de los obligatorios.
+     *
+     * Los campos transversales (únicos por cliente) siempre se incluyen, sin
+     * importar si `$formas` viene vacío — son datos del cliente como persona,
+     * no de una forma en particular, así que se piden sin importar qué forma(s)
+     * termine aplicando (o incluso antes de que se determine ninguna). Los
+     * campos propios de cada forma en `$formas` NUNCA se deduplican entre sí —
+     * ej. "estados_bancarios" de schedule_c y de schedule_e son dos pendientes
+     * distintas, una por forma real, porque son datos genuinamente distintos
+     * (contabilidades separadas).
+     *
+     * @param  array<int, TaxForm>  $formas
+     * @return array<int, array<string, mixed>>
+     */
+    public static function pendientesPara(int $taxYear, array $formas, int $clienteId): array
+    {
+        $recibidos = CampoCliente::query()
+            ->where('user_id', $clienteId)
+            ->where('tax_year', $taxYear)
+            ->whereIn('forma', [...array_map(fn (TaxForm $f) => $f->value, $formas), CampoCatalogo::TRANSVERSAL])
+            ->where('estado', FieldState::Recibido)
+            ->get(['forma', 'campo'])
+            ->map(fn (CampoCliente $c) => "{$c->forma}|{$c->campo}")
+            ->flip();
+
+        $pendientes = [];
+
+        foreach (self::transversales($taxYear) as $field) {
+            if ($recibidos->has(CampoCatalogo::TRANSVERSAL."|{$field['campo']}")) {
+                continue;
+            }
+
+            $pendientes[] = [
+                'forma' => CampoCatalogo::TRANSVERSAL,
+                'campo' => $field['campo'],
+                'tipo_campo' => $field['tipo']->value,
+                'tipo_dato' => $field['tipo_dato']?->value,
+                'subcampos' => $field['subcampos'],
+                'formatos_aceptados' => $field['formatos_aceptados'],
+                'obligatorio' => $field['obligatorio'],
+                'sensible' => $field['sensible'],
+            ];
+        }
+
+        foreach ($formas as $forma) {
+            foreach (self::fieldsFor($taxYear, $forma) as $field) {
+                // Los transversales ya se agregaron arriba, una sola vez.
+                if ($field['unico_por_cliente'] ?? false) {
+                    continue;
+                }
+
+                if ($recibidos->has("{$forma->value}|{$field['campo']}")) {
+                    continue;
+                }
+
+                $pendientes[] = [
+                    'forma' => $forma->value,
+                    'campo' => $field['campo'],
+                    'tipo_campo' => $field['tipo']->value,
+                    'tipo_dato' => $field['tipo_dato']?->value,
+                    'subcampos' => $field['subcampos'],
+                    'formatos_aceptados' => $field['formatos_aceptados'],
+                    'obligatorio' => $field['obligatorio'],
+                    'sensible' => $field['sensible'],
+                ];
+            }
+        }
+
+        return $pendientes;
     }
 
     /**

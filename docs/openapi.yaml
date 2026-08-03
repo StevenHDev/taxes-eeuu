@@ -491,6 +491,97 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /clientes/{cliente}/formas:
+    parameters:
+      - $ref: '#/components/parameters/ClienteId'
+    post:
+      tags: [Clientes]
+      operationId: declararFormasCliente
+      summary: Declara las formas del IRS aplicables a un cliente (Fase 4)
+      description: |
+        El agente conversacional externo la invoca apenas resuelve, en lenguaje
+        natural, su propio árbol de determinación de forma(s) — reemplaza la
+        necesidad de que `formas_aplicables` viva solo en su memoria conversacional.
+        `tax_year` y `formas` son ambos obligatorios (sin default). Idempotente:
+        si una forma ya declarada está `completo`, volver a declararla no la
+        resetea a `en_progreso`.
+      x-required-ability: clientes:write
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tax_year:
+                  type: integer
+                formas:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TaxForm'
+              required: [tax_year, formas]
+            example:
+              tax_year: 2025
+              formas: [schedule_c, schedule_e]
+      responses:
+        '200':
+          description: Formas declaradas — responde con el mismo shape que `GET /clientes/{cliente}/pendientes`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendientesRespuesta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationErrorResponse'
+
+  /clientes/{cliente}/pendientes:
+    parameters:
+      - $ref: '#/components/parameters/ClienteId'
+    get:
+      tags: [Clientes]
+      operationId: pendientesCliente
+      summary: Qué campos faltan por recolectar, listos para preguntar (Fase 4)
+      description: |
+        El agente conversacional externo la llama después de cada evento
+        (`guardar_campo_cliente`) para saber el siguiente campo a pedir —
+        sustituye el catálogo hardcodeado que antes vivía como texto estático
+        en su propio prompt. `tax_year` es obligatorio (sin default: es una
+        consulta agente-facing, no una lectura de panel humano). Los campos
+        transversales no dependen de que exista ninguna forma declarada — se
+        piden sin importar cuál(es) apliquen, así que aparecen en `pendientes`
+        aunque el cliente todavía no tenga ninguna forma declarada. En ese
+        caso, `completo` es siempre `false` (la determinación de forma en sí
+        sigue pendiente).
+      x-required-ability: clientes:read
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tax_year
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Checklist pendiente del cliente para ese año fiscal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendientesRespuesta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationErrorResponse'
+
   /clientes/{cliente}/campos/{campo}:
     parameters:
       - $ref: '#/components/parameters/ClienteId'
@@ -921,6 +1012,64 @@ components:
             items:
               type: string
       required: [message, errors]
+
+    PendienteCampo:
+      type: object
+      description: |
+        Un campo del catálogo que al cliente le falta entregar. Los campos
+        transversales (`unico_por_cliente`) aparecen una sola vez sin importar
+        cuántas formas tenga el cliente; los propios de cada forma nunca se
+        deduplican entre formas (ej. `estados_bancarios` de `schedule_c` y de
+        `schedule_e` son dos pendientes distintas).
+      properties:
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        campo:
+          type: string
+        tipo_campo:
+          $ref: '#/components/schemas/FieldKind'
+        tipo_dato:
+          $ref: '#/components/schemas/FieldDataType'
+          nullable: true
+        subcampos:
+          type: array
+          items:
+            type: string
+          nullable: true
+        formatos_aceptados:
+          type: array
+          items:
+            type: string
+          nullable: true
+        obligatorio:
+          type: boolean
+        sensible:
+          type: boolean
+
+    PendientesRespuesta:
+      type: object
+      description: |
+        Respuesta compartida entre `POST /clientes/{cliente}/formas` y
+        `GET /clientes/{cliente}/pendientes` (Fase 4).
+      properties:
+        tax_year:
+          type: integer
+        completo:
+          type: boolean
+          description: 'Calculado solo sobre los pendientes con `obligatorio: true`.'
+        pendientes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendienteCampo'
+        siguiente:
+          type: object
+          nullable: true
+          description: Puntero de conveniencia al primer pendiente obligatorio, o `null` si no queda ninguno.
+          properties:
+            forma:
+              $ref: '#/components/schemas/FormaAlmacen'
+            campo:
+              type: string
 
   responses:
     Unauthorized:

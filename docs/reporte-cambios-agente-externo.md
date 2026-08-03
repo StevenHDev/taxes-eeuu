@@ -196,12 +196,75 @@ No aplica al agente conversacional — es integración backend/preparador con Ta
 
 ---
 
+## Fase 4 — Catálogo dinámico vía API `[LISTO PARA APLICAR]` (completada 2026-08-02)
+
+Hasta ahora, todo el árbol de determinación de forma(s) (PASO A-D) y el catálogo completo de campos por forma vivían como **texto estático dentro del propio prompt** — nada de eso se declaraba a la plataforma. Esto ya causó un problema real: al revisar el catálogo real sembrado en la plataforma, se confirmó que la sección "CAMPOS POR FORMA DE NEGOCIO" del prompt describe 3 campos que **no existen** (`pl_balance_general`, `gastos_deducibles`, `activos_depreciacion`) — nunca se reconciliaron con los nombres reales del catálogo (`gastos_deducibles_negocio`, `activos`, etc.). Si el prompt alguna vez intentó guardarlos, la plataforma los habría rechazado con error 422. Es la misma clase de problema que ya pasó con la Fase 2 (`ingresos`/`estado_civil`/`creditos` cambiaron y el prompt nunca se actualizó) — un catálogo hardcodeado como texto se desincroniza cada vez que la plataforma cambia.
+
+**La solución**: dos endpoints nuevos para que el prompt deje de memorizar el catálogo y lo consulte en vivo. El árbol de clasificación conversacional (PASO A-D, "¿cuál es tu principal fuente de ingresos?") **se mantiene igual, en lenguaje natural** — no cambia cómo se le habla al cliente — pero su resultado ahora se declara explícitamente a la plataforma, y el catálogo de campos por forma deja de estar en el prompt.
+
+### 1. Nueva tool `declarar_formas_cliente` — reemplaza el paso mental de "armar el checklist"
+
+Se invoca **una sola vez, al terminar el PASO D** (cuando `formas_aplicables` queda cerrada), y de nuevo cada vez que el cliente confirme una situación adicional más adelante en la conversación (ej. "en realidad también vendí una propiedad este año").
+
+```json
+POST /api/clientes/{cliente_id}/formas
+{
+  "tax_year": 2025,
+  "formas": ["schedule_c", "schedule_e"]
+}
+```
+
+Responde con el checklist de lo que falta (mismo shape que la tool de abajo) — así el prompt, en la misma llamada, ya sabe qué preguntar primero. Es seguro llamarla de nuevo con las mismas formas (ej. si el cliente repite su situación): no borra ni resetea el progreso ya guardado.
+
+### 2. Nueva tool `consultar_pendientes_cliente` — reemplaza TODO el catálogo hardcodeado del prompt
+
+Se invoca después de cada `guardar_campo_cliente`, para saber cuál es el siguiente campo a pedir. **Esto elimina la necesidad de las secciones "CAMPOS ÚNICOS GLOBALES", "CAMPOS POR FORMA DE NEGOCIO" y "CONTEXTO — CATÁLOGO DE CAMPOS PROPIOS DE CADA FORMA" del prompt** — ya no hace falta memorizar nombres de campo, tipos ni formatos: la plataforma los devuelve en cada llamada.
+
+```json
+GET /api/clientes/{cliente_id}/pendientes?tax_year=2025
+```
+
+Respuesta:
+
+```json
+{
+  "tax_year": 2025,
+  "completo": false,
+  "pendientes": [
+    { "forma": "transversal", "campo": "estado_civil", "tipo_campo": "dato", "tipo_dato": "object", "subcampos": ["casado_al_31_dic", "convivio_conyuge_ultimos_6_meses", "costeo_mas_mitad_hogar", "existe_persona_calificable", "conyuge_fallecio_en_anio", "anio_fallecimiento_conyuge"], "formatos_aceptados": null, "obligatorio": true, "sensible": false },
+    { "forma": "schedule_c", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false },
+    { "forma": "schedule_e", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false }
+  ],
+  "siguiente": { "forma": "transversal", "campo": "estado_civil" }
+}
+```
+
+Cómo debe usar el prompt esta respuesta:
+
+- Preguntar por el campo indicado en `siguiente` (nunca elegir el prompt por su cuenta qué pedir a continuación — el orden lo decide la plataforma).
+- Los campos con `forma: "transversal"` se preguntan una sola vez y se guardan siempre con `forma: "transversal"` en `guardar_campo_cliente`, igual que antes.
+- Los campos con una forma real (ej. `schedule_c`) que aparecen más de una vez con el mismo `campo` para formas de negocio distintas (ej. `estados_bancarios` de `schedule_c` Y de `schedule_e`) se preguntan y guardan por separado, cada uno con su forma real — igual que antes, pero ahora la plataforma es quien decide cuáles campos se repiten por forma, no una lista fija en el prompt.
+- Cuando `pendientes` queda vacío (o `completo: true`), la recolección terminó — es el reemplazo directo del PASO 8 (Cierre) del flujo actual.
+- Los campos con `obligatorio: false` (ej. `declaracion_anio_anterior`, `gastos_cuidado_dependientes`) se ofrecen una sola vez; si el cliente no los tiene, no insistir — igual trato que hoy.
+- Los campos transversales **no dependen de que ya se haya llamado a `declarar_formas_cliente`** — se piden sin importar cuál(es) forma(s) terminen aplicando, así que `consultar_pendientes_cliente` los muestra igual aunque todavía no exista ninguna forma declarada para ese cliente/año. En ese caso puntual, `completo` siempre viene `false` (la determinación de forma en sí sigue pendiente), aunque ya no falte ningún transversal. El prompt no necesita hacer nada especial con esto — solo tenerlo presente si alguna vez llama a esta tool antes del PASO D.
+
+### 3. Corrección explícita del catálogo de "campos por forma de negocio"
+
+La sección actual del prompt que dice que `estados_bancarios`, `pl_balance_general`, `gastos_deducibles` y `activos_depreciacion` se repiten por cada forma de negocio **es parcialmente incorrecta**: solo `estados_bancarios` existe de verdad en el catálogo (y sí se repite legítimamente por forma: `schedule_c`, `schedule_e`, `form_1065`, `form_1120`, `form_1120_s`, `schedule_f` — no en `form_1041`/`form_990`). Los otros tres campos no existen bajo ningún nombre — lo que sí existe para cada forma de negocio son sus propios campos reales (ej. `gastos_deducibles_negocio` y `activos` para `schedule_c`), que ya estaban documentados en la sección "CONTEXTO — CATÁLOGO" del prompt bajo cada forma. Con `consultar_pendientes_cliente` este problema queda resuelto de raíz: el prompt deja de necesitar una lista propia, y por lo tanto deja de poder desincronizarse.
+
+### 4. Reescritura recomendada del prompt
+
+- Eliminar las secciones "CAMPOS ÚNICOS GLOBALES", "CAMPOS POR FORMA DE NEGOCIO" y "CONTEXTO — CATÁLOGO DE CAMPOS PROPIOS DE CADA FORMA" completas.
+- Agregar `declarar_formas_cliente` y `consultar_pendientes_cliente` a "HERRAMIENTAS DISPONIBLES" y "DEFINICIÓN DE LAS TOOLS", con los parámetros exactos de arriba.
+- Al final del PASO D, agregar: invocar `declarar_formas_cliente` con `formas_aplicables`.
+- Reemplazar el paso 2 de "TAREA — FLUJO DE RECOLECCIÓN PROGRESIVA" ("Construcción del checklist interno") por: invocar `consultar_pendientes_cliente` y usar `siguiente` como el próximo campo a pedir.
+
+---
+
 ## Mejoras al prompt, independientes de las fases de arriba `[PENDIENTE]`
 
-Estas ya están identificadas y documentadas en `plan-desarrollo-fases.md` (sección 4), pero requieren trabajo de plataforma que todavía no se hizo:
+Estas ya están identificadas y documentadas en `plan-desarrollo-fases.md` (sección 4), pero requieren trabajo de plataforma que todavía no se hizo (el catálogo dinámico y el endpoint de pendientes que estaban aquí ya se implementaron — ver Fase 4 arriba):
 
-- **Catálogo dinámico**: reemplazar el catálogo hardcodeado como texto en el prompt por una tool nueva que lo consulte contra un endpoint real (hoy no existe expuesto bajo `/api` para el agente externo).
-- **Endpoint de pendientes**: `GET /api/clientes/{id}/pendientes` — combina catálogo vigente + datos ya guardados del cliente y devuelve directamente qué campos faltan, para que el prompt no tenga que llevar su propio checklist.
 - **Extracción estructurada por documento**: sección nueva en el prompt para extraer datos de `declaracion_anio_anterior` (filing status, dependientes, AGI, créditos del año pasado) de forma sistemática, no incidental.
 - **Regla de confirmación**: todo dato "de situación" extraído de un documento de años anteriores (estado civil, dependientes, cuenta bancaria) debe confirmarse con una pregunta corta antes de guardarse — nunca guardarse en silencio.
 - **Priorizar `declaracion_anio_anterior`** más temprano en el flujo (hoy es casi lo último y opcional).

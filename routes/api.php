@@ -21,6 +21,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{cliente}/documentos', [ClienteController::class, 'documentos'])->name('documentos');
         Route::get('/{cliente}/export', [ClienteController::class, 'export'])->name('export');
         Route::post('/{cliente}/marcar-revisado/{forma}', [ClienteController::class, 'marcarRevisado'])->name('marcar-revisado');
+        Route::post('/{cliente}/formas', [ClienteController::class, 'formas'])->name('formas');
+        Route::get('/{cliente}/pendientes', [ClienteController::class, 'pendientes'])->name('pendientes');
 
         Route::get('/{cliente}/campos/{campo}', [CampoClienteController::class, 'historial'])->name('campos.historial');
         Route::match(['put', 'patch'], '/{cliente}/campos/{campo}', [CampoClienteController::class, 'update'])->name('campos.update');

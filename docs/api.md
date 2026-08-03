@@ -457,9 +457,11 @@ GET    /api/clientes/{id}/campos/{campo}?forma=&tax_year=    — historial de ca
 PATCH  /api/clientes/{id}/campos/{campo}?forma=&tax_year=    — corrección manual de un campo por un preparador/administrador (forma y tax_year obligatorios)
 DELETE /api/clientes/{id}/campos/{campo}?forma=&tax_year=    — elimina un campo cargado por error (forma y tax_year obligatorios; conserva el historial)
 POST   /api/clientes/{id}/marcar-revisado/{forma}            — marca una forma como revisada por un humano (tax_year obligatorio en el body)
+POST   /api/clientes/{id}/formas                             — declara las formas del IRS aplicables a un cliente (Fase 4, tax_year obligatorio en el body)
+GET    /api/clientes/{id}/pendientes?tax_year=                — qué campos faltan por recolectar, listos para preguntar (Fase 4, tax_year obligatorio)
 ```
 
-`tax_year` en los endpoints de **lectura** (`GET`) es opcional: si se omite, usa el año fiscal actual configurado en la plataforma. En los que identifican/modifican un campo puntual (`campos/{campo}`, `marcar-revisado`) es **obligatorio** — ver [Año fiscal](#año-fiscal-taxyear).
+`tax_year` en los endpoints de **lectura** (`GET`) es opcional: si se omite, usa el año fiscal actual configurado en la plataforma. En los que identifican/modifican un campo puntual (`campos/{campo}`, `marcar-revisado`, `formas`, `pendientes`) es **obligatorio** — ver [Año fiscal](#año-fiscal-taxyear).
 
 ### Listar clientes (`GET /api/clientes`)
 
@@ -532,6 +534,51 @@ curl -s "https://tu-dominio/api/clientes/buscar?phone=%2B15551234567&tax_year=20
 ```
 
 Se le puede pasar `id` o `email` en vez de `phone` (`?id=42`, `?email=maria@ejemplo.com`) — hace falta exactamente uno de los tres. `tax_year` es opcional (default = año actual de la plataforma), igual que en `GET /api/clientes/{id}`. Devuelve el mismo shape que `GET /api/clientes/{id}` (incluye `phone`), respetando el mismo alcance de datos que el resto de la API: un preparador solo encuentra a sus clientes asignados. Si no hay ningún cliente visible con ese id/teléfono/email, responde `404`.
+
+### Declarar las formas aplicables de un cliente (`POST /api/clientes/{id}/formas`)
+
+**Fase 4.** Reemplaza la necesidad de que el agente conversacional externo memorice el catálogo como texto: en cuanto resuelve, en lenguaje natural, qué formulario(s) del IRS le corresponden a un cliente, se lo declara a la plataforma con esta llamada — en vez de dejarlo solo en su propia memoria conversacional. Requiere ability `clientes:write`. `tax_year` y `formas` son ambos obligatorios (sin default); `formas` es un arreglo de una o más de las 10 formas del catálogo (`form_1040`, `schedule_c`, `schedule_e`, `form_1065`, `form_1120`, `form_1120_s`, `schedule_f`, `form_1041`, `form_990`, `form_1040_nr`), sin duplicados. Es **idempotente**: si una forma ya está declarada y su estado ya es `completo`, volver a declararla no la resetea a `en_progreso`.
+
+```bash
+curl -X POST https://tu-dominio/api/clientes/42/formas \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{ "tax_year": 2025, "formas": ["schedule_c", "schedule_e"] }'
+```
+
+Responde `200` con el mismo shape que `GET /api/clientes/{id}/pendientes` (ver justo abajo) — así el agente, en la misma llamada que declara las formas, ya sabe qué pedir primero, sin una segunda ida y vuelta.
+
+### Qué falta por recolectar (`GET /api/clientes/{id}/pendientes?tax_year=`)
+
+**Fase 4.** El agente conversacional externo la llama después de cada `guardar_campo_cliente` (evento) para saber el siguiente campo a pedir — sustituye por completo el catálogo hardcodeado que antes vivía como texto estático en su propio prompt. Requiere ability `clientes:read`. `tax_year` es obligatorio (sin default, es una consulta agente-facing, no una lectura de panel humano).
+
+```bash
+curl -s "https://tu-dominio/api/clientes/42/pendientes?tax_year=2025" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/json"
+```
+
+```json
+{
+  "tax_year": 2025,
+  "completo": false,
+  "pendientes": [
+    { "forma": "transversal", "campo": "estado_civil", "tipo_campo": "dato", "tipo_dato": "object", "subcampos": ["casado_al_31_dic", "convivio_conyuge_ultimos_6_meses", "costeo_mas_mitad_hogar", "existe_persona_calificable", "conyuge_fallecio_en_anio", "anio_fallecimiento_conyuge"], "formatos_aceptados": null, "obligatorio": true, "sensible": false },
+    { "forma": "schedule_c", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false },
+    { "forma": "schedule_e", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false }
+  ],
+  "siguiente": { "forma": "transversal", "campo": "estado_civil" }
+}
+```
+
+Notas de este shape:
+
+- `pendientes` incluye campos obligatorios **y** opcionales (cada uno con su propio flag `obligatorio`) — `completo` se calcula solo sobre los obligatorios, así que un opcional sin recolectar (ej. `declaracion_anio_anterior`, `gastos_cuidado_dependientes`) nunca bloquea `completo: true`.
+- Los campos transversales (únicos por cliente) aparecen **una sola vez**, sin importar cuántas formas tenga el cliente. Los campos propios de cada forma **nunca se deduplican entre formas** — si el cliente tiene `schedule_c` y `schedule_e`, `estados_bancarios` aparece dos veces, una por forma real, porque son contabilidades distintas.
+- `siguiente` es un puntero de conveniencia al primer pendiente obligatorio (o `null` si no queda ninguno) — para que el agente no tenga que decidir el orden por su cuenta.
+- Los campos transversales (`forma: "transversal"`) **no dependen de que exista ninguna forma declarada** — se piden sin importar cuál(es) apliquen, así que aparecen en `pendientes` incluso si el cliente todavía no tiene ninguna forma declarada (nunca se llamó a `POST /formas`). En ese caso, `completo` es siempre `false` — la determinación de forma en sí sigue pendiente, aunque ya no falte ningún transversal.
+- **Limitación conocida**: no hay un estado persistido de "el cliente confirmó que esto no aplica" para los campos opcionales — si la conversación se reinicia sin memoria del agente, un opcional ya declinado puede volver a aparecer en `pendientes`. Es una limitación ya existente hoy (nada se persistía al declinar), no una introducida por este endpoint.
 
 ## Panel de administración (solo web, sin API de token)
 
