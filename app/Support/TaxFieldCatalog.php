@@ -191,11 +191,16 @@ class TaxFieldCatalog
      */
     public static function pendientesPara(int $taxYear, array $formas, int $clienteId): array
     {
+        // Un campo ya resuelto no vuelve a aparecer como pendiente — "resuelto"
+        // incluye tanto un valor recibido como un "no aplica" explícito del
+        // cliente (ver FieldState::NoAplica): ambos son una respuesta, no la
+        // ausencia de una, así que ninguno debe seguir apareciendo en el
+        // checklist que consulta el agente conversacional.
         $recibidos = CampoCliente::query()
             ->where('user_id', $clienteId)
             ->where('tax_year', $taxYear)
             ->whereIn('forma', [...array_map(fn (TaxForm $f) => $f->value, $formas), CampoCatalogo::TRANSVERSAL])
-            ->where('estado', FieldState::Recibido)
+            ->whereIn('estado', [FieldState::Recibido, FieldState::NoAplica])
             ->get(['forma', 'campo'])
             ->map(fn (CampoCliente $c) => "{$c->forma}|{$c->campo}")
             ->flip();

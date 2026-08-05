@@ -117,12 +117,19 @@ class EventoRequest extends FormRequest
                 }
             }
 
-            if ($field['tipo'] === FieldKind::Documento && $modo !== FieldMode::Archivo) {
-                $validator->errors()->add('modo', 'Este campo solo admite modo "archivo".');
+            if ($field['tipo'] === FieldKind::Documento && ! \in_array($modo, [FieldMode::Archivo, FieldMode::NoAplica], true)) {
+                $validator->errors()->add('modo', 'Este campo solo admite modo "archivo" (o "no_aplica" si es opcional).');
             }
 
-            if ($field['tipo'] === FieldKind::Dato && $modo !== FieldMode::Texto) {
-                $validator->errors()->add('modo', 'Este campo solo admite modo "texto".');
+            if ($field['tipo'] === FieldKind::Dato && ! \in_array($modo, [FieldMode::Texto, FieldMode::NoAplica], true)) {
+                $validator->errors()->add('modo', 'Este campo solo admite modo "texto" (o "no_aplica" si es opcional).');
+            }
+
+            // "no_aplica" es una respuesta del cliente ("no lo tengo"/"no aplica"),
+            // no la ausencia de un valor obligatorio — solo tiene sentido en un
+            // campo que de verdad puede faltar sin bloquear la forma.
+            if ($modo === FieldMode::NoAplica && $field['obligatorio']) {
+                $validator->errors()->add('modo', 'Este campo es obligatorio y no se puede marcar como "no_aplica".');
             }
 
             if ($modo === FieldMode::Archivo && $this->hasFile('file')) {

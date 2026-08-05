@@ -120,6 +120,11 @@ class EventoRecoleccionService
 
         if ($modo === FieldMode::Archivo) {
             [$documento, $estado] = $this->procesarArchivo($file, $cliente, $taxYear, $formaAlmacen, $campo, $nombreOriginal, $field['formatos_aceptados'] ?? []);
+        } elseif ($modo === FieldMode::NoAplica) {
+            // Respuesta explícita del cliente ("no lo tengo"/"no aplica"), no la
+            // ausencia de un valor — EventoRequest/CampoClienteUpdateRequest ya
+            // garantizan que el campo es opcional antes de llegar acá.
+            $estado = FieldState::NoAplica;
         } else {
             $valor = $contenido;
             $estado = $this->validarContenido($campo, $tipoDato, $field['subcampos'] ?? null, $valor);
@@ -132,7 +137,9 @@ class EventoRecoleccionService
             ->where('tax_year', $taxYear)
             ->first();
 
-        if ($documento && $anterior?->documento_id && $anterior->documento_id !== $documento->id) {
+        // Si el campo ya tenía un documento asociado (ej. un archivo inválido
+        // reemplazado, o ahora marcado "no aplica"), el anterior queda obsoleto.
+        if ($anterior?->documento_id && $anterior->documento_id !== $documento?->id) {
             $this->borrarDocumento($anterior->documento);
         }
 
@@ -156,7 +163,11 @@ class EventoRecoleccionService
             'tax_year' => $taxYear,
             'campo' => $campo,
             'valor_anterior' => $anterior?->valor_texto,
-            'valor_nuevo' => $modo === FieldMode::Texto ? $valor : $documento->only(['file_original_name', 'formato']),
+            'valor_nuevo' => match ($modo) {
+                FieldMode::Texto => $valor,
+                FieldMode::Archivo => $documento->only(['file_original_name', 'formato']),
+                FieldMode::NoAplica => 'no_aplica',
+            },
             'source' => $source,
             'modificado_por' => $actor->id,
         ]);

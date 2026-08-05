@@ -349,7 +349,11 @@
         "fieldState": {
             "pendiente": "Pending",
             "recibido": "Received",
-            "invalido": "Invalid"
+            "invalido": "Invalid",
+            "no_aplica": "Not applicable"
+        },
+        "noAplica": {
+            "trigger": "Not applicable"
         },
         "value": {
             "emptyList": "No records",

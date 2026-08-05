@@ -138,6 +138,7 @@ class ClienteController extends Controller
                     'tipo_dato' => $campo['tipo_dato']?->value,
                     'subcampos' => $campo['subcampos'] ?? null,
                     'formatos_aceptados' => $campo['formatos_aceptados'] ?? null,
+                    'obligatorio' => $campo['obligatorio'],
                 ]));
 
         // Los campos únicos por cliente (SSN, cónyuge, dependientes): una sola vez,
@@ -155,6 +156,7 @@ class ClienteController extends Controller
                 'tipo_dato' => $c->tipo_dato?->value,
                 'subcampos' => $c->subcampos,
                 'formatos_aceptados' => $c->formatos_aceptados,
+                'obligatorio' => $c->obligatorio,
             ]);
 
         return Inertia::render('clientes/show', [
@@ -189,6 +191,7 @@ class ClienteController extends Controller
                     'valor' => $c->valor,
                     'es_sensible' => $c->esSensible(),
                     'formatos_aceptados' => $definicion['formatos_aceptados'] ?? null,
+                    'obligatorio' => $definicion['obligatorio'] ?? false,
                     'documento' => $c->documento ? [
                         'id' => $c->documento->id,
                         'file_original_name' => $c->documento->file_original_name,

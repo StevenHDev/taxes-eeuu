@@ -75,4 +75,30 @@ class TaxFieldCatalogPendientesTest extends TestCase
         $this->assertNotNull($opcional);
         $this->assertFalse($opcional['obligatorio']);
     }
+
+    /**
+     * Un opcional declinado (estado no_aplica) es una respuesta resuelta, igual
+     * que uno recibido — no debe seguir apareciendo en `pendientes` (ver
+     * App\Enums\FieldState::NoAplica).
+     */
+    public function test_un_campo_marcado_no_aplica_no_aparece_como_pendiente(): void
+    {
+        $cliente = User::factory()->create();
+
+        CampoCliente::query()->create([
+            'user_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'declaracion_anio_anterior',
+            'tipo_campo' => 'documento',
+            'modo' => 'no_aplica',
+            'valor_texto' => null,
+            'estado' => 'no_aplica',
+            'source' => 'agente_ia',
+        ]);
+
+        $pendientes = TaxFieldCatalog::pendientesPara(2025, [TaxForm::Form1040], $cliente->id);
+
+        $this->assertFalse(collect($pendientes)->contains(fn (array $p) => $p['campo'] === 'declaracion_anio_anterior'));
+    }
 }

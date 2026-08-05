@@ -195,6 +195,41 @@ class ClientePanelTest extends TestCase
             ->assertSessionHasErrors('tipo_dato');
     }
 
+    public function test_un_preparador_puede_marcar_un_campo_opcional_como_no_aplica(): void
+    {
+        // declaracion_anio_anterior es documento y obligatorio: false — el
+        // preparador puede registrar que el cliente no lo tiene sin subir nada.
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->actingAs($preparador)
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'declaracion_anio_anterior']).'?forma=transversal&tax_year=2025', [
+                'forma' => 'transversal',
+                'modo' => 'no_aplica',
+            ])
+            ->assertRedirect();
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'declaracion_anio_anterior')->first();
+        $this->assertNotNull($campo);
+        $this->assertSame('no_aplica', $campo->estado->value);
+        $this->assertSame('preparador', $campo->source->value);
+    }
+
+    public function test_no_aplica_es_rechazado_en_correccion_manual_para_un_campo_obligatorio(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->actingAs($preparador)
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025', [
+                'forma' => 'form_1040',
+                'modo' => 'no_aplica',
+            ])
+            ->assertSessionHasErrors('modo');
+
+        $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'impuestos_retenidos']);
+    }
+
     public function test_un_preparador_no_puede_corregir_campos_de_un_cliente_ajeno(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);

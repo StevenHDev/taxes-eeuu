@@ -65,11 +65,16 @@
      * que se ve oscura está lista; pálida, sin tocar. Se lee de reojo, sin
      * leer texto, y sale de los 4 colores de marca en lugar de sumar otros.
      *
-     * Son exactamente los tres casos de App\Enums\FieldState — ni uno más.
+     * Son exactamente los cuatro casos de App\Enums\FieldState — ni uno más.
+     * `no_aplica` es la excepción deliberada a "más navy = más avance": no es
+     * un paso de la rampa (no es progreso ni error), así que en vez de un
+     * tono de marca usa un gris neutro fuera de la mezcla — ver la nota en
+     * --state-no-aplica más abajo.
      */
     --color-state-pendiente: var(--state-pendiente);
     --color-state-recibido: var(--state-recibido);
     --color-state-invalido: var(--state-invalido);
+    --color-state-no-aplica: var(--state-no-aplica);
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -149,6 +154,9 @@
     --state-pendiente: #c9d8e3;
     --state-recibido: #194569;
     --state-invalido: var(--destructive);
+    /* Gris neutro fuera de la familia navy a propósito: "no aplica" es una
+       respuesta del cliente, no un paso más pálido o más oscuro que el resto. */
+    --state-no-aplica: #94a3b8;
     --border: #c9d8e3;
     --input: #c9d8e3;
     --ring: #194569;
@@ -196,6 +204,7 @@
     --state-pendiente: color-mix(in oklch, #194569 45%, black);
     --state-recibido: #dbeef0;
     --state-invalido: oklch(0.637 0.237 25.331);
+    --state-no-aplica: #94a3b8;
     --border: color-mix(in oklch, #194569 40%, black);
     --input: color-mix(in oklch, #194569 40%, black);
     --ring: #dbeef0;

@@ -612,4 +612,80 @@ class EventoRecoleccionTest extends TestCase
         $this->assertSame(['form_1040'], $formasDe2026->all());
         $this->assertDatabaseMissing('formas_cliente', ['user_id' => $cliente->id, 'forma' => 'schedule_c', 'tax_year' => 2026]);
     }
+
+    public function test_modo_no_aplica_se_acepta_para_un_campo_opcional(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        // declaracion_anio_anterior es documento y obligatorio: false en el catálogo.
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'declaracion_anio_anterior',
+            'tipo_campo' => 'documento',
+            'modo' => 'no_aplica',
+        ]);
+
+        $response->assertCreated()->assertJsonPath('estado', 'no_aplica');
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'declaracion_anio_anterior')->first();
+        $this->assertNotNull($campo);
+        $this->assertNull($campo->valor);
+        $this->assertNull($campo->documento_id);
+    }
+
+    public function test_modo_no_aplica_es_rechazado_para_un_campo_obligatorio(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        // ingresos es obligatorio: true — no_aplica no tiene sentido ahí.
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'no_aplica',
+        ])->assertStatus(422)->assertJsonValidationErrors(['modo']);
+
+        $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'ingresos']);
+    }
+
+    public function test_no_aplica_puede_reemplazarse_despues_por_el_archivo_real(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'declaracion_anio_anterior',
+            'tipo_campo' => 'documento',
+            'modo' => 'no_aplica',
+        ])->assertCreated();
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'declaracion_anio_anterior',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('1040_2024.pdf', 10),
+        ])->assertCreated()->assertJsonPath('estado', 'recibido');
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'declaracion_anio_anterior')->first();
+        $this->assertSame('recibido', $campo->estado->value);
+        $this->assertNotNull($campo->documento_id);
+
+        // El historial conserva ambos movimientos, con el "no_aplica" anterior visible.
+        $historial = HistorialCambio::query()->where('user_id', $cliente->id)->where('campo', 'declaracion_anio_anterior')->orderBy('id')->get();
+        $this->assertCount(2, $historial);
+        $this->assertSame('no_aplica', $historial->first()->valor_nuevo);
+    }
 }

@@ -19,7 +19,7 @@ export type FormaOption = {
 // para los campos únicos por cliente (SSN, cónyuge, dependientes).
 export type FormaAlmacen = TaxForm | 'transversal';
 
-export type FieldState = 'recibido' | 'pendiente' | 'invalido';
+export type FieldState = 'recibido' | 'pendiente' | 'invalido' | 'no_aplica';
 export type FormState = 'en_progreso' | 'completo';
 export type EstadoGeneral = 'sin_iniciar' | 'en_progreso' | 'completo';
 export type NivelRiesgo = 'bajo' | 'medio' | 'alto';
@@ -81,12 +81,13 @@ export type CampoCliente = {
     tipo_dato:
         'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
     subcampos: string[] | null;
-    modo: 'archivo' | 'texto';
+    modo: 'archivo' | 'texto' | 'no_aplica';
     estado: FieldState;
     valor: unknown;
     es_sensible: boolean;
     documento: CampoDocumento | null;
     formatos_aceptados: string[] | null;
+    obligatorio: boolean;
     updated_at: string;
 };
 
@@ -106,6 +107,7 @@ export type CatalogoDisponibleItem = {
         'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
     subcampos: string[] | null;
     formatos_aceptados: string[] | null;
+    obligatorio: boolean;
 };
 
 export type CampoCatalogo = {

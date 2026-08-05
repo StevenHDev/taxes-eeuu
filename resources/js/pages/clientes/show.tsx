@@ -1,5 +1,5 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { AlertTriangle, Check, Circle, Upload } from 'lucide-react';
+import { AlertTriangle, Check, Circle, MinusCircle, Upload } from 'lucide-react';
 import { Fragment, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
@@ -77,24 +77,28 @@ const ESTADO_RIEL: Record<CampoCliente['estado'], string> = {
     pendiente: 'border-l-state-pendiente',
     recibido: 'border-l-state-recibido',
     invalido: 'border-l-state-invalido',
+    no_aplica: 'border-l-state-no-aplica',
 };
 
 const ESTADO_FONDO: Record<CampoCliente['estado'], string> = {
     pendiente: 'bg-state-pendiente',
     recibido: 'bg-state-recibido',
     invalido: 'bg-state-invalido',
+    no_aplica: 'bg-state-no-aplica',
 };
 
 const ESTADO_TINTA: Record<CampoCliente['estado'], string> = {
     pendiente: 'text-muted-foreground',
     recibido: 'text-foreground',
     invalido: 'text-destructive',
+    no_aplica: 'text-muted-foreground',
 };
 
 const ESTADO_ICONO: Record<CampoCliente['estado'], typeof Circle> = {
     pendiente: Circle,
     recibido: Check,
     invalido: AlertTriangle,
+    no_aplica: MinusCircle,
 };
 
 function EstadoTag({ estado }: { estado: CampoCliente['estado'] }) {
@@ -1184,6 +1188,16 @@ function AgregarCampoDialog({
         );
     };
 
+    // Solo disponible para campos opcionales (ver App\Enums\FieldState::NoAplica)
+    // — no requiere archivo ni contenido, es una respuesta del cliente, no un dato.
+    const submitNoAplica = () => {
+        router.patch(
+            url,
+            { modo: 'no_aplica' },
+            { preserveScroll: true, onSuccess: () => setOpen(false) },
+        );
+    };
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -1275,8 +1289,49 @@ function AgregarCampoDialog({
                         </>
                     )}
                 </div>
+
+                {seleccionado?.obligatorio === false && (
+                    <div className="flex justify-end border-t pt-3">
+                        <Button variant="ghost" size="sm" onClick={submitNoAplica}>
+                            {t('clienteShow.noAplica.trigger')}
+                        </Button>
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
+    );
+}
+
+// Solo para campos opcionales (el backend rechaza esto en un obligatorio —
+// ver App\Enums\FieldState::NoAplica). Registra que el cliente ya fue
+// consultado y respondió que no lo tiene / no aplica en su caso, para que
+// deje de aparecer como pendiente sin depender de que alguien se acuerde.
+function MarcarNoAplicaButton({
+    clienteId,
+    taxYear,
+    campo,
+}: {
+    clienteId: number;
+    taxYear: number;
+    campo: CampoCliente;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+                router.patch(
+                    campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
+                        `?forma=${campo.forma}&tax_year=${taxYear}`,
+                    { modo: 'no_aplica' },
+                    { preserveScroll: true },
+                )
+            }
+        >
+            {t('clienteShow.noAplica.trigger')}
+        </Button>
     );
 }
 
@@ -1742,6 +1797,14 @@ function FormaSection({
                                         formaLabel={label}
                                     />
                                 )}
+                                {!campo.obligatorio &&
+                                    campo.estado !== 'no_aplica' && (
+                                        <MarcarNoAplicaButton
+                                            clienteId={clienteId}
+                                            taxYear={taxYear}
+                                            campo={campo}
+                                        />
+                                    )}
                                 <EliminarCampoButton
                                     clienteId={clienteId}
                                     taxYear={taxYear}

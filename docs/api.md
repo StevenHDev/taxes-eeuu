@@ -62,10 +62,10 @@ El catálogo completo (fuente de verdad) vive en `catalogo_campos` (administrabl
 
 Qué significa cada columna:
 
-- **`tipo_campo`**: `documento` (el campo **solo** admite `modo: archivo`), `dato` (**solo** admite `modo: texto`), o `mixto` (admite cualquiera de los dos — el agente elige según lo que el cliente entregue realmente).
+- **`tipo_campo`**: `documento` (admite `modo: archivo`, o `modo: no_aplica` si es opcional), `dato` (admite `modo: texto`, o `modo: no_aplica` si es opcional), o `mixto` (admite cualquiera de los dos, o `no_aplica` si es opcional — el agente elige según lo que el cliente entregue realmente).
 - **`tipo_dato`**: solo aplica cuando `modo: texto`. Uno de `string`, `number`, `object`, `array_string`, `array_object`.
 - **`formatos_aceptados`**: solo aplica cuando `modo: archivo`. Extensiones de archivo válidas para ese campo — cualquier otra extensión hace que el evento se guarde con `estado: "invalido"`.
-- **`obligatorio`**: si es `no`, ese campo no cuenta para que la API marque la forma como `completo` (ver [Emitir eventos](#emitir-un-evento-post-apieventos)).
+- **`obligatorio`**: si es `no`, ese campo no cuenta para que la API marque la forma como `completo` (ver [Emitir eventos](#emitir-un-evento-post-apieventos)), y además puede recibir `modo: "no_aplica"` (ver [`modo: "no_aplica"`](#modo-no_aplica--el-cliente-respondió-que-no-tiene-ese-campo-solo-opcionales)) — un campo obligatorio nunca admite ese modo.
 - **`sensible`**: si es `sí`, el valor se cifra en la base de datos, se muestra enmascarado en el panel/API, y revelarlo exige el flujo de [Revelar campos sensibles](#revelar-campos-sensibles).
 - **`unico_por_cliente`**: si es `sí`, es un dato de la persona que se guarda una sola vez (bajo la forma `transversal`) y se comparte entre todas sus formas.
 
@@ -442,6 +442,23 @@ Notas:
 - Reenviar el mismo `(cliente_id, forma, campo, tax_year)` sobrescribe el valor anterior (idempotencia) y queda registrado en el historial de cambios. Para los campos `unico_por_cliente` la unicidad es por `(cliente_id, campo, tax_year)` — reenviarlos en cualquier `forma` sobrescribe la misma fila única (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). **`tax_year` es parte de la identidad del dato**: el mismo campo enviado para dos años fiscales distintos crea **dos filas independientes**, no se sobrescriben entre sí.
 - Para campos `array_object`/`array_string` (ej. `info_dependientes`), reenvía siempre el **arreglo acumulado completo** — la API sobrescribe, no hace merge parcial.
 
+### `modo: "no_aplica"` — el cliente respondió que no tiene ese campo (solo opcionales)
+
+Registra que el campo fue **preguntado y declinado explícitamente** por el cliente — distinto de dejarlo sin tocar (`estado: "pendiente"`, indistinguible de "todavía no se preguntó"). Solo válido para campos con `obligatorio: false` en el catálogo (ver [Qué falta por recolectar](#qué-falta-por-recolectar-get-apiclientesidpendientestax_year)); usarlo sobre un campo obligatorio responde `422`. No requiere `tipo_dato` ni `contenido` — se omiten o van vacíos, JSON puro basta, nunca requiere `multipart/form-data` aunque el `tipo_campo` sea `documento` o `mixto`:
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "transversal",
+  "tax_year": 2025,
+  "campo": "declaracion_anio_anterior",
+  "tipo_campo": "documento",
+  "modo": "no_aplica"
+}
+```
+
+Respuesta `201`, `estado: "no_aplica"`. El campo deja de aparecer en `pendientes` (ver más abajo) — la plataforma ya sabe que fue preguntado, así que la responsabilidad de no repetir la pregunta no depende de la memoria del agente conversacional entre turnos.
+
 ## Endpoints del panel
 
 Requieren ability `clientes:read` (lectura) o `clientes:write` (escritura).
@@ -497,7 +514,7 @@ curl -X POST https://tu-dominio/api/clientes \
 
 Responde `201` con el mismo shape que `GET /api/clientes/{id}` (ver más abajo) — que ahora incluye `tax_year` en el nivel superior de la respuesta, con el año usado para resolver `formas`/`campos` (el actual de la plataforma, ya que la creación no recibe `tax_year` propio).
 
-La corrección manual (`PATCH`) requiere `?forma=` **y `?tax_year=`** en el query string (ambos obligatorios, sin default), acepta el mismo shape que un evento de texto/archivo (`modo`, `tipo_dato`+`contenido`, o `file` — máx. **10 MB**, ver nota en [Emitir eventos](#emitir-un-evento-post-apieventos)), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`). Responde `200` con `{ "campo": "...", "estado": "..." }`.
+La corrección manual (`PATCH`) requiere `?forma=` **y `?tax_year=`** en el query string (ambos obligatorios, sin default), acepta el mismo shape que un evento de texto/archivo/`no_aplica` (`modo`, `tipo_dato`+`contenido`, `file` — máx. **10 MB**, ver nota en [Emitir eventos](#emitir-un-evento-post-apieventos) —, o `modo: "no_aplica"` sin body adicional, solo para campos opcionales), y queda registrada en el historial con `source: "preparador"` o `"administrador"` según quién la hizo (a diferencia de los eventos del agente, que quedan con `source: "agente_ia"`). Responde `200` con `{ "campo": "...", "estado": "..." }`.
 
 `DELETE` también requiere `?forma=` **y `?tax_year=`**. Borra la fila de `campos_cliente` (y el documento/archivo si era de tipo `documento`), pero agrega una entrada final al historial con `valor_nuevo: null` — nada se pierde de la trazabilidad. Responde `204` sin body.
 
@@ -578,7 +595,7 @@ Notas de este shape:
 - Los campos transversales (únicos por cliente) aparecen **una sola vez**, sin importar cuántas formas tenga el cliente. Los campos propios de cada forma **nunca se deduplican entre formas** — si el cliente tiene `schedule_c` y `schedule_e`, `estados_bancarios` aparece dos veces, una por forma real, porque son contabilidades distintas.
 - `siguiente` es un puntero de conveniencia al primer pendiente obligatorio (o `null` si no queda ninguno) — para que el agente no tenga que decidir el orden por su cuenta.
 - Los campos transversales (`forma: "transversal"`) **no dependen de que exista ninguna forma declarada** — se piden sin importar cuál(es) apliquen, así que aparecen en `pendientes` incluso si el cliente todavía no tiene ninguna forma declarada (nunca se llamó a `POST /formas`). En ese caso, `completo` es siempre `false` — la determinación de forma en sí sigue pendiente, aunque ya no falte ningún transversal.
-- **Limitación conocida**: no hay un estado persistido de "el cliente confirmó que esto no aplica" para los campos opcionales — si la conversación se reinicia sin memoria del agente, un opcional ya declinado puede volver a aparecer en `pendientes`. Es una limitación ya existente hoy (nada se persistía al declinar), no una introducida por este endpoint.
+- Un campo opcional que el cliente declinó (guardado con `modo: "no_aplica"`, ver [`modo: "no_aplica"`](#modo-no_aplica--el-cliente-respondió-que-no-tiene-ese-campo-solo-opcionales)) deja de aparecer en `pendientes` igual que uno con `estado: "recibido"` — a diferencia de dejarlo simplemente sin tocar, esto sí queda persistido, así que no vuelve a aparecer aunque la conversación se reinicie sin memoria del agente.
 
 ## Panel de administración (solo web, sin API de token)
 
@@ -610,6 +627,6 @@ Los campos marcados como sensibles en el catálogo (`identificacion_ssn_itin`, `
 | `401` | Token ausente, inválido o revocado. |
 | `403` | Token sin la ability requerida, o el cliente/preparador no tiene acceso a ese recurso. |
 | `404` | El cliente, campo o documento no existe (o no es visible para este token). |
-| `422` | El evento/corrección está mal formado: falta `tax_year` (ver [Año fiscal](#año-fiscal-taxyear)), campo inexistente en el catálogo **para ese `tax_year` y esa forma** (puede existir en otro año y no en este), `tipo_campo`/`modo` inconsistente, falta un campo requerido de la request, o el archivo supera el límite de tamaño (ver [Emitir eventos](#emitir-un-evento-post-apieventos) y [Endpoints del panel](#endpoints-del-panel)). |
+| `422` | El evento/corrección está mal formado: falta `tax_year` (ver [Año fiscal](#año-fiscal-taxyear)), campo inexistente en el catálogo **para ese `tax_year` y esa forma** (puede existir en otro año y no en este), `tipo_campo`/`modo` inconsistente, `modo: "no_aplica"` sobre un campo `obligatorio: true` (ver [`modo: "no_aplica"`](#modo-no_aplica--el-cliente-respondió-que-no-tiene-ese-campo-solo-opcionales)), falta un campo requerido de la request, o el archivo supera el límite de tamaño (ver [Emitir eventos](#emitir-un-evento-post-apieventos) y [Endpoints del panel](#endpoints-del-panel)). |
 
 Ningún endpoint bajo `/api/*` tiene rate limiting hoy — un token puede llamarlos sin límite de tasa. (El `429` solo existe en `POST /clientes/{cliente}/campos/{campo}/reveal`, que es exclusivo del panel web con sesión, no un endpoint de esta API — ver [Revelar campos sensibles](#revelar-campos-sensibles).)

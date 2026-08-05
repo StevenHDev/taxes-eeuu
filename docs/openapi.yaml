@@ -55,7 +55,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventoTexto'
+              oneOf:
+                - $ref: '#/components/schemas/EventoTexto'
+                - $ref: '#/components/schemas/EventoNoAplica'
             examples:
               string:
                 summary: Dato simple (string) — identificacion_ssn_itin
@@ -163,6 +165,15 @@ paths:
                     proveedor_ssn_ein: "12-3456789"
                     monto_anual: 4800
                     dependiente_relacionado: Kid One
+              no_aplica:
+                summary: Campo opcional declinado — modo "no_aplica" (ej. declaracion_anio_anterior)
+                value:
+                  cliente_id: 42
+                  forma: transversal
+                  tax_year: 2025
+                  campo: declaracion_anio_anterior
+                  tipo_campo: documento
+                  modo: no_aplica
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/EventoArchivo'
@@ -181,7 +192,8 @@ paths:
           description: |
             La FORMA del evento está mal (no el contenido): falta `tax_year`,
             campo inexistente en el catálogo para esa forma **y ese año fiscal**,
-            `tipo_campo`/`modo` inconsistente, falta un campo requerido, o el
+            `tipo_campo`/`modo` inconsistente, `modo: "no_aplica"` sobre un
+            campo `obligatorio: true`, falta un campo requerido, o el
             archivo supera 20 MB.
           content:
             application/json:
@@ -639,9 +651,10 @@ paths:
       operationId: corregirCampo
       summary: Corrección manual de un campo por un preparador/administrador
       description: |
-        Acepta el mismo shape que un evento (`modo` + `tipo_dato`/`contenido`, o
-        `file`). Queda registrada en el historial con `source: "preparador"` o
-        `"administrador"`. El límite de archivo es **10 MB** (más chico que
+        Acepta el mismo shape que un evento (`modo` + `tipo_dato`/`contenido`,
+        `file`, o `modo: "no_aplica"` sin body adicional para campos
+        opcionales). Queda registrada en el historial con `source: "preparador"`
+        o `"administrador"`. El límite de archivo es **10 MB** (más chico que
         `POST /eventos`, a propósito: es para correcciones puntuales, no la
         carga inicial del agente).
       x-required-ability: clientes:write
@@ -652,7 +665,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CorreccionTexto'
+              oneOf:
+                - $ref: '#/components/schemas/CorreccionTexto'
+                - $ref: '#/components/schemas/CorreccionNoAplica'
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/CorreccionArchivo'
@@ -745,11 +760,12 @@ components:
     FieldKind:
       type: string
       enum: [documento, dato, mixto]
-      description: '`documento` solo admite `modo: archivo`; `dato` solo admite `modo: texto`; `mixto` admite cualquiera.'
+      description: '`documento` admite `modo: archivo`; `dato` admite `modo: texto`; `mixto` admite cualquiera. Los tres admiten además `modo: no_aplica` si el campo es opcional (`obligatorio: false`).'
 
     FieldMode:
       type: string
-      enum: [archivo, texto]
+      enum: [archivo, texto, no_aplica]
+      description: '`no_aplica` registra que el cliente fue consultado por un campo opcional y respondió que no lo tiene — nunca válido sobre un campo `obligatorio: true` (responde 422).'
 
     FieldDataType:
       type: string
@@ -758,7 +774,8 @@ components:
 
     FieldState:
       type: string
-      enum: [pendiente, recibido, invalido]
+      enum: [pendiente, recibido, invalido, no_aplica]
+      description: '`no_aplica`: el cliente fue consultado por un campo opcional y respondió que no lo tiene — a diferencia de `pendiente`, es una respuesta explícita, no la ausencia de una.'
 
     FormState:
       type: string
@@ -846,9 +863,52 @@ components:
           nullable: true
       required: [forma, tax_year, campo, tipo_campo, modo, file]
 
+    EventoNoAplica:
+      type: object
+      description: |
+        Shape para `modo: "no_aplica"` (JSON puro, nunca multipart aunque el
+        `tipo_campo` sea `documento` o `mixto`) — el cliente fue consultado
+        por un campo opcional (`obligatorio: false`) y respondió que no lo
+        tiene o que no aplica en su caso. Sin `tipo_dato` ni `contenido`: no
+        hay ningún valor que describir. Usarlo sobre un campo con
+        `obligatorio: true` responde 422 — ver `docs/api.md#modo-no_aplica--el-cliente-respondió-que-no-tiene-ese-campo-solo-opcionales`.
+      properties:
+        cliente_id:
+          type: integer
+          nullable: true
+        external_ref:
+          type: string
+          maxLength: 255
+          nullable: true
+        phone:
+          type: string
+          maxLength: 32
+          nullable: true
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        tax_year:
+          type: integer
+        campo:
+          type: string
+        tipo_campo:
+          $ref: '#/components/schemas/FieldKind'
+        modo:
+          type: string
+          enum: [no_aplica]
+      required: [forma, tax_year, campo, tipo_campo, modo]
+
     CorreccionTexto:
       allOf:
         - $ref: '#/components/schemas/EventoTexto'
+        - type: object
+          properties:
+            cliente_id: false
+            external_ref: false
+            phone: false
+
+    CorreccionNoAplica:
+      allOf:
+        - $ref: '#/components/schemas/EventoNoAplica'
         - type: object
           properties:
             cliente_id: false
@@ -1020,7 +1080,10 @@ components:
         transversales (`unico_por_cliente`) aparecen una sola vez sin importar
         cuántas formas tenga el cliente; los propios de cada forma nunca se
         deduplican entre formas (ej. `estados_bancarios` de `schedule_c` y de
-        `schedule_e` son dos pendientes distintas).
+        `schedule_e` son dos pendientes distintas). Un campo deja de aparecer
+        acá tanto si ya tiene `estado: "recibido"` como si se guardó con
+        `modo: "no_aplica"` (solo posible cuando `obligatorio: false`) — ambos
+        son una respuesta resuelta, no la ausencia de una.
       properties:
         forma:
           $ref: '#/components/schemas/FormaAlmacen'
