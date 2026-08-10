@@ -87,14 +87,18 @@ class ClientePendientesApiTest extends TestCase
 
         $response = $this->getJson("/api/clientes/{$cliente->id}/pendientes?tax_year=2025")
             ->assertOk()
-            ->assertJsonPath('completo', true)
-            ->assertJsonPath('siguiente', null);
+            ->assertJsonPath('completo', true);
 
-        // Los campos obligatorios ya no aparecen; el único que puede quedar
-        // pendiente es el opcional transversal (declaracion_anio_anterior),
-        // que nunca cuenta para "completo".
+        // Los campos obligatorios ya no aparecen; solo quedan opcionales
+        // transversales (w2, form_1099_nec, declaracion_anio_anterior, etc.),
+        // que nunca cuentan para "completo" — pero `siguiente` SÍ los sigue
+        // señalando (ver pendientesEnvelope): un campo opcional se pregunta
+        // igual que cualquier otro, en su turno, y el cliente puede responder
+        // "no aplica" si no lo tiene.
         $pendientes = collect($response->json('pendientes'));
+        $this->assertTrue($pendientes->isNotEmpty());
         $this->assertTrue($pendientes->every(fn (array $p) => $p['obligatorio'] === false));
+        $this->assertSame($pendientes->first()['campo'], $response->json('siguiente.campo'));
     }
 
     /**
@@ -116,6 +120,46 @@ class ClientePendientesApiTest extends TestCase
         $pendientes = collect($response->json('pendientes'));
         $this->assertTrue($pendientes->isNotEmpty());
         $this->assertTrue($pendientes->every(fn (array $p) => $p['forma'] === 'transversal'));
+    }
+
+    /**
+     * Encontrado en una prueba real end-to-end del agente conversacional: si
+     * `siguiente` filtrara solo por `obligatorio`, saltaría por encima de
+     * documentos opcionales (w2, 1099-nec, ...) que aparecen antes en
+     * `pendientes`, y le pediría al cliente teclear a mano un monto (ej.
+     * `impuestos_retenidos`) que esos mismos documentos ya revelan (ver
+     * RelacionDocumentoCampo) — inutilizando esa relación para ese campo.
+     */
+    public function test_siguiente_no_salta_documentos_opcionales_por_delante_de_lo_obligatorio(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
+
+        // Resuelve TODOS los transversales obligatorios (cuáles sean exactos
+        // depende del catálogo, ver CatalogoCamposSeeder), dejando pendientes
+        // solo los opcionales (documentos como w2/1099-nec, ...) y los campos
+        // de form_1040.
+        foreach (TaxFieldCatalog::transversales(2025) as $field) {
+            if (! $field['obligatorio']) {
+                continue;
+            }
+
+            CampoCliente::query()->create([
+                'user_id' => $cliente->id, 'forma' => 'transversal', 'campo' => $field['campo'], 'tax_year' => 2025,
+                'tipo_campo' => $field['tipo']->value, 'modo' => 'texto', 'valor_texto' => 'x', 'estado' => 'recibido', 'source' => 'agente_ia',
+            ]);
+        }
+
+        Sanctum::actingAs($admin, [ApiAbility::ClientesRead->value]);
+
+        $response = $this->getJson("/api/clientes/{$cliente->id}/pendientes?tax_year=2025")->assertOk();
+
+        $primerPendiente = $response->json('pendientes.0');
+
+        $this->assertFalse($primerPendiente['obligatorio']);
+        $this->assertSame($primerPendiente['campo'], $response->json('siguiente.campo'));
+        $this->assertNotSame('impuestos_retenidos', $response->json('siguiente.campo'));
     }
 
     public function test_falta_tax_year_devuelve_422(): void

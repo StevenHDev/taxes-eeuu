@@ -1156,7 +1156,15 @@ components:
         siguiente:
           type: object
           nullable: true
-          description: Puntero de conveniencia al primer pendiente obligatorio, o `null` si no queda ninguno.
+          description: |
+            Puntero de conveniencia al primer elemento de `pendientes` en el
+            orden en que ya vienen (o `null` si `pendientes` está vacío).
+            Desde la Fase 5 NO filtra por `obligatorio` — puede señalar un
+            campo opcional (ej. un documento) antes que uno obligatorio, a
+            propósito: le da al agente la oportunidad de ofrecer el documento
+            (y aprovechar su `revela`) antes de pedir un dato manual que ese
+            documento ya resuelve. `completo` sigue evaluando solo los
+            pendientes obligatorios.
           properties:
             forma:
               $ref: '#/components/schemas/FormaAlmacen'

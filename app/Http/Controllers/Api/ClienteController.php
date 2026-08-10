@@ -213,11 +213,27 @@ class ClienteController extends Controller
         // pendiente, aunque ya no falte ningún transversal.
         $pendientes = TaxFieldCatalog::pendientesPara($taxYear, $formas, $cliente->id);
 
-        $siguiente = collect($pendientes)->first(fn (array $p) => $p['obligatorio']);
+        // `siguiente` es el PRIMER elemento de `pendientes`, en el orden que ya
+        // trae el catálogo (transversales primero, documentos y datos
+        // opcionales incluidos) — nunca solo el primer obligatorio. El agente
+        // externo pregunta uno a uno lo que indique `siguiente`, sin importar
+        // si es opcional, para poder ofrecer un documento (ej. w2, 1099-nec)
+        // ANTES de pedirle al cliente que teclee a mano un monto que ese mismo
+        // documento ya revela (ver RelacionDocumentoCampo/`revela`) — filtrar
+        // por obligatorio acá saltaría siempre los documentos opcionales y
+        // pediría el dato manual primero, inutilizando esa relación. Si el
+        // cliente no tiene el documento, el flujo normal de "no_aplica" ya lo
+        // cubre — este cambio no afecta eso.
+        $siguiente = $pendientes[0] ?? null;
+
+        // `completo`, en cambio, sigue mirando solo obligatorios: un opcional
+        // sin resolver (el cliente nunca llegó a que se lo ofrecieran, o está
+        // pendiente de "no_aplica") nunca debe bloquear el cierre de la forma.
+        $quedaObligatorioPendiente = collect($pendientes)->contains(fn (array $p) => $p['obligatorio']);
 
         return [
             'tax_year' => $taxYear,
-            'completo' => $formas !== [] && $siguiente === null,
+            'completo' => $formas !== [] && ! $quedaObligatorioPendiente,
             'pendientes' => $pendientes,
             'siguiente' => $siguiente ? ['forma' => $siguiente['forma'], 'campo' => $siguiente['campo']] : null,
         ];
