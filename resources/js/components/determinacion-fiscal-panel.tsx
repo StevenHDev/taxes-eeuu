@@ -44,10 +44,17 @@ export function DeterminacionFiscalPanel({
     clienteId,
     taxYear,
     determinaciones,
+    readOnly = false,
 }: {
     clienteId: number;
     taxYear: number;
     determinaciones: Determinacion[];
+    /**
+     * Vista de autoservicio del cliente (`mi-informacion.tsx`): el cliente
+     * nunca dispara el motor de reglas, solo un preparador/administrador
+     * desde su panel — ver ClientePolicy y DeterminacionFiscalController.
+     */
+    readOnly?: boolean;
 }) {
     const { t, i18n } = useTranslation();
     const [calculando, setCalculando] = useState(false);
@@ -96,11 +103,13 @@ export function DeterminacionFiscalPanel({
                             : t('determinacionFiscal.neverCalculated')}
                     </p>
                 </div>
-                <Button size="sm" onClick={calcular} disabled={calculando}>
-                    {yaCalculado
-                        ? t('determinacionFiscal.recalculate')
-                        : t('determinacionFiscal.calculateNow')}
-                </Button>
+                {!readOnly && (
+                    <Button size="sm" onClick={calcular} disabled={calculando}>
+                        {yaCalculado
+                            ? t('determinacionFiscal.recalculate')
+                            : t('determinacionFiscal.calculateNow')}
+                    </Button>
+                )}
             </CardHeader>
 
             {yaCalculado && (
@@ -257,7 +266,11 @@ export function DeterminacionFiscalPanel({
             {!yaCalculado && (
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        {t('determinacionFiscal.emptyState')}
+                        {t(
+                            readOnly
+                                ? 'determinacionFiscal.emptyStateReadOnly'
+                                : 'determinacionFiscal.emptyState',
+                        )}
                     </p>
                 </CardContent>
             )}

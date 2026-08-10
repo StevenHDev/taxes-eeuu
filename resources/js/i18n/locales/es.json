@@ -210,6 +210,11 @@
             "empty": "Todavía no hay clientes."
         }
     },
+    "miInformacion": {
+        "pageTitle": "Mi información",
+        "subtitle": "Todo lo que compartiste con tu asesor, organizado por formulario.",
+        "empty": "Todavía no hay información cargada para este año fiscal."
+    },
     "clientesIndex": {
         "head": {
             "title": "Clientes"
@@ -255,6 +260,7 @@
         "calculateNow": "Calcular ahora",
         "recalculate": "Recalcular",
         "emptyState": "Todavía no hay una determinación calculada para este año. Carga el estado civil, los dependientes y los ingresos del cliente, y presiona «Calcular ahora».",
+        "emptyStateReadOnly": "Tu asesor todavía no ha calculado esto para este año fiscal.",
         "filingStatus": "Estado civil",
         "agi": "AGI",
         "totalCredits": "Créditos totales",

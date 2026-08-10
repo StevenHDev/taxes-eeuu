@@ -210,6 +210,11 @@
             "empty": "No clients yet."
         }
     },
+    "miInformacion": {
+        "pageTitle": "My information",
+        "subtitle": "Everything you shared with your advisor, organized by form.",
+        "empty": "There's no information loaded for this tax year yet."
+    },
     "clientesIndex": {
         "head": {
             "title": "Clients"
@@ -255,6 +260,7 @@
         "calculateNow": "Calculate now",
         "recalculate": "Recalculate",
         "emptyState": "There's no calculated determination for this year yet. Load the client's marital status, dependents, and income, then press \"Calculate now\".",
+        "emptyStateReadOnly": "Your advisor hasn't calculated this yet for this tax year.",
         "filingStatus": "Filing status",
         "agi": "AGI",
         "totalCredits": "Total credits",
