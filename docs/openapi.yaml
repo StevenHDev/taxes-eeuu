@@ -1108,6 +1108,35 @@ components:
           type: boolean
         sensible:
           type: boolean
+        revela:
+          type: array
+          description: |
+            Fase 5. Campos-destino que este documento ya resuelve si el
+            cliente lo entrega, respaldados por la tabla
+            `relaciones_documento_campo` del catálogo — nunca memorizados en
+            el prompt del agente conversacional. Casi siempre vacío para
+            campos `tipo_campo: dato`.
+          items:
+            $ref: '#/components/schemas/RelacionRevelada'
+
+    RelacionRevelada:
+      type: object
+      description: |
+        Una relación confirmada "este documento ya trae el valor de ese otro
+        campo" (ej. w2 revela form_1040.ingresos.salarios). Ver
+        `App\Models\RelacionDocumentoCampo` y `RelacionesDocumentoCampoSeeder`.
+      properties:
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        campo:
+          type: string
+        subcampo:
+          type: string
+          nullable: true
+          description: Subcampo exacto dentro de `campo` cuando el destino es `object`/`array_object`; `null` si el destino es un valor simple.
+        descripcion:
+          type: string
+          description: Explicación en lenguaje natural de la relación, para que el agente conversacional entienda qué casilla del documento corresponde.
 
     PendientesRespuesta:
       type: object

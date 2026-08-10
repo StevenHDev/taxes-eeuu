@@ -80,6 +80,18 @@ class CatalogoCamposSeeder extends Seeder
             ], sensible: true, unicoPorCliente: true),
             $this->campo('w2', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], unicoPorCliente: true),
             $this->campo('form_1099_nec', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], unicoPorCliente: true),
+            // Documentos de inversión/retiro/vivienda — a diferencia de w2 y
+            // form_1099_nec, no todo cliente los recibe (depende de si tuvo
+            // intereses, dividendos, distribuciones de retiro, desempleo/reembolso
+            // estatal, o hipoteca/préstamo estudiantil ese año), por eso
+            // obligatorio: false. Ver RelacionesDocumentoCampoSeeder para a qué
+            // campo de qué forma alimenta cada uno (matriz GTS 1040 2025).
+            $this->campo('form_1099_int', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_div', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_r', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_g', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1098', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1098_e', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('declaracion_anio_anterior', FieldKind::Documento, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
             // Hechos crudos (no la conclusión) para que el motor de reglas calcule
             // el filing status — ver App\Services\Reglas\FilingStatusCalculator.

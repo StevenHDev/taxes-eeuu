@@ -34,7 +34,7 @@ Un endpoint que requiera un permiso que el token no tiene responde `403 Forbidde
 
 - Un preparador (`role = preparer`) solo ve/gestiona los clientes que tiene asignados (`preparer_id`).
 - Un administrador (`role = administrator`) ve y gestiona todos los clientes.
-- Un cliente (`role = client`) no tiene acceso a estos endpoints — el panel es exclusivamente interno.
+- Un cliente (`role = client`) no tiene acceso a estos endpoints de token (`/api/*`) ni al panel interno de preparadores/administradores — sí tiene, desde la Fase 5, su propia vista de solo lectura dentro de la app web (sesión), ver [Vista de autoservicio del cliente](#vista-de-autoservicio-del-cliente-fase-5) más abajo.
 - El endpoint `POST /eventos` es la excepción: el token del agente conversacional puede escribir sobre **cualquier** `cliente_id`, porque el agente no conoce asignaciones de preparador. Por eso ese token debe ser de un solo propósito (`eventos:write` únicamente) y no compartirse con un preparador.
 
 ## Año fiscal (`tax_year`)
@@ -80,10 +80,18 @@ Qué significa cada columna:
 | `info_dependientes` | dato | `array_object` (`nombre_completo`, `fecha_nacimiento`, `ssn`, `relacion`, `meses_en_hogar`, `estudiante_tiempo_completo`, `discapacitado`, `provee_mas_50_soporte_propio`, `ingreso_bruto_anual`, `custodia_compartida_sin_conflicto`) | — | sí | sí |
 | `w2` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
 | `form_1099_nec` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
+| `form_1099_int` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1099_div` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1099_r` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1099_g` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1098` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1098_e` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
 | `declaracion_anio_anterior` | documento | — | `pdf` | **no** | no |
 | `estado_civil` | dato | `object` (`casado_al_31_dic`, `convivio_conyuge_ultimos_6_meses`, `costeo_mas_mitad_hogar`, `existe_persona_calificable`, `conyuge_fallecio_en_anio`, `anio_fallecimiento_conyuge`) | — | sí | no |
 
-Estos 7 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). Los subcampos ampliados de `info_dependientes` y el campo nuevo `estado_civil` (Fase 2) alimentan el motor de reglas — capturan **hechos**, no conclusiones: nunca se le pregunta al cliente su filing status directamente, se deriva de estos datos.
+Estos 13 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). Los subcampos ampliados de `info_dependientes` y el campo nuevo `estado_civil` (Fase 2) alimentan el motor de reglas — capturan **hechos**, no conclusiones: nunca se le pregunta al cliente su filing status directamente, se deriva de estos datos.
+
+**Fase 5:** `form_1099_int`, `form_1099_div`, `form_1099_r`, `form_1099_g`, `form_1098` y `form_1098_e` son opcionales — a diferencia de `w2` y `form_1099_nec`, no todo cliente los recibe (dependen de si tuvo intereses, dividendos, distribuciones de retiro, desempleo/reembolso estatal, o hipoteca/préstamo estudiantil ese año). Cada uno trae en su clave `revela` (ver [Qué falta por recolectar](#qué-falta-por-recolectar-get-apiclientesidpendientestax_year)) a qué campo de `form_1040`/`schedule_c` alimenta, derivado de la matriz de trazabilidad GTS Form 1040 2025 — ver `RelacionesDocumentoCampoSeeder`.
 
 ### `form_1040`
 
@@ -581,9 +589,13 @@ curl -s "https://tu-dominio/api/clientes/42/pendientes?tax_year=2025" \
   "tax_year": 2025,
   "completo": false,
   "pendientes": [
-    { "forma": "transversal", "campo": "estado_civil", "tipo_campo": "dato", "tipo_dato": "object", "subcampos": ["casado_al_31_dic", "convivio_conyuge_ultimos_6_meses", "costeo_mas_mitad_hogar", "existe_persona_calificable", "conyuge_fallecio_en_anio", "anio_fallecimiento_conyuge"], "formatos_aceptados": null, "obligatorio": true, "sensible": false },
-    { "forma": "schedule_c", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false },
-    { "forma": "schedule_e", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false }
+    { "forma": "transversal", "campo": "estado_civil", "tipo_campo": "dato", "tipo_dato": "object", "subcampos": ["casado_al_31_dic", "convivio_conyuge_ultimos_6_meses", "costeo_mas_mitad_hogar", "existe_persona_calificable", "conyuge_fallecio_en_anio", "anio_fallecimiento_conyuge"], "formatos_aceptados": null, "obligatorio": true, "sensible": false, "revela": [] },
+    { "forma": "transversal", "campo": "w2", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "jpg", "png", "heic"], "obligatorio": true, "sensible": false, "revela": [
+      { "forma": "form_1040", "campo": "ingresos", "subcampo": "salarios", "descripcion": "Box 1 (Wages, tips, other compensation) del W-2 es el salario total del cliente." },
+      { "forma": "form_1040", "campo": "impuestos_retenidos", "subcampo": null, "descripcion": "Box 2 (Federal income tax withheld) del W-2 suma directo a la retención federal total." }
+    ] },
+    { "forma": "schedule_c", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false, "revela": [] },
+    { "forma": "schedule_e", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false, "revela": [] }
   ],
   "siguiente": { "forma": "transversal", "campo": "estado_civil" }
 }
@@ -596,6 +608,20 @@ Notas de este shape:
 - `siguiente` es un puntero de conveniencia al primer pendiente obligatorio (o `null` si no queda ninguno) — para que el agente no tenga que decidir el orden por su cuenta.
 - Los campos transversales (`forma: "transversal"`) **no dependen de que exista ninguna forma declarada** — se piden sin importar cuál(es) apliquen, así que aparecen en `pendientes` incluso si el cliente todavía no tiene ninguna forma declarada (nunca se llamó a `POST /formas`). En ese caso, `completo` es siempre `false` — la determinación de forma en sí sigue pendiente, aunque ya no falte ningún transversal.
 - Un campo opcional que el cliente declinó (guardado con `modo: "no_aplica"`, ver [`modo: "no_aplica"`](#modo-no_aplica--el-cliente-respondió-que-no-tiene-ese-campo-solo-opcionales)) deja de aparecer en `pendientes` igual que uno con `estado: "recibido"` — a diferencia de dejarlo simplemente sin tocar, esto sí queda persistido, así que no vuelve a aparecer aunque la conversación se reinicie sin memoria del agente.
+- **`revela`** (Fase 5): lista de campos-destino que ese documento ya resuelve si el cliente lo entrega, respaldada por la tabla `relaciones_documento_campo` (ver [`RelacionDocumentoCampo`](../app/Models/RelacionDocumentoCampo.php) y `RelacionesDocumentoCampoSeeder`) — nunca por texto memorizado en el prompt del agente. Casi siempre vacía para campos tipo `dato`; en campos `documento`/`mixto` puede traer una o más entradas. Cada entrada indica `forma` + `campo` (+ `subcampo` si el destino es un `object`/`array_object`) + `descripcion` en lenguaje natural. El agente conversacional, al recibir ese documento, guarda también los campos que `revela` señale — siempre que sigan apareciendo en `pendientes` y el valor sea legible en el texto extraído del documento — en vez de volver a preguntárselos al cliente. Editable desde el panel de administración igual que el resto del catálogo (ver más abajo).
+
+## Vista de autoservicio del cliente (Fase 5)
+
+**No es parte de la API de token** (`/api/*`) — es una ruta web con sesión (`GET /dashboard`, la misma que usa el resto de la app; el `User` con rol `client` inicia sesión con su email/password como cualquier otro usuario). `App\Http\Controllers\DashboardController::index` detecta `role === client` y renderiza la página Inertia `mi-informacion` en vez del resumen de estadísticas que ven preparadores/administradores.
+
+Qué ve el cliente: sus formas declaradas y su estado, cada campo que ya entregó (agrupado por forma, con el mismo enmascarado de campos sensibles que ve un preparador — sin flujo de revelado), cada documento subido con su link de descarga, y sus determinaciones fiscales ya calculadas (filing status, AGI, créditos) si el preparador ya las calculó.
+
+Qué NO ve ni puede accionar, a propósito — esto sigue siendo exclusivo de `ClienteController` (panel interno) y sigue negado por `ClientePolicy` para `role = client`:
+
+- Nivel de riesgo del caso (`nivel_riesgo`) — es una señal interna para priorizar el trabajo del despacho, no información para el cliente.
+- Disparar el motor de reglas fiscales (`POST /clientes/{cliente}/determinaciones`) — el cliente solo ve el último resultado que un preparador ya calculó; `DeterminacionFiscalPanel` se renderiza con la prop `readOnly` para ocultar ese botón.
+- Editar/eliminar campos, revelar valores sensibles, marcar formas como revisadas, exportar el ZIP, ni ver la detección de documentos duplicados entre clientes.
+- La ficha de ningún otro cliente — `DashboardController::miInformacion()` nunca recibe un `User $cliente` de la request, siempre usa `request()->user()`, así que no hay parámetro de ruta que un cliente pueda manipular para ver datos ajenos.
 
 ## Panel de administración (solo web, sin API de token)
 

@@ -6,6 +6,7 @@ use App\Enums\FieldState;
 use App\Enums\TaxForm;
 use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
+use App\Models\RelacionDocumentoCampo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -26,6 +27,8 @@ use Illuminate\Support\Facades\Cache;
 class TaxFieldCatalog
 {
     const CACHE_KEY = 'catalogo_campos';
+
+    const RELACIONES_CACHE_KEY = 'catalogo_relaciones_documento_campo';
 
     /**
      * Todos los campos aplicables a una forma en un año fiscal dado: los
@@ -221,6 +224,7 @@ class TaxFieldCatalog
                 'formatos_aceptados' => $field['formatos_aceptados'],
                 'obligatorio' => $field['obligatorio'],
                 'sensible' => $field['sensible'],
+                'revela' => self::revelaPara($taxYear, $field['campo']),
             ];
         }
 
@@ -244,11 +248,32 @@ class TaxFieldCatalog
                     'formatos_aceptados' => $field['formatos_aceptados'],
                     'obligatorio' => $field['obligatorio'],
                     'sensible' => $field['sensible'],
+                    'revela' => self::revelaPara($taxYear, $field['campo']),
                 ];
             }
         }
 
         return $pendientes;
+    }
+
+    /**
+     * Campos-destino que un campo-documento ya resuelve, si el cliente lo
+     * entrega — ej. 'w2' revela form_1040.ingresos (subcampo 'salarios') y
+     * form_1040.impuestos_retenidos. Alimenta la clave `revela` de cada
+     * pendiente en `pendientesPara()`, para que el agente externo sepa qué
+     * campos NO tiene que preguntar aparte si ya leyó el documento — sin
+     * tener esa lógica memorizada en su propio prompt (ver
+     * RelacionDocumentoCampo y RelacionesDocumentoCampoSeeder).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function revelaPara(int $taxYear, string $campoDocumento): array
+    {
+        return self::relaciones()
+            ->filter(fn (array $r) => $r['tax_year'] === $taxYear && $r['documento_campo'] === $campoDocumento)
+            ->map(fn (array $r) => $r['definicion'])
+            ->values()
+            ->all();
     }
 
     /**
@@ -259,6 +284,7 @@ class TaxFieldCatalog
     public static function invalidate(): void
     {
         Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::RELACIONES_CACHE_KEY);
     }
 
     /**
@@ -285,6 +311,23 @@ class TaxFieldCatalog
                     'forma' => $c->forma,
                     'tax_year' => $c->tax_year,
                     'definicion' => $c->toDefinition(),
+                ])
+                ->all(),
+        ));
+    }
+
+    /**
+     * @return Collection<int, array{documento_campo: string, tax_year: int, definicion: array<string, mixed>}>
+     */
+    private static function relaciones(): Collection
+    {
+        return collect(Cache::rememberForever(
+            self::RELACIONES_CACHE_KEY,
+            fn () => RelacionDocumentoCampo::all()
+                ->map(fn (RelacionDocumentoCampo $r) => [
+                    'documento_campo' => $r->documento_campo,
+                    'tax_year' => $r->tax_year,
+                    'definicion' => $r->toDefinition(),
                 ])
                 ->all(),
         ));
