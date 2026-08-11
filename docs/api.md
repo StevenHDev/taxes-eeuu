@@ -78,28 +78,28 @@ Qué significa cada columna:
 | `identificacion_ssn_itin` | dato | `string` (SSN/ITIN, 9 dígitos) | — | sí | sí |
 | `info_conyuge` | dato | `object` (`nombre_completo`, `fecha_nacimiento`, `ssn`) | — | sí | sí |
 | `info_dependientes` | dato | `array_object` (`nombre_completo`, `fecha_nacimiento`, `ssn`, `relacion`, `meses_en_hogar`, `estudiante_tiempo_completo`, `discapacitado`, `provee_mas_50_soporte_propio`, `ingreso_bruto_anual`, `custodia_compartida_sin_conflicto`) | — | sí | sí |
-| `w2` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
-| `form_1099_nec` | documento | — | `pdf`, `jpg`, `png`, `heic` | sí | no |
-| `form_1099_int` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1099_div` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1099_r` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1099_g` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1098` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1098_e` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `w2` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | sí | no |
+| `form_1099_nec` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | sí | no |
+| `form_1099_int` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1099_div` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1099_r` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1099_g` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1098` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1098_e` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `declaracion_anio_anterior` | documento | — | `pdf` | **no** | no |
 | `estado_civil` | dato | `object` (`casado_al_31_dic`, `convivio_conyuge_ultimos_6_meses`, `costeo_mas_mitad_hogar`, `existe_persona_calificable`, `conyuge_fallecio_en_anio`, `anio_fallecimiento_conyuge`) | — | sí | no |
-| `ssa_1099` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1099_b` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1098_t` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1095_a` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1099_misc` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1099_k` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1099_s` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `ssa_1099` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1099_b` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1098_t` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1095_a` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1099_misc` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1099_k` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1099_s` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `k1_recibido` | documento | — | `pdf` | **no** | no |
-| `form_w2g` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1099_c` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_1099_sa` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
-| `form_5498_sa` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_w2g` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1099_c` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_1099_sa` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `form_5498_sa` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 
 Estos 21 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). Los subcampos ampliados de `info_dependientes` y el campo nuevo `estado_civil` (Fase 2) alimentan el motor de reglas — capturan **hechos**, no conclusiones: nunca se le pregunta al cliente su filing status directamente, se deriva de estos datos.
 
@@ -112,10 +112,10 @@ Estos 21 cuentan para la completitud de **todas** las formas del cliente (basta 
 | Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
 | `ingresos` | dato | `object` (`salarios`, `intereses_dividendos`, `ganancias_capital`, `ingresos_jubilacion`, `otros_ingresos`, `ajustes_ingreso`, `seguridad_social`) | — | sí | no |
-| `deducciones` | mixto | `number` | `pdf`, `jpg` | sí | no |
-| `gastos_cuidado_dependientes` | mixto | `object` (`proveedor_nombre`, `proveedor_ssn_ein`, `monto_anual`, `dependiente_relacionado`) | `pdf`, `jpg` | **no** | sí |
+| `deducciones` | mixto | `number` | `pdf`, `jpg`, `jpeg` | sí | no |
+| `gastos_cuidado_dependientes` | mixto | `object` (`proveedor_nombre`, `proveedor_ssn_ein`, `monto_anual`, `dependiente_relacionado`) | `pdf`, `jpg`, `jpeg` | **no** | sí |
 | `impuestos_retenidos` | dato | `number` | — | sí | no |
-| `gastos_educacion` | mixto | `number` | `pdf`, `jpg` | **no** | no |
+| `gastos_educacion` | mixto | `number` | `pdf`, `jpg`, `jpeg` | **no** | no |
 | `marketplace_seguro` | dato | `object` (`premium_mensual`, `slcsp`, `aptc_recibido`) | — | **no** | no |
 | `impuesto_extranjero_pagado` | dato | `number` | — | **no** | no |
 | `beneficios_2025` | dato | `object` (`propinas_reportadas`, `horas_extra_pagadas`, `interes_prestamo_auto`, `es_adulto_mayor`) | — | **no** | no |
@@ -129,7 +129,7 @@ Estos 21 cuentan para la completitud de **todas** las formas del cliente (basta 
 |---|---|---|---|---|---|
 | `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
 | `ingresos_negocio` | dato | `number` | — | sí | no |
-| `gastos_deducibles_negocio` | mixto | `number` | `pdf`, `jpg`, `csv` | sí | no |
+| `gastos_deducibles_negocio` | mixto | `number` | `pdf`, `jpg`, `jpeg`, `csv` | sí | no |
 | `millaje` | dato | `number` | — | sí | no |
 | `activos` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
 | `costo_ventas` | dato | `number` | — | sí | no |
@@ -140,7 +140,7 @@ Estos 21 cuentan para la completitud de **todas** las formas del cliente (basta 
 |---|---|---|---|---|---|
 | `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
 | `ingresos_renta` | dato | `number` | — | sí | no |
-| `gastos_propiedad` | mixto | `number` | `pdf`, `jpg` | sí | no |
+| `gastos_propiedad` | mixto | `number` | `pdf`, `jpg`, `jpeg` | sí | no |
 | `depreciacion` | dato | `number` | — | sí | no |
 | `intereses_hipotecarios` | documento | — | `pdf` | sí | no |
 | `impuestos_propiedad` | documento | — | `pdf` | sí | no |
@@ -192,7 +192,7 @@ Estos 21 cuentan para la completitud de **todas** las formas del cliente (basta 
 | `estados_bancarios` | documento | — | `pdf`, `xlsx`, `csv` | sí | no |
 | `ventas_agricolas` | dato | `number` | — | sí | no |
 | `subsidios` | dato | `number` | — | sí | no |
-| `gastos_operacion` | mixto | `number` | `pdf`, `jpg` | sí | no |
+| `gastos_operacion` | mixto | `number` | `pdf`, `jpg`, `jpeg` | sí | no |
 | `maquinaria` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
 | `animales` | dato | `array_object` | — | sí | no |
 | `inventario` | mixto | `array_object` | `pdf`, `xlsx` | sí | no |
@@ -227,7 +227,7 @@ Estos 21 cuentan para la completitud de **todas** las formas del cliente (basta 
 | `formularios_retencion` | documento | — | `pdf` | sí | no |
 | `info_migratoria` | dato | `object` (`tipo_visa`, `fecha_entrada_usa`, `estatus_migratorio`) | — | sí | no |
 | `tratados_tributarios` | dato | `string` | — | sí | no |
-| `deducciones_permitidas` | mixto | `number` | `pdf`, `jpg` | sí | no |
+| `deducciones_permitidas` | mixto | `number` | `pdf`, `jpg`, `jpeg` | sí | no |
 
 ## Cómo se guardan los datos únicos por cliente
 
@@ -643,7 +643,7 @@ curl -s "https://tu-dominio/api/clientes/42/pendientes?tax_year=2025" \
   "completo": false,
   "pendientes": [
     { "forma": "transversal", "campo": "estado_civil", "tipo_campo": "dato", "tipo_dato": "object", "subcampos": ["casado_al_31_dic", "convivio_conyuge_ultimos_6_meses", "costeo_mas_mitad_hogar", "existe_persona_calificable", "conyuge_fallecio_en_anio", "anio_fallecimiento_conyuge"], "formatos_aceptados": null, "obligatorio": true, "sensible": false, "revela": [] },
-    { "forma": "transversal", "campo": "w2", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "jpg", "png", "heic"], "obligatorio": true, "sensible": false, "revela": [
+    { "forma": "transversal", "campo": "w2", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "jpg", "jpeg", "png", "heic"], "obligatorio": true, "sensible": false, "revela": [
       { "forma": "form_1040", "campo": "ingresos", "subcampo": "salarios", "descripcion": "Box 1 (Wages, tips, other compensation) del W-2 es el salario total del cliente.", "acumulable": false },
       { "forma": "form_1040", "campo": "impuestos_retenidos", "subcampo": null, "descripcion": "Box 2 (Federal income tax withheld) del W-2 suma directo a la retención federal total.", "acumulable": true }
     ] },

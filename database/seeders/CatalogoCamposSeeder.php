@@ -78,20 +78,20 @@ class CatalogoCamposSeeder extends Seeder
                 'relacion', 'meses_en_hogar', 'estudiante_tiempo_completo', 'discapacitado',
                 'provee_mas_50_soporte_propio', 'ingreso_bruto_anual', 'custodia_compartida_sin_conflicto',
             ], sensible: true, unicoPorCliente: true),
-            $this->campo('w2', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], unicoPorCliente: true),
-            $this->campo('form_1099_nec', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], unicoPorCliente: true),
+            $this->campo('w2', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], unicoPorCliente: true),
+            $this->campo('form_1099_nec', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], unicoPorCliente: true),
             // Documentos de inversión/retiro/vivienda — a diferencia de w2 y
             // form_1099_nec, no todo cliente los recibe (depende de si tuvo
             // intereses, dividendos, distribuciones de retiro, desempleo/reembolso
             // estatal, o hipoteca/préstamo estudiantil ese año), por eso
             // obligatorio: false. Ver RelacionesDocumentoCampoSeeder para a qué
             // campo de qué forma alimenta cada uno (matriz GTS 1040 2025).
-            $this->campo('form_1099_int', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1099_div', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1099_r', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1099_g', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1098', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1098_e', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_int', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_div', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_r', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_g', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1098', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1098_e', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             // Fase 6 (auditoría completa de la matriz GTS 1040 2025, más allá de
             // la primera pasada): documentos que la matriz identifica pero que
             // todavía no existían en el catálogo. Ver RelacionesDocumentoCampoSeeder
@@ -101,22 +101,22 @@ class CatalogoCamposSeeder extends Seeder
             // automáticamente gravable en su totalidad", así que solo se
             // recolectan como documento, sin relación automática (ver
             // GROUNDING ESTRICTO del prompt: nunca inventar una relación ambigua).
-            $this->campo('ssa_1099', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1099_b', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1098_t', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1095_a', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1099_misc', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1099_k', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1099_s', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('ssa_1099', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_b', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1098_t', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1095_a', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_misc', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_k', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_s', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             // K-1 que el cliente recibe como socio/beneficiario de una entidad
             // AJENA (no la suya) — distinto de `datos_k1` dentro de form_1065/
             // form_1120_s, que es el K-1 que la ENTIDAD del cliente emite a sus
             // propios socios.
             $this->campo('k1_recibido', FieldKind::Documento, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_w2g', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1099_c', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1099_sa', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_5498_sa', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_w2g', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_c', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_sa', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_5498_sa', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('declaracion_anio_anterior', FieldKind::Documento, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
             // Hechos crudos (no la conclusión) para que el motor de reglas calcule
             // el filing status — ver App\Services\Reglas\FilingStatusCalculator.
@@ -146,19 +146,19 @@ class CatalogoCamposSeeder extends Seeder
                     'salarios', 'intereses_dividendos', 'ganancias_capital',
                     'ingresos_jubilacion', 'otros_ingresos', 'ajustes_ingreso', 'seguridad_social',
                 ]),
-                $this->campo('deducciones', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg']),
+                $this->campo('deducciones', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg']),
                 $this->campo('impuestos_retenidos', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('info_bancaria', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: ['banco', 'tipo_cuenta', 'numero_cuenta', 'routing_number'], sensible: true),
                 // Alimenta el Child and Dependent Care Credit (Form 2441) — ver
                 // App\Services\Reglas\CreditEligibilityCalculator. No todos los
                 // clientes tienen gastos de cuidado, por eso obligatorio: false.
-                $this->campo('gastos_cuidado_dependientes', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'jpg'], subcampos: [
+                $this->campo('gastos_cuidado_dependientes', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'jpg', 'jpeg'], subcampos: [
                     'proveedor_nombre', 'proveedor_ssn_ein', 'monto_anual', 'dependiente_relacionado',
                 ], obligatorio: false, sensible: true),
                 // Fase 6 — campos nuevos identificados en la auditoría completa
                 // de la matriz GTS 1040 2025 (1098-T, 1095-A, impuesto extranjero
                 // de 1099-DIV casilla 7, y las deducciones nuevas de 2025).
-                $this->campo('gastos_educacion', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg'], obligatorio: false),
+                $this->campo('gastos_educacion', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg'], obligatorio: false),
                 $this->campo('marketplace_seguro', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
                     'premium_mensual', 'slcsp', 'aptc_recibido',
                 ], obligatorio: false),
@@ -173,7 +173,7 @@ class CatalogoCamposSeeder extends Seeder
             TaxForm::ScheduleC->value => [
                 $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
                 $this->campo('ingresos_negocio', FieldKind::Dato, tipoDato: FieldDataType::Number),
-                $this->campo('gastos_deducibles_negocio', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'csv']),
+                $this->campo('gastos_deducibles_negocio', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg', 'csv']),
                 $this->campo('millaje', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('activos', FieldKind::Mixto, tipoDato: FieldDataType::ArrayObject, formatos: ['pdf', 'xlsx']),
                 $this->campo('costo_ventas', FieldKind::Dato, tipoDato: FieldDataType::Number),
@@ -181,7 +181,7 @@ class CatalogoCamposSeeder extends Seeder
             TaxForm::ScheduleE->value => [
                 $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
                 $this->campo('ingresos_renta', FieldKind::Dato, tipoDato: FieldDataType::Number),
-                $this->campo('gastos_propiedad', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg']),
+                $this->campo('gastos_propiedad', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg']),
                 $this->campo('depreciacion', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('intereses_hipotecarios', FieldKind::Documento, formatos: ['pdf']),
                 $this->campo('impuestos_propiedad', FieldKind::Documento, formatos: ['pdf']),
@@ -221,7 +221,7 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),
                 $this->campo('ventas_agricolas', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('subsidios', FieldKind::Dato, tipoDato: FieldDataType::Number),
-                $this->campo('gastos_operacion', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg']),
+                $this->campo('gastos_operacion', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg']),
                 $this->campo('maquinaria', FieldKind::Mixto, tipoDato: FieldDataType::ArrayObject, formatos: ['pdf', 'xlsx']),
                 $this->campo('animales', FieldKind::Dato, tipoDato: FieldDataType::ArrayObject),
                 $this->campo('inventario', FieldKind::Mixto, tipoDato: FieldDataType::ArrayObject, formatos: ['pdf', 'xlsx']),
@@ -247,7 +247,7 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('formularios_retencion', FieldKind::Documento, formatos: ['pdf']),
                 $this->campo('info_migratoria', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: ['tipo_visa', 'fecha_entrada_usa', 'estatus_migratorio']),
                 $this->campo('tratados_tributarios', FieldKind::Dato, tipoDato: FieldDataType::String),
-                $this->campo('deducciones_permitidas', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg']),
+                $this->campo('deducciones_permitidas', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg']),
             ],
         ];
     }
