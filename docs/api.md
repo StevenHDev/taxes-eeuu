@@ -301,6 +301,41 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
 }
 ```
 
+### Acumular en vez de sobrescribir (`acumular` / `subcampo`)
+
+Algunos campos/subcampos pueden ser revelados por **más de un documento** — ej. `impuestos_retenidos` (Fase 5, arriba) lo suma un W-2, un 1099-NEC, un 1099-INT, un 1099-DIV **y** un 1099-R, cada uno con su propia retención; `ingresos.intereses_dividendos` lo puede traer tanto un 1099-INT como un 1099-DIV. Sin un mecanismo explícito, un segundo `POST /api/eventos` sobre el mismo campo simplemente **sobrescribe** el primero — el valor del primer documento se pierde en silencio. Esto se marca en la relación con `acumulable: true` (ver clave `revela` en [Qué falta por recolectar](#qué-falta-por-recolectar-get-apiclientesidpendientestax_year)) y se resuelve con dos parámetros adicionales, opcionales, en el body:
+
+- **`acumular`** (`boolean`, default `false`): si es `true`, la plataforma SUMA `contenido` (o, si `subcampo` viene indicado, el valor de esa clave dentro de `contenido`) al valor que ya tuviera guardado para ese mismo `campo`/`subcampo` de ese cliente/`tax_year`, en vez de sobrescribirlo. Solo tiene efecto en eventos del agente (`POST /api/eventos`) — la corrección manual de un preparador (`PATCH /api/clientes/{id}/campos/{campo}`) siempre sobrescribe, nunca suma.
+- **`subcampo`** (`string`, nullable): solo aplica junto con `acumular: true` sobre un campo `tipo_dato: "object"` — indica cuál de sus subcampos es el que se debe sumar (los demás subcampos de `contenido` se guardan tal como llegan, sin sumar). Se omite (o se envía `null`) cuando el campo acumulable es un `number` suelto (ej. `impuestos_retenidos`).
+
+`acumular: true` solo es válido cuando `tipo_dato` es `number`, o `object` con `subcampo` presente y perteneciente al catálogo de ese campo — cualquier otra combinación responde `422`.
+
+Ejemplo: el cliente ya tiene `intereses_dividendos: 500` guardado (de un 1099-INT) y ahora sube un 1099-DIV con $1,200 en dividendos — el agente envía solo el aporte de ESTE documento, marcando el subcampo a sumar:
+
+```json
+{
+  "cliente_id": 42,
+  "forma": "form_1040",
+  "tax_year": 2025,
+  "campo": "ingresos",
+  "tipo_campo": "dato",
+  "modo": "texto",
+  "tipo_dato": "object",
+  "contenido": {
+    "salarios": 0,
+    "intereses_dividendos": 1200,
+    "ganancias_capital": 0,
+    "ingresos_jubilacion": 0,
+    "otros_ingresos": 0,
+    "ajustes_ingreso": 0
+  },
+  "acumular": true,
+  "subcampo": "intereses_dividendos"
+}
+```
+
+El campo queda con `intereses_dividendos: 1700` (500 + 1200); los demás subcampos del objeto se guardan con el valor recién enviado (`0` en este ejemplo), igual que en cualquier evento sin `acumular`.
+
 **`object` — `ingresos` (Fase 2, desglosado — reemplaza al `number` suelto que tenía antes)**, siempre con las 6 claves presentes, `0` en las que no apliquen:
 
 ```json
@@ -609,8 +644,8 @@ curl -s "https://tu-dominio/api/clientes/42/pendientes?tax_year=2025" \
   "pendientes": [
     { "forma": "transversal", "campo": "estado_civil", "tipo_campo": "dato", "tipo_dato": "object", "subcampos": ["casado_al_31_dic", "convivio_conyuge_ultimos_6_meses", "costeo_mas_mitad_hogar", "existe_persona_calificable", "conyuge_fallecio_en_anio", "anio_fallecimiento_conyuge"], "formatos_aceptados": null, "obligatorio": true, "sensible": false, "revela": [] },
     { "forma": "transversal", "campo": "w2", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "jpg", "png", "heic"], "obligatorio": true, "sensible": false, "revela": [
-      { "forma": "form_1040", "campo": "ingresos", "subcampo": "salarios", "descripcion": "Box 1 (Wages, tips, other compensation) del W-2 es el salario total del cliente." },
-      { "forma": "form_1040", "campo": "impuestos_retenidos", "subcampo": null, "descripcion": "Box 2 (Federal income tax withheld) del W-2 suma directo a la retención federal total." }
+      { "forma": "form_1040", "campo": "ingresos", "subcampo": "salarios", "descripcion": "Box 1 (Wages, tips, other compensation) del W-2 es el salario total del cliente.", "acumulable": false },
+      { "forma": "form_1040", "campo": "impuestos_retenidos", "subcampo": null, "descripcion": "Box 2 (Federal income tax withheld) del W-2 suma directo a la retención federal total.", "acumulable": true }
     ] },
     { "forma": "schedule_c", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false, "revela": [] },
     { "forma": "schedule_e", "campo": "estados_bancarios", "tipo_campo": "documento", "tipo_dato": null, "subcampos": null, "formatos_aceptados": ["pdf", "xlsx", "csv"], "obligatorio": true, "sensible": false, "revela": [] }
@@ -626,7 +661,7 @@ Notas de este shape:
 - `siguiente` es un puntero de conveniencia al **primer elemento de `pendientes`, en el orden en que ya vienen** (o `null` si `pendientes` está vacío) — para que el agente no tenga que decidir el orden por su cuenta. Desde la Fase 5, **no filtra por `obligatorio`**: puede señalar un campo opcional (ej. `w2`, `form_1099_nec`) antes que uno obligatorio, a propósito — los transversales (documentos y datos personales) siempre aparecen primero en `pendientes`, así que `siguiente` le da al agente la oportunidad de ofrecer un documento (y aprovechar su `revela`, ver más abajo) antes de pedirle al cliente que teclee a mano un monto que ese documento ya trae. `completo`, en cambio, sigue evaluando solo los pendientes obligatorios — un opcional sin resolver nunca bloquea el cierre.
 - Los campos transversales (`forma: "transversal"`) **no dependen de que exista ninguna forma declarada** — se piden sin importar cuál(es) apliquen, así que aparecen en `pendientes` incluso si el cliente todavía no tiene ninguna forma declarada (nunca se llamó a `POST /formas`). En ese caso, `completo` es siempre `false` — la determinación de forma en sí sigue pendiente, aunque ya no falte ningún transversal.
 - Un campo opcional que el cliente declinó (guardado con `modo: "no_aplica"`, ver [`modo: "no_aplica"`](#modo-no_aplica--el-cliente-respondió-que-no-tiene-ese-campo-solo-opcionales)) deja de aparecer en `pendientes` igual que uno con `estado: "recibido"` — a diferencia de dejarlo simplemente sin tocar, esto sí queda persistido, así que no vuelve a aparecer aunque la conversación se reinicie sin memoria del agente.
-- **`revela`** (Fase 5): lista de campos-destino que ese documento ya resuelve si el cliente lo entrega, respaldada por la tabla `relaciones_documento_campo` (ver [`RelacionDocumentoCampo`](../app/Models/RelacionDocumentoCampo.php) y `RelacionesDocumentoCampoSeeder`) — nunca por texto memorizado en el prompt del agente. Casi siempre vacía para campos tipo `dato`; en campos `documento`/`mixto` puede traer una o más entradas. Cada entrada indica `forma` + `campo` (+ `subcampo` si el destino es un `object`/`array_object`) + `descripcion` en lenguaje natural. El agente conversacional, al recibir ese documento, guarda también los campos que `revela` señale — siempre que sigan apareciendo en `pendientes` y el valor sea legible en el texto extraído del documento — en vez de volver a preguntárselos al cliente. Editable desde el panel de administración igual que el resto del catálogo (ver más abajo).
+- **`revela`** (Fase 5, `acumulable` agregado en Fase 6): lista de campos-destino que ese documento ya resuelve si el cliente lo entrega, respaldada por la tabla `relaciones_documento_campo` (ver [`RelacionDocumentoCampo`](../app/Models/RelacionDocumentoCampo.php) y `RelacionesDocumentoCampoSeeder`) — nunca por texto memorizado en el prompt del agente. Casi siempre vacía para campos tipo `dato`; en campos `documento`/`mixto` puede traer una o más entradas. Cada entrada indica `forma` + `campo` (+ `subcampo` si el destino es un `object`/`array_object`) + `descripcion` en lenguaje natural + `acumulable` (`boolean`). El agente conversacional, al recibir ese documento, guarda también los campos que `revela` señale — siempre que sigan apareciendo en `pendientes` y el valor sea legible en el texto extraído del documento — en vez de volver a preguntárselos al cliente. Cuando `acumulable: true`, ese campo/subcampo puede ser resuelto por más de un documento distinto (ej. `impuestos_retenidos` por W-2 **y** 1099-NEC **y** más), así que el agente NO lo trata como "ya resuelto" solo porque otro documento lo tocó antes, y envía `acumular: true` (ver [Acumular en vez de sobrescribir](#acumular-en-vez-de-sobrescribir-acumular--subcampo)) para que la plataforma sume en vez de sobrescribir. Editable desde el panel de administración igual que el resto del catálogo (ver más abajo).
 
 ## Vista de autoservicio del cliente (Fase 5)
 

@@ -828,6 +828,25 @@ components:
           type: string
           maxLength: 255
           nullable: true
+        acumular:
+          type: boolean
+          default: false
+          description: |
+            Fase 6. Si es `true`, suma `contenido` (o, con `subcampo`
+            indicado, el valor de esa clave dentro de `contenido`) al valor ya
+            guardado para ese campo/subcampo en vez de sobrescribirlo — solo
+            válido cuando `tipo_dato` es `number`, o `object` con `subcampo`
+            presente (ver `RelacionRevelada.acumulable` y
+            `docs/api.md#acumular-en-vez-de-sobrescribir-acumular--subcampo`).
+            Sin efecto en la corrección manual de un preparador, que siempre
+            sobrescribe.
+        subcampo:
+          type: string
+          nullable: true
+          description: |
+            Solo junto con `acumular: true` sobre un campo `tipo_dato: object`
+            — el subcampo exacto de `contenido` que se debe sumar (los demás
+            subcampos del objeto se guardan tal como llegan).
       required: [forma, tax_year, campo, tipo_campo, modo]
 
     EventoArchivo:
@@ -1137,6 +1156,17 @@ components:
         descripcion:
           type: string
           description: Explicación en lenguaje natural de la relación, para que el agente conversacional entienda qué casilla del documento corresponde.
+        acumulable:
+          type: boolean
+          description: |
+            Fase 6. Si es `true`, este campo/subcampo destino puede ser
+            resuelto por MÁS de un documento distinto (ej.
+            `impuestos_retenidos` por w2 y por form_1099_nec, cada uno con su
+            propia retención) — el agente debe enviar `acumular: true` (y
+            `subcampo` si aplica) en `POST /eventos` para que la plataforma
+            SUME el nuevo valor al ya guardado en vez de sobrescribirlo. Si es
+            `false`, el destino solo lo resuelve este documento — comportamiento
+            histórico, sin cambios.
 
     PendientesRespuesta:
       type: object

@@ -15,11 +15,13 @@ use App\Support\ParametrosFiscales;
  * cambie por año.
  *
  * Limitación documentada: "ingreso neto de inversión" acá es intereses +
- * dividendos + ganancias de capital + renta de alquiler (`ingresos_renta` de
- * cada schedule_e declarada) — no distingue alquiler activo/pasivo material
- * participation, ni resta gastos de inversión deducibles; MAGI se aproxima
- * con AGI (la diferencia real solo aplica a exclusión de ingreso extranjero,
- * caso raro fuera del alcance actual).
+ * dividendos + ganancias de capital + renta de alquiler NETA (`ingresos_renta`
+ * menos `gastos_propiedad` y `depreciacion` de cada schedule_e declarada,
+ * mismo neto que ya se sumó al AGI — ver DeterminacionFiscalService) — no
+ * distingue alquiler activo/pasivo material participation, ni resta gastos de
+ * inversión deducibles adicionales; MAGI se aproxima con AGI (la diferencia
+ * real solo aplica a exclusión de ingreso extranjero, caso raro fuera del
+ * alcance actual).
  */
 class NiitCalculator
 {

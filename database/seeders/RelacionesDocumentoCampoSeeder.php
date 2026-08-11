@@ -48,6 +48,7 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 [
                     'documento_forma' => $r['documento_forma'],
                     'descripcion' => $r['descripcion'],
+                    'acumulable' => $r['acumulable'] ?? false,
                 ],
             );
         }
@@ -80,6 +81,7 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'w2',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'impuestos_retenidos', 'subcampo_destino' => null,
                 'descripcion' => 'Box 2 (Federal income tax withheld) del W-2 suma directo a la retención federal total.',
+                'acumulable' => true,
             ],
             [
                 'documento_forma' => $transversal, 'documento_campo' => 'w2',
@@ -98,6 +100,7 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1099_nec',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'impuestos_retenidos', 'subcampo_destino' => null,
                 'descripcion' => 'Casilla 4 (Federal income tax withheld) del 1099-NEC suma a la retención federal total.',
+                'acumulable' => true,
             ],
 
             // 1099-INT
@@ -105,11 +108,13 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1099_int',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'intereses_dividendos',
                 'descripcion' => 'Casilla 1 (Interest income) del 1099-INT es interés gravable a incluir en ingresos.',
+                'acumulable' => true,
             ],
             [
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1099_int',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'impuestos_retenidos', 'subcampo_destino' => null,
                 'descripcion' => 'Casilla 4 (Federal income tax withheld) del 1099-INT suma a la retención federal total.',
+                'acumulable' => true,
             ],
 
             // 1099-DIV
@@ -117,11 +122,13 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1099_div',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'intereses_dividendos',
                 'descripcion' => 'Casilla 1a (Total ordinary dividends) del 1099-DIV es dividendo gravable a incluir en ingresos.',
+                'acumulable' => true,
             ],
             [
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1099_div',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'impuestos_retenidos', 'subcampo_destino' => null,
                 'descripcion' => 'Casilla 4 (Federal income tax withheld) del 1099-DIV suma a la retención federal total.',
+                'acumulable' => true,
             ],
 
             // 1099-R
@@ -134,6 +141,7 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1099_r',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'impuestos_retenidos', 'subcampo_destino' => null,
                 'descripcion' => 'Casilla 4 (Federal income tax withheld) del 1099-R suma a la retención federal total.',
+                'acumulable' => true,
             ],
 
             // 1099-G
@@ -141,6 +149,7 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1099_g',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'otros_ingresos',
                 'descripcion' => 'Casilla 1 (Unemployment compensation) o casilla 2 (state/local refund, si gravable) del 1099-G es otro ingreso a reportar.',
+                'acumulable' => true,
             ],
 
             // 1098 (hipoteca)
@@ -155,6 +164,7 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1098_e',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'ajustes_ingreso',
                 'descripcion' => 'Casilla 1 (Student loan interest received) del 1098-E es un ajuste al ingreso (above-the-line), sujeto a límites de MAGI.',
+                'acumulable' => true,
             ],
 
             // Fase 6 — relaciones ciertas identificadas en la auditoría completa
@@ -209,6 +219,7 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'form_w2g',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'otros_ingresos',
                 'descripcion' => 'Casilla 1 (Reportable winnings) del W-2G es ingreso de juego a reportar como otro ingreso.',
+                'acumulable' => true,
             ],
 
             // 1099-C (cancelación de deuda)
@@ -216,6 +227,7 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1099_c',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'otros_ingresos',
                 'descripcion' => 'Casilla 2 (Amount of debt discharged) del 1099-C es ingreso por cancelación de deuda a incluir en otros ingresos, sujeto a exclusiones (insolvencia, quiebra) que el motor de reglas no evalúa — verificar con el cliente antes de usarlo tal cual.',
+                'acumulable' => true,
             ],
 
             // 5498-SA (aportes a HSA — deducible; distinto de 1099-SA, que son

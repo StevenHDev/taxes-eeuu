@@ -42,4 +42,33 @@ class AgiCalculatorTest extends TestCase
 
         $this->assertSame(-19000.0, $resultado['agi']);
     }
+
+    /**
+     * Fase 6, encontrado en pruebas end-to-end: el ingreso neto de negocio
+     * (schedule_c), alquiler (schedule_e) y granja (schedule_f) se calculaba
+     * para SE tax/QBI/NIIT pero nunca llegaba al AGI — Schedule 1 líneas
+     * 3/5/6 → 1040 línea 8, antes de la Fase 6 ese ingreso desaparecía.
+     */
+    public function test_ingreso_de_negocio_alquiler_o_granja_se_suma_al_bruto(): void
+    {
+        $resultado = (new AgiCalculator)->calcular(
+            ['salarios' => 50000, 'ajustes_ingreso' => 0],
+            ajustesAdicionales: 0.0,
+            ingresoNegocioRentaGranja: 15000.0,
+        );
+
+        $this->assertSame(65000.0, $resultado['ingreso_bruto_total']);
+        $this->assertSame(65000.0, $resultado['agi']);
+    }
+
+    public function test_una_perdida_de_negocio_reduce_el_agi(): void
+    {
+        $resultado = (new AgiCalculator)->calcular(
+            ['salarios' => 50000, 'ajustes_ingreso' => 0],
+            ajustesAdicionales: 0.0,
+            ingresoNegocioRentaGranja: -8000.0,
+        );
+
+        $this->assertSame(42000.0, $resultado['agi']);
+    }
 }

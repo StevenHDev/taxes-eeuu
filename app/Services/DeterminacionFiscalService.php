@@ -110,10 +110,22 @@ class DeterminacionFiscalService
                 - $this->leerNumero($cliente, $taxYear, 'schedule_f', 'gastos_operacion');
             $netoAutoempleo = $netoScheduleC + $netoScheduleF;
 
+            // Schedule E (alquiler) — neto, no bruto: se resta lo mismo que el
+            // cliente ya reportó como gasto/depreciación de esa propiedad.
+            // Se calcula acá (antes del AGI) porque Schedule 1 línea 5 suma
+            // este neto al ingreso total — NIIT lo reutiliza más abajo, no lo
+            // vuelve a leer en bruto.
+            $netoScheduleE = $this->leerNumero($cliente, $taxYear, 'schedule_e', 'ingresos_renta')
+                - $this->leerNumero($cliente, $taxYear, 'schedule_e', 'gastos_propiedad')
+                - $this->leerNumero($cliente, $taxYear, 'schedule_e', 'depreciacion');
+
             $impuestoAutoempleo = $this->impuestoAutoempleo->calcular($taxYear, $netoAutoempleo);
 
+            // Schedule 1 líneas 3/5/6 → 1040 línea 8 → AGI. Antes de la Fase 6
+            // este ingreso se calculaba para SE tax/QBI/NIIT pero nunca llegaba
+            // al AGI — bug real encontrado en pruebas end-to-end, corregido acá.
             $agi = is_array($ingresos)
-                ? $this->agi->calcular($ingresos, $impuestoAutoempleo['mitad_deducible'])
+                ? $this->agi->calcular($ingresos, $impuestoAutoempleo['mitad_deducible'], $netoAutoempleo + $netoScheduleE)
                 : $this->noDisponible($ingresos === null
                     ? 'ingresos no ha sido capturado todavía'
                     : 'ingresos tiene un formato antiguo (cargado antes de la Fase 2) — vuelve a cargarlo con el formulario actual para poder calcular el AGI');
@@ -168,11 +180,11 @@ class DeterminacionFiscalService
                 )
                 : $this->noDisponible('depende de estado_civil');
 
-            // --- NIIT (Form 8960) ---
-            $ingresoRentaE = $this->leerNumero($cliente, $taxYear, 'schedule_e', 'ingresos_renta');
+            // --- NIIT (Form 8960) — reutiliza el neto de schedule_e ya
+            // calculado arriba para el AGI, no lo vuelve a leer en bruto.
             $netoInversion = max(0.0, (is_array($ingresos)
                 ? (float) ($ingresos['intereses_dividendos'] ?? 0) + (float) ($ingresos['ganancias_capital'] ?? 0)
-                : 0.0) + $ingresoRentaE);
+                : 0.0) + $netoScheduleE);
             $niit = ($filingStatus['disponible'] && $agi['disponible'])
                 ? $this->niit->calcular($taxYear, FilingStatus::from($filingStatus['estado']), $agi['agi'], $netoInversion)
                 : $this->noDisponible('depende de estado_civil e ingresos');

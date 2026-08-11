@@ -25,16 +25,27 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $campo_destino
  * @property string|null $subcampo_destino
  * @property string|null $descripcion
+ * @property bool $acumulable
  * @property int $tax_year
  */
-#[Fillable(['documento_forma', 'documento_campo', 'campo_destino_forma', 'campo_destino', 'subcampo_destino', 'descripcion', 'tax_year'])]
+#[Fillable(['documento_forma', 'documento_campo', 'campo_destino_forma', 'campo_destino', 'subcampo_destino', 'descripcion', 'acumulable', 'tax_year'])]
 class RelacionDocumentoCampo extends Model
 {
     protected $table = 'relaciones_documento_campo';
 
+    protected $casts = [
+        'acumulable' => 'boolean',
+    ];
+
     /**
      * Shape que consume el agente externo desde la clave `revela` de un
      * pendiente tipo documento — ver TaxFieldCatalog::pendientesPara().
+     *
+     * `acumulable`: cuando es true, el mismo campo-destino puede ser
+     * resuelto por más de un documento (ej. `intereses_dividendos` por un
+     * 1099-INT Y un 1099-DIV) y el agente debe enviar `acumular: true` en
+     * POST /api/eventos para que el backend SUME en vez de sobrescribir —
+     * ver EventoRecoleccionService::procesar().
      *
      * @return array<string, mixed>
      */
@@ -45,6 +56,7 @@ class RelacionDocumentoCampo extends Model
             'campo' => $this->campo_destino,
             'subcampo' => $this->subcampo_destino,
             'descripcion' => $this->descripcion,
+            'acumulable' => $this->acumulable,
         ];
     }
 }

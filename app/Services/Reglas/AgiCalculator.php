@@ -19,9 +19,21 @@ class AgiCalculator
      *                                     Income" del Schedule 1 Parte II,
      *                                     solo que este componente lo calcula
      *                                     el motor, no lo escribe el cliente.
+     * @param  float  $ingresoNegocioRentaGranja  ingreso neto (no bruto) de
+     *                                            schedule_c + schedule_e +
+     *                                            schedule_f (Schedule 1 líneas
+     *                                            3/5/6 → 1040 línea 8) — Fase
+     *                                            6. Puede ser negativo (una
+     *                                            pérdida de negocio SÍ reduce
+     *                                            el AGI). Antes de la Fase 6
+     *                                            este ingreso se calculaba
+     *                                            para SE tax/QBI/NIIT pero
+     *                                            nunca llegaba al AGI — bug
+     *                                            real encontrado en pruebas
+     *                                            end-to-end, corregido acá.
      * @return array{disponible: bool, motivo_no_disponible: ?string, agi?: float, ingreso_bruto_total?: float, ajustes?: float}
      */
-    public function calcular(array $ingresos, float $ajustesAdicionales = 0.0): array
+    public function calcular(array $ingresos, float $ajustesAdicionales = 0.0, float $ingresoNegocioRentaGranja = 0.0): array
     {
         // 'seguridad_social' (Fase 6) se excluye del ingreso bruto total
         // directo a propósito: su porción gravable depende del "provisional
@@ -32,7 +44,7 @@ class AgiCalculator
         // una calculadora dedicada para esa porción.
         $campos = ['salarios', 'intereses_dividendos', 'ganancias_capital', 'ingresos_jubilacion', 'otros_ingresos'];
 
-        $ingresoBrutoTotal = 0.0;
+        $ingresoBrutoTotal = $ingresoNegocioRentaGranja;
 
         foreach ($campos as $campo) {
             $ingresoBrutoTotal += (float) ($ingresos[$campo] ?? 0);

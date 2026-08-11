@@ -689,4 +689,141 @@ class EventoRecoleccionTest extends TestCase
         $this->assertCount(2, $historial);
         $this->assertSame('no_aplica', $historial->first()->valor_nuevo);
     }
+
+    /**
+     * Bug encontrado en pruebas end-to-end: dos documentos revelando el mismo
+     * campo numérico simple (ej. w2 y 1099-NEC ambos hacia
+     * `impuestos_retenidos`) perdían en silencio la retención del primero —
+     * el segundo evento sobrescribía en vez de sumar. `acumular: true` sobre
+     * un campo `number` debe sumar sobre lo ya guardado.
+     */
+    public function test_acumular_suma_sobre_un_campo_numerico_simple(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 400,
+            'acumular' => true,
+        ])->assertCreated();
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 150,
+            'acumular' => true,
+        ])->assertCreated();
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
+        $this->assertEquals(550.0, $campo->valor_texto);
+    }
+
+    /**
+     * Mismo bug que el test anterior, pero sobre un subcampo de un campo tipo
+     * objeto (ej. `ingresos.intereses_dividendos`, resuelto tanto por un
+     * 1099-INT como por un 1099-DIV) — solo el subcampo indicado se suma, los
+     * demás se guardan tal como llegan en `contenido`.
+     */
+    public function test_acumular_suma_sobre_un_subcampo_de_un_campo_objeto(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => array_merge($this->ingresosPayload(salarios: 0), ['intereses_dividendos' => 500]),
+            'acumular' => true,
+            'subcampo' => 'intereses_dividendos',
+        ])->assertCreated();
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => array_merge($this->ingresosPayload(salarios: 0), ['intereses_dividendos' => 1200]),
+            'acumular' => true,
+            'subcampo' => 'intereses_dividendos',
+        ])->assertCreated();
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('forma', 'form_1040')->where('campo', 'ingresos')->first();
+        $this->assertEquals(1700.0, $campo->valor_texto['intereses_dividendos']);
+    }
+
+    public function test_acumular_sin_subcampo_en_un_campo_objeto_es_invalido(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(),
+            'acumular' => true,
+        ])->assertStatus(422)->assertJsonValidationErrors(['subcampo']);
+    }
+
+    public function test_acumular_con_subcampo_inexistente_es_invalido(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => $this->ingresosPayload(),
+            'acumular' => true,
+            'subcampo' => 'no_existe',
+        ])->assertStatus(422)->assertJsonValidationErrors(['subcampo']);
+    }
+
+    public function test_acumular_con_subcampo_sobre_un_campo_numerico_es_invalido(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 400,
+            'acumular' => true,
+            'subcampo' => 'algo',
+        ])->assertStatus(422)->assertJsonValidationErrors(['subcampo']);
+    }
 }

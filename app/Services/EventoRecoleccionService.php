@@ -52,6 +52,8 @@ class EventoRecoleccionService
                 nombreOriginal: $request->validated('nombre_original'),
                 actor: $request->user(),
                 source: EventSource::AgenteIa,
+                acumular: $request->boolean('acumular'),
+                subcampoAcumular: $request->validated('subcampo'),
             );
         });
     }
@@ -75,6 +77,9 @@ class EventoRecoleccionService
         ?string $nombreOriginal,
         User $actor,
     ): array {
+        // Una corrección manual siempre reemplaza el valor tal cual lo escribe el
+        // preparador — nunca suma sobre lo que hubiera, aunque el campo/subcampo
+        // esté marcado como acumulable para el agente (acumular=false, siempre).
         return DB::transaction(fn () => $this->aplicarCambio(
             cliente: $cliente,
             taxYear: $taxYear,
@@ -107,6 +112,8 @@ class EventoRecoleccionService
         ?string $nombreOriginal,
         User $actor,
         EventSource $source,
+        bool $acumular = false,
+        ?string $subcampoAcumular = null,
     ): array {
         $field = TaxFieldCatalog::find($taxYear, $forma, $campo);
 
@@ -114,6 +121,13 @@ class EventoRecoleccionService
         // 'transversal' — una sola fila compartida por todas las formas — para no
         // duplicar el mismo dato personal (SSN, cónyuge, dependientes) por forma.
         $formaAlmacen = TaxFieldCatalog::formaAlmacen($taxYear, $campo, $forma);
+
+        $anterior = CampoCliente::query()
+            ->where('user_id', $cliente->id)
+            ->where('forma', $formaAlmacen)
+            ->where('campo', $campo)
+            ->where('tax_year', $taxYear)
+            ->first();
 
         $documento = null;
         $valor = null;
@@ -126,16 +140,11 @@ class EventoRecoleccionService
             // garantizan que el campo es opcional antes de llegar acá.
             $estado = FieldState::NoAplica;
         } else {
-            $valor = $contenido;
+            $valor = $acumular
+                ? $this->acumularValor($contenido, $tipoDato, $subcampoAcumular, $anterior?->valor_texto)
+                : $contenido;
             $estado = $this->validarContenido($campo, $tipoDato, $field['subcampos'] ?? null, $valor);
         }
-
-        $anterior = CampoCliente::query()
-            ->where('user_id', $cliente->id)
-            ->where('forma', $formaAlmacen)
-            ->where('campo', $campo)
-            ->where('tax_year', $taxYear)
-            ->first();
 
         // Si el campo ya tenía un documento asociado (ej. un archivo inválido
         // reemplazado, o ahora marcado "no aplica"), el anterior queda obsoleto.
@@ -326,6 +335,34 @@ class EventoRecoleccionService
         ]);
 
         return [$documento, $estado];
+    }
+
+    /**
+     * Suma el aporte de este evento sobre lo ya guardado, en vez de
+     * sobrescribirlo — para un campo/subcampo que más de un documento puede
+     * revelar (ej. `intereses_dividendos` desde un 1099-INT y un 1099-DIV,
+     * ver RelacionDocumentoCampo::$acumulable). Solo aplica a `procesar()`
+     * (evento del agente); `corregirManualmente()` nunca pasa acumular=true.
+     */
+    private function acumularValor(mixed $contenido, ?FieldDataType $tipoDato, ?string $subcampo, mixed $valorAnterior): mixed
+    {
+        if ($tipoDato === FieldDataType::Number) {
+            $previo = is_numeric($valorAnterior) ? (float) $valorAnterior : 0.0;
+
+            return $previo + (float) $contenido;
+        }
+
+        if ($tipoDato === FieldDataType::Object && is_array($contenido) && $subcampo !== null) {
+            $previo = is_array($valorAnterior) && is_numeric($valorAnterior[$subcampo] ?? null)
+                ? (float) $valorAnterior[$subcampo]
+                : 0.0;
+
+            $contenido[$subcampo] = $previo + (float) ($contenido[$subcampo] ?? 0);
+
+            return $contenido;
+        }
+
+        return $contenido;
     }
 
     /**

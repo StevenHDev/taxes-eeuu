@@ -76,6 +76,16 @@ class EventoRequest extends FormRequest
                 'max:20480',
             ],
             'nombre_original' => ['nullable', 'string', 'max:255'],
+            // Cuando un campo (o un subcampo suyo) puede ser revelado por más de
+            // un documento (ver clave `revela.acumulable` de consultar_pendientes_cliente,
+            // ej. intereses_dividendos por 1099-INT Y 1099-DIV), el agente marca
+            // `acumular: true` para que el backend SUME el nuevo valor al ya
+            // guardado en vez de sobrescribirlo — ver EventoRecoleccionService::procesar().
+            'acumular' => ['sometimes', 'boolean'],
+            // Solo se usa junto con acumular=true sobre un campo tipo_dato=object:
+            // indica qué subcampo del objeto es el que este documento contribuye
+            // (los demás subcampos del `contenido` se guardan tal como llegan).
+            'subcampo' => ['nullable', 'string'],
         ];
     }
 
@@ -138,6 +148,27 @@ class EventoRequest extends FormRequest
 
                 if ($formatos && ! \in_array($extension, $formatos, true)) {
                     $validator->errors()->add('file', 'Formato de archivo no aceptado para este campo. Formatos válidos: '.implode(', ', $formatos));
+                }
+            }
+
+            if ($this->boolean('acumular')) {
+                $tipoDatoEnviado = FieldDataType::tryFrom((string) $this->input('tipo_dato'));
+                $subcampo = $this->input('subcampo');
+
+                if ($tipoDatoEnviado === FieldDataType::Number) {
+                    if ($subcampo !== null) {
+                        $validator->errors()->add('subcampo', 'No se especifica subcampo cuando el campo acumulable es numérico simple.');
+                    }
+                } elseif ($tipoDatoEnviado === FieldDataType::Object) {
+                    $subcampos = $field['subcampos'] ?? [];
+
+                    if (! is_string($subcampo) || $subcampo === '') {
+                        $validator->errors()->add('subcampo', 'Se requiere indicar el subcampo a acumular para un campo tipo objeto.');
+                    } elseif (! \in_array($subcampo, $subcampos, true)) {
+                        $validator->errors()->add('subcampo', 'El subcampo indicado no existe en el catálogo para este campo.');
+                    }
+                } else {
+                    $validator->errors()->add('acumular', 'acumular solo aplica a campos numéricos o a un subcampo de un campo tipo objeto.');
                 }
             }
         });
