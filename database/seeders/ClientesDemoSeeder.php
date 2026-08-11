@@ -36,7 +36,7 @@ class ClientesDemoSeeder extends Seeder
             ['name' => 'Preparador de prueba', 'role' => UserRole::Preparer],
         );
 
-        $eventos = new EventoRecoleccionService();
+        $eventos = new EventoRecoleccionService;
         $determinaciones = app(DeterminacionFiscalService::class);
 
         $this->clienteCompleto($eventos, $determinaciones, $preparador);
@@ -75,7 +75,7 @@ class ClientesDemoSeeder extends Seeder
 
         $this->dato($eventos, $cliente, $preparador, 'form_1040', 'ingresos', FieldDataType::Object, [
             'salarios' => 82000, 'intereses_dividendos' => 400, 'ganancias_capital' => 0,
-            'ingresos_jubilacion' => 0, 'otros_ingresos' => 0, 'ajustes_ingreso' => 0,
+            'ingresos_jubilacion' => 0, 'otros_ingresos' => 0, 'ajustes_ingreso' => 0, 'seguridad_social' => 0,
         ]);
         $this->dato($eventos, $cliente, $preparador, 'form_1040', 'deducciones', FieldDataType::Number, 0);
         $this->dato($eventos, $cliente, $preparador, 'form_1040', 'impuestos_retenidos', FieldDataType::Number, 9800);
@@ -152,7 +152,7 @@ class ClientesDemoSeeder extends Seeder
 
         $this->dato($eventos, $cliente, $preparador, 'form_1040', 'ingresos', FieldDataType::Object, [
             'salarios' => 45000, 'intereses_dividendos' => 0, 'ganancias_capital' => 0,
-            'ingresos_jubilacion' => 0, 'otros_ingresos' => 0, 'ajustes_ingreso' => 0,
+            'ingresos_jubilacion' => 0, 'otros_ingresos' => 0, 'ajustes_ingreso' => 0, 'seguridad_social' => 0,
         ]);
         $this->dato($eventos, $cliente, $preparador, 'form_1040', 'impuestos_retenidos', FieldDataType::Number, 3100);
 

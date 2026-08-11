@@ -31,7 +31,7 @@ class CreditEligibilityCalculatorTest extends TestCase
         // reducción $500. El total combinado correcto es 2700-500=2200, NO
         // max(0, 2200-500) + max(0, 500-500) = 1700+0 = 1700 (versión incorrecta
         // que reduce cada crédito por separado).
-        $resultado = (new CreditEligibilityCalculator())->calcular(
+        $resultado = (new CreditEligibilityCalculator)->calcular(
             2025,
             FilingStatus::Single,
             210000.0,
@@ -47,7 +47,7 @@ class CreditEligibilityCalculatorTest extends TestCase
     {
         // $200,001 de AGI (soltero) — $1 de exceso, pero ceil(1/1000)=1, así
         // que la reducción completa de $50 aplica igual (no floor, que daría 0).
-        $resultado = (new CreditEligibilityCalculator())->calcular(
+        $resultado = (new CreditEligibilityCalculator)->calcular(
             2025,
             FilingStatus::Single,
             200001.0,
@@ -61,7 +61,7 @@ class CreditEligibilityCalculatorTest extends TestCase
 
     public function test_agi_exactamente_en_el_umbral_no_tiene_reduccion(): void
     {
-        $resultado = (new CreditEligibilityCalculator())->calcular(
+        $resultado = (new CreditEligibilityCalculator)->calcular(
             2025,
             FilingStatus::Single,
             200000.0,
@@ -77,7 +77,7 @@ class CreditEligibilityCalculatorTest extends TestCase
     {
         // AGI muy por encima del umbral: la reducción tentativa supera el
         // crédito tentativo — el total debe quedar en 0, no negativo.
-        $resultado = (new CreditEligibilityCalculator())->calcular(
+        $resultado = (new CreditEligibilityCalculator)->calcular(
             2025,
             FilingStatus::Single,
             500000.0,
@@ -91,7 +91,7 @@ class CreditEligibilityCalculatorTest extends TestCase
 
     public function test_sin_gastos_de_cuidado_reportados_el_credito_es_cero(): void
     {
-        $resultado = (new CreditEligibilityCalculator())->calcular(
+        $resultado = (new CreditEligibilityCalculator)->calcular(
             2025,
             FilingStatus::Single,
             50000.0,
@@ -104,7 +104,7 @@ class CreditEligibilityCalculatorTest extends TestCase
 
     public function test_el_tope_de_gastos_cambia_segun_1_o_2_mas_dependientes(): void
     {
-        $unDependiente = (new CreditEligibilityCalculator())->calcular(
+        $unDependiente = (new CreditEligibilityCalculator)->calcular(
             2025,
             FilingStatus::Single,
             10000.0, // AGI bajo → porcentaje máximo (35%)
@@ -115,7 +115,7 @@ class CreditEligibilityCalculatorTest extends TestCase
         // Tope de 1 persona: $3,000 × 35% = $1,050.
         $this->assertSame(1050.0, $unDependiente['cuidado_dependientes']);
 
-        $dosDependientes = (new CreditEligibilityCalculator())->calcular(
+        $dosDependientes = (new CreditEligibilityCalculator)->calcular(
             2025,
             FilingStatus::Single,
             10000.0,
@@ -129,7 +129,7 @@ class CreditEligibilityCalculatorTest extends TestCase
 
     public function test_porcentaje_de_cuidado_interpola_en_los_extremos_y_a_la_mitad(): void
     {
-        $calculadora = new CreditEligibilityCalculator();
+        $calculadora = new CreditEligibilityCalculator;
 
         $bajo = $calculadora->calcular(2025, FilingStatus::Single, 15000.0, $this->dependientesResultado(0, 0, 1), ['monto_anual' => 3000]);
         $this->assertSame(1050.0, $bajo['cuidado_dependientes']); // 35% de 3000

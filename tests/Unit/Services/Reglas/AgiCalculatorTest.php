@@ -9,7 +9,7 @@ class AgiCalculatorTest extends TestCase
 {
     public function test_suma_basica(): void
     {
-        $resultado = (new AgiCalculator())->calcular([
+        $resultado = (new AgiCalculator)->calcular([
             'salarios' => 50000,
             'intereses_dividendos' => 500,
             'ganancias_capital' => 1000,
@@ -25,7 +25,7 @@ class AgiCalculatorTest extends TestCase
 
     public function test_subcampo_faltante_se_trata_como_cero(): void
     {
-        $resultado = (new AgiCalculator())->calcular(['salarios' => 10000]);
+        $resultado = (new AgiCalculator)->calcular(['salarios' => 10000]);
 
         $this->assertSame(10000.0, $resultado['ingreso_bruto_total']);
         $this->assertSame(0.0, $resultado['ajustes']);
@@ -34,7 +34,7 @@ class AgiCalculatorTest extends TestCase
 
     public function test_agi_negativo_permitido_no_se_fuerza_a_cero(): void
     {
-        $resultado = (new AgiCalculator())->calcular([
+        $resultado = (new AgiCalculator)->calcular([
             'salarios' => 1000,
             'ganancias_capital' => -20000,
             'ajustes_ingreso' => 0,

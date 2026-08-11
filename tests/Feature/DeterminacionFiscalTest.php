@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\CampoCliente;
 use App\Models\DeterminacionFiscal;
+use App\Models\ParametroFiscal;
 use App\Models\User;
+use App\Support\ParametrosFiscales;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -13,6 +15,28 @@ use Tests\TestCase;
 class DeterminacionFiscalTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * Las calculadoras nuevas de la Fase 6 (deducción aplicable, QBI, impuesto
+     * sobre el ingreso, Additional Medicare Tax, NIIT) están menos
+     * condicionadas que las 4 originales — corren en cuanto filing_status/AGI
+     * están disponibles, sin depender de info_dependientes. Para un test que
+     * calcula un segundo tax_year (2026) sin haber sembrado parámetros para
+     * ese año (ParametrosFiscalesSeeder solo siembra 2025 a propósito), hay
+     * que duplicar los parámetros — mismo dato, otro año — como haría un
+     * despliegue real al llegar la siguiente temporada fiscal.
+     */
+    private function duplicarParametrosPara(int $taxYear): void
+    {
+        ParametroFiscal::query()->where('tax_year', 2025)->get()->each(
+            fn (ParametroFiscal $p) => ParametroFiscal::query()->firstOrCreate(
+                ['tax_year' => $taxYear, 'categoria' => $p->categoria, 'clave' => $p->clave],
+                ['valor' => $p->valor],
+            ),
+        );
+
+        ParametrosFiscales::invalidate();
+    }
 
     private function cargarCampo(User $cliente, string $forma, string $campo, mixed $valor, int $taxYear = 2025): void
     {
@@ -62,10 +86,11 @@ class DeterminacionFiscalTest extends TestCase
             'ingresos_jubilacion' => 0,
             'otros_ingresos' => 0,
             'ajustes_ingreso' => 0,
+            'seguridad_social' => 0,
         ]);
     }
 
-    public function test_calcular_determinaciones_crea_las_4_filas(): void
+    public function test_calcular_determinaciones_crea_las_11_filas(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
@@ -75,7 +100,7 @@ class DeterminacionFiscalTest extends TestCase
             ->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025])
             ->assertRedirect();
 
-        $this->assertSame(4, DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tax_year', 2025)->count());
+        $this->assertSame(11, DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tax_year', 2025)->count());
 
         $filingStatus = DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tipo', 'filing_status')->first();
         $this->assertSame('hoh', $filingStatus->resultado['estado']);
@@ -147,7 +172,7 @@ class DeterminacionFiscalTest extends TestCase
         $this->actingAs($preparador)->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025]);
         $this->actingAs($preparador)->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025]);
 
-        $this->assertSame(4, DeterminacionFiscal::query()->where('user_id', $cliente->id)->count());
+        $this->assertSame(11, DeterminacionFiscal::query()->where('user_id', $cliente->id)->count());
     }
 
     public function test_dos_anos_fiscales_del_mismo_cliente_no_se_cruzan(): void
@@ -157,12 +182,13 @@ class DeterminacionFiscalTest extends TestCase
         $this->cargarDatosCompletos($cliente);
         $this->cargarCampo($cliente, 'form_1040', 'ingresos', [
             'salarios' => 90000, 'intereses_dividendos' => 0, 'ganancias_capital' => 0,
-            'ingresos_jubilacion' => 0, 'otros_ingresos' => 0, 'ajustes_ingreso' => 0,
+            'ingresos_jubilacion' => 0, 'otros_ingresos' => 0, 'ajustes_ingreso' => 0, 'seguridad_social' => 0,
         ], 2026);
         $this->cargarCampo($cliente, 'transversal', 'estado_civil', [
             'casado_al_31_dic' => false, 'convivio_conyuge_ultimos_6_meses' => false, 'costeo_mas_mitad_hogar' => false,
             'existe_persona_calificable' => false, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
         ], 2026);
+        $this->duplicarParametrosPara(2026);
 
         $this->actingAs($preparador)->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025]);
         $this->actingAs($preparador)->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2026]);
@@ -185,6 +211,6 @@ class DeterminacionFiscalTest extends TestCase
         $this->actingAs($preparador)
             ->get(route('clientes.show', $cliente))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->has('determinaciones', 4));
+            ->assertInertia(fn (Assert $page) => $page->has('determinaciones', 11));
     }
 }

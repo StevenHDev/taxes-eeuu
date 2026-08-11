@@ -22,7 +22,7 @@ class FilingStatusCalculatorTest extends TestCase
 
     public function test_casado_es_mfj(): void
     {
-        $resultado = (new FilingStatusCalculator())->calcular(
+        $resultado = (new FilingStatusCalculator)->calcular(
             2025,
             $this->estadoCivil(['casado_al_31_dic' => true]),
             existeQualifyingChild: false,
@@ -36,7 +36,7 @@ class FilingStatusCalculatorTest extends TestCase
     {
         // El año en que murió el cónyuge todavía se declara MFJ — QSS solo
         // aplica a los dos años SIGUIENTES al fallecimiento.
-        $resultado = (new FilingStatusCalculator())->calcular(
+        $resultado = (new FilingStatusCalculator)->calcular(
             2025,
             $this->estadoCivil([
                 'conyuge_fallecio_en_anio' => true,
@@ -53,7 +53,7 @@ class FilingStatusCalculatorTest extends TestCase
     public function test_viudo_dentro_de_los_dos_anos_con_qualifying_child_es_qss(): void
     {
         foreach ([1, 2] as $delta) {
-            $resultado = (new FilingStatusCalculator())->calcular(
+            $resultado = (new FilingStatusCalculator)->calcular(
                 2024 + $delta,
                 $this->estadoCivil([
                     'conyuge_fallecio_en_anio' => true,
@@ -70,7 +70,7 @@ class FilingStatusCalculatorTest extends TestCase
 
     public function test_viudo_fuera_del_periodo_de_dos_anos_no_es_qss(): void
     {
-        $resultado = (new FilingStatusCalculator())->calcular(
+        $resultado = (new FilingStatusCalculator)->calcular(
             2027, // delta = 3
             $this->estadoCivil([
                 'conyuge_fallecio_en_anio' => true,
@@ -86,7 +86,7 @@ class FilingStatusCalculatorTest extends TestCase
 
     public function test_soltero_con_dependiente_calificado_y_costeo_es_hoh(): void
     {
-        $resultado = (new FilingStatusCalculator())->calcular(
+        $resultado = (new FilingStatusCalculator)->calcular(
             2025,
             $this->estadoCivil(['costeo_mas_mitad_hogar' => true]),
             existeQualifyingChild: false,
@@ -98,7 +98,7 @@ class FilingStatusCalculatorTest extends TestCase
 
     public function test_soltero_sin_dependientes_ni_costeo_es_single(): void
     {
-        $resultado = (new FilingStatusCalculator())->calcular(
+        $resultado = (new FilingStatusCalculator)->calcular(
             2025,
             $this->estadoCivil(),
             existeQualifyingChild: false,

@@ -88,22 +88,40 @@ Qué significa cada columna:
 | `form_1098_e` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
 | `declaracion_anio_anterior` | documento | — | `pdf` | **no** | no |
 | `estado_civil` | dato | `object` (`casado_al_31_dic`, `convivio_conyuge_ultimos_6_meses`, `costeo_mas_mitad_hogar`, `existe_persona_calificable`, `conyuge_fallecio_en_anio`, `anio_fallecimiento_conyuge`) | — | sí | no |
+| `ssa_1099` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1099_b` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1098_t` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1095_a` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1099_misc` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1099_k` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1099_s` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `k1_recibido` | documento | — | `pdf` | **no** | no |
+| `form_w2g` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1099_c` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_1099_sa` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
+| `form_5498_sa` | documento | — | `pdf`, `jpg`, `png`, `heic` | **no** | no |
 
-Estos 13 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). Los subcampos ampliados de `info_dependientes` y el campo nuevo `estado_civil` (Fase 2) alimentan el motor de reglas — capturan **hechos**, no conclusiones: nunca se le pregunta al cliente su filing status directamente, se deriva de estos datos.
+Estos 21 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). Los subcampos ampliados de `info_dependientes` y el campo nuevo `estado_civil` (Fase 2) alimentan el motor de reglas — capturan **hechos**, no conclusiones: nunca se le pregunta al cliente su filing status directamente, se deriva de estos datos.
 
 **Fase 5:** `form_1099_int`, `form_1099_div`, `form_1099_r`, `form_1099_g`, `form_1098` y `form_1098_e` son opcionales — a diferencia de `w2` y `form_1099_nec`, no todo cliente los recibe (dependen de si tuvo intereses, dividendos, distribuciones de retiro, desempleo/reembolso estatal, o hipoteca/préstamo estudiantil ese año). Cada uno trae en su clave `revela` (ver [Qué falta por recolectar](#qué-falta-por-recolectar-get-apiclientesidpendientestax_year)) a qué campo de `form_1040`/`schedule_c` alimenta, derivado de la matriz de trazabilidad GTS Form 1040 2025 — ver `RelacionesDocumentoCampoSeeder`.
+
+**Fase 6** (auditoría completa de la matriz, más allá de la primera pasada): `ssa_1099`, `form_1099_b`, `form_1098_t`, `form_1095_a`, `form_w2g`, `form_1099_c` y `form_5498_sa` traen `revela` (ver tabla de `form_1040` abajo). `form_1099_div` (ya existente desde la Fase 5) suma una segunda relación en esta fase: casilla 7 (Foreign tax paid) → `impuesto_extranjero_pagado`. `form_1099_misc`, `form_1099_k`, `form_1099_s`, `k1_recibido` y `form_1099_sa` se recolectan como documento **sin** relación automática — la matriz misma los marca como fact-dependent (ej. un 1099-S puede ser la venta de la casa del cliente, excluible bajo §121, o un inmueble de negocio; un K-1 personal retiene el carácter del ingreso subyacente) — inventar una relación ahí sería una suposición, no un hecho confirmado.
 
 ### `form_1040`
 
 | Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
-| `ingresos` | dato | `object` (`salarios`, `intereses_dividendos`, `ganancias_capital`, `ingresos_jubilacion`, `otros_ingresos`, `ajustes_ingreso`) | — | sí | no |
+| `ingresos` | dato | `object` (`salarios`, `intereses_dividendos`, `ganancias_capital`, `ingresos_jubilacion`, `otros_ingresos`, `ajustes_ingreso`, `seguridad_social`) | — | sí | no |
 | `deducciones` | mixto | `number` | `pdf`, `jpg` | sí | no |
 | `gastos_cuidado_dependientes` | mixto | `object` (`proveedor_nombre`, `proveedor_ssn_ein`, `monto_anual`, `dependiente_relacionado`) | `pdf`, `jpg` | **no** | sí |
 | `impuestos_retenidos` | dato | `number` | — | sí | no |
+| `gastos_educacion` | mixto | `number` | `pdf`, `jpg` | **no** | no |
+| `marketplace_seguro` | dato | `object` (`premium_mensual`, `slcsp`, `aptc_recibido`) | — | **no** | no |
+| `impuesto_extranjero_pagado` | dato | `number` | — | **no** | no |
+| `beneficios_2025` | dato | `object` (`propinas_reportadas`, `horas_extra_pagadas`, `interes_prestamo_auto`, `es_adulto_mayor`) | — | **no** | no |
 | `info_bancaria` | dato | `object` (`banco`, `tipo_cuenta`, `numero_cuenta`, `routing_number`) | — | sí | sí |
 
-**`creditos` ya no existe en el catálogo** (Fase 2, Decisión A): pasó de ser un dato que se recolectaba (`array_string`) a ser 100% un resultado calculado por el motor de reglas (filing status, calificación de dependientes, AGI y créditos elegibles) — ver [Motor de reglas fiscales](#motor-de-reglas-fiscales-fase-2) más abajo. Ya no se pide ni se guarda vía `POST /api/eventos`.
+**`creditos` ya no existe en el catálogo** (Fase 2, Decisión A): pasó de ser un dato que se recolectaba (`array_string`) a ser 100% un resultado calculado por el motor de reglas (filing status, calificación de dependientes, AGI y créditos elegibles) — ver [Motor de reglas fiscales](#motor-de-reglas-fiscales-fase-2-ampliado-en-fase-6) más abajo. Ya no se pide ni se guarda vía `POST /api/eventos`.
 
 ### `schedule_c`
 
@@ -347,7 +365,7 @@ Para `modo: "texto"` (campos `string`, `number`, `object`, `array_string`, `arra
 }
 ```
 
-**`array_string`**: hoy **ningún campo del catálogo usa este tipo** (el único que lo usaba, `creditos`, se eliminó en la Fase 2 — ver [Motor de reglas fiscales](#motor-de-reglas-fiscales-fase-2)). Se documenta la forma igual, por si se agrega un campo nuevo de este tipo más adelante:
+**`array_string`**: hoy **ningún campo del catálogo usa este tipo** (el único que lo usaba, `creditos`, se eliminó en la Fase 2 — ver [Motor de reglas fiscales](#motor-de-reglas-fiscales-fase-2-ampliado-en-fase-6)). Se documenta la forma igual, por si se agrega un campo nuevo de este tipo más adelante:
 
 ```json
 {
@@ -630,17 +648,37 @@ Tres áreas exclusivamente del panel web (sesión), sin equivalente sobre token 
 - **`/clientes`**: además de listar/ver, un preparador o administrador puede dar de alta un cliente manualmente (`POST /clientes`) y un administrador puede eliminarlo (`DELETE /clientes/{id}`, borra en cascada todos sus datos y archivos).
 - **`/catalogo?tax_year=`** (solo administrador): CRUD de qué campos pide cada formulario, **por año fiscal** — alta, edición y baja de definiciones (`tipo_campo`, `tipo_dato`, `formatos_aceptados`, `obligatorio`, `sensible`, `tax_year`). Las 10 formas en sí son fijas; los campos dentro de cada una, y el año fiscal al que pertenecen, son editables. Un campo nuevo se crea para el año seleccionado en el selector del panel — no se copia automáticamente a otros años. Borrar una definición no borra los datos de clientes ya cargados con ese campo — solo deja de pedirse/contar a futuro (para ese año).
 - **`/usuarios`** (solo administrador): alta, edición y baja de cualquier usuario (cliente, preparador o administrador), incluida la asignación/reasignación de preparador de un cliente. Un administrador no puede eliminarse a sí mismo.
-- **`POST /clientes/{cliente}/determinaciones`** (`tax_year` requerido en el body): dispara el motor de reglas fiscales para ese cliente y año — ver [Motor de reglas fiscales](#motor-de-reglas-fiscales-fase-2) abajo.
+- **`POST /clientes/{cliente}/determinaciones`** (`tax_year` requerido en el body): dispara el motor de reglas fiscales para ese cliente y año — ver [Motor de reglas fiscales](#motor-de-reglas-fiscales-fase-2-ampliado-en-fase-6) abajo.
 
-## Motor de reglas fiscales (Fase 2)
+## Motor de reglas fiscales (Fase 2, ampliado en Fase 6)
 
-A partir de la Fase 2, la plataforma **calcula** (no solo recolecta) cuatro determinaciones fiscales por cliente y año: **filing status**, **calificación de dependientes** (qualifying child / qualifying relative), **AGI**, y **créditos elegibles** (Child Tax Credit, Credit for Other Dependents, crédito de cuidado de dependientes). El cálculo:
+La plataforma **calcula** (no solo recolecta) determinaciones fiscales por cliente y año. El cálculo:
 
 - Es **on-demand**, no automático: un preparador dispara `POST /clientes/{cliente}/determinaciones` (solo panel web, sesión — sin equivalente sobre token de agente) desde la ficha del cliente.
-- Lee los datos ya recolectados (`estado_civil`, `info_dependientes`, `ingresos`, `gastos_cuidado_dependientes`) y persiste el resultado en `determinaciones_fiscales`, **separado** de `campos_cliente` — nunca se mezcla "lo que dijo el cliente" con "lo que calculó el sistema".
-- Si falta un dato de entrada (ej. `estado_civil` nunca capturado), la determinación correspondiente queda con `disponible: false` y un `motivo_no_disponible` — nunca lanza un error 500 por datos incompletos.
-- Los montos y umbrales del IRS (`parametros_fiscales`) están versionados por `tax_year`, igual que el catálogo — hoy sembrados con cifras de 2025 confirmadas por fuente pública (Child Tax Credit $2,200, phase-out $200k/$400k, límite de ingreso "qualifying relative" $5,200, entre otros). El porcentaje del crédito de cuidado de dependientes se aproxima linealmente entre 35% y 20% — es una simplificación documentada de la tabla escalonada real del IRS, no el valor exacto.
-- **Estas cifras no reemplazan el criterio de un CPA** — están pensadas como apoyo al preparador, no como fuente final de verdad para presentar una declaración real.
+- Persiste cada resultado en `determinaciones_fiscales`, **separado** de `campos_cliente` — nunca se mezcla "lo que dijo el cliente" con "lo que calculó el sistema".
+- Si falta un dato de entrada (ej. `estado_civil` nunca capturado), la determinación correspondiente queda con `disponible: false` y un `motivo_no_disponible` — nunca lanza un error 500 por datos incompletos. Si en cambio falta un **parámetro fiscal** para ese `tax_year` (ej. nadie sembró los tramos de impuesto de un año nuevo todavía), la llamada completa falla con `500` y un mensaje explícito (`Falta sembrar el parámetro fiscal [...]`) — es un problema de despliegue, no de datos de cliente, así que no se disfraza de "no disponible".
+
+**Las once determinaciones** (`App\Enums\TipoDeterminacion`), en el orden real en que se calculan — cada paso alimenta al siguiente, replicando la secuencia del Form 1040:
+
+| Orden | `tipo` | Qué calcula |
+|---|---|---|
+| 1 | `dependientes` | Qualifying child / qualifying relative por dependiente (Fase 2) |
+| 2 | `filing_status` | Estado civil tributario derivado de hechos, nunca preguntado directo (Fase 2) |
+| 3 | `impuesto_autoempleo` | Schedule SE — 15.3%/92.35% sobre el neto de `schedule_c` + `schedule_f` (Fase 6) |
+| 4 | `agi` | Ingreso bruto ajustado — incluye la mitad deducible del SE tax como ajuste (Fase 2, ampliado Fase 6) |
+| 5 | `deduccion_aplicable` | Mayor entre deducción estándar y `form_1040.deducciones` itemizada (Fase 6) |
+| 6 | `qbi` | Form 8995 simplificado — 20% de ingreso calificado de negocio, con el tope legal del "menor de los dos" (Fase 6) |
+| 7 | `impuesto_ingreso` | Ingreso gravable + impuesto según los tramos marginales federales (Fase 6) |
+| 8 | `creditos` | Child Tax Credit, Credit for Other Dependents, crédito de cuidado de dependientes (Fase 2) |
+| 9 | `impuesto_medicare_adicional` | Form 8959 — 0.9% sobre salarios + SE combinados por encima del umbral (Fase 6) |
+| 10 | `niit` | Form 8960 — 3.8% sobre ingreso neto de inversión (Fase 6) |
+| 11 | `liquidacion` | Liquidación final: impuesto total, pagos totales, reembolso o saldo a pagar (Fase 6) |
+
+Limitaciones documentadas explícitamente en cada calculadora (`App\Services\Reglas\*`), no implementadas a propósito por complejidad o por depender de datos que el catálogo no recolecta todavía: tasa preferencial de dividendos calificados/ganancias de largo plazo (usa siempre tramos ordinarios), phase-out completo de QBI para SSTB/W-2 wages (solo marca `requiere_revision_manual`), coordinación del tope de Social Security entre SE tax y salarios W-2, pagos estimados (Form 1040-ES) y créditos reembolsables (EIC, Additional CTC, AOTC reembolsable) en la liquidación final.
+
+Los montos y umbrales del IRS (`parametros_fiscales`) están versionados por `tax_year`, igual que el catálogo — sembrados con cifras de 2025 confirmadas contra **fuente primaria** (IRS Rev. Proc. 2024-40, leída directo del PDF oficial) y cruzadas con la "One Big Beautiful Bill Act" (OBBBA, firmada 4-jul-2025), que corrigió la deducción estándar y el rango de phase-out de QBI **por encima** del ajuste por inflación original — ver los comentarios de `ParametrosFiscalesSeeder` para el detalle de qué cambió y qué no. El porcentaje del crédito de cuidado de dependientes se aproxima linealmente entre 35% y 20% — es una simplificación documentada de la tabla escalonada real del IRS, no el valor exacto.
+
+**Estas cifras no reemplazan el criterio de un CPA** — están pensadas como apoyo al preparador, no como fuente final de verdad para presentar una declaración real.
 
 ## Revelar campos sensibles
 

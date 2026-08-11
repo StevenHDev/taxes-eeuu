@@ -128,7 +128,14 @@ export type TipoDeterminacion =
     | 'filing_status'
     | 'dependientes'
     | 'agi'
-    | 'creditos';
+    | 'creditos'
+    | 'deduccion_aplicable'
+    | 'qbi'
+    | 'impuesto_ingreso'
+    | 'impuesto_autoempleo'
+    | 'impuesto_medicare_adicional'
+    | 'niit'
+    | 'liquidacion';
 
 export type FilingStatusValue = 'mfj' | 'single' | 'hoh' | 'qss';
 
@@ -180,13 +187,94 @@ export type CreditosResultado =
           total: number;
       };
 
+export type DeduccionAplicableResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          deduccion_estandar: number;
+          deduccion_itemizada: number;
+          deduccion_aplicable: number;
+          usa_itemizada: boolean;
+      };
+
+export type QbiResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          qbi: number;
+          deduccion: number;
+          requiere_revision_manual: boolean;
+      };
+
+export type ImpuestoIngresoResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          ingreso_gravable: number;
+          impuesto: number;
+      };
+
+export type ImpuestoAutoempleoResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          ingreso_neto_se: number;
+          base_gravable: number;
+          impuesto_se: number;
+          mitad_deducible: number;
+      };
+
+export type ImpuestoMedicareAdicionalResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          base_combinada: number;
+          umbral: number;
+          impuesto: number;
+      };
+
+export type NiitResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          ingreso_neto_inversion: number;
+          exceso_magi: number;
+          impuesto: number;
+      };
+
+export type LiquidacionResultado =
+    | { disponible: false; motivo_no_disponible: string }
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          impuesto_antes_otros: number;
+          otros_impuestos: number;
+          total_impuesto: number;
+          total_pagos: number;
+          reembolso: number;
+          saldo_a_pagar: number;
+      };
+
 export type Determinacion = {
     tipo: TipoDeterminacion;
     resultado:
         | FilingStatusResultado
         | DependientesResultado
         | AgiResultado
-        | CreditosResultado;
+        | CreditosResultado
+        | DeduccionAplicableResultado
+        | QbiResultado
+        | ImpuestoIngresoResultado
+        | ImpuestoAutoempleoResultado
+        | ImpuestoMedicareAdicionalResultado
+        | NiitResultado
+        | LiquidacionResultado;
     version_reglas: string;
     calculado_en: string;
 };

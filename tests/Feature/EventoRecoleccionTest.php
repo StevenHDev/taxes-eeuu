@@ -72,6 +72,7 @@ class EventoRecoleccionTest extends TestCase
             'ingresos_jubilacion' => 0,
             'otros_ingresos' => 0,
             'ajustes_ingreso' => 0,
+            'seguridad_social' => 0,
         ];
     }
 
@@ -353,7 +354,7 @@ class EventoRecoleccionTest extends TestCase
             $this->postJson('/api/eventos', array_merge([
                 'cliente_id' => $cliente->id,
                 'forma' => 'form_1040',
-            'tax_year' => 2025,
+                'tax_year' => 2025,
                 'modo' => 'texto',
             ], $campo))->assertCreated();
         }
@@ -369,7 +370,7 @@ class EventoRecoleccionTest extends TestCase
             $this->post('/api/eventos', [
                 'cliente_id' => $cliente->id,
                 'forma' => 'form_1040',
-            'tax_year' => 2025,
+                'tax_year' => 2025,
                 'campo' => $documento['campo'],
                 'tipo_campo' => 'documento',
                 'modo' => 'archivo',

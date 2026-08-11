@@ -8,17 +8,32 @@ use App\Enums\TipoDeterminacion;
 use App\Models\CampoCliente;
 use App\Models\DeterminacionFiscal;
 use App\Models\User;
+use App\Services\Reglas\AdditionalMedicareTaxCalculator;
 use App\Services\Reglas\AgiCalculator;
 use App\Services\Reglas\CreditEligibilityCalculator;
 use App\Services\Reglas\DependentQualificationCalculator;
 use App\Services\Reglas\FilingStatusCalculator;
+use App\Services\Reglas\NiitCalculator;
+use App\Services\Reglas\QbiCalculator;
+use App\Services\Reglas\SelfEmploymentTaxCalculator;
+use App\Services\Reglas\SettlementCalculator;
+use App\Services\Reglas\StandardDeductionCalculator;
+use App\Services\Reglas\TaxableIncomeAndTaxCalculator;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Orquesta las cuatro calculadoras del motor de reglas para un cliente y un
- * año fiscal, y persiste el resultado en `determinaciones_fiscales` — nunca
- * en `campos_cliente` (esa tabla es solo para lo que el cliente/agente
- * entregó, ver docs/plan-desarrollo-fases.md Decisión B).
+ * Orquesta las once calculadoras del motor de reglas para un cliente y un año
+ * fiscal, y persiste el resultado en `determinaciones_fiscales` — nunca en
+ * `campos_cliente` (esa tabla es solo para lo que el cliente/agente entregó,
+ * ver docs/plan-desarrollo-fases.md Decisión B).
+ *
+ * Orden de cálculo (cada paso alimenta al siguiente, replicando la secuencia
+ * real del Form 1040): dependientes → filing status → SE tax (necesario
+ * ANTES del AGI, porque la mitad es deducible como ajuste) → AGI → deducción
+ * aplicable (estándar vs itemizada) → QBI (necesita AGI y la deducción ya
+ * resueltas) → impuesto sobre el ingreso → créditos no reembolsables →
+ * Additional Medicare Tax / NIIT (otros impuestos de Schedule 2 Parte II) →
+ * liquidación final (reembolso o saldo a pagar).
  */
 class DeterminacionFiscalService
 {
@@ -35,10 +50,17 @@ class DeterminacionFiscalService
         private readonly FilingStatusCalculator $filingStatus,
         private readonly AgiCalculator $agi,
         private readonly CreditEligibilityCalculator $creditos,
+        private readonly StandardDeductionCalculator $deduccionAplicable,
+        private readonly SelfEmploymentTaxCalculator $impuestoAutoempleo,
+        private readonly AdditionalMedicareTaxCalculator $impuestoMedicareAdicional,
+        private readonly NiitCalculator $niit,
+        private readonly QbiCalculator $qbi,
+        private readonly TaxableIncomeAndTaxCalculator $impuestoIngreso,
+        private readonly SettlementCalculator $liquidacion,
     ) {}
 
     /**
-     * @return array<string, array<string, mixed>> las 4 determinaciones, indexadas por TipoDeterminacion
+     * @return array<string, array<string, mixed>> las determinaciones, indexadas por TipoDeterminacion
      */
     public function calcularPara(User $cliente, int $taxYear): array
     {
@@ -76,8 +98,22 @@ class DeterminacionFiscalService
                     ? 'estado_civil no ha sido capturado todavía'
                     : 'estado_civil tiene un formato inesperado — vuelve a cargarlo');
 
+            // --- Self-employment (Schedule C + Schedule F) — ANTES del AGI: la
+            // mitad del SE tax es un ajuste al ingreso (Schedule 1 línea 15).
+            // Una pérdida de un negocio SÍ compensa la ganancia del otro para
+            // este cálculo (no se floorea cada uno en 0 por separado).
+            $netoScheduleC = $this->leerNumero($cliente, $taxYear, 'schedule_c', 'ingresos_negocio')
+                - $this->leerNumero($cliente, $taxYear, 'schedule_c', 'gastos_deducibles_negocio')
+                - $this->leerNumero($cliente, $taxYear, 'schedule_c', 'costo_ventas');
+            $netoScheduleF = $this->leerNumero($cliente, $taxYear, 'schedule_f', 'ventas_agricolas')
+                + $this->leerNumero($cliente, $taxYear, 'schedule_f', 'subsidios')
+                - $this->leerNumero($cliente, $taxYear, 'schedule_f', 'gastos_operacion');
+            $netoAutoempleo = $netoScheduleC + $netoScheduleF;
+
+            $impuestoAutoempleo = $this->impuestoAutoempleo->calcular($taxYear, $netoAutoempleo);
+
             $agi = is_array($ingresos)
-                ? $this->agi->calcular($ingresos)
+                ? $this->agi->calcular($ingresos, $impuestoAutoempleo['mitad_deducible'])
                 : $this->noDisponible($ingresos === null
                     ? 'ingresos no ha sido capturado todavía'
                     : 'ingresos tiene un formato antiguo (cargado antes de la Fase 2) — vuelve a cargarlo con el formulario actual para poder calcular el AGI');
@@ -90,11 +126,82 @@ class DeterminacionFiscalService
                 ? $this->creditos->calcular($taxYear, FilingStatus::from($filingStatus['estado']), $agi['agi'], $dependientes, $gastosCuidado)
                 : $this->noDisponible('depende de estado_civil, ingresos e info_dependientes');
 
+            // --- Deducción aplicable (estándar vs itemizada) ---
+            $deduccionItemizada = $this->leerNumero($cliente, $taxYear, 'form_1040', 'deducciones');
+            $deduccionAplicable = ($filingStatus['disponible'])
+                ? $this->deduccionAplicable->calcular($taxYear, FilingStatus::from($filingStatus['estado']), $deduccionItemizada)
+                : $this->noDisponible('depende de estado_civil');
+
+            // --- QBI (Form 8995 simplificado) — necesita AGI y la deducción ya
+            // resueltas para el tope de "20% del taxable income antes de QBI".
+            $qbiInput = max(0.0, $netoScheduleC) + max(0.0, $netoScheduleF);
+            $gananciaCapitalNeta = is_array($ingresos) ? (float) ($ingresos['ganancias_capital'] ?? 0) : 0.0;
+            $qbi = ($filingStatus['disponible'] && $agi['disponible'] && $deduccionAplicable['disponible'])
+                ? $this->qbi->calcular(
+                    $taxYear,
+                    FilingStatus::from($filingStatus['estado']),
+                    $qbiInput,
+                    max(0.0, $agi['agi'] - $deduccionAplicable['deduccion_aplicable']),
+                    $gananciaCapitalNeta,
+                )
+                : $this->noDisponible('depende de estado_civil, ingresos y deducciones');
+
+            // --- Impuesto sobre el ingreso gravable (línea 15-16) ---
+            $impuestoIngreso = ($filingStatus['disponible'] && $agi['disponible'] && $deduccionAplicable['disponible'] && $qbi['disponible'])
+                ? $this->impuestoIngreso->calcular(
+                    $taxYear,
+                    FilingStatus::from($filingStatus['estado']),
+                    $agi['agi'],
+                    $deduccionAplicable['deduccion_aplicable'],
+                    $qbi['deduccion'],
+                )
+                : $this->noDisponible('depende de estado_civil, ingresos, deducciones y QBI');
+
+            // --- Additional Medicare Tax (Form 8959) ---
+            $salariosMedicare = is_array($ingresos) ? (float) ($ingresos['salarios'] ?? 0) : 0.0;
+            $impuestoMedicareAdicional = $filingStatus['disponible']
+                ? $this->impuestoMedicareAdicional->calcular(
+                    $taxYear,
+                    FilingStatus::from($filingStatus['estado']),
+                    $salariosMedicare,
+                    $impuestoAutoempleo['base_gravable'],
+                )
+                : $this->noDisponible('depende de estado_civil');
+
+            // --- NIIT (Form 8960) ---
+            $ingresoRentaE = $this->leerNumero($cliente, $taxYear, 'schedule_e', 'ingresos_renta');
+            $netoInversion = max(0.0, (is_array($ingresos)
+                ? (float) ($ingresos['intereses_dividendos'] ?? 0) + (float) ($ingresos['ganancias_capital'] ?? 0)
+                : 0.0) + $ingresoRentaE);
+            $niit = ($filingStatus['disponible'] && $agi['disponible'])
+                ? $this->niit->calcular($taxYear, FilingStatus::from($filingStatus['estado']), $agi['agi'], $netoInversion)
+                : $this->noDisponible('depende de estado_civil e ingresos');
+
+            // --- Liquidación final (líneas 22-37) ---
+            $impuestosRetenidos = $this->leerNumero($cliente, $taxYear, 'form_1040', 'impuestos_retenidos');
+            $liquidacion = ($impuestoIngreso['disponible'] && $creditos['disponible'] && $impuestoMedicareAdicional['disponible'] && $niit['disponible'])
+                ? $this->liquidacion->calcular(
+                    $impuestoIngreso['impuesto'],
+                    $creditos['total'],
+                    $impuestoAutoempleo['impuesto_se'],
+                    $impuestoMedicareAdicional['impuesto'],
+                    $niit['impuesto'],
+                    $impuestosRetenidos,
+                )
+                : $this->noDisponible('depende del impuesto sobre el ingreso, créditos, Additional Medicare Tax y NIIT');
+
             $resultados = [
                 TipoDeterminacion::Dependientes->value => $dependientes,
                 TipoDeterminacion::FilingStatus->value => $filingStatus,
                 TipoDeterminacion::Agi->value => $agi,
                 TipoDeterminacion::Creditos->value => $creditos,
+                TipoDeterminacion::DeduccionAplicable->value => $deduccionAplicable,
+                TipoDeterminacion::Qbi->value => $qbi,
+                TipoDeterminacion::ImpuestoIngreso->value => $impuestoIngreso,
+                TipoDeterminacion::ImpuestoAutoempleo->value => $impuestoAutoempleo,
+                TipoDeterminacion::ImpuestoMedicareAdicional->value => $impuestoMedicareAdicional,
+                TipoDeterminacion::Niit->value => $niit,
+                TipoDeterminacion::Liquidacion->value => $liquidacion,
             ];
 
             foreach ($resultados as $tipo => $resultado) {
@@ -129,6 +236,18 @@ class DeterminacionFiscalService
             ->where('estado', FieldState::Recibido)
             ->first()
             ?->valor_texto;
+    }
+
+    /**
+     * Igual que `leerValor()`, pero para campos numéricos simples (schedule_c,
+     * schedule_e, schedule_f) donde no declarar esa forma, o no haber cargado
+     * todavía ese campo puntual, es un estado legítimo — 0, no "no disponible"
+     * — a diferencia de `ingresos`/`estado_civil`, que sí bloquean el cálculo
+     * completo si faltan.
+     */
+    private function leerNumero(User $cliente, int $taxYear, string $forma, string $campo): float
+    {
+        return (float) ($this->leerValor($cliente, $taxYear, $forma, $campo) ?? 0);
     }
 
     /**

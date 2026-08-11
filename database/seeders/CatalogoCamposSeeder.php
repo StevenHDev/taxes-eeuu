@@ -92,6 +92,31 @@ class CatalogoCamposSeeder extends Seeder
             $this->campo('form_1099_g', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1098', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1098_e', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            // Fase 6 (auditoría completa de la matriz GTS 1040 2025, más allá de
+            // la primera pasada): documentos que la matriz identifica pero que
+            // todavía no existían en el catálogo. Ver RelacionesDocumentoCampoSeeder
+            // para las relaciones ciertas; SSA-1099, 1099-B/DA, 1098-T y 1095-A
+            // tienen `revela` — el resto (1099-MISC, 1099-K, 1099-S, K-1 personal,
+            // 1099-SA) la matriz misma los marca como "fact-dependent"/"no
+            // automáticamente gravable en su totalidad", así que solo se
+            // recolectan como documento, sin relación automática (ver
+            // GROUNDING ESTRICTO del prompt: nunca inventar una relación ambigua).
+            $this->campo('ssa_1099', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_b', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1098_t', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1095_a', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_misc', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_k', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_s', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            // K-1 que el cliente recibe como socio/beneficiario de una entidad
+            // AJENA (no la suya) — distinto de `datos_k1` dentro de form_1065/
+            // form_1120_s, que es el K-1 que la ENTIDAD del cliente emite a sus
+            // propios socios.
+            $this->campo('k1_recibido', FieldKind::Documento, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_w2g', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_c', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_sa', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_5498_sa', FieldKind::Documento, formatos: ['pdf', 'jpg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('declaracion_anio_anterior', FieldKind::Documento, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
             // Hechos crudos (no la conclusión) para que el motor de reglas calcule
             // el filing status — ver App\Services\Reglas\FilingStatusCalculator.
@@ -111,9 +136,15 @@ class CatalogoCamposSeeder extends Seeder
             TaxForm::Form1040->value => [
                 // Desglosado (no un Number suelto): sin esto no se puede calcular
                 // AGI — ver App\Services\Reglas\AgiCalculator.
+                // 'seguridad_social' (Fase 6) es un subcampo NUEVO agregado a un
+                // campo ya existente en producción — CatalogoCamposSeeder usa
+                // firstOrCreate por (forma, clave, tax_year), así que esto solo
+                // toma efecto en instalaciones frescas; la fila ya sembrada en
+                // producción se actualiza aparte con una migración de datos
+                // (ver 2026_08_11_090000_fase6_documentos_faltantes_matriz_gts.php).
                 $this->campo('ingresos', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
                     'salarios', 'intereses_dividendos', 'ganancias_capital',
-                    'ingresos_jubilacion', 'otros_ingresos', 'ajustes_ingreso',
+                    'ingresos_jubilacion', 'otros_ingresos', 'ajustes_ingreso', 'seguridad_social',
                 ]),
                 $this->campo('deducciones', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg']),
                 $this->campo('impuestos_retenidos', FieldKind::Dato, tipoDato: FieldDataType::Number),
@@ -124,6 +155,20 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('gastos_cuidado_dependientes', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'jpg'], subcampos: [
                     'proveedor_nombre', 'proveedor_ssn_ein', 'monto_anual', 'dependiente_relacionado',
                 ], obligatorio: false, sensible: true),
+                // Fase 6 — campos nuevos identificados en la auditoría completa
+                // de la matriz GTS 1040 2025 (1098-T, 1095-A, impuesto extranjero
+                // de 1099-DIV casilla 7, y las deducciones nuevas de 2025).
+                $this->campo('gastos_educacion', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg'], obligatorio: false),
+                $this->campo('marketplace_seguro', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
+                    'premium_mensual', 'slcsp', 'aptc_recibido',
+                ], obligatorio: false),
+                $this->campo('impuesto_extranjero_pagado', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false),
+                // Hechos crudos para Schedule 1-A (línea 13b) — no es la
+                // conclusión de cuánto deducir, solo lo que el motor de reglas
+                // necesita para calcularlo más adelante.
+                $this->campo('beneficios_2025', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
+                    'propinas_reportadas', 'horas_extra_pagadas', 'interes_prestamo_auto', 'es_adulto_mayor',
+                ], obligatorio: false),
             ],
             TaxForm::ScheduleC->value => [
                 $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),

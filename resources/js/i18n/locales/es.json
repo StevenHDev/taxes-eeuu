@@ -270,7 +270,20 @@
         "creditBreakdown": "Desglose de créditos",
         "dependentCare": "Cuidado de dependientes",
         "agiReduction": "Reducción por AGI",
-        "total": "Total"
+        "total": "Total",
+        "settlement": {
+            "refund": "Reembolso estimado",
+            "balanceDue": "Saldo a pagar estimado",
+            "totalTax": "Impuesto total",
+            "totalPayments": "Pagos totales"
+        },
+        "otherTaxes": {
+            "title": "Impuesto sobre el ingreso y otros impuestos",
+            "incomeTax": "Impuesto sobre el ingreso",
+            "selfEmploymentTax": "Impuesto de autoempleo (SE tax)",
+            "additionalMedicare": "Medicare adicional",
+            "niit": "Impuesto neto de inversión (NIIT)"
+        }
     },
     "clienteShow": {
         "viewer": {

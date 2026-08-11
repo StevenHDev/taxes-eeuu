@@ -169,6 +169,7 @@ class ClientePanelTest extends TestCase
                     'ingresos_jubilacion' => 0,
                     'otros_ingresos' => 0,
                     'ajustes_ingreso' => 1000,
+                    'seguridad_social' => 0,
                 ],
             ])
             ->assertRedirect();

@@ -270,7 +270,20 @@
         "creditBreakdown": "Credit breakdown",
         "dependentCare": "Dependent care",
         "agiReduction": "AGI reduction",
-        "total": "Total"
+        "total": "Total",
+        "settlement": {
+            "refund": "Estimated refund",
+            "balanceDue": "Estimated balance due",
+            "totalTax": "Total tax",
+            "totalPayments": "Total payments"
+        },
+        "otherTaxes": {
+            "title": "Income tax and other taxes",
+            "incomeTax": "Income tax",
+            "selfEmploymentTax": "Self-employment tax (SE tax)",
+            "additionalMedicare": "Additional Medicare tax",
+            "niit": "Net investment income tax (NIIT)"
+        }
     },
     "clienteShow": {
         "viewer": {

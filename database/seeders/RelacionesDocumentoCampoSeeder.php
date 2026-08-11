@@ -156,6 +156,84 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'ajustes_ingreso',
                 'descripcion' => 'Casilla 1 (Student loan interest received) del 1098-E es un ajuste al ingreso (above-the-line), sujeto a límites de MAGI.',
             ],
+
+            // Fase 6 — relaciones ciertas identificadas en la auditoría completa
+            // de la matriz (pestañas Source_Forms/Schedule_Flows/1040_Trace).
+            // form_1099_misc, form_1099_k, form_1099_s, k1_recibido y
+            // form_1099_sa NO tienen relación acá a propósito: la matriz misma
+            // los marca como "fact-dependent"/"no automáticamente gravable en su
+            // totalidad" — no hay una casilla única que determine con certeza el
+            // campo destino, así que solo se recolectan como documento (ver
+            // GROUNDING ESTRICTO del prompt del agente).
+
+            // SSA-1099 / RRB-1099 (Seguro Social)
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'ssa_1099',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'seguridad_social',
+                'descripcion' => 'Casilla 5 (Net benefits) del SSA-1099 es el beneficio bruto de Seguro Social; la porción gravable la calcula el motor de reglas según el ingreso combinado (Social Security Benefits Worksheet).',
+            ],
+
+            // 1099-B / 1099-DA (ventas de inversiones/cripto)
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_b',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'ganancias_capital',
+                'descripcion' => 'Ganancia/pérdida neta reportada (proceeds menos basis) del 1099-B/1099-DA es la ganancia de capital a incluir en ingresos — aproximación: no distingue corto/largo plazo ni lote por lote.',
+            ],
+
+            // 1098-T (educación)
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1098_t',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'gastos_educacion', 'subcampo_destino' => null,
+                'descripcion' => 'Casilla 1 (Payments received for qualified tuition and related expenses) del 1098-T son los gastos calificados de educación para el crédito educativo (Form 8863).',
+            ],
+
+            // 1095-A (Marketplace / Affordable Care Act)
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1095_a',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'marketplace_seguro', 'subcampo_destino' => 'premium_mensual',
+                'descripcion' => 'Columna A (Monthly premium amount) del 1095-A, parte III, es la prima mensual pagada por el seguro del Marketplace.',
+            ],
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1095_a',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'marketplace_seguro', 'subcampo_destino' => 'slcsp',
+                'descripcion' => 'Columna B (Monthly second lowest cost silver plan) del 1095-A, parte III, es el SLCSP mensual, necesario para reconciliar el Premium Tax Credit (Form 8962).',
+            ],
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1095_a',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'marketplace_seguro', 'subcampo_destino' => 'aptc_recibido',
+                'descripcion' => 'Columna C (Monthly advance payment of premium tax credit) del 1095-A, parte III, es el APTC recibido por adelantado a reconciliar en el Form 8962.',
+            ],
+
+            // W-2G (ganancias de juego)
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'form_w2g',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'otros_ingresos',
+                'descripcion' => 'Casilla 1 (Reportable winnings) del W-2G es ingreso de juego a reportar como otro ingreso.',
+            ],
+
+            // 1099-C (cancelación de deuda)
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_c',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'otros_ingresos',
+                'descripcion' => 'Casilla 2 (Amount of debt discharged) del 1099-C es ingreso por cancelación de deuda a incluir en otros ingresos, sujeto a exclusiones (insolvencia, quiebra) que el motor de reglas no evalúa — verificar con el cliente antes de usarlo tal cual.',
+            ],
+
+            // 5498-SA (aportes a HSA — deducible; distinto de 1099-SA, que son
+            // distribuciones y no tiene relación cierta por depender de si
+            // fueron gastos médicos calificados).
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'form_5498_sa',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'ajustes_ingreso',
+                'descripcion' => 'Casilla 2 (Total contributions made) del 5498-SA es el aporte a HSA deducible como ajuste al ingreso (Form 8889).',
+            ],
+
+            // Impuesto extranjero pagado — casilla adicional del 1099-DIV que ya
+            // es transversal en el catálogo (no requiere un documento nuevo).
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_div',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'impuesto_extranjero_pagado', 'subcampo_destino' => null,
+                'descripcion' => 'Casilla 7 (Foreign tax paid) del 1099-DIV es impuesto extranjero pagado, elegible para el crédito del Form 1116.',
+            ],
         ];
     }
 }
