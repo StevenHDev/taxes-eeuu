@@ -954,7 +954,18 @@ components:
           type: string
         estado:
           $ref: '#/components/schemas/FieldState'
-      required: [cliente_id, forma, campo, estado]
+        revela:
+          type: array
+          description: |
+            Repite el mismo `revela` que ya traía esta entrada en la última
+            respuesta de consultar_pendientes_cliente, para que el agente no
+            dependa de recordarlo de un turno anterior — encontrado en
+            producción con modelos pequeños sobre prompts largos: el agente
+            guardaba el documento principal pero nunca encadenaba las llamadas
+            para sus campos revelados. Vacío para casi todo campo `dato`.
+          items:
+            $ref: '#/components/schemas/RelacionRevelada'
+      required: [cliente_id, forma, campo, estado, revela]
 
     ClienteResumen:
       type: object

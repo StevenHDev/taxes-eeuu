@@ -490,12 +490,17 @@ Respuesta `201` (mismo shape para cualquiera de los casos anteriores). `forma` r
   "forma": "transversal",
   "forma_estado": null,
   "campo": "w2",
-  "estado": "recibido"
+  "estado": "recibido",
+  "revela": [
+    { "forma": "form_1040", "campo": "ingresos", "subcampo": "salarios", "descripcion": "Box 1 (Wages, tips, other compensation) del W-2 es el salario total del cliente.", "acumulable": false },
+    { "forma": "form_1040", "campo": "impuestos_retenidos", "subcampo": null, "descripcion": "Box 2 (Federal income tax withheld) del W-2 suma directo a la retención federal total.", "acumulable": true }
+  ]
 }
 ```
 
 Notas:
 
+- **`revela`** (mismo shape que en [Qué falta por recolectar](#qué-falta-por-recolectar-get-apiclientesidpendientestax_year)): se repite acá el `revela` que ya traía esta entrada en la última respuesta de `consultar_pendientes_cliente`, para que el agente no dependa de recordarlo de un turno anterior — encontrado en producción con modelos más pequeños (ej. gpt-5-mini) sobre prompts largos: el agente guardaba el documento principal pero nunca encadenaba las llamadas para los campos que ese documento revela, porque esa clave solo vivía en una respuesta 1-2 turnos atrás. Vacío (`[]`) para casi todo campo `tipo_campo: "dato"` y para cualquier campo sin relaciones confirmadas.
 - **`cliente_id` vacío/null** = primer contacto: la API crea un cliente nuevo (placeholder, sin nombre) y lo devuelve en la respuesta. Guarda ese `cliente_id` para los siguientes eventos de la misma persona.
 - **`external_ref`** (opcional, extensión sobre el contrato original): identificador estable de la conversación externa (ej. el id de sesión del agente). Si lo envías la primera vez que `cliente_id` es null, y luego lo repites, la API reconoce que es el mismo cliente en vez de crear uno duplicado — protección recomendada si tu agente puede perder el `cliente_id` entre turnos.
 - **`phone`** (opcional, extensión sobre el contrato original): teléfono del cliente. Si lo envías cuando `cliente_id` es null y ya existe un cliente con ese teléfono, la API reutiliza ese cliente en vez de crear uno duplicado — es un identificador más estable que `external_ref` para esto, y además queda guardado para poder [buscar al cliente por teléfono](#buscar-un-cliente-por-id-o-por-telefono) más adelante.

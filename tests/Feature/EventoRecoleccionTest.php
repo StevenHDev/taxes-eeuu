@@ -9,6 +9,7 @@ use App\Models\CampoCliente;
 use App\Models\ClientIntakeSession;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
+use App\Models\RelacionDocumentoCampo;
 use App\Models\User;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -825,5 +826,74 @@ class EventoRecoleccionTest extends TestCase
             'acumular' => true,
             'subcampo' => 'algo',
         ])->assertStatus(422)->assertJsonValidationErrors(['subcampo']);
+    }
+
+    /**
+     * Encontrado en producción: el agente conversacional externo guardaba el
+     * documento principal (ej. w2) pero nunca encadenaba las llamadas para
+     * guardar los campos de su `revela`, porque esa clave solo vivía en la
+     * respuesta de consultar_pendientes_cliente de 1-2 turnos atrás — con
+     * prompts largos, modelos más chicos pierden esa referencia. La respuesta
+     * de guardar_campo_cliente ahora repite el mismo `revela`, justo en el
+     * resultado del guardado que el agente acaba de hacer.
+     */
+    public function test_la_respuesta_incluye_el_revela_del_documento_guardado(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        // El seeder de relaciones no corre en TestCase::setUp() (solo catálogo
+        // y parámetros fiscales) — se siembra acá la única relación que este
+        // test necesita.
+        RelacionDocumentoCampo::query()->create([
+            'documento_forma' => 'transversal',
+            'documento_campo' => 'w2',
+            'campo_destino_forma' => 'form_1040',
+            'campo_destino' => 'ingresos',
+            'subcampo_destino' => 'salarios',
+            'descripcion' => 'Box 1 del W-2 es el salario total.',
+            'acumulable' => false,
+            'tax_year' => 2025,
+        ]);
+        TaxFieldCatalog::invalidate();
+
+        $response = $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'w2',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2.pdf', 10),
+        ]);
+
+        $response->assertCreated();
+        $revela = $response->json('revela');
+
+        $this->assertCount(1, $revela);
+        $this->assertSame('form_1040', $revela[0]['forma']);
+        $this->assertSame('ingresos', $revela[0]['campo']);
+        $this->assertSame('salarios', $revela[0]['subcampo']);
+        $this->assertSame(false, $revela[0]['acumulable']);
+    }
+
+    public function test_la_respuesta_trae_revela_vacio_para_un_campo_sin_relaciones(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'identificacion_ssn_itin',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'string',
+            'contenido' => '123-45-6789',
+        ]);
+
+        $response->assertCreated()->assertJsonPath('revela', []);
     }
 }
