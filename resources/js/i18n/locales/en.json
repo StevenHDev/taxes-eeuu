@@ -277,6 +277,15 @@
             "totalTax": "Total tax",
             "totalPayments": "Total payments"
         },
+        "deduction": {
+            "title": "Deduction & QBI",
+            "standard": "Standard deduction",
+            "itemized": "Itemized deduction",
+            "applied": "Deduction applied",
+            "usingItemized": "Itemizing",
+            "qbiDeduction": "QBI deduction (20%)",
+            "qbiManualReview": "Requires manual review"
+        },
         "otherTaxes": {
             "title": "Income tax and other taxes",
             "incomeTax": "Income tax",

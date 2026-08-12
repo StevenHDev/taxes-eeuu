@@ -277,6 +277,15 @@
             "totalTax": "Impuesto total",
             "totalPayments": "Pagos totales"
         },
+        "deduction": {
+            "title": "Deducción y QBI",
+            "standard": "Deducción estándar",
+            "itemized": "Deducción itemizada",
+            "applied": "Deducción aplicada",
+            "usingItemized": "Itemizada",
+            "qbiDeduction": "Deducción QBI (20%)",
+            "qbiManualReview": "Requiere revisión manual"
+        },
         "otherTaxes": {
             "title": "Impuesto sobre el ingreso y otros impuestos",
             "incomeTax": "Impuesto sobre el ingreso",

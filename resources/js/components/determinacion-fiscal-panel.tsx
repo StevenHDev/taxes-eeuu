@@ -10,6 +10,7 @@ import { store as calcularDeterminaciones } from '@/routes/clientes/determinacio
 import type {
     AgiResultado,
     CreditosResultado,
+    DeduccionAplicableResultado,
     Determinacion,
     DependientesResultado,
     FilingStatusResultado,
@@ -19,6 +20,7 @@ import type {
     ImpuestoMedicareAdicionalResultado,
     LiquidacionResultado,
     NiitResultado,
+    QbiResultado,
     TipoDeterminacion,
 } from '@/types';
 
@@ -76,7 +78,15 @@ export function DeterminacionFiscalPanel({
         'dependientes',
     );
     const agi = resultadoDe<AgiResultado>(determinaciones, 'agi');
-    const creditos = resultadoDe<CreditosResultado>(determinaciones, 'creditos');
+    const creditos = resultadoDe<CreditosResultado>(
+        determinaciones,
+        'creditos',
+    );
+    const deduccionAplicable = resultadoDe<DeduccionAplicableResultado>(
+        determinaciones,
+        'deduccion_aplicable',
+    );
+    const qbi = resultadoDe<QbiResultado>(determinaciones, 'qbi');
     const impuestoIngreso = resultadoDe<ImpuestoIngresoResultado>(
         determinaciones,
         'impuesto_ingreso',
@@ -152,7 +162,7 @@ export function DeterminacionFiscalPanel({
                                         : 'determinacionFiscal.settlement.refund',
                                 )}
                             </p>
-                            <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
+                            <p className="mt-1 text-2xl font-semibold text-foreground tabular-nums">
                                 {formatCurrency(
                                     liquidacion.saldo_a_pagar > 0
                                         ? liquidacion.saldo_a_pagar
@@ -241,37 +251,35 @@ export function DeterminacionFiscalPanel({
                                     {t('determinacionFiscal.dependents')}
                                 </h3>
                                 <ul className="mt-2 space-y-2">
-                                    {dependientes.dependientes.map(
-                                        (dep, i) => (
-                                            <li
-                                                key={i}
-                                                className="flex items-center justify-between gap-2 text-sm"
+                                    {dependientes.dependientes.map((dep, i) => (
+                                        <li
+                                            key={i}
+                                            className="flex items-center justify-between gap-2 text-sm"
+                                        >
+                                            <span className="text-foreground">
+                                                {dep.nombre_completo ??
+                                                    t(
+                                                        'determinacionFiscal.unnamedDependent',
+                                                    )}
+                                            </span>
+                                            <Badge
+                                                variant={
+                                                    dep.elegible_ctc ||
+                                                    dep.elegible_odc
+                                                        ? 'secondary'
+                                                        : 'outline'
+                                                }
                                             >
-                                                <span className="text-foreground">
-                                                    {dep.nombre_completo ??
-                                                        t(
-                                                            'determinacionFiscal.unnamedDependent',
+                                                {dep.elegible_ctc
+                                                    ? 'CTC'
+                                                    : dep.elegible_odc
+                                                      ? 'ODC'
+                                                      : t(
+                                                            'determinacionFiscal.notQualified',
                                                         )}
-                                                </span>
-                                                <Badge
-                                                    variant={
-                                                        dep.elegible_ctc ||
-                                                        dep.elegible_odc
-                                                            ? 'secondary'
-                                                            : 'outline'
-                                                    }
-                                                >
-                                                    {dep.elegible_ctc
-                                                        ? 'CTC'
-                                                        : dep.elegible_odc
-                                                          ? 'ODC'
-                                                          : t(
-                                                                'determinacionFiscal.notQualified',
-                                                            )}
-                                                </Badge>
-                                            </li>
-                                        ),
-                                    )}
+                                            </Badge>
+                                        </li>
+                                    ))}
                                 </ul>
                             </div>
                         )}
@@ -300,9 +308,7 @@ export function DeterminacionFiscalPanel({
                                 </div>
                                 <div className="flex justify-between">
                                     <dt className="text-muted-foreground">
-                                        {t(
-                                            'determinacionFiscal.dependentCare',
-                                        )}
+                                        {t('determinacionFiscal.dependentCare')}
                                     </dt>
                                     <dd className="tabular-nums">
                                         {formatCurrency(
@@ -335,6 +341,82 @@ export function DeterminacionFiscalPanel({
                         </div>
                     )}
 
+                    {(deduccionAplicable?.disponible || qbi?.disponible) && (
+                        <div>
+                            <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                {t('determinacionFiscal.deduction.title')}
+                            </h3>
+                            <dl className="mt-2 space-y-1 text-sm">
+                                {deduccionAplicable?.disponible && (
+                                    <>
+                                        <div className="flex justify-between">
+                                            <dt className="text-muted-foreground">
+                                                {t(
+                                                    'determinacionFiscal.deduction.standard',
+                                                )}
+                                            </dt>
+                                            <dd className="tabular-nums">
+                                                {formatCurrency(
+                                                    deduccionAplicable.deduccion_estandar,
+                                                )}
+                                            </dd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <dt className="text-muted-foreground">
+                                                {t(
+                                                    'determinacionFiscal.deduction.itemized',
+                                                )}
+                                            </dt>
+                                            <dd className="tabular-nums">
+                                                {formatCurrency(
+                                                    deduccionAplicable.deduccion_itemizada,
+                                                )}
+                                            </dd>
+                                        </div>
+                                        <div className="flex justify-between border-t pt-1 font-medium text-foreground">
+                                            <dt className="flex items-center gap-1.5">
+                                                {t(
+                                                    'determinacionFiscal.deduction.applied',
+                                                )}
+                                                {deduccionAplicable.usa_itemizada && (
+                                                    <Badge variant="secondary">
+                                                        {t(
+                                                            'determinacionFiscal.deduction.usingItemized',
+                                                        )}
+                                                    </Badge>
+                                                )}
+                                            </dt>
+                                            <dd className="tabular-nums">
+                                                {formatCurrency(
+                                                    deduccionAplicable.deduccion_aplicable,
+                                                )}
+                                            </dd>
+                                        </div>
+                                    </>
+                                )}
+                                {qbi?.disponible && qbi.deduccion > 0 && (
+                                    <div className="flex justify-between">
+                                        <dt className="flex items-center gap-1.5 text-muted-foreground">
+                                            {t(
+                                                'determinacionFiscal.deduction.qbiDeduction',
+                                            )}
+                                            {qbi.requiere_revision_manual && (
+                                                <Badge variant="outline">
+                                                    {t(
+                                                        'determinacionFiscal.deduction.qbiManualReview',
+                                                    )}
+                                                </Badge>
+                                            )}
+                                        </dt>
+                                        <dd className="tabular-nums">
+                                            {formatCurrency(qbi.deduccion)}
+                                        </dd>
+                                    </div>
+                                )}
+                            </dl>
+                        </div>
+                    )}
+
                     {impuestoIngreso?.disponible &&
                         (impuestoAutoempleo?.disponible ||
                             impuestoMedicareAdicional?.disponible ||
@@ -342,9 +424,7 @@ export function DeterminacionFiscalPanel({
                             <div>
                                 <h3 className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                     <Landmark className="size-3.5" />
-                                    {t(
-                                        'determinacionFiscal.otherTaxes.title',
-                                    )}
+                                    {t('determinacionFiscal.otherTaxes.title')}
                                 </h3>
                                 <dl className="mt-2 space-y-1 text-sm">
                                     <div className="flex justify-between">
@@ -360,8 +440,7 @@ export function DeterminacionFiscalPanel({
                                         </dd>
                                     </div>
                                     {impuestoAutoempleo?.disponible &&
-                                        impuestoAutoempleo.impuesto_se >
-                                            0 && (
+                                        impuestoAutoempleo.impuesto_se > 0 && (
                                             <div className="flex justify-between">
                                                 <dt className="text-muted-foreground">
                                                     {t(
