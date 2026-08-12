@@ -271,7 +271,23 @@ class TaxFieldCatalog
     {
         return self::relaciones()
             ->filter(fn (array $r) => $r['tax_year'] === $taxYear && $r['documento_campo'] === $campoDocumento)
-            ->map(fn (array $r) => $r['definicion'])
+            ->map(function (array $r) use ($taxYear) {
+                $definicion = $r['definicion'];
+                // El agente necesita el tipo_campo/tipo_dato del campo DESTINO
+                // para poder armar el item de `revelados` (ver DEFINICIÓN DE
+                // LAS TOOLS, punto 10) sin tener que adivinarlos de memoria —
+                // encontrado en producción: sin esto, el agente asumía "dato"
+                // y el tipo del propio subcampo (ej. "number") en vez del tipo
+                // real del campo en el catálogo (ej. "mixto"/"object"),
+                // provocando 422 en guardar_campo_cliente.
+                $destino = self::find($taxYear, $definicion['forma'], $definicion['campo']);
+
+                return [
+                    ...$definicion,
+                    'tipo_campo' => $destino['tipo']?->value,
+                    'tipo_dato' => $destino['tipo_dato']?->value,
+                ];
+            })
             ->values()
             ->all();
     }

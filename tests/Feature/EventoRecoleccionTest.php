@@ -876,6 +876,58 @@ class EventoRecoleccionTest extends TestCase
         $this->assertSame('ingresos', $revela[0]['campo']);
         $this->assertSame('salarios', $revela[0]['subcampo']);
         $this->assertSame(false, $revela[0]['acumulable']);
+        // El agente necesita el tipo_campo/tipo_dato del campo DESTINO (no del
+        // documento) para armar el item de `revelados` sin adivinarlos —
+        // encontrado en producción: sin esto, el agente asumía "dato"/"number"
+        // en vez del tipo real en el catálogo ("dato"/"object" para `ingresos`,
+        // o "mixto" para campos como gastos_cuidado_dependientes).
+        $this->assertSame('dato', $revela[0]['tipo_campo']);
+        $this->assertSame('object', $revela[0]['tipo_dato']);
+    }
+
+    /**
+     * Bug real reportado en producción: `gastos_cuidado_dependientes` está
+     * catalogado como tipo_campo="mixto" (acepta documento o texto), pero el
+     * agente enviaba tipo_campo="dato" en el revelado porque `revela` no le
+     * decía el tipo real del campo destino y point 10 decía "siempre dato".
+     * Ahora `revela` expone el tipo_campo real, y el agente solo tiene que
+     * copiarlo — nunca asumirlo.
+     */
+    public function test_revela_expone_tipo_campo_mixto_para_un_campo_destino_mixto(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        RelacionDocumentoCampo::query()->create([
+            'documento_forma' => 'transversal',
+            'documento_campo' => 'w2',
+            'campo_destino_forma' => 'form_1040',
+            'campo_destino' => 'gastos_cuidado_dependientes',
+            'subcampo_destino' => 'monto_anual',
+            'descripcion' => 'Box 10 del W-2 es el monto anual de beneficios de cuidado de dependientes.',
+            'acumulable' => false,
+            'tax_year' => 2025,
+        ]);
+        TaxFieldCatalog::invalidate();
+
+        $response = $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'w2',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2.pdf', 10),
+        ]);
+
+        $response->assertCreated();
+        $revela = $response->json('revela');
+
+        $gastosCuidado = collect($revela)->firstWhere('campo', 'gastos_cuidado_dependientes');
+        $this->assertNotNull($gastosCuidado);
+        $this->assertSame('mixto', $gastosCuidado['tipo_campo']);
+        $this->assertSame('object', $gastosCuidado['tipo_dato']);
     }
 
     public function test_la_respuesta_trae_revela_vacio_para_un_campo_sin_relaciones(): void
