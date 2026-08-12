@@ -1,5 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Code2, LayoutGrid, ListChecks, UserCog, Users } from 'lucide-react';
+import {
+    Code2,
+    History,
+    LayoutGrid,
+    ListChecks,
+    UserCog,
+    Users,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -12,6 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as apiDocsIndex } from '@/routes/api-docs';
+import { index as bitacoraIndex } from '@/routes/bitacora';
 import { index as catalogoIndex } from '@/routes/catalogo';
 import { index as clientesIndex } from '@/routes/clientes';
 import { index as usuariosIndex } from '@/routes/usuarios';
@@ -53,6 +61,11 @@ export function AppSidebar() {
                       title: t('nav.users'),
                       href: usuariosIndex(),
                       icon: UserCog,
+                  },
+                  {
+                      title: t('nav.auditLog'),
+                      href: bitacoraIndex(),
+                      icon: History,
                   },
               ]
             : []),

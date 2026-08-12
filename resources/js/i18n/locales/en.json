@@ -30,6 +30,7 @@
         "clients": "Clients",
         "catalog": "Catalog",
         "users": "Users",
+        "auditLog": "Audit log",
         "apiDocs": "API docs",
         "platform": "Platform",
         "repository": "Repository",
@@ -434,6 +435,28 @@
             "deleteTitle": "Delete {{name}}?",
             "deleteDescription": "If this is a client, all of their uploaded data will be deleted. This action cannot be undone.",
             "deleteConfirm": "Delete permanently"
+        }
+    },
+    "bitacora": {
+        "title": "Audit log",
+        "subtitle": "Platform activity log: who did what and when, over the last 30 days.",
+        "searchPlaceholder": "Search by user or affected record…",
+        "empty": "No activity recorded.",
+        "system": "System",
+        "acciones": {
+            "creado": "Created",
+            "actualizado": "Updated",
+            "eliminado": "Deleted",
+            "inicioSesion": "Login",
+            "cierreSesion": "Logout"
+        },
+        "columns": {
+            "date": "Date",
+            "actor": "User",
+            "action": "Action",
+            "record": "Affected record",
+            "fields": "Fields",
+            "ip": "IP"
         }
     },
     "catalogo": {

@@ -60,7 +60,12 @@ export type DocumentoDuplicado = {
     posible_duplicado: boolean;
     mismo_cliente: { forma: string; campo: string }[] | null;
     otro_cliente: boolean;
-    otro_cliente_detalle: { cliente_id: number; cliente_nombre: string; forma: string; campo: string } | null;
+    otro_cliente_detalle: {
+        cliente_id: number;
+        cliente_nombre: string;
+        forma: string;
+        campo: string;
+    } | null;
 };
 
 export type CampoDocumento = {
@@ -141,7 +146,11 @@ export type FilingStatusValue = 'mfj' | 'single' | 'hoh' | 'qss';
 
 export type FilingStatusResultado =
     | { disponible: false; motivo_no_disponible: string }
-    | { disponible: true; motivo_no_disponible: null; estado: FilingStatusValue };
+    | {
+          disponible: true;
+          motivo_no_disponible: null;
+          estado: FilingStatusValue;
+      };
 
 export type DependienteResultado = {
     nombre_completo: string | null;
@@ -286,6 +295,21 @@ export type Usuario = {
     phone: string | null;
     role: 'client' | 'preparer' | 'administrator';
     preparer?: { id: number; name: string } | null;
+};
+
+export type AccionAuditoria =
+    'creado' | 'actualizado' | 'eliminado' | 'inicio_sesion' | 'cierre_sesion';
+
+export type BitacoraEvento = {
+    id: number;
+    created_at: string;
+    actor_nombre: string | null;
+    actor_email: string | null;
+    accion: AccionAuditoria;
+    auditable_type: string | null;
+    etiqueta: string | null;
+    campos_afectados: string[] | null;
+    ip_address: string | null;
 };
 
 export type DashboardResumen = {

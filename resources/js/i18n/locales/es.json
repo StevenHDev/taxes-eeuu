@@ -30,6 +30,7 @@
         "clients": "Clientes",
         "catalog": "Catálogo",
         "users": "Usuarios",
+        "auditLog": "Bitácora",
         "apiDocs": "Documentación API",
         "platform": "Plataforma",
         "repository": "Repositorio",
@@ -434,6 +435,28 @@
             "deleteTitle": "¿Eliminar a {{name}}?",
             "deleteDescription": "Si es un cliente, se borran todos sus datos cargados. Esta acción no se puede deshacer.",
             "deleteConfirm": "Eliminar definitivamente"
+        }
+    },
+    "bitacora": {
+        "title": "Bitácora",
+        "subtitle": "Registro de actividad de la plataforma: quién hizo qué y cuándo, en los últimos 30 días.",
+        "searchPlaceholder": "Buscar por usuario o registro afectado…",
+        "empty": "Sin actividad registrada.",
+        "system": "Sistema",
+        "acciones": {
+            "creado": "Creado",
+            "actualizado": "Actualizado",
+            "eliminado": "Eliminado",
+            "inicioSesion": "Inicio de sesión",
+            "cierreSesion": "Cierre de sesión"
+        },
+        "columns": {
+            "date": "Fecha",
+            "actor": "Usuario",
+            "action": "Acción",
+            "record": "Registro afectado",
+            "fields": "Campos",
+            "ip": "IP"
         }
     },
     "catalogo": {
