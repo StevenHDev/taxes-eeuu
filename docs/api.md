@@ -336,6 +336,71 @@ Ejemplo: el cliente ya tiene `intereses_dividendos: 500` guardado (de un 1099-IN
 
 El campo queda con `intereses_dividendos: 1700` (500 + 1200); los demás subcampos del objeto se guardan con el valor recién enviado (`0` en este ejemplo), igual que en cualquier evento sin `acumular`.
 
+### Guardar un documento y sus campos revelados en una sola llamada (`revelados`)
+
+Cuando un documento tiene `revela` no vacío (ver [Qué falta por recolectar](#qué-falta-por-recolectar-get-apiclientesidpendientestax_year)), el agente puede resolver el documento **y** cada campo que revela en la MISMA invocación de `POST /api/eventos`, en vez de un evento separado por cada uno. Esto es puramente aditivo — un evento sin `revelados` funciona exactamente igual que siempre, este parámetro es opcional y no cambia el shape de ningún request/response existente.
+
+- **`revelados`** (`array`, opcional): un item por cada campo que este documento ya resuelve. Cada item tiene la misma forma que un evento normal de tipo dato, sin `cliente_id`/`tax_year`/`modo` (se heredan del evento raíz — siempre es modo `"texto"`, un revelado nunca es otro documento):
+  - `forma`, `campo`: el destino, tal como los trae ese elemento de `revela`.
+  - `tipo_campo`: siempre `"dato"`.
+  - `tipo_dato`: el que corresponda a ese campo en el catálogo.
+  - `contenido`: el valor, mismas reglas que el `contenido` raíz.
+  - `subcampo` (opcional): cuando ese elemento de `revela` trae `subcampo` no nulo.
+  - `acumular` (opcional, `boolean`): cuando ese elemento de `revela` trae `acumulable: true` — misma semántica que `acumular` a nivel raíz (ver arriba).
+
+Cada item se valida contra el catálogo igual que el campo raíz — un `forma`/`campo` inexistente, un `tipo_dato` que no coincide, o un `campo` que resulte ser de tipo `documento` en el catálogo, responden `422` con el error en `revelados.{i}.{campo}` (ej. `revelados.0.tipo_dato`).
+
+Ejemplo real: un cliente sube un 1099-NEC. Ese documento revela `schedule_c.ingresos_negocio` (casilla 1) y `form_1040.impuestos_retenidos` (casilla 4, acumulable — también lo puede aportar un W-2):
+
+```json
+{
+  "cliente_id": 15,
+  "forma": "transversal",
+  "tax_year": 2025,
+  "campo": "form_1099_nec",
+  "tipo_campo": "documento",
+  "modo": "archivo",
+  "revelados": [
+    {
+      "forma": "schedule_c",
+      "campo": "ingresos_negocio",
+      "tipo_campo": "dato",
+      "tipo_dato": "number",
+      "contenido": "9600"
+    },
+    {
+      "forma": "form_1040",
+      "campo": "impuestos_retenidos",
+      "tipo_campo": "dato",
+      "tipo_dato": "number",
+      "contenido": "1200",
+      "acumular": true
+    }
+  ]
+}
+```
+
+(El `file` del documento se omite en este ejemplo por brevedad — en la práctica este evento va como `multipart/form-data`, igual que cualquier `modo: "archivo"`, con `revelados` como un campo de texto más del form-data serializado como JSON.)
+
+La respuesta `201` confirma el campo principal (igual que siempre) y agrega `revelados` con el resultado de cada item:
+
+```json
+{
+  "cliente_id": 15,
+  "forma": "transversal",
+  "forma_estado": "en_progreso",
+  "campo": "form_1099_nec",
+  "estado": "recibido",
+  "revela": [ /* igual que siempre */ ],
+  "revelados": [
+    { "forma": "schedule_c", "campo": "ingresos_negocio", "estado": "recibido" },
+    { "forma": "form_1040", "campo": "impuestos_retenidos", "estado": "recibido" }
+  ]
+}
+```
+
+`revelados` en la respuesta siempre está presente (arreglo vacío `[]` si el request no envió ninguno) — permite confirmar que cada campo quedó bien guardado sin necesitar otra consulta.
+
 **`object` — `ingresos` (Fase 2, desglosado — reemplaza al `number` suelto que tenía antes)**, siempre con las 6 claves presentes, `0` en las que no apliquen:
 
 ```json
@@ -666,7 +731,7 @@ Notas de este shape:
 - `siguiente` es un puntero de conveniencia al **primer elemento de `pendientes`, en el orden en que ya vienen** (o `null` si `pendientes` está vacío) — para que el agente no tenga que decidir el orden por su cuenta. Desde la Fase 5, **no filtra por `obligatorio`**: puede señalar un campo opcional (ej. `w2`, `form_1099_nec`) antes que uno obligatorio, a propósito — los transversales (documentos y datos personales) siempre aparecen primero en `pendientes`, así que `siguiente` le da al agente la oportunidad de ofrecer un documento (y aprovechar su `revela`, ver más abajo) antes de pedirle al cliente que teclee a mano un monto que ese documento ya trae. `completo`, en cambio, sigue evaluando solo los pendientes obligatorios — un opcional sin resolver nunca bloquea el cierre.
 - Los campos transversales (`forma: "transversal"`) **no dependen de que exista ninguna forma declarada** — se piden sin importar cuál(es) apliquen, así que aparecen en `pendientes` incluso si el cliente todavía no tiene ninguna forma declarada (nunca se llamó a `POST /formas`). En ese caso, `completo` es siempre `false` — la determinación de forma en sí sigue pendiente, aunque ya no falte ningún transversal.
 - Un campo opcional que el cliente declinó (guardado con `modo: "no_aplica"`, ver [`modo: "no_aplica"`](#modo-no_aplica--el-cliente-respondió-que-no-tiene-ese-campo-solo-opcionales)) deja de aparecer en `pendientes` igual que uno con `estado: "recibido"` — a diferencia de dejarlo simplemente sin tocar, esto sí queda persistido, así que no vuelve a aparecer aunque la conversación se reinicie sin memoria del agente.
-- **`revela`** (Fase 5, `acumulable` agregado en Fase 6): lista de campos-destino que ese documento ya resuelve si el cliente lo entrega, respaldada por la tabla `relaciones_documento_campo` (ver [`RelacionDocumentoCampo`](../app/Models/RelacionDocumentoCampo.php) y `RelacionesDocumentoCampoSeeder`) — nunca por texto memorizado en el prompt del agente. Casi siempre vacía para campos tipo `dato`; en campos `documento`/`mixto` puede traer una o más entradas. Cada entrada indica `forma` + `campo` (+ `subcampo` si el destino es un `object`/`array_object`) + `descripcion` en lenguaje natural + `acumulable` (`boolean`). El agente conversacional, al recibir ese documento, guarda también los campos que `revela` señale — siempre que sigan apareciendo en `pendientes` y el valor sea legible en el texto extraído del documento — en vez de volver a preguntárselos al cliente. Cuando `acumulable: true`, ese campo/subcampo puede ser resuelto por más de un documento distinto (ej. `impuestos_retenidos` por W-2 **y** 1099-NEC **y** más), así que el agente NO lo trata como "ya resuelto" solo porque otro documento lo tocó antes, y envía `acumular: true` (ver [Acumular en vez de sobrescribir](#acumular-en-vez-de-sobrescribir-acumular--subcampo)) para que la plataforma sume en vez de sobrescribir. Editable desde el panel de administración igual que el resto del catálogo (ver más abajo).
+- **`revela`** (Fase 5, `acumulable` agregado en Fase 6): lista de campos-destino que ese documento ya resuelve si el cliente lo entrega, respaldada por la tabla `relaciones_documento_campo` (ver [`RelacionDocumentoCampo`](../app/Models/RelacionDocumentoCampo.php) y `RelacionesDocumentoCampoSeeder`) — nunca por texto memorizado en el prompt del agente. Casi siempre vacía para campos tipo `dato`; en campos `documento`/`mixto` puede traer una o más entradas. Cada entrada indica `forma` + `campo` (+ `subcampo` si el destino es un `object`/`array_object`) + `descripcion` en lenguaje natural + `acumulable` (`boolean`). El agente conversacional, al recibir ese documento, guarda también los campos que `revela` señale — siempre que sigan apareciendo en `pendientes` y el valor sea legible en el texto extraído del documento — en vez de volver a preguntárselos al cliente, incluyéndolos en el parámetro `revelados` de esa misma invocación (ver [Guardar un documento y sus campos revelados en una sola llamada](#guardar-un-documento-y-sus-campos-revelados-en-una-sola-llamada-revelados)), nunca en eventos separados. Cuando `acumulable: true`, ese campo/subcampo puede ser resuelto por más de un documento distinto (ej. `impuestos_retenidos` por W-2 **y** 1099-NEC **y** más), así que el agente NO lo trata como "ya resuelto" solo porque otro documento lo tocó antes, y envía `acumular: true` en el item correspondiente (ver [Acumular en vez de sobrescribir](#acumular-en-vez-de-sobrescribir-acumular--subcampo)) para que la plataforma sume en vez de sobrescribir. Editable desde el panel de administración igual que el resto del catálogo (ver más abajo).
 
 ## Vista de autoservicio del cliente (Fase 5)
 

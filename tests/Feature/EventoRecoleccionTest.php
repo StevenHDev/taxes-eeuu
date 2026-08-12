@@ -896,4 +896,242 @@ class EventoRecoleccionTest extends TestCase
 
         $response->assertCreated()->assertJsonPath('revela', []);
     }
+
+    /**
+     * Encontrado en producción: aunque el backend y el prompt ya eran
+     * correctos, un modelo más chico (gpt-5-mini) no siempre decidía invocar
+     * guardar_campo_cliente una segunda vez para cada campo de `revela` —
+     * confirmado que era una limitación de razonamiento multi-paso del
+     * modelo, no de configuración (un modelo más grande sí encadenaba bien).
+     * `revelados` elimina esa necesidad: todo se resuelve en una sola
+     * invocación, algo que hasta un modelo chico arma de forma confiable.
+     */
+    public function test_revelados_guarda_el_campo_principal_y_los_revelados_en_una_sola_llamada(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $response = $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'w2',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2.pdf', 10),
+            'revelados' => [
+                [
+                    'forma' => 'schedule_c',
+                    'campo' => 'ingresos_negocio',
+                    'tipo_campo' => 'dato',
+                    'tipo_dato' => 'number',
+                    'contenido' => 9600,
+                ],
+                [
+                    'forma' => 'form_1040',
+                    'campo' => 'impuestos_retenidos',
+                    'tipo_campo' => 'dato',
+                    'tipo_dato' => 'number',
+                    'contenido' => 1200,
+                    'acumular' => true,
+                ],
+            ],
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonCount(2, 'revelados');
+        $response->assertJsonPath('revelados.0.estado', 'recibido');
+        $response->assertJsonPath('revelados.1.estado', 'recibido');
+
+        $this->assertDatabaseHas('campos_cliente', [
+            'user_id' => $cliente->id,
+            'forma' => 'transversal',
+            'campo' => 'w2',
+        ]);
+
+        $ingresoNegocio = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos_negocio')->first();
+        $this->assertEquals(9600.0, $ingresoNegocio->valor_texto);
+
+        $impuestosRetenidos = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
+        $this->assertEquals(1200.0, $impuestosRetenidos->valor_texto);
+    }
+
+    public function test_revelados_acumulable_suma_sobre_lo_ya_guardado(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 400,
+            'acumular' => true,
+        ])->assertCreated();
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'w2',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2.pdf', 10),
+            'revelados' => [
+                [
+                    'forma' => 'form_1040',
+                    'campo' => 'impuestos_retenidos',
+                    'tipo_campo' => 'dato',
+                    'tipo_dato' => 'number',
+                    'contenido' => 300,
+                    'acumular' => true,
+                ],
+            ],
+        ])->assertCreated();
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
+        $this->assertEquals(700.0, $campo->valor_texto);
+    }
+
+    /**
+     * Encontrado al reproducir el caso real vía curl/multipart (como lo
+     * envía n8n): esta API siempre envía los parámetros como texto (ver
+     * `docs/prompt.md`, punto 8 de guardar_campo_cliente), así que `acumular`
+     * llega como el STRING "true"/"false", nunca un boolean nativo. La regla
+     * `boolean` de Laravel rechaza esos strings con 422, y un cast `(bool)`
+     * directo sobre el string "false" da `true` en PHP (cualquier string no
+     * vacío es "truthy") — ambos bugs reales, corregidos en EventoRequest y
+     * EventoRecoleccionService.
+     */
+    public function test_acumular_como_texto_true_o_false_se_interpreta_correctamente(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        // Raíz: acumular="true" (string) debe aceptarse y sumar.
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 400,
+            'acumular' => 'true',
+        ])->assertCreated();
+
+        // Documento con dos revelados: uno con acumular="true" (debe sumar) y
+        // otro con acumular="false" (debe sobrescribir, NUNCA tratarse como true
+        // por ser un string no vacío).
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'w2',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2.pdf', 10),
+            'revelados' => [
+                [
+                    'forma' => 'form_1040',
+                    'campo' => 'impuestos_retenidos',
+                    'tipo_campo' => 'dato',
+                    'tipo_dato' => 'number',
+                    'contenido' => 300,
+                    'acumular' => 'true',
+                ],
+                [
+                    'forma' => 'schedule_c',
+                    'campo' => 'ingresos_negocio',
+                    'tipo_campo' => 'dato',
+                    'tipo_dato' => 'number',
+                    'contenido' => 9600,
+                    'acumular' => 'false',
+                ],
+            ],
+        ])->assertCreated();
+
+        $impuestosRetenidos = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
+        $this->assertEquals(700.0, $impuestosRetenidos->valor_texto);
+
+        $ingresoNegocio = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos_negocio')->first();
+        $this->assertEquals(9600.0, $ingresoNegocio->valor_texto);
+    }
+
+    public function test_revelados_con_tipo_dato_que_no_coincide_con_catalogo_es_invalido(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'w2',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2.pdf', 10),
+            'revelados' => [
+                [
+                    'forma' => 'schedule_c',
+                    'campo' => 'ingresos_negocio',
+                    'tipo_campo' => 'dato',
+                    'tipo_dato' => 'string',
+                    'contenido' => 'no es un número',
+                ],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors(['revelados.0.tipo_dato']);
+    }
+
+    public function test_revelados_no_puede_apuntar_a_un_campo_tipo_documento(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'w2',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2.pdf', 10),
+            'revelados' => [
+                [
+                    'forma' => 'transversal',
+                    'campo' => 'form_1099_nec',
+                    'tipo_campo' => 'documento',
+                    'tipo_dato' => 'number',
+                    'contenido' => 'x',
+                ],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors(['revelados.0.campo']);
+    }
+
+    public function test_sin_revelados_la_respuesta_trae_un_arreglo_vacio(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'identificacion_ssn_itin',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'string',
+            'contenido' => '123-45-6789',
+        ])->assertCreated()->assertJsonPath('revelados', []);
+    }
 }

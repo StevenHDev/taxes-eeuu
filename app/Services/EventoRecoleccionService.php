@@ -30,7 +30,14 @@ class EventoRecoleccionService
      * Procesa un evento de recolección de un solo campo emitido por el agente
      * conversacional (sección 3-4 de la especificación).
      *
-     * @return array{cliente: User, campo_cliente: CampoCliente, forma_cliente: ?FormaCliente}
+     * `revelados` (opcional): campos que el mismo documento ya reveló, para
+     * guardarlos en la MISMA invocación en vez de que el agente tenga que
+     * decidir invocar la tool de nuevo por cada uno — ver EventoRequest y
+     * RELACIONES DOCUMENTO→CAMPO en docs/prompt.md. Cada item es siempre
+     * modo="texto" implícito y usa el mismo `$cliente` ya resuelto, dentro de
+     * la misma transacción que el campo principal.
+     *
+     * @return array{cliente: User, campo_cliente: CampoCliente, forma_cliente: ?FormaCliente, revelados: array<int, array{campo_cliente: CampoCliente, forma_cliente: ?FormaCliente}>}
      */
     public function procesar(EventoRequest $request): array
     {
@@ -39,7 +46,7 @@ class EventoRecoleccionService
 
             $file = $request->validated('modo') === FieldMode::Archivo->value ? $request->file('file') : null;
 
-            return $this->aplicarCambio(
+            $principal = $this->aplicarCambio(
                 cliente: $cliente,
                 taxYear: (int) $request->validated('tax_year'),
                 forma: (string) $request->validated('forma'),
@@ -55,6 +62,36 @@ class EventoRecoleccionService
                 acumular: $request->boolean('acumular'),
                 subcampoAcumular: $request->validated('subcampo'),
             );
+
+            $revelados = [];
+
+            foreach ($request->validated('revelados') ?? [] as $item) {
+                $resultado = $this->aplicarCambio(
+                    cliente: $cliente,
+                    taxYear: (int) $request->validated('tax_year'),
+                    forma: (string) $item['forma'],
+                    campo: (string) $item['campo'],
+                    tipoCampo: (string) $item['tipo_campo'],
+                    modo: FieldMode::Texto,
+                    tipoDato: FieldDataType::from((string) $item['tipo_dato']),
+                    contenido: $item['contenido'],
+                    file: null,
+                    nombreOriginal: null,
+                    actor: $request->user(),
+                    source: EventSource::AgenteIa,
+                    // No (bool) directo: `acumular` viaja como string ("true"/"false")
+                    // y (bool) "false" da true en PHP por ser un string no vacío.
+                    acumular: filter_var($item['acumular'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    subcampoAcumular: $item['subcampo'] ?? null,
+                );
+
+                $revelados[] = [
+                    'campo_cliente' => $resultado['campo_cliente'],
+                    'forma_cliente' => $resultado['forma_cliente'],
+                ];
+            }
+
+            return [...$principal, 'revelados' => $revelados];
         });
     }
 

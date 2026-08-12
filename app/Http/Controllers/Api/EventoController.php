@@ -34,6 +34,14 @@ class EventoController extends Controller
             // en producción: con prompts largos, modelos más chicos (ej. gpt-5-mini)
             // pierden esa referencia y solo guardan el documento principal.
             'revela' => TaxFieldCatalog::revelaPara($taxYear, $campo),
+            // Confirma qué quedó guardado de `revelados` (si el agente envió
+            // alguno en esta misma llamada) — útil para depurar si alguno
+            // resultó "invalido" en vez de asumir que se guardó bien.
+            'revelados' => collect($resultado['revelados'])->map(fn (array $r) => [
+                'forma' => $r['campo_cliente']->forma,
+                'campo' => $r['campo_cliente']->campo,
+                'estado' => $r['campo_cliente']->estado,
+            ])->all(),
         ], 201);
     }
 }

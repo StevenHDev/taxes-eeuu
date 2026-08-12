@@ -847,6 +847,16 @@ components:
             Solo junto con `acumular: true` sobre un campo `tipo_dato: object`
             — el subcampo exacto de `contenido` que se debe sumar (los demás
             subcampos del objeto se guardan tal como llegan).
+        revelados:
+          type: array
+          description: |
+            Opcional, puramente aditivo — un evento sin `revelados` funciona
+            exactamente igual que siempre. Un item por cada campo que este
+            mismo evento ya revela (ver `RelacionRevelada`), para guardarlo en
+            la MISMA invocación en vez de un evento separado — ver
+            `docs/api.md#guardar-un-documento-y-sus-campos-revelados-en-una-sola-llamada-revelados`.
+          items:
+            $ref: '#/components/schemas/RevelacionItem'
       required: [forma, tax_year, campo, tipo_campo, modo]
 
     EventoArchivo:
@@ -880,6 +890,16 @@ components:
         nombre_original:
           type: string
           nullable: true
+        revelados:
+          type: array
+          description: |
+            Opcional, puramente aditivo — el caso típico, ya que un documento
+            es lo que normalmente trae `revela` no vacío. Como este endpoint
+            es `multipart/form-data`, `revelados` va como un campo de texto
+            más, serializado como JSON — ver
+            `docs/api.md#guardar-un-documento-y-sus-campos-revelados-en-una-sola-llamada-revelados`.
+          items:
+            $ref: '#/components/schemas/RevelacionItem'
       required: [forma, tax_year, campo, tipo_campo, modo, file]
 
     EventoNoAplica:
@@ -924,6 +944,9 @@ components:
             cliente_id: false
             external_ref: false
             phone: false
+            # Una corrección manual del preparador siempre sobrescribe — nunca
+            # suma sobre lo ya guardado, ni resuelve campos revelados por lote.
+            revelados: false
 
     CorreccionNoAplica:
       allOf:
@@ -939,6 +962,8 @@ components:
         - $ref: '#/components/schemas/EventoArchivo'
         - type: object
           description: Igual que `EventoArchivo`, pero el límite es 10 MB, no 20 MB.
+          properties:
+            revelados: false
 
     EventoRespuesta:
       type: object
@@ -965,7 +990,16 @@ components:
             para sus campos revelados. Vacío para casi todo campo `dato`.
           items:
             $ref: '#/components/schemas/RelacionRevelada'
-      required: [cliente_id, forma, campo, estado, revela]
+        revelados:
+          type: array
+          description: |
+            Confirma qué quedó guardado del parámetro `revelados` del request
+            (arreglo vacío si el request no envió ninguno) — para que el
+            agente verifique que cada campo revelado quedó bien guardado sin
+            necesitar otra consulta.
+          items:
+            $ref: '#/components/schemas/RevelacionResultado'
+      required: [cliente_id, forma, campo, estado, revela, revelados]
 
     ClienteResumen:
       type: object
@@ -1178,6 +1212,45 @@ components:
             SUME el nuevo valor al ya guardado en vez de sobrescribirlo. Si es
             `false`, el destino solo lo resuelve este documento — comportamiento
             histórico, sin cambios.
+
+    RevelacionItem:
+      type: object
+      description: |
+        Un item del parámetro `revelados` de `POST /eventos` — el aporte de
+        ESTE documento a un campo que su propio `revela` señala, para
+        guardarlo en la misma invocación en vez de un evento aparte. Ver
+        `docs/api.md#guardar-un-documento-y-sus-campos-revelados-en-una-sola-llamada-revelados`.
+      properties:
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        campo:
+          type: string
+        tipo_campo:
+          $ref: '#/components/schemas/FieldKind'
+          description: Siempre "dato" — un campo revelado nunca es un documento.
+        tipo_dato:
+          $ref: '#/components/schemas/FieldDataType'
+        contenido:
+          description: Mismas reglas que `contenido` a nivel raíz — ver `EventoTexto`.
+        subcampo:
+          type: string
+          nullable: true
+          description: Solo cuando el elemento de `revela` correspondiente trae `subcampo` no nulo.
+        acumular:
+          type: boolean
+          description: 'Solo cuando el elemento de `revela` correspondiente trae `acumulable: true`.'
+      required: [forma, campo, tipo_campo, tipo_dato, contenido]
+
+    RevelacionResultado:
+      type: object
+      description: Confirmación de un item de `revelados` ya guardado — ver `EventoRespuesta`.
+      properties:
+        forma:
+          $ref: '#/components/schemas/FormaAlmacen'
+        campo:
+          type: string
+        estado:
+          $ref: '#/components/schemas/FieldState'
 
     PendientesRespuesta:
       type: object
