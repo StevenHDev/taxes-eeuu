@@ -177,9 +177,9 @@ class EventoRecoleccionService
             // garantizan que el campo es opcional antes de llegar acá.
             $estado = FieldState::NoAplica;
         } else {
-            $valor = $acumular
-                ? $this->acumularValor($contenido, $tipoDato, $subcampoAcumular, $anterior?->valor_texto)
-                : $contenido;
+            $valor = $subcampoAcumular !== null
+                ? $this->resolverSubcampo($contenido, $subcampoAcumular, $anterior?->valor_texto, $acumular, $field['subcampos'] ?? [])
+                : ($acumular ? $this->acumularValor($contenido, $tipoDato, $anterior?->valor_texto) : $contenido);
             $estado = $this->validarContenido($campo, $tipoDato, $field['subcampos'] ?? null, $valor);
         }
 
@@ -376,30 +376,60 @@ class EventoRecoleccionService
 
     /**
      * Suma el aporte de este evento sobre lo ya guardado, en vez de
-     * sobrescribirlo — para un campo/subcampo que más de un documento puede
-     * revelar (ej. `intereses_dividendos` desde un 1099-INT y un 1099-DIV,
-     * ver RelacionDocumentoCampo::$acumulable). Solo aplica a `procesar()`
-     * (evento del agente); `corregirManualmente()` nunca pasa acumular=true.
+     * sobrescribirlo — para un campo numérico simple que más de un documento
+     * puede revelar (ver RelacionDocumentoCampo::$acumulable). Solo aplica a
+     * `procesar()` (evento del agente); `corregirManualmente()` nunca pasa
+     * acumular=true. El caso de un subcampo dentro de un campo tipo objeto lo
+     * resuelve `resolverSubcampo()`, que aplica sin importar `acumular`.
      */
-    private function acumularValor(mixed $contenido, ?FieldDataType $tipoDato, ?string $subcampo, mixed $valorAnterior): mixed
+    private function acumularValor(mixed $contenido, ?FieldDataType $tipoDato, mixed $valorAnterior): mixed
     {
-        if ($tipoDato === FieldDataType::Number) {
-            $previo = is_numeric($valorAnterior) ? (float) $valorAnterior : 0.0;
-
-            return $previo + (float) $contenido;
-        }
-
-        if ($tipoDato === FieldDataType::Object && is_array($contenido) && $subcampo !== null) {
-            $previo = is_array($valorAnterior) && is_numeric($valorAnterior[$subcampo] ?? null)
-                ? (float) $valorAnterior[$subcampo]
-                : 0.0;
-
-            $contenido[$subcampo] = $previo + (float) ($contenido[$subcampo] ?? 0);
-
+        if ($tipoDato !== FieldDataType::Number) {
             return $contenido;
         }
 
-        return $contenido;
+        $previo = is_numeric($valorAnterior) ? (float) $valorAnterior : 0.0;
+
+        return $previo + (float) $contenido;
+    }
+
+    /**
+     * Actualiza un solo subcampo de un campo tipo objeto (ej. `ingresos.salarios`
+     * desde un W-2) partiendo SIEMPRE del objeto ya guardado, para no perder los
+     * demás subcampos que otros documentos ya hayan resuelto — sin importar si
+     * ESTE subcampo en particular es acumulable o no (eso solo decide si el
+     * subcampo se SUMA o se REEMPLAZA, nunca si el resto del objeto se preserva).
+     * Encontrado en producción: un revelado con `acumulable: false` (ej. salarios,
+     * que normalmente viene de un solo W-2) sobrescribía todo el objeto `ingresos`
+     * y borraba subcampos ya guardados por otro documento (ej. seguridad_social).
+     *
+     * `contenido` puede llegar como el objeto completo (convención histórica de
+     * `acumular` a nivel raíz, ver tests) o como solo el aporte de este subcampo
+     * (convención de `revelados`, ver docs/prompt.md punto 10) — ambas formas son
+     * válidas, cualquier otra clave que sí traiga se respeta igual.
+     *
+     * Los subcampos declarados en el catálogo que todavía no tengan ningún valor
+     * (ni en lo ya guardado ni en este aporte) se completan en 0 — son siempre
+     * campos monetarios — para que el objeto quede completo desde la primera vez
+     * que se guarda, en vez de quedar "invalido" por faltarle claves.
+     *
+     * @param  array<int, string>  $subcamposDeclarados
+     * @return array<string, mixed>
+     */
+    private function resolverSubcampo(mixed $contenido, string $subcampo, mixed $valorAnterior, bool $acumular, array $subcamposDeclarados): array
+    {
+        $base = is_array($valorAnterior) ? $valorAnterior : [];
+        $previo = is_numeric($base[$subcampo] ?? null) ? (float) $base[$subcampo] : 0.0;
+        $aporte = is_array($contenido) ? ($contenido[$subcampo] ?? 0) : $contenido;
+
+        $resultado = is_array($contenido) ? [...$base, ...$contenido] : $base;
+        $resultado[$subcampo] = $acumular ? $previo + (float) $aporte : (float) $aporte;
+
+        foreach ($subcamposDeclarados as $clave) {
+            $resultado[$clave] ??= 0;
+        }
+
+        return $resultado;
     }
 
     /**

@@ -32,6 +32,68 @@ class EventoRequest extends FormRequest
     }
 
     /**
+     * Cuando el evento llega como multipart/form-data (necesario para adjuntar
+     * `file`), el cliente HTTP del agente serializa como string JSON tanto
+     * `revelados` como `contenido` cuando su tipo_dato es object/array_string/
+     * array_object (ver docs/prompt.md, punto 8 y 10 de guardar_campo_cliente:
+     * "contenido siempre como string, incluso para una estructura compleja") —
+     * en vez de exploded fields. Se decodifican aquí, antes de que corran las
+     * reglas de 'array', para aceptar ambas formas de envío (string JSON o
+     * arreglo/objeto nativo, como en una request JSON pura) sin duplicar
+     * validación. `revelados` se decodifica primero porque cada uno de sus
+     * items puede a su vez traer su propio `contenido` en la misma forma.
+     */
+    protected function prepareForValidation(): void
+    {
+        $revelados = $this->decodificarSiEsJson($this->input('revelados'));
+
+        if (is_array($revelados)) {
+            foreach ($revelados as $i => $item) {
+                if (is_array($item) && array_key_exists('contenido', $item)) {
+                    $tipoDato = FieldDataType::tryFrom((string) ($item['tipo_dato'] ?? ''));
+
+                    if (in_array($tipoDato, [FieldDataType::Object, FieldDataType::ArrayString, FieldDataType::ArrayObject], true)) {
+                        $revelados[$i]['contenido'] = $this->decodificarSiEsJson($item['contenido']) ?? $item['contenido'];
+                    }
+                }
+            }
+
+            $this->merge(['revelados' => $revelados]);
+        }
+
+        $tipoDatoRaiz = FieldDataType::tryFrom((string) $this->input('tipo_dato'));
+
+        if (in_array($tipoDatoRaiz, [FieldDataType::Object, FieldDataType::ArrayString, FieldDataType::ArrayObject], true)) {
+            $contenido = $this->decodificarSiEsJson($this->input('contenido'));
+
+            if ($contenido !== null) {
+                $this->merge(['contenido' => $contenido]);
+            }
+        }
+    }
+
+    /**
+     * Decodifica $valor si es un string JSON que representa un arreglo/objeto;
+     * si ya es un arreglo (request JSON pura, o item ya decodificado dentro de
+     * `revelados`) o no es JSON válido, lo devuelve tal cual (null si no era
+     * string ni array, para que el llamador decida el fallback).
+     */
+    private function decodificarSiEsJson(mixed $valor): mixed
+    {
+        if (is_array($valor)) {
+            return $valor;
+        }
+
+        if (! is_string($valor) || $valor === '') {
+            return null;
+        }
+
+        $decodificado = json_decode($valor, true);
+
+        return is_array($decodificado) ? $decodificado : null;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function rules(): array

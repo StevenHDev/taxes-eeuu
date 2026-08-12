@@ -1134,4 +1134,112 @@ class EventoRecoleccionTest extends TestCase
             'contenido' => '123-45-6789',
         ])->assertCreated()->assertJsonPath('revelados', []);
     }
+
+    /**
+     * Bug real reportado en producción: el nodo Tool de n8n envía `revelados`
+     * como un string JSON (no como campos exploded revelados[0][forma]=...)
+     * cuando la request es multipart/form-data (necesaria por el `file` del
+     * documento) — Laravel rechazaba esto con 422 "validation.array" porque
+     * nunca se decodificaba. Ver EventoRequest::prepareForValidation().
+     */
+    public function test_revelados_como_string_json_en_multipart_se_decodifica_correctamente(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $revelados = json_encode([
+            [
+                'forma' => 'schedule_c',
+                'campo' => 'ingresos_negocio',
+                'tipo_campo' => 'dato',
+                'tipo_dato' => 'number',
+                'contenido' => '9600',
+            ],
+        ]);
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'form_1099_nec',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('1099nec.pdf', 10),
+            'revelados' => $revelados,
+        ])->assertCreated()->assertJsonPath('revelados.0.estado', 'recibido');
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos_negocio')->first();
+        $this->assertEquals(9600.0, $campo->valor_texto);
+    }
+
+    /**
+     * Mismo bug que el test anterior, pero sobre `contenido` cuando su
+     * tipo_dato es object/array — también llega como string JSON en una
+     * request multipart, y también se decodifica en prepareForValidation().
+     */
+    public function test_contenido_tipo_object_como_string_json_en_multipart_se_decodifica_correctamente(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => json_encode(['salarios' => '55665']),
+            'subcampo' => 'salarios',
+        ])->assertCreated();
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
+        $this->assertEquals('recibido', $campo->estado->value);
+        $this->assertEquals(55665.0, $campo->valor_texto['salarios']);
+    }
+
+    /**
+     * Bug real reportado en producción: un W-2 revela `ingresos.salarios` con
+     * `acumulable: false` (solo un W-2 aporta ese subcampo). Antes de este fix,
+     * guardar ese subcampo sobrescribía TODO el objeto `ingresos`, borrando
+     * subcampos que otro documento (ej. un SSA-1099 con `seguridad_social`) ya
+     * hubiera guardado. Ver EventoRecoleccionService::resolverSubcampo().
+     */
+    public function test_subcampo_no_acumulable_preserva_los_demas_subcampos_ya_guardados(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => ['seguridad_social' => '18200.50'],
+            'subcampo' => 'seguridad_social',
+        ])->assertCreated();
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => ['salarios' => '55665'],
+            'subcampo' => 'salarios',
+        ])->assertCreated();
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
+        $this->assertEquals('recibido', $campo->estado->value);
+        $this->assertEquals(55665.0, $campo->valor_texto['salarios']);
+        $this->assertEquals(18200.5, $campo->valor_texto['seguridad_social']);
+        $this->assertEquals(0.0, $campo->valor_texto['intereses_dividendos']);
+    }
 }
