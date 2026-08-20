@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CampoClienteController;
+use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\EventoController;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ Route::get('/user', function (Request $request) {
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('eventos', [EventoController::class, 'store'])->name('api.eventos.store');
+    Route::get('catalogo/documentos-extra', [CatalogoController::class, 'documentosExtra'])->name('api.catalogo.documentos-extra');
 
     Route::prefix('clientes')->name('api.clientes.')->group(function () {
         Route::get('/', [ClienteController::class, 'index'])->name('index');

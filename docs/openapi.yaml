@@ -27,6 +27,8 @@ tags:
     description: Alta, listado, búsqueda y detalle de clientes.
   - name: Campos
     description: Historial, corrección y borrado de campos individuales de un cliente.
+  - name: Catalogo
+    description: Catálogo del agente conversacional, sin depender de un cliente concreto.
 
 security:
   - BearerAuth: []
@@ -564,11 +566,12 @@ paths:
         sustituye el catálogo hardcodeado que antes vivía como texto estático
         en su propio prompt. `tax_year` es obligatorio (sin default: es una
         consulta agente-facing, no una lectura de panel humano). Los campos
-        con pseudo-forma (`transversal` o `documentos_extra`) no dependen de
-        que exista ninguna forma declarada — se piden sin importar cuál(es)
-        apliquen, así que aparecen en `pendientes` aunque el cliente todavía
-        no tenga ninguna forma declarada. En ese caso, `completo` es siempre
-        `false` (la determinación de forma en sí sigue pendiente).
+        `transversal` no dependen de que exista ninguna forma declarada — se
+        piden sin importar cuál(es) apliquen, así que aparecen en `pendientes`
+        aunque el cliente todavía no tenga ninguna forma declarada. En ese
+        caso, `completo` es siempre `false` (la determinación de forma en sí
+        sigue pendiente). Los `documentos_extra` NO aparecen acá — se
+        consultan aparte, reactivamente, vía `/catalogo/documentos-extra`.
       x-required-ability: clientes:read
       security:
         - BearerAuth: []
@@ -591,6 +594,51 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationErrorResponse'
+
+  /catalogo/documentos-extra:
+    get:
+      tags: [Catalogo]
+      operationId: catalogoDocumentosExtra
+      summary: Catálogo de documentos extra, para consulta reactiva
+      description: |
+        No depende de un cliente. El agente conversacional externo la llama
+        solo cuando el cliente menciona o sube, sin que se lo pidieran, un
+        documento que no reconoce — para confirmar que es un campo real del
+        catálogo (`forma: documentos_extra`) y obtener su `tipo_campo`/
+        `tipo_dato`/`formatos_aceptados`/`revela` exactos antes de invocar
+        `guardar_campo_cliente`. A diferencia de `pendientes`, siempre
+        devuelve el catálogo completo de los 18 documentos extra, sin
+        filtrar por lo que el cliente ya tenga cargado. `tax_year` es
+        obligatorio (sin default).
+      x-required-ability: clientes:read
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tax_year
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Catálogo completo de documentos extra para ese año fiscal.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tax_year:
+                    type: integer
+                  documentos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PendienteCampo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '422':
           $ref: '#/components/responses/ValidationErrorResponse'
 
@@ -1146,9 +1194,11 @@ components:
     PendienteCampo:
       type: object
       description: |
-        Un campo del catálogo que al cliente le falta entregar. Los campos con
-        pseudo-forma (`unico_por_cliente`, `forma: transversal` o
-        `forma: documentos_extra`) aparecen una sola vez sin importar cuántas
+        Un campo del catálogo, con el mismo shape tanto en `pendientes` (lo
+        que al cliente le falta entregar) como en `documentos` de
+        `/catalogo/documentos-extra` (consulta reactiva, no filtrada por
+        cliente). En `pendientes`: los campos `forma: transversal`
+        (`unico_por_cliente`) aparecen una sola vez sin importar cuántas
         formas tenga el cliente; los propios de cada forma nunca se
         deduplican entre formas (ej. `estados_bancarios` de `schedule_c` y de
         `schedule_e` son dos pendientes distintas). Un campo deja de aparecer

@@ -196,9 +196,13 @@ class TaxFieldCatalog
     }
 
     /**
-     * Documentos opcionales que, igual que los transversales, se piden
-     * siempre sin importar qué forma(s) tenga el cliente — ver
-     * `CampoCatalogo::DOCUMENTOS_EXTRA`.
+     * Documentos opcionales que el cliente puede enviar pero que NO se
+     * preguntan proactivamente (a diferencia de los transversales, no se
+     * inyectan en `pendientesPara()`) — ver `CampoCatalogo::DOCUMENTOS_EXTRA`.
+     * Se exponen aparte vía `GET /api/catalogo/documentos-extra`
+     * (`App\Http\Controllers\Api\CatalogoController`) para que el agente
+     * externo los consulte de forma reactiva cuando el cliente menciona o
+     * sube un documento que no reconoce, en vez de preguntarlos siempre.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -256,27 +260,6 @@ class TaxFieldCatalog
 
             $pendientes[] = [
                 'forma' => CampoCatalogo::TRANSVERSAL,
-                'campo' => $field['campo'],
-                'tipo_campo' => $field['tipo']->value,
-                'tipo_dato' => $field['tipo_dato']?->value,
-                'subcampos' => $field['subcampos'],
-                'formatos_aceptados' => $field['formatos_aceptados'],
-                'obligatorio' => $field['obligatorio'],
-                'sensible' => $field['sensible'],
-                'revela' => self::revelaPara($taxYear, $field['campo']),
-            ];
-        }
-
-        // Documentos extra (ver CampoCatalogo::DOCUMENTOS_EXTRA): mismo trato
-        // que los transversales — siempre presentes, sin importar $formas —
-        // solo que agrupados bajo otra pseudo-forma.
-        foreach (self::documentosExtra($taxYear) as $field) {
-            if ($recibidos->has(CampoCatalogo::DOCUMENTOS_EXTRA."|{$field['campo']}")) {
-                continue;
-            }
-
-            $pendientes[] = [
-                'forma' => CampoCatalogo::DOCUMENTOS_EXTRA,
                 'campo' => $field['campo'],
                 'tipo_campo' => $field['tipo']->value,
                 'tipo_dato' => $field['tipo_dato']?->value,

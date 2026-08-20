@@ -119,16 +119,17 @@ class ClientePendientesApiTest extends TestCase
 
         $pendientes = collect($response->json('pendientes'));
         $this->assertTrue($pendientes->isNotEmpty());
-        $this->assertTrue($pendientes->every(fn (array $p) => in_array($p['forma'], ['transversal', 'documentos_extra'], true)));
+        $this->assertTrue($pendientes->every(fn (array $p) => $p['forma'] === 'transversal'));
     }
 
     /**
-     * Los documentos extra (form_1099_int, form_1099_div, ...) se comportan
-     * igual que los transversales — siempre presentes, sin importar $formas —
-     * pero agrupados bajo su propia pseudo-forma (ver
-     * CampoCatalogo::DOCUMENTOS_EXTRA).
+     * Los documentos extra (form_1099_int, form_1099_div, ...) NO se
+     * preguntan proactivamente — a diferencia de los transversales, no se
+     * inyectan en `pendientes` (ver GET /api/catalogo/documentos-extra para
+     * la consulta reactiva). Sí siguen resolviéndose a su propia pseudo-forma
+     * al guardarse (ver CampoCatalogo::DOCUMENTOS_EXTRA).
      */
-    public function test_documentos_extra_aparecen_bajo_su_propia_pseudo_forma(): void
+    public function test_documentos_extra_no_aparecen_en_pendientes(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
         $cliente = User::factory()->create(['role' => UserRole::Client]);
@@ -139,8 +140,7 @@ class ClientePendientesApiTest extends TestCase
         $pendiente = collect($response->json('pendientes'))
             ->firstWhere('campo', 'form_1099_int');
 
-        $this->assertNotNull($pendiente);
-        $this->assertSame('documentos_extra', $pendiente['forma']);
+        $this->assertNull($pendiente);
         $this->assertSame('documentos_extra', TaxFieldCatalog::formaAlmacen(2025, 'form_1099_int', 'form_1040'));
     }
 

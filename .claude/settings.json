@@ -14,7 +14,8 @@
       "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('resources/js/i18n/locales/es.json','utf8'\\)\\); JSON.parse\\(require\\('fs'\\).readFileSync\\('resources/js/i18n/locales/en.json','utf8'\\)\\); console.log\\('valid'\\)\")",
       "Bash(composer lint:check)",
       "Bash(composer types:check)",
-      "Bash(psql -h 127.0.0.1 -U stevendev -d declaracion_impuestos -c \"select count\\(*\\) from users;\" -c \"select count\\(*\\) from catalogo_campos;\" -c \"select count\\(*\\) from campos_cliente;\")"
+      "Bash(psql -h 127.0.0.1 -U stevendev -d declaracion_impuestos -c \"select count\\(*\\) from users;\" -c \"select count\\(*\\) from catalogo_campos;\" -c \"select count\\(*\\) from campos_cliente;\")",
+      "Bash(python3 -c \"import yaml; yaml.safe_load\\(open\\('docs/openapi.yaml'\\)\\); print\\('valid'\\)\")"
     ]
   }
 }

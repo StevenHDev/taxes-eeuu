@@ -68,9 +68,12 @@ class TaxFieldCatalogPendientesTest extends TestCase
     {
         $cliente = User::factory()->create();
 
+        // form_1095_a es transversal y obligatorio: false — declaracion_anio_anterior
+        // ya no sirve de ejemplo acá porque se movió a documentos_extra, que ya
+        // no se inyecta en pendientesPara() (ver GET /api/catalogo/documentos-extra).
         $pendientes = collect(TaxFieldCatalog::pendientesPara(2025, [TaxForm::Form1040], $cliente->id));
 
-        $opcional = $pendientes->firstWhere('campo', 'declaracion_anio_anterior');
+        $opcional = $pendientes->firstWhere('campo', 'form_1095_a');
 
         $this->assertNotNull($opcional);
         $this->assertFalse($opcional['obligatorio']);
