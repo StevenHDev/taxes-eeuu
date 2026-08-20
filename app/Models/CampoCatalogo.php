@@ -31,6 +31,26 @@ class CampoCatalogo extends Model
     public const TRANSVERSAL = 'transversal';
 
     /**
+     * Documentos opcionales que, igual que TRANSVERSAL, se piden siempre sin
+     * importar qué forma(s) tenga el cliente — pero se agrupan aparte porque
+     * a diferencia de TRANSVERSAL (identidad del cliente: SSN, cónyuge,
+     * dependientes, estado civil, w2, 1099-NEC, 1095-A) no son el núcleo
+     * siempre-preguntado, sino documentos que el cliente puede enviar además.
+     */
+    public const DOCUMENTOS_EXTRA = 'documentos_extra';
+
+    /**
+     * Valores de `forma` que no son una `TaxForm` real — único punto de verdad
+     * para todo chequeo de "¿esta forma es una de las pseudo-formas especiales?".
+     *
+     * @return array<int, string>
+     */
+    public static function pseudoFormas(): array
+    {
+        return [self::TRANSVERSAL, self::DOCUMENTOS_EXTRA];
+    }
+
+    /**
      * Convención de pluralización de Eloquent daría "campo_catalogos" — la tabla
      * real es "catalogo_campos" (orden del dominio: "campos del catálogo").
      */

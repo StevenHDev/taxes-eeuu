@@ -119,7 +119,29 @@ class ClientePendientesApiTest extends TestCase
 
         $pendientes = collect($response->json('pendientes'));
         $this->assertTrue($pendientes->isNotEmpty());
-        $this->assertTrue($pendientes->every(fn (array $p) => $p['forma'] === 'transversal'));
+        $this->assertTrue($pendientes->every(fn (array $p) => in_array($p['forma'], ['transversal', 'documentos_extra'], true)));
+    }
+
+    /**
+     * Los documentos extra (form_1099_int, form_1099_div, ...) se comportan
+     * igual que los transversales — siempre presentes, sin importar $formas —
+     * pero agrupados bajo su propia pseudo-forma (ver
+     * CampoCatalogo::DOCUMENTOS_EXTRA).
+     */
+    public function test_documentos_extra_aparecen_bajo_su_propia_pseudo_forma(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        Sanctum::actingAs($admin, [ApiAbility::ClientesRead->value]);
+
+        $response = $this->getJson("/api/clientes/{$cliente->id}/pendientes?tax_year=2025")->assertOk();
+
+        $pendiente = collect($response->json('pendientes'))
+            ->firstWhere('campo', 'form_1099_int');
+
+        $this->assertNotNull($pendiente);
+        $this->assertSame('documentos_extra', $pendiente['forma']);
+        $this->assertSame('documentos_extra', TaxFieldCatalog::formaAlmacen(2025, 'form_1099_int', 'form_1040'));
     }
 
     /**

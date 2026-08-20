@@ -204,8 +204,8 @@ class ClientePanelTest extends TestCase
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 
         $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'declaracion_anio_anterior']).'?forma=transversal&tax_year=2025', [
-                'forma' => 'transversal',
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'declaracion_anio_anterior']).'?forma=documentos_extra&tax_year=2025', [
+                'forma' => 'documentos_extra',
                 'modo' => 'no_aplica',
             ])
             ->assertRedirect();

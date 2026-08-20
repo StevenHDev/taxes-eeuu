@@ -394,6 +394,7 @@
             "fieldCount_other": "{{count}} fields"
         },
         "transversalLabel": "Client data",
+        "documentosExtraLabel": "Extra documents",
         "section": {
             "received": "{{recibidos}}/{{total}} received"
         },

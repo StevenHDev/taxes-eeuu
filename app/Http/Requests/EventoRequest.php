@@ -108,10 +108,10 @@ class EventoRequest extends FormRequest
             // Solo se usa cuando cliente_id es null: identifica/crea al cliente por
             // teléfono en vez de (o además de) external_ref — ver resolverCliente().
             'phone' => ['nullable', 'string', 'max:32'],
-            // Las 10 formas del IRS, o 'transversal' para los datos únicos por
-            // cliente (SSN, cónyuge, dependientes, W-2, 1099-NEC, declaración
-            // anterior) — que no pertenecen a una forma en particular.
-            'forma' => ['required', Rule::in([...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), CampoCatalogo::TRANSVERSAL])],
+            // Las 10 formas del IRS, o una pseudo-forma ('transversal' para
+            // identidad del cliente, 'documentos_extra' para el resto de
+            // documentos opcionales) que no pertenecen a una forma en particular.
+            'forma' => ['required', Rule::in([...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), ...CampoCatalogo::pseudoFormas()])],
             // Sin default: el agente conversacional externo siempre debe declarar
             // explícitamente para qué año fiscal es el dato (nunca se asume).
             'tax_year' => ['required', 'integer', 'digits:4'],
@@ -161,7 +161,7 @@ class EventoRequest extends FormRequest
             // Cada item es siempre modo="texto" implícito (un revelado nunca es
             // otro documento ni un "no_aplica") — ver DEFINICIÓN DE LAS TOOLS.
             'revelados' => ['sometimes', 'array'],
-            'revelados.*.forma' => ['required', Rule::in([...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), CampoCatalogo::TRANSVERSAL])],
+            'revelados.*.forma' => ['required', Rule::in([...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), ...CampoCatalogo::pseudoFormas()])],
             'revelados.*.campo' => ['required', 'string'],
             'revelados.*.tipo_campo' => ['required', Rule::enum(FieldKind::class)],
             'revelados.*.tipo_dato' => ['required', Rule::enum(FieldDataType::class)],
@@ -194,7 +194,7 @@ class EventoRequest extends FormRequest
             $taxYear = (int) $this->input('tax_year');
             $forma = (string) $this->input('forma');
 
-            if ($forma !== CampoCatalogo::TRANSVERSAL && ! TaxForm::tryFrom($forma)) {
+            if (! in_array($forma, CampoCatalogo::pseudoFormas(), true) && ! TaxForm::tryFrom($forma)) {
                 return;
             }
 
@@ -265,7 +265,7 @@ class EventoRequest extends FormRequest
             $forma = (string) ($item['forma'] ?? '');
             $campo = (string) ($item['campo'] ?? '');
 
-            if ($forma !== CampoCatalogo::TRANSVERSAL && ! TaxForm::tryFrom($forma)) {
+            if (! in_array($forma, CampoCatalogo::pseudoFormas(), true) && ! TaxForm::tryFrom($forma)) {
                 continue;
             }
 

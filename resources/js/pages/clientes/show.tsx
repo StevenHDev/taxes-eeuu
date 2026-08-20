@@ -115,9 +115,12 @@ function EstadoTag({ estado }: { estado: CampoCliente['estado'] }) {
     );
 }
 
-// Los campos únicos por cliente se guardan bajo esta forma canónica; no es una
-// forma fiscal sino la identidad del cliente (SSN, cónyuge, dependientes).
+// Los campos únicos por cliente se guardan bajo una de estas dos pseudo-formas;
+// ninguna es una forma fiscal. TRANSVERSAL es la identidad del cliente (SSN,
+// cónyuge, dependientes, estado civil, w2, 1099-NEC, 1095-A); DOCUMENTOS_EXTRA
+// agrupa el resto de documentos opcionales que también se piden siempre.
 const TRANSVERSAL = 'transversal';
+const DOCUMENTOS_EXTRA = 'documentos_extra';
 
 // El código es como los preparadores nombran el trabajo — «el 1040», «la
 // Schedule C» — así que encabeza la sección en vez de quedar sepultado en una
@@ -125,6 +128,10 @@ const TRANSVERSAL = 'transversal';
 function codigoForma(forma: string): string {
     if (forma === TRANSVERSAL) {
         return 'IDENT';
+    }
+
+    if (forma === DOCUMENTOS_EXTRA) {
+        return 'EXTRA';
     }
 
     return forma
@@ -1224,9 +1231,11 @@ function AgregarCampoDialog({
                         {[...new Set(disponibles.map((d) => d.forma))].map(
                             (f) => (
                                 <option key={f} value={f}>
-                                    {f === 'transversal'
+                                    {f === TRANSVERSAL
                                         ? t('clienteShow.transversalLabel')
-                                        : f}
+                                        : f === DOCUMENTOS_EXTRA
+                                          ? t('clienteShow.documentosExtraLabel')
+                                          : f}
                                 </option>
                             ),
                         )}
@@ -1945,10 +1954,17 @@ export default function ClienteShow({
         );
     };
 
-    const formaLabel = (forma: string) =>
-        forma === TRANSVERSAL
-            ? t('clienteShow.transversalLabel')
-            : (formas.find((f) => f.forma === forma)?.forma_label ?? forma);
+    const formaLabel = (forma: string) => {
+        if (forma === TRANSVERSAL) {
+            return t('clienteShow.transversalLabel');
+        }
+
+        if (forma === DOCUMENTOS_EXTRA) {
+            return t('clienteShow.documentosExtraLabel');
+        }
+
+        return formas.find((f) => f.forma === forma)?.forma_label ?? forma;
+    };
 
     // Agrupado por forma, preservando el orden por campo que ya trae el backend.
     const porForma = new Map<string, CampoCliente[]>();
@@ -1976,10 +1992,16 @@ export default function ClienteShow({
     }
 
     // Los datos del cliente van primero: son su identidad (SSN, cónyuge,
-    // dependientes) y no pertenecen a ninguna forma en particular. Después las
-    // formas en el orden del backend, y al final cualquier forma con campos que
-    // no esté declarada — no debería pasar, pero no la escondemos si pasa.
-    const declaradas = [TRANSVERSAL, ...formas.map((f) => f.forma)];
+    // dependientes) y no pertenecen a ninguna forma en particular. Luego los
+    // documentos extra (también sin forma particular, pero no son identidad).
+    // Después las formas en el orden del backend, y al final cualquier forma
+    // con campos que no esté declarada — no debería pasar, pero no la
+    // escondemos si pasa.
+    const declaradas = [
+        TRANSVERSAL,
+        DOCUMENTOS_EXTRA,
+        ...formas.map((f) => f.forma),
+    ];
     const secciones = [
         ...declaradas,
         ...[...porForma.keys()].filter((f) => !declaradas.includes(f)),

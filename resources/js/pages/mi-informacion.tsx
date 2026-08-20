@@ -10,6 +10,7 @@ import { dashboard } from '@/routes';
 import type { CampoCliente, ClienteForma, Determinacion } from '@/types';
 
 const TRANSVERSAL = 'transversal';
+const DOCUMENTOS_EXTRA = 'documentos_extra';
 
 // Mismo criterio visual que la ficha del preparador (clientes/show.tsx): un
 // riel de color al borde para leer el estado de reojo, más una etiqueta para
@@ -248,12 +249,23 @@ export default function MiInformacion({
         }
     }
 
-    const formaLabel = (forma: string) =>
-        forma === TRANSVERSAL
-            ? t('clienteShow.transversalLabel')
-            : (formas.find((f) => f.forma === forma)?.forma_label ?? forma);
+    const formaLabel = (forma: string) => {
+        if (forma === TRANSVERSAL) {
+            return t('clienteShow.transversalLabel');
+        }
 
-    const declaradas = [TRANSVERSAL, ...formas.map((f) => f.forma)];
+        if (forma === DOCUMENTOS_EXTRA) {
+            return t('clienteShow.documentosExtraLabel');
+        }
+
+        return formas.find((f) => f.forma === forma)?.forma_label ?? forma;
+    };
+
+    const declaradas = [
+        TRANSVERSAL,
+        DOCUMENTOS_EXTRA,
+        ...formas.map((f) => f.forma),
+    ];
     const secciones = [
         ...declaradas,
         ...[...porForma.keys()].filter((f) => !declaradas.includes(f)),

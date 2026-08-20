@@ -194,14 +194,17 @@ class DashboardSummaryService
     }
 
     /**
-     * `historial_cambios.forma` puede valer 'transversal' (campos únicos por
-     * cliente, ver TaxFieldCatalog::formaAlmacen) — eso no es una TaxForm real,
-     * así que `TaxForm::from()` no puede resolverlo directamente.
+     * `historial_cambios.forma` puede valer una pseudo-forma ('transversal' o
+     * 'documentos_extra', campos únicos por cliente, ver
+     * TaxFieldCatalog::formaAlmacen) — eso no es una TaxForm real, así que
+     * `TaxForm::from()` no puede resolverlo directamente.
      */
     private function formaLabel(string $forma): string
     {
-        return $forma === CampoCatalogo::TRANSVERSAL
-            ? 'Datos del cliente'
-            : TaxForm::from($forma)->label();
+        return match ($forma) {
+            CampoCatalogo::TRANSVERSAL => 'Datos del cliente',
+            CampoCatalogo::DOCUMENTOS_EXTRA => 'Documentos extra',
+            default => TaxForm::from($forma)->label(),
+        };
     }
 }

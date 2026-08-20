@@ -31,7 +31,7 @@ class CatalogoCampoRequest extends FormRequest
     public function rules(): array
     {
         $tipoCampo = (string) $this->input('tipo_campo');
-        $formasValidas = [...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), CampoCatalogo::TRANSVERSAL];
+        $formasValidas = [...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), ...CampoCatalogo::pseudoFormas()];
         $campoActual = $this->route('campo');
 
         return [

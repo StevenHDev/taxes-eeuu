@@ -26,6 +26,7 @@ class CatalogoController extends Controller
         return Inertia::render('catalogo/index', [
             'formas' => [
                 ['value' => CampoCatalogo::TRANSVERSAL, 'label' => 'Transversales (todas las formas)'],
+                ['value' => CampoCatalogo::DOCUMENTOS_EXTRA, 'label' => 'Documentos extra (siempre se piden)'],
                 ...array_map(fn (TaxForm $f) => ['value' => $f->value, 'label' => $f->label()], TaxForm::cases()),
             ],
             'campos' => $campos,

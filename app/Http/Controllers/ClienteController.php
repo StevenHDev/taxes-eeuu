@@ -141,8 +141,10 @@ class ClienteController extends Controller
                     'obligatorio' => $campo['obligatorio'],
                 ]));
 
-        // Los campos únicos por cliente (SSN, cónyuge, dependientes): una sola vez,
-        // bajo la forma canónica 'transversal', si no están ya cargados.
+        // Los campos únicos por cliente (SSN, cónyuge, dependientes, documentos
+        // extra...): una sola vez, bajo su propia pseudo-forma ('transversal' o
+        // 'documentos_extra', ver CampoCatalogo::pseudoFormas), si no están ya
+        // cargados.
         $disponibleUnicos = CampoCatalogo::query()
             ->where('unico_por_cliente', true)
             ->where('tax_year', $taxYear)
@@ -150,7 +152,7 @@ class ClienteController extends Controller
             ->get()
             ->reject(fn (CampoCatalogo $c) => $unicosCargados->contains($c->clave))
             ->map(fn (CampoCatalogo $c) => [
-                'forma' => CampoCatalogo::TRANSVERSAL,
+                'forma' => $c->forma,
                 'campo' => $c->clave,
                 'tipo_campo' => $c->tipo_campo->value,
                 'tipo_dato' => $c->tipo_dato?->value,

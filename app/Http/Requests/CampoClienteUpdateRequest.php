@@ -51,11 +51,11 @@ class CampoClienteUpdateRequest extends FormRequest
         $tipoDato = FieldDataType::tryFrom((string) $this->input('tipo_dato'));
         $esArray = in_array($tipoDato, [FieldDataType::ArrayString, FieldDataType::ArrayObject], true);
 
-        $formasValidas = [...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), CampoCatalogo::TRANSVERSAL];
+        $formasValidas = [...array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()), ...CampoCatalogo::pseudoFormas()];
 
         return [
-            // Además de las 10 formas, se acepta 'transversal': los campos únicos por
-            // cliente (SSN, cónyuge, dependientes) se guardan bajo esa forma canónica.
+            // Además de las 10 formas, se aceptan las pseudo-formas (transversal,
+            // documentos_extra): los campos únicos por cliente se guardan bajo esas.
             'forma' => ['required', Rule::in($formasValidas)],
             'tax_year' => ['required', 'integer', 'digits:4'],
             'modo' => ['required', Rule::enum(FieldMode::class)],
@@ -98,7 +98,7 @@ class CampoClienteUpdateRequest extends FormRequest
         $validator->after(function (ValidatorContract $validator) {
             $forma = (string) $this->query('forma');
 
-            if ($forma !== CampoCatalogo::TRANSVERSAL && ! TaxForm::tryFrom($forma)) {
+            if (! in_array($forma, CampoCatalogo::pseudoFormas(), true) && ! TaxForm::tryFrom($forma)) {
                 return;
             }
 

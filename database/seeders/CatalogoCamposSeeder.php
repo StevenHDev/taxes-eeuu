@@ -32,6 +32,10 @@ class CatalogoCamposSeeder extends Seeder
             $this->crear(CampoCatalogo::TRANSVERSAL, $campo);
         }
 
+        foreach ($this->documentosExtra() as $campo) {
+            $this->crear(CampoCatalogo::DOCUMENTOS_EXTRA, $campo);
+        }
+
         foreach ($this->porForma() as $forma => $campos) {
             foreach ($campos as $campo) {
                 $this->crear($forma, $campo);
@@ -66,6 +70,10 @@ class CatalogoCamposSeeder extends Seeder
     }
 
     /**
+     * Identidad del cliente y los pocos documentos núcleo que se le piden a
+     * todo el mundo — el resto de documentos opcionales vive en
+     * `documentosExtra()`, bajo CampoCatalogo::DOCUMENTOS_EXTRA.
+     *
      * @return array<int, array<string, mixed>>
      */
     private function transversales(): array
@@ -80,12 +88,33 @@ class CatalogoCamposSeeder extends Seeder
             ], sensible: true, unicoPorCliente: true),
             $this->campo('w2', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], unicoPorCliente: true),
             $this->campo('form_1099_nec', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], unicoPorCliente: true),
-            // Documentos de inversión/retiro/vivienda — a diferencia de w2 y
-            // form_1099_nec, no todo cliente los recibe (depende de si tuvo
-            // intereses, dividendos, distribuciones de retiro, desempleo/reembolso
-            // estatal, o hipoteca/préstamo estudiantil ese año), por eso
-            // obligatorio: false. Ver RelacionesDocumentoCampoSeeder para a qué
-            // campo de qué forma alimenta cada uno (matriz GTS 1040 2025).
+            $this->campo('form_1095_a', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            // Hechos crudos (no la conclusión) para que el motor de reglas calcule
+            // el filing status — ver App\Services\Reglas\FilingStatusCalculator.
+            $this->campo('estado_civil', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
+                'casado_al_31_dic', 'convivio_conyuge_ultimos_6_meses', 'costeo_mas_mitad_hogar',
+                'existe_persona_calificable', 'conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge',
+            ], unicoPorCliente: true),
+        ];
+    }
+
+    /**
+     * Documentos opcionales que, igual que `transversales()`, se piden
+     * siempre sin importar qué forma(s) tenga el cliente — se agrupan aparte
+     * (CampoCatalogo::DOCUMENTOS_EXTRA) porque no son el núcleo de identidad
+     * del cliente, sino documentos que puede enviar además.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function documentosExtra(): array
+    {
+        return [
+            // Documentos de inversión/retiro/vivienda — no todo cliente los
+            // recibe (depende de si tuvo intereses, dividendos, distribuciones
+            // de retiro, desempleo/reembolso estatal, o hipoteca/préstamo
+            // estudiantil ese año), por eso obligatorio: false. Ver
+            // RelacionesDocumentoCampoSeeder para a qué campo de qué forma
+            // alimenta cada uno (matriz GTS 1040 2025).
             $this->campo('form_1099_int', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_div', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_r', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
@@ -95,7 +124,7 @@ class CatalogoCamposSeeder extends Seeder
             // Fase 6 (auditoría completa de la matriz GTS 1040 2025, más allá de
             // la primera pasada): documentos que la matriz identifica pero que
             // todavía no existían en el catálogo. Ver RelacionesDocumentoCampoSeeder
-            // para las relaciones ciertas; SSA-1099, 1099-B/DA, 1098-T y 1095-A
+            // para las relaciones ciertas; SSA-1099 y 1099-B/DA y 1098-T
             // tienen `revela` — el resto (1099-MISC, 1099-K, 1099-S, K-1 personal,
             // 1099-SA) la matriz misma los marca como "fact-dependent"/"no
             // automáticamente gravable en su totalidad", así que solo se
@@ -104,7 +133,6 @@ class CatalogoCamposSeeder extends Seeder
             $this->campo('ssa_1099', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_b', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1098_t', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1095_a', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_misc', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_k', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_s', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
@@ -118,12 +146,6 @@ class CatalogoCamposSeeder extends Seeder
             $this->campo('form_1099_sa', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_5498_sa', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('declaracion_anio_anterior', FieldKind::Documento, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
-            // Hechos crudos (no la conclusión) para que el motor de reglas calcule
-            // el filing status — ver App\Services\Reglas\FilingStatusCalculator.
-            $this->campo('estado_civil', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
-                'casado_al_31_dic', 'convivio_conyuge_ultimos_6_meses', 'costeo_mas_mitad_hogar',
-                'existe_persona_calificable', 'conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge',
-            ], unicoPorCliente: true),
         ];
     }
 

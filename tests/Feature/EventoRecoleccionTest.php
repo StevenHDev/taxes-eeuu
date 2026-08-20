@@ -623,7 +623,7 @@ class EventoRecoleccionTest extends TestCase
         // declaracion_anio_anterior es documento y obligatorio: false en el catálogo.
         $response = $this->postJson('/api/eventos', [
             'cliente_id' => $cliente->id,
-            'forma' => 'transversal',
+            'forma' => 'documentos_extra',
             'tax_year' => 2025,
             'campo' => 'declaracion_anio_anterior',
             'tipo_campo' => 'documento',
@@ -664,7 +664,7 @@ class EventoRecoleccionTest extends TestCase
 
         $this->postJson('/api/eventos', [
             'cliente_id' => $cliente->id,
-            'forma' => 'transversal',
+            'forma' => 'documentos_extra',
             'tax_year' => 2025,
             'campo' => 'declaracion_anio_anterior',
             'tipo_campo' => 'documento',
@@ -673,7 +673,7 @@ class EventoRecoleccionTest extends TestCase
 
         $this->post('/api/eventos', [
             'cliente_id' => $cliente->id,
-            'forma' => 'transversal',
+            'forma' => 'documentos_extra',
             'tax_year' => 2025,
             'campo' => 'declaracion_anio_anterior',
             'tipo_campo' => 'documento',

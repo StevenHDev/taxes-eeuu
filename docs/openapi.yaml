@@ -169,7 +169,7 @@ paths:
                 summary: Campo opcional declinado — modo "no_aplica" (ej. declaracion_anio_anterior)
                 value:
                   cliente_id: 42
-                  forma: transversal
+                  forma: documentos_extra
                   tax_year: 2025
                   campo: declaracion_anio_anterior
                   tipo_campo: documento
@@ -564,11 +564,11 @@ paths:
         sustituye el catálogo hardcodeado que antes vivía como texto estático
         en su propio prompt. `tax_year` es obligatorio (sin default: es una
         consulta agente-facing, no una lectura de panel humano). Los campos
-        transversales no dependen de que exista ninguna forma declarada — se
-        piden sin importar cuál(es) apliquen, así que aparecen en `pendientes`
-        aunque el cliente todavía no tenga ninguna forma declarada. En ese
-        caso, `completo` es siempre `false` (la determinación de forma en sí
-        sigue pendiente).
+        con pseudo-forma (`transversal` o `documentos_extra`) no dependen de
+        que exista ninguna forma declarada — se piden sin importar cuál(es)
+        apliquen, así que aparecen en `pendientes` aunque el cliente todavía
+        no tenga ninguna forma declarada. En ese caso, `completo` es siempre
+        `false` (la determinación de forma en sí sigue pendiente).
       x-required-ability: clientes:read
       security:
         - BearerAuth: []
@@ -604,7 +604,8 @@ paths:
         description: |
           Obligatoria: el mismo nombre de campo se repite en formas distintas con
           significado distinto (ej. `gastos` en `form_1065`, `form_1120`, etc.).
-          Para campos únicos por cliente, usa `transversal`.
+          Para campos únicos por cliente, usa `transversal` o `documentos_extra`
+          según a cuál categoría pertenezca (ver FormaAlmacen).
         schema:
           $ref: '#/components/schemas/FormaAlmacen'
       - name: tax_year
@@ -751,11 +752,16 @@ components:
       description: Las 10 formas del IRS soportadas.
 
     FormaAlmacen:
-      description: Una de las 10 formas, o `transversal` para los campos únicos por cliente.
+      description: >-
+        Una de las 10 formas, o una pseudo-forma para los campos únicos por
+        cliente: `transversal` (identidad del cliente — SSN, cónyuge,
+        dependientes, estado civil, w2, 1099-NEC, 1095-A) o `documentos_extra`
+        (el resto de documentos opcionales que también se piden siempre, sin
+        importar qué forma(s) tenga el cliente).
       oneOf:
         - $ref: '#/components/schemas/TaxForm'
         - type: string
-          enum: [transversal]
+          enum: [transversal, documentos_extra]
 
     FieldKind:
       type: string
@@ -1140,9 +1146,10 @@ components:
     PendienteCampo:
       type: object
       description: |
-        Un campo del catálogo que al cliente le falta entregar. Los campos
-        transversales (`unico_por_cliente`) aparecen una sola vez sin importar
-        cuántas formas tenga el cliente; los propios de cada forma nunca se
+        Un campo del catálogo que al cliente le falta entregar. Los campos con
+        pseudo-forma (`unico_por_cliente`, `forma: transversal` o
+        `forma: documentos_extra`) aparecen una sola vez sin importar cuántas
+        formas tenga el cliente; los propios de cada forma nunca se
         deduplican entre formas (ej. `estados_bancarios` de `schedule_c` y de
         `schedule_e` son dos pendientes distintas). Un campo deja de aparecer
         acá tanto si ya tiene `estado: "recibido"` como si se guardó con

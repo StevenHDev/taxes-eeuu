@@ -87,7 +87,7 @@ class TaxFieldCatalogPendientesTest extends TestCase
 
         CampoCliente::query()->create([
             'user_id' => $cliente->id,
-            'forma' => 'transversal',
+            'forma' => 'documentos_extra',
             'tax_year' => 2025,
             'campo' => 'declaracion_anio_anterior',
             'tipo_campo' => 'documento',

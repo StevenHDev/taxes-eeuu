@@ -40,7 +40,7 @@ class TaxFieldCatalog
     {
         return self::todos()
             ->filter(fn (array $c) => $c['tax_year'] === $taxYear
-                && ($c['forma'] === CampoCatalogo::TRANSVERSAL || $c['forma'] === $forma->value))
+                && (in_array($c['forma'], CampoCatalogo::pseudoFormas(), true) || $c['forma'] === $forma->value))
             ->map(fn (array $c) => $c['definicion'])
             ->values()
             ->all();
@@ -51,12 +51,13 @@ class TaxFieldCatalog
      */
     public static function find(int $taxYear, string $forma, string $campo): ?array
     {
-        // 'transversal' es la forma canónica bajo la que se guardan los campos
-        // únicos por cliente — no es una TaxForm, así que se resuelve aparte.
-        if ($forma === CampoCatalogo::TRANSVERSAL) {
+        // Las pseudo-formas (transversal, documentos_extra) son la forma
+        // canónica bajo la que se guardan los campos únicos por cliente — no
+        // son una TaxForm, así que se resuelven aparte.
+        if (in_array($forma, CampoCatalogo::pseudoFormas(), true)) {
             foreach (self::todos() as $candidato) {
                 if ($candidato['tax_year'] === $taxYear
-                    && $candidato['forma'] === CampoCatalogo::TRANSVERSAL
+                    && $candidato['forma'] === $forma
                     && $candidato['definicion']['campo'] === $campo) {
                     return $candidato['definicion'];
                 }
@@ -97,14 +98,36 @@ class TaxFieldCatalog
     }
 
     /**
-     * Forma bajo la que se debe guardar un campo: 'transversal' si es único por
-     * cliente (una sola fila compartida), o la forma solicitada en caso contrario.
+     * Forma bajo la que se debe guardar un campo: su propia pseudo-forma
+     * ('transversal' o 'documentos_extra') si es único por cliente (una sola
+     * fila compartida), o la forma solicitada en caso contrario.
      */
     public static function formaAlmacen(int $taxYear, string $campo, string $formaSolicitada): string
     {
-        return self::isUnicoPorCliente($taxYear, $campo)
-            ? CampoCatalogo::TRANSVERSAL
-            : $formaSolicitada;
+        if (! self::isUnicoPorCliente($taxYear, $campo)) {
+            return $formaSolicitada;
+        }
+
+        return self::pseudoFormaDe($taxYear, $campo) ?? CampoCatalogo::TRANSVERSAL;
+    }
+
+    /**
+     * La pseudo-forma bajo la que vive un campo único por cliente en el
+     * catálogo — nunca se asume 'transversal' a ciegas, porque desde que
+     * existe `CampoCatalogo::DOCUMENTOS_EXTRA` un campo único por cliente
+     * puede vivir bajo cualquiera de las dos.
+     */
+    private static function pseudoFormaDe(int $taxYear, string $campo): ?string
+    {
+        foreach (self::todos() as $candidato) {
+            if ($candidato['tax_year'] === $taxYear
+                && in_array($candidato['forma'], CampoCatalogo::pseudoFormas(), true)
+                && $candidato['definicion']['campo'] === $campo) {
+                return $candidato['forma'];
+            }
+        }
+
+        return null;
     }
 
     public static function isSensible(int $taxYear, string $campo): bool
@@ -149,7 +172,7 @@ class TaxFieldCatalog
         $recibidos = CampoCliente::query()
             ->where('user_id', $clienteId)
             ->where('tax_year', $taxYear)
-            ->whereIn('forma', [$forma->value, CampoCatalogo::TRANSVERSAL])
+            ->whereIn('forma', [$forma->value, ...CampoCatalogo::pseudoFormas()])
             ->where('estado', FieldState::Recibido)
             ->pluck('campo');
 
@@ -167,6 +190,22 @@ class TaxFieldCatalog
     {
         return self::todos()
             ->filter(fn (array $c) => $c['tax_year'] === $taxYear && $c['forma'] === CampoCatalogo::TRANSVERSAL)
+            ->map(fn (array $c) => $c['definicion'])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Documentos opcionales que, igual que los transversales, se piden
+     * siempre sin importar qué forma(s) tenga el cliente — ver
+     * `CampoCatalogo::DOCUMENTOS_EXTRA`.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function documentosExtra(int $taxYear): array
+    {
+        return self::todos()
+            ->filter(fn (array $c) => $c['tax_year'] === $taxYear && $c['forma'] === CampoCatalogo::DOCUMENTOS_EXTRA)
             ->map(fn (array $c) => $c['definicion'])
             ->values()
             ->all();
@@ -202,7 +241,7 @@ class TaxFieldCatalog
         $recibidos = CampoCliente::query()
             ->where('user_id', $clienteId)
             ->where('tax_year', $taxYear)
-            ->whereIn('forma', [...array_map(fn (TaxForm $f) => $f->value, $formas), CampoCatalogo::TRANSVERSAL])
+            ->whereIn('forma', [...array_map(fn (TaxForm $f) => $f->value, $formas), ...CampoCatalogo::pseudoFormas()])
             ->whereIn('estado', [FieldState::Recibido, FieldState::NoAplica])
             ->get(['forma', 'campo'])
             ->map(fn (CampoCliente $c) => "{$c->forma}|{$c->campo}")
@@ -217,6 +256,27 @@ class TaxFieldCatalog
 
             $pendientes[] = [
                 'forma' => CampoCatalogo::TRANSVERSAL,
+                'campo' => $field['campo'],
+                'tipo_campo' => $field['tipo']->value,
+                'tipo_dato' => $field['tipo_dato']?->value,
+                'subcampos' => $field['subcampos'],
+                'formatos_aceptados' => $field['formatos_aceptados'],
+                'obligatorio' => $field['obligatorio'],
+                'sensible' => $field['sensible'],
+                'revela' => self::revelaPara($taxYear, $field['campo']),
+            ];
+        }
+
+        // Documentos extra (ver CampoCatalogo::DOCUMENTOS_EXTRA): mismo trato
+        // que los transversales — siempre presentes, sin importar $formas —
+        // solo que agrupados bajo otra pseudo-forma.
+        foreach (self::documentosExtra($taxYear) as $field) {
+            if ($recibidos->has(CampoCatalogo::DOCUMENTOS_EXTRA."|{$field['campo']}")) {
+                continue;
+            }
+
+            $pendientes[] = [
+                'forma' => CampoCatalogo::DOCUMENTOS_EXTRA,
                 'campo' => $field['campo'],
                 'tipo_campo' => $field['tipo']->value,
                 'tipo_dato' => $field['tipo_dato']?->value,

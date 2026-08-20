@@ -15,9 +15,12 @@ export type FormaOption = {
     label: string;
 };
 
-// Forma bajo la que se guarda un valor: una de las 10 formas, o 'transversal'
-// para los campos únicos por cliente (SSN, cónyuge, dependientes).
-export type FormaAlmacen = TaxForm | 'transversal';
+// Forma bajo la que se guarda un valor: una de las 10 formas, o una
+// pseudo-forma para los campos únicos por cliente — 'transversal' (identidad:
+// SSN, cónyuge, dependientes, estado civil, w2, 1099-NEC, 1095-A) o
+// 'documentos_extra' (el resto de documentos opcionales que también se piden
+// siempre, agrupados aparte).
+export type FormaAlmacen = TaxForm | 'transversal' | 'documentos_extra';
 
 export type FieldState = 'recibido' | 'pendiente' | 'invalido' | 'no_aplica';
 export type FormState = 'en_progreso' | 'completo';

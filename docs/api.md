@@ -51,10 +51,13 @@ Impacto concreto en la API:
 
 ## Catálogo maestro de campos
 
-Cada campo pertenece a una de dos categorías:
+Cada campo pertenece a una de tres categorías:
 
-- **Datos únicos por cliente** (`unico_por_cliente: sí`): son datos de la **persona**, no de una forma en particular (identificación, cónyuge, dependientes, W-2, 1099-NEC, declaración del año anterior). Se piden **una sola vez** y se comparten entre todas las formas del cliente. Internamente se guardan bajo la forma canónica **`transversal`** — una sola fila por `(cliente, campo)`, sin importar en qué forma llegó el evento. Ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente).
+- **Identidad del cliente** (`unico_por_cliente: sí`, `forma: "transversal"`): el núcleo de datos de la **persona** que se le pide a todo cliente sin excepción — identificación, cónyuge, dependientes, estado civil, W-2, 1099-NEC, 1095-A. Se piden **una sola vez** y se comparten entre todas las formas del cliente. Ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente).
+- **Documentos extra** (`unico_por_cliente: sí`, `forma: "documentos_extra"`): el resto de documentos opcionales que el cliente puede enviar (1099-INT/DIV/R/G/B/C/MISC/K/S/SA, 1098/1098-E/1098-T, SSA-1099, K-1 recibido, W-2G, 5498-SA, declaración del año anterior). Se comportan igual que la identidad del cliente (se piden siempre, sin importar qué forma(s) tenga, una sola vez por cliente) — se agrupan aparte solo porque conceptualmente no son la identidad núcleo, sino documentos adicionales. Misma mecánica de guardado que la identidad del cliente, ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente).
 - **Campos por forma**: pertenecen a una **forma específica** (`form_1040`, `schedule_c`, `schedule_e`, `form_1065`, `form_1120`, `form_1120_s`, `schedule_f`, `form_1041`, `form_990`, `form_1040_nr`). Un mismo campo puede pedirse en varias formas y tener **un valor distinto en cada una** (ej. `estados_bancarios`, `gastos`, `activos`).
+
+`transversal` y `documentos_extra` son ambas **pseudo-formas**: valores especiales de `forma` que no son ninguna de las 10 formas del IRS (ver `App\Models\CampoCatalogo::pseudoFormas()`). Cualquier endpoint que acepte `forma` acepta las 10 formas reales o cualquiera de estas dos.
 
 El catálogo completo (fuente de verdad) vive en `catalogo_campos` (administrable desde `/catalogo`) y se lee vía `App\Support\TaxFieldCatalog`; las tablas de abajo son su documentación exhaustiva, campo por campo — si cambia el catálogo, hay que actualizar esta sección también.
 
@@ -67,11 +70,11 @@ Qué significa cada columna:
 - **`formatos_aceptados`**: solo aplica cuando `modo: archivo`. Extensiones de archivo válidas para ese campo — cualquier otra extensión hace que el evento se guarde con `estado: "invalido"`.
 - **`obligatorio`**: si es `no`, ese campo no cuenta para que la API marque la forma como `completo` (ver [Emitir eventos](#emitir-un-evento-post-apieventos)), y además puede recibir `modo: "no_aplica"` (ver [`modo: "no_aplica"`](#modo-no_aplica--el-cliente-respondió-que-no-tiene-ese-campo-solo-opcionales)) — un campo obligatorio nunca admite ese modo.
 - **`sensible`**: si es `sí`, el valor se cifra en la base de datos, se muestra enmascarado en el panel/API, y revelarlo exige el flujo de [Revelar campos sensibles](#revelar-campos-sensibles).
-- **`unico_por_cliente`**: si es `sí`, es un dato de la persona que se guarda una sola vez (bajo la forma `transversal`) y se comparte entre todas sus formas.
+- **`unico_por_cliente`**: si es `sí`, es un dato que se guarda una sola vez y se comparte entre todas las formas del cliente, bajo su propia pseudo-forma (`transversal` o `documentos_extra`, según a cuál categoría pertenezca).
 
-**Nota importante:** varios nombres de campo se repiten en formas distintas con significado distinto (ej. `gastos` existe en `form_1065`, `form_1120`, `form_1120_s`, `form_1041` y `form_990`; `estados_bancarios` en todas las formas de negocio). Por eso todo endpoint que identifique un campo específico exige también `forma` — nunca alcanza con el nombre del campo solo. Para los datos únicos por cliente, la forma de almacenamiento es siempre `transversal` (ver más abajo).
+**Nota importante:** varios nombres de campo se repiten en formas distintas con significado distinto (ej. `gastos` existe en `form_1065`, `form_1120`, `form_1120_s`, `form_1041` y `form_990`; `estados_bancarios` en todas las formas de negocio). Por eso todo endpoint que identifique un campo específico exige también `forma` — nunca alcanza con el nombre del campo solo. Para los datos únicos por cliente, la forma de almacenamiento es siempre su pseudo-forma (`transversal` o `documentos_extra`, ver más abajo) — nunca la forma real que traiga el evento.
 
-### Datos únicos por cliente (`unico_por_cliente`, se guardan bajo `transversal`)
+### Identidad del cliente (`unico_por_cliente`, se guardan bajo `transversal`)
 
 | Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
 |---|---|---|---|---|---|
@@ -80,6 +83,15 @@ Qué significa cada columna:
 | `info_dependientes` | dato | `array_object` (`nombre_completo`, `fecha_nacimiento`, `ssn`, `relacion`, `meses_en_hogar`, `estudiante_tiempo_completo`, `discapacitado`, `provee_mas_50_soporte_propio`, `ingreso_bruto_anual`, `custodia_compartida_sin_conflicto`) | — | sí | sí |
 | `w2` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | sí | no |
 | `form_1099_nec` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | sí | no |
+| `form_1095_a` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
+| `estado_civil` | dato | `object` (`casado_al_31_dic`, `convivio_conyuge_ultimos_6_meses`, `costeo_mas_mitad_hogar`, `existe_persona_calificable`, `conyuge_fallecio_en_anio`, `anio_fallecimiento_conyuge`) | — | sí | no |
+
+Estos 7 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). Los subcampos ampliados de `info_dependientes` y el campo `estado_civil` (Fase 2) alimentan el motor de reglas — capturan **hechos**, no conclusiones: nunca se le pregunta al cliente su filing status directamente, se deriva de estos datos. `form_1095_a` trae `revela` hacia `form_1040.marketplace_seguro` (ver tabla de `form_1040` abajo).
+
+### Documentos extra (`unico_por_cliente`, se guardan bajo `documentos_extra`)
+
+| Campo | `tipo_campo` | `tipo_dato` / subcampos | `formatos_aceptados` | Obligatorio | Sensible |
+|---|---|---|---|---|---|
 | `form_1099_int` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `form_1099_div` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `form_1099_r` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
@@ -87,11 +99,9 @@ Qué significa cada columna:
 | `form_1098` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `form_1098_e` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `declaracion_anio_anterior` | documento | — | `pdf` | **no** | no |
-| `estado_civil` | dato | `object` (`casado_al_31_dic`, `convivio_conyuge_ultimos_6_meses`, `costeo_mas_mitad_hogar`, `existe_persona_calificable`, `conyuge_fallecio_en_anio`, `anio_fallecimiento_conyuge`) | — | sí | no |
 | `ssa_1099` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `form_1099_b` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `form_1098_t` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
-| `form_1095_a` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `form_1099_misc` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `form_1099_k` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `form_1099_s` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
@@ -101,11 +111,11 @@ Qué significa cada columna:
 | `form_1099_sa` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 | `form_5498_sa` | documento | — | `pdf`, `jpg`, `jpeg`, `png`, `heic` | **no** | no |
 
-Estos 21 cuentan para la completitud de **todas** las formas del cliente (basta cargarlos una vez). Al emitir el evento se envían con `forma: "transversal"` (ver [Cómo se guardan los datos únicos](#cómo-se-guardan-los-datos-únicos-por-cliente)). Los subcampos ampliados de `info_dependientes` y el campo nuevo `estado_civil` (Fase 2) alimentan el motor de reglas — capturan **hechos**, no conclusiones: nunca se le pregunta al cliente su filing status directamente, se deriva de estos datos.
+Estos 18 se comportan igual que la identidad del cliente (siempre en `pendientes`, sin importar qué forma(s) tenga el cliente, una sola vez por cliente) — se envían con `forma: "documentos_extra"`. Ninguno es obligatorio, así que ninguno cuenta para la completitud de una forma, pero sí se preguntan en su turno (ver [Qué falta por recolectar](#qué-falta-por-recolectar-get-apiclientesidpendientestax_year)).
 
-**Fase 5:** `form_1099_int`, `form_1099_div`, `form_1099_r`, `form_1099_g`, `form_1098` y `form_1098_e` son opcionales — a diferencia de `w2` y `form_1099_nec`, no todo cliente los recibe (dependen de si tuvo intereses, dividendos, distribuciones de retiro, desempleo/reembolso estatal, o hipoteca/préstamo estudiantil ese año). Cada uno trae en su clave `revela` (ver [Qué falta por recolectar](#qué-falta-por-recolectar-get-apiclientesidpendientestax_year)) a qué campo de `form_1040`/`schedule_c` alimenta, derivado de la matriz de trazabilidad GTS Form 1040 2025 — ver `RelacionesDocumentoCampoSeeder`.
+**Fase 5:** `form_1099_int`, `form_1099_div`, `form_1099_r`, `form_1099_g`, `form_1098` y `form_1098_e` son opcionales — no todo cliente los recibe (dependen de si tuvo intereses, dividendos, distribuciones de retiro, desempleo/reembolso estatal, o hipoteca/préstamo estudiantil ese año). Cada uno trae en su clave `revela` (ver [Qué falta por recolectar](#qué-falta-por-recolectar-get-apiclientesidpendientestax_year)) a qué campo de `form_1040`/`schedule_c` alimenta, derivado de la matriz de trazabilidad GTS Form 1040 2025 — ver `RelacionesDocumentoCampoSeeder`.
 
-**Fase 6** (auditoría completa de la matriz, más allá de la primera pasada): `ssa_1099`, `form_1099_b`, `form_1098_t`, `form_1095_a`, `form_w2g`, `form_1099_c` y `form_5498_sa` traen `revela` (ver tabla de `form_1040` abajo). `form_1099_div` (ya existente desde la Fase 5) suma una segunda relación en esta fase: casilla 7 (Foreign tax paid) → `impuesto_extranjero_pagado`. `form_1099_misc`, `form_1099_k`, `form_1099_s`, `k1_recibido` y `form_1099_sa` se recolectan como documento **sin** relación automática — la matriz misma los marca como fact-dependent (ej. un 1099-S puede ser la venta de la casa del cliente, excluible bajo §121, o un inmueble de negocio; un K-1 personal retiene el carácter del ingreso subyacente) — inventar una relación ahí sería una suposición, no un hecho confirmado.
+**Fase 6** (auditoría completa de la matriz, más allá de la primera pasada): `ssa_1099`, `form_1099_b`, `form_1098_t`, `form_w2g`, `form_1099_c` y `form_5498_sa` traen `revela` (ver tabla de `form_1040` abajo). `form_1099_div` (ya existente desde la Fase 5) suma una segunda relación en esta fase: casilla 7 (Foreign tax paid) → `impuesto_extranjero_pagado`. `form_1099_misc`, `form_1099_k`, `form_1099_s`, `k1_recibido` y `form_1099_sa` se recolectan como documento **sin** relación automática — la matriz misma los marca como fact-dependent (ej. un 1099-S puede ser la venta de la casa del cliente, excluible bajo §121, o un inmueble de negocio; un K-1 personal retiene el carácter del ingreso subyacente) — inventar una relación ahí sería una suposición, no un hecho confirmado.
 
 ### `form_1040`
 
@@ -231,14 +241,14 @@ Estos 21 cuentan para la completitud de **todas** las formas del cliente (basta 
 
 ## Cómo se guardan los datos únicos por cliente
 
-Los 6 campos marcados `unico_por_cliente` (identificación, cónyuge, dependientes, W-2, 1099-NEC, declaración del año anterior) son datos de la **persona**, no de una forma. Antes se guardaban con la `forma` de cada evento, así que el mismo dato quedaba **duplicado** si llegaba en el contexto de dos formas distintas (ej. un SSN en `form_1040` y otro en `schedule_c`). Ahora:
+Los 25 campos marcados `unico_por_cliente` — los 7 de identidad del cliente y los 18 de documentos extra (ver [Catálogo maestro de campos](#catálogo-maestro-de-campos)) — son datos de la **persona**, no de una forma. Antes se guardaban con la `forma` de cada evento, así que el mismo dato quedaba **duplicado** si llegaba en el contexto de dos formas distintas (ej. un SSN en `form_1040` y otro en `schedule_c`). Ahora:
 
-- Se guardan **una sola vez por cliente y por año fiscal**, bajo la forma canónica **`transversal`** (`campos_cliente.forma = "transversal"`), sin importar en qué `forma` llegó el evento. El mismo campo para dos `tax_year` distintos son dos filas independientes — ver [Año fiscal](#año-fiscal-taxyear).
-- Al emitir el evento, envía **`forma: "transversal"`** (recomendado, es lo semánticamente correcto para un dato de la persona). También se acepta una forma real (ej. `form_1040`): la API la reubica igual bajo `transversal`. La respuesta del evento devuelve la `forma` que enviaste.
+- Se guardan **una sola vez por cliente y por año fiscal**, bajo su propia pseudo-forma canónica — **`transversal`** para los 7 de identidad, **`documentos_extra`** para los 18 documentos extra (`campos_cliente.forma` correspondiente) — sin importar en qué `forma` llegó el evento. El mismo campo para dos `tax_year` distintos son dos filas independientes — ver [Año fiscal](#año-fiscal-taxyear).
+- Al emitir el evento, envía la pseudo-forma que le corresponde a ese campo (**`transversal`** o **`documentos_extra`** — recomendado, es lo semánticamente correcto). También se acepta una forma real (ej. `form_1040`): la API la reubica igual bajo la pseudo-forma correcta del campo. La respuesta del evento devuelve la `forma` que enviaste.
 - Cuentan para la **completitud de todas** las formas del cliente: basta cargarlos una vez para que todas sus formas los den por recibidos.
 - Reenviar uno de estos campos (en cualquier forma) **sobrescribe la única fila existente** — no crea una nueva por forma.
-- En el detalle del cliente (`GET /api/clientes/{id}`) estos campos aparecen con `forma: "transversal"`, y en el panel web se muestran agrupados como **"Datos del cliente"**.
-- Para los endpoints que identifican un campo por `forma` (historial, `PATCH`, `DELETE`), usa **`?forma=transversal`** para estos campos — es lo que devuelve el detalle. Pasar una forma real también funciona: la API la normaliza a `transversal` para estos campos.
+- En el detalle del cliente (`GET /api/clientes/{id}`) estos campos aparecen con su pseudo-forma (`transversal` o `documentos_extra`), y en el panel web se muestran agrupados como **"Datos del cliente"** y **"Documentos extra"** respectivamente.
+- Para los endpoints que identifican un campo por `forma` (historial, `PATCH`, `DELETE`), usa **`?forma=transversal`** o **`?forma=documentos_extra`** según corresponda — es lo que devuelve el detalle. Pasar una forma real también funciona: la API la normaliza a la pseudo-forma correcta para estos campos.
 
 Los demás campos (los que pertenecen a una forma) siguen guardándose por `(cliente, forma, campo)` como antes: un mismo campo puede tener valores distintos en formas distintas.
 
@@ -578,7 +588,7 @@ Registra que el campo fue **preguntado y declinado explícitamente** por el clie
 ```json
 {
   "cliente_id": 42,
-  "forma": "transversal",
+  "forma": "documentos_extra",
   "tax_year": 2025,
   "campo": "declaracion_anio_anterior",
   "tipo_campo": "documento",
@@ -725,9 +735,9 @@ curl -s "https://tu-dominio/api/clientes/42/pendientes?tax_year=2025" \
 Notas de este shape:
 
 - `pendientes` incluye campos obligatorios **y** opcionales (cada uno con su propio flag `obligatorio`) — `completo` se calcula solo sobre los obligatorios, así que un opcional sin recolectar (ej. `declaracion_anio_anterior`, `gastos_cuidado_dependientes`) nunca bloquea `completo: true`.
-- Los campos transversales (únicos por cliente) aparecen **una sola vez**, sin importar cuántas formas tenga el cliente. Los campos propios de cada forma **nunca se deduplican entre formas** — si el cliente tiene `schedule_c` y `schedule_e`, `estados_bancarios` aparece dos veces, una por forma real, porque son contabilidades distintas.
-- `siguiente` es un puntero de conveniencia al **primer elemento de `pendientes`, en el orden en que ya vienen** (o `null` si `pendientes` está vacío) — para que el agente no tenga que decidir el orden por su cuenta. Desde la Fase 5, **no filtra por `obligatorio`**: puede señalar un campo opcional (ej. `w2`, `form_1099_nec`) antes que uno obligatorio, a propósito — los transversales (documentos y datos personales) siempre aparecen primero en `pendientes`, así que `siguiente` le da al agente la oportunidad de ofrecer un documento (y aprovechar su `revela`, ver más abajo) antes de pedirle al cliente que teclee a mano un monto que ese documento ya trae. `completo`, en cambio, sigue evaluando solo los pendientes obligatorios — un opcional sin resolver nunca bloquea el cierre.
-- Los campos transversales (`forma: "transversal"`) **no dependen de que exista ninguna forma declarada** — se piden sin importar cuál(es) apliquen, así que aparecen en `pendientes` incluso si el cliente todavía no tiene ninguna forma declarada (nunca se llamó a `POST /formas`). En ese caso, `completo` es siempre `false` — la determinación de forma en sí sigue pendiente, aunque ya no falte ningún transversal.
+- Los campos de identidad del cliente y documentos extra (únicos por cliente, `forma: "transversal"` o `forma: "documentos_extra"`) aparecen **una sola vez**, sin importar cuántas formas tenga el cliente. Los campos propios de cada forma **nunca se deduplican entre formas** — si el cliente tiene `schedule_c` y `schedule_e`, `estados_bancarios` aparece dos veces, una por forma real, porque son contabilidades distintas.
+- `siguiente` es un puntero de conveniencia al **primer elemento de `pendientes`, en el orden en que ya vienen** (o `null` si `pendientes` está vacío) — para que el agente no tenga que decidir el orden por su cuenta. Desde la Fase 5, **no filtra por `obligatorio`**: puede señalar un campo opcional (ej. `w2`, `form_1099_nec`) antes que uno obligatorio, a propósito — los campos de identidad y documentos extra siempre aparecen primero en `pendientes` (identidad primero, documentos extra después), así que `siguiente` le da al agente la oportunidad de ofrecer un documento (y aprovechar su `revela`, ver más abajo) antes de pedirle al cliente que teclee a mano un monto que ese documento ya trae. `completo`, en cambio, sigue evaluando solo los pendientes obligatorios — un opcional sin resolver nunca bloquea el cierre.
+- Los campos con pseudo-forma (`forma: "transversal"` o `forma: "documentos_extra"`) **no dependen de que exista ninguna forma declarada** — se piden sin importar cuál(es) apliquen, así que aparecen en `pendientes` incluso si el cliente todavía no tiene ninguna forma declarada (nunca se llamó a `POST /formas`). En ese caso, `completo` es siempre `false` — la determinación de forma en sí sigue pendiente, aunque ya no falte ninguno de estos.
 - Un campo opcional que el cliente declinó (guardado con `modo: "no_aplica"`, ver [`modo: "no_aplica"`](#modo-no_aplica--el-cliente-respondió-que-no-tiene-ese-campo-solo-opcionales)) deja de aparecer en `pendientes` igual que uno con `estado: "recibido"` — a diferencia de dejarlo simplemente sin tocar, esto sí queda persistido, así que no vuelve a aparecer aunque la conversación se reinicie sin memoria del agente.
 - **`revela`** (Fase 5, `acumulable` agregado en Fase 6, `tipo_campo`/`tipo_dato` agregados junto con `revelados`): lista de campos-destino que ese documento ya resuelve si el cliente lo entrega, respaldada por la tabla `relaciones_documento_campo` (ver [`RelacionDocumentoCampo`](../app/Models/RelacionDocumentoCampo.php) y `RelacionesDocumentoCampoSeeder`) — nunca por texto memorizado en el prompt del agente. Casi siempre vacía para campos tipo `dato`; en campos `documento`/`mixto` puede traer una o más entradas. Cada entrada indica `forma` + `campo` + `tipo_campo` + `tipo_dato` (los cuatro del campo DESTINO según el catálogo maestro, resueltos por `TaxFieldCatalog::revelaPara()` — no del documento que los revela) + `subcampo` (si el destino es un `object`/`array_object`) + `descripcion` en lenguaje natural + `acumulable` (`boolean`). Encontrado en producción: sin `tipo_campo`/`tipo_dato` explícitos acá, el agente los adivinaba (ej. "dato"/"number" para un subcampo numérico) en vez de copiar los reales del campo contenedor (ej. `form_1040.ingresos` es `tipo_campo: "dato"` / `tipo_dato: "object"`; `gastos_cuidado_dependientes` es `tipo_campo: "mixto"`), y la API rechazaba el `revelado` correspondiente con 422. El agente conversacional, al recibir ese documento, guarda también los campos que `revela` señale — siempre que sigan apareciendo en `pendientes` y el valor sea legible en el texto extraído del documento — en vez de volver a preguntárselos al cliente, incluyéndolos en el parámetro `revelados` de esa misma invocación (ver [Guardar un documento y sus campos revelados en una sola llamada](#guardar-un-documento-y-sus-campos-revelados-en-una-sola-llamada-revelados)), nunca en eventos separados. Cuando `acumulable: true`, ese campo/subcampo puede ser resuelto por más de un documento distinto (ej. `impuestos_retenidos` por W-2 **y** 1099-NEC **y** más), así que el agente NO lo trata como "ya resuelto" solo porque otro documento lo tocó antes, y envía `acumular: true` en el item correspondiente (ver [Acumular en vez de sobrescribir](#acumular-en-vez-de-sobrescribir-acumular--subcampo)) para que la plataforma sume en vez de sobrescribir. Editable desde el panel de administración igual que el resto del catálogo (ver más abajo).
 
