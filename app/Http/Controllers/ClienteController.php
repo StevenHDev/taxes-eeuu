@@ -16,7 +16,9 @@ use App\Models\User;
 use App\Services\ClienteExportService;
 use App\Services\DocumentoDuplicadoService;
 use App\Services\RiesgoCasoService;
+use App\Services\SupabaseWhatsappConversationService;
 use App\Support\TaxFieldCatalog;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -34,6 +36,7 @@ class ClienteController extends Controller
         private readonly ClienteExportService $export,
         private readonly DocumentoDuplicadoService $duplicados,
         private readonly RiesgoCasoService $riesgo,
+        private readonly SupabaseWhatsappConversationService $whatsapp,
     ) {}
 
     public function index(Request $request): Response
@@ -312,5 +315,18 @@ class ClienteController extends Controller
         $zipPath = $this->export->exportarZip($cliente, $taxYear);
 
         return response()->download($zipPath, "cliente-{$cliente->id}-{$taxYear}.zip")->deleteFileAfterSend();
+    }
+
+    public function conversacionWhatsapp(User $cliente): JsonResponse
+    {
+        $this->authorize('view', $cliente);
+
+        if (! $cliente->phone) {
+            return response()->json(['mensajes' => []]);
+        }
+
+        return response()->json([
+            'mensajes' => $this->whatsapp->paraTelefono($cliente->phone),
+        ]);
     }
 }

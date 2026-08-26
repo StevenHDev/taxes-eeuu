@@ -357,6 +357,17 @@
             "reveal": "Revelar"
         },
         "exportZip": "Exportar ZIP",
+        "whatsapp": {
+            "trigger": "Conversación de WhatsApp",
+            "title": "Conversación de WhatsApp — {{name}}",
+            "empty": "Sin conversación registrada todavía.",
+            "error": "No se pudo cargar la conversación.",
+            "role": {
+                "human": "Cliente",
+                "ai": "Agente",
+                "system": "Sistema"
+            }
+        },
         "deleteClient": {
             "trigger": "Eliminar cliente",
             "title": "¿Eliminar a {{name}}?",

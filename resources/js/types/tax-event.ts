@@ -107,6 +107,12 @@ export type HistorialCambio = {
     created_at: string;
 };
 
+export type MensajeWhatsapp = {
+    role: 'human' | 'ai' | 'system';
+    content: string;
+    created_at: string | null;
+};
+
 export type CatalogoDisponibleItem = {
     forma: FormaAlmacen;
     campo: string;

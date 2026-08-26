@@ -14,6 +14,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('clientes/{cliente}', [ClienteController::class, 'show'])->name('clientes.show');
     Route::delete('clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
     Route::get('clientes/{cliente}/export', [ClienteController::class, 'export'])->name('clientes.export');
+    Route::get('clientes/{cliente}/conversacion-whatsapp', [ClienteController::class, 'conversacionWhatsapp'])
+        ->name('clientes.conversacion-whatsapp');
     Route::post('clientes/{cliente}/formas/{forma}/marcar-revisado', [ClienteController::class, 'marcarRevisado'])
         ->name('clientes.marcar-revisado');
     Route::post('clientes/{cliente}/determinaciones', [DeterminacionFiscalController::class, 'store'])

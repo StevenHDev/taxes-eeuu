@@ -36,6 +36,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { dashboard } from '@/routes';
 import {
     index as clientesIndex,
+    conversacionWhatsapp,
     destroy as clienteDestroy,
     exportMethod as clienteExport,
     marcarRevisado,
@@ -59,6 +60,7 @@ import type {
     Determinacion,
     DocumentoDuplicado,
     HistorialCambio,
+    MensajeWhatsapp,
     NivelRiesgo,
     NivelRiesgoEfectivo,
 } from '@/types';
@@ -1400,6 +1402,119 @@ const SOURCE_VARIANT: Record<
     administrador: 'outline',
 };
 
+function WhatsappConversationDialog({
+    clienteId,
+    clienteName,
+}: {
+    clienteId: number;
+    clienteName: string;
+}) {
+    const { t, i18n } = useTranslation();
+    const [mensajes, setMensajes] = useState<MensajeWhatsapp[] | null>(null);
+    const [error, setError] = useState(false);
+
+    const formatDate = (iso: string | null): string => {
+        if (!iso) {
+            return '';
+        }
+
+        const fecha = new Date(iso);
+
+        if (Number.isNaN(fecha.getTime())) {
+            return iso;
+        }
+
+        return new Intl.DateTimeFormat(i18n.language, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        }).format(fecha);
+    };
+
+    const load = async () => {
+        setError(false);
+        setMensajes(null);
+
+        try {
+            const response = await fetch(
+                conversacionWhatsapp({ cliente: clienteId }).url,
+                { headers: { Accept: 'application/json' } },
+            );
+
+            if (!response.ok) {
+                throw new Error('request_failed');
+            }
+
+            const json = await response.json();
+            setMensajes(json.mensajes ?? []);
+        } catch {
+            setError(true);
+            setMensajes([]);
+        }
+    };
+
+    return (
+        <Dialog onOpenChange={(open) => open && load()}>
+            <DialogTrigger asChild>
+                <Button variant="secondary">
+                    {t('clienteShow.whatsapp.trigger')}
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-lg">
+                <DialogTitle>
+                    {t('clienteShow.whatsapp.title', { name: clienteName })}
+                </DialogTitle>
+                <div className="flex-1 space-y-3 overflow-y-auto">
+                    {mensajes === null && !error && (
+                        <p className="text-sm text-muted-foreground">
+                            {t('common.loading')}
+                        </p>
+                    )}
+                    {error && (
+                        <p className="text-sm text-destructive">
+                            {t('clienteShow.whatsapp.error')}
+                        </p>
+                    )}
+                    {mensajes?.length === 0 && !error && (
+                        <p className="text-sm text-muted-foreground">
+                            {t('clienteShow.whatsapp.empty')}
+                        </p>
+                    )}
+                    {mensajes?.map((mensaje, i) => {
+                        const esHumano = mensaje.role === 'human';
+
+                        return (
+                            <div
+                                key={i}
+                                className={`flex ${esHumano ? 'justify-end' : 'justify-start'}`}
+                            >
+                                <div
+                                    className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                                        esHumano
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'bg-muted text-foreground'
+                                    }`}
+                                >
+                                    <div className="mb-1 text-xs opacity-70">
+                                        {t(
+                                            `clienteShow.whatsapp.role.${mensaje.role}`,
+                                        )}
+                                        {mensaje.created_at
+                                            ? ` · ${formatDate(mensaje.created_at)}`
+                                            : ''}
+                                    </div>
+                                    <div className="whitespace-pre-wrap">
+                                        {mensaje.content}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function HistorialDialog({
     clienteId,
     taxYear,
@@ -2053,6 +2168,12 @@ export default function ClienteShow({
                                 {t('clienteShow.exportZip')}
                             </Button>
                         </a>
+                        {cliente.phone && (
+                            <WhatsappConversationDialog
+                                clienteId={cliente.id}
+                                clienteName={cliente.name}
+                            />
+                        )}
                         {esAdministrador && (
                             <Dialog>
                                 <DialogTrigger asChild>

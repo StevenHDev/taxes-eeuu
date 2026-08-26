@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'supabase' => [
+        'url' => env('VITE_SUPABASE_URL'),
+        'key' => env('VITE_SUPABASE_KEY'),
+        'whatsapp_table' => env('WHATSAPP_SUPABASE_TABLE_PATTERN', 'globaltax_registro_whatsapp'),
+    ],
+
 ];

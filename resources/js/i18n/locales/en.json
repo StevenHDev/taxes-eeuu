@@ -357,6 +357,17 @@
             "reveal": "Reveal"
         },
         "exportZip": "Export ZIP",
+        "whatsapp": {
+            "trigger": "WhatsApp conversation",
+            "title": "WhatsApp conversation — {{name}}",
+            "empty": "No conversation recorded yet.",
+            "error": "Could not load the conversation.",
+            "role": {
+                "human": "Client",
+                "ai": "Agent",
+                "system": "System"
+            }
+        },
         "deleteClient": {
             "trigger": "Delete client",
             "title": "Delete {{name}}?",
