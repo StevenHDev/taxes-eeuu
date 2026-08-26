@@ -83,8 +83,30 @@ class SupabaseWhatsappConversationService
         return [
             'role' => $this->normalizarRol((string) $tipo),
             'content' => $contenido,
-            'created_at' => $fila['created_at'] ?? null,
+            'created_at' => $this->normalizarFechaUtc($fila['created_at'] ?? null),
         ];
+    }
+
+    /**
+     * La columna created_at es "timestamp without time zone" y Supabase la
+     * guarda en UTC, pero PostgREST la devuelve sin offset (ej.
+     * "2026-08-26T21:04:17.479465"). Sin el "Z", el navegador la interpreta
+     * como hora local del dispositivo en vez de UTC, así que la marcamos
+     * explícitamente antes de mandarla al frontend.
+     */
+    private function normalizarFechaUtc(?string $fecha): ?string
+    {
+        if ($fecha === null || $fecha === '') {
+            return null;
+        }
+
+        $fecha = str_replace(' ', 'T', $fecha);
+
+        if (! preg_match('/[Zz]|[+-]\d{2}:?\d{2}$/', $fecha)) {
+            $fecha .= 'Z';
+        }
+
+        return $fecha;
     }
 
     private function normalizarRol(string $tipo): string

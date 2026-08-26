@@ -1424,9 +1424,12 @@ function WhatsappConversationDialog({
             return iso;
         }
 
+        // La conversación es con clientes en Colombia: se muestra siempre en
+        // esa zona horaria, sin importar dónde esté el navegador de quien mira.
         return new Intl.DateTimeFormat(i18n.language, {
             dateStyle: 'medium',
             timeStyle: 'short',
+            timeZone: 'America/Bogota',
         }).format(fecha);
     };
 
