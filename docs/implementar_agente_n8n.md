@@ -273,6 +273,12 @@ la atención automática"), para que el cambio de tono no lo confunda.
   desde los argumentos del tool call.
 - `app/Services/WhatsappAgent/OpenAiClient.php` — wrapper propio sobre `Http::` para
   chat completions + function calling, con reintentos/backoff configurables por modelo.
+- `app/Support/AgenteWhatsappUser.php` — resuelve/crea el usuario de sistema que actúa
+  como `actor` cuando el origen del dato es el agente de WhatsApp.
+- `app/Services/AgenteToolService.php` — lógica compartida detrás de
+  `crear_cliente_taxes`/`declarar_formas_cliente`/`consultar_pendientes_cliente`/
+  `consultar_documentos_extra`, invocada tanto por `Api\ClienteController`/
+  `Api\CatalogoController` (HTTP) como por `ToolExecutor` (directo).
 - `app/Services/WhatsappAgent/EstadoConversacionResolver.php` — deriva la fase vigente de
   la conversación (verificación de cuenta → determinación de forma(s) → recolección →
   cierre) a partir de los datos ya existentes del cliente, nunca de memoria de la
@@ -403,11 +409,20 @@ la atención automática"), para que el cambio de tono no lo confunda.
       existentes del cliente. Tests en `EstadoConversacionResolverTest` (5 casos: sin
       cliente, sin formas, con pendientes, sin pendientes, y que usa el tax_year más
       reciente entre formas de años distintos).
-- [ ] `ToolDefinitions` con el esquema de las 5 tools + `think`, y `paraFase()`.
-- [ ] `ToolExecutor` llamando a los servicios internos directamente (`EventoValidator` +
-      `EventoRecoleccionService::procesar()` con `EventoRecoleccionData`, no HTTP; y
-      llamadas directas a los métodos de `Api\ClienteController`/`CatalogoController`
-      una vez extraídos a servicio).
+- [x] `ToolDefinitions` con el esquema de las 5 tools + `think`, y `paraFase()`.
+      Decisión: ninguna tool expone `cliente_id` (ToolExecutor ya conoce al cliente de
+      la conversación) ni `tax_year` salvo `declarar_formas_cliente` (que es quien lo
+      establece) — se deriva igual que en `EstadoConversacionResolver`, menos estado
+      para que el modelo tenga que recordar y pasar bien turno a turno.
+- [x] `ToolExecutor` llamando a los servicios internos directamente (`AgenteToolService`,
+      `EventoValidator` + `EventoRecoleccionService::procesar()` con
+      `EventoRecoleccionData`, nunca HTTP). Un tool call inválido devuelve
+      `{error, detalles}` como resultado de la tool (el modelo puede corregir y
+      reintentar), no una excepción.
+- [x] `App\Support\AgenteWhatsappUser`: usuario de sistema que actúa como `actor` en
+      `EventoRecoleccionService` para el camino de WhatsApp (sin token Sanctum/HTTP) —
+      necesario porque `campos_cliente.actualizado_por`/`historial_cambios.modificado_por`
+      son FKs reales a `users.id`.
 - [ ] `AgenteConversacionalService`: **una sola** llamada de function-calling por turno
       (prompt de la fase vigente + historial + mensaje nuevo → tool calls → resultado →
       repetir dentro de la misma llamada hasta texto final).
