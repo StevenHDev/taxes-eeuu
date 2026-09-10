@@ -53,6 +53,9 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL'),
         'vision_model' => env('OPENAI_VISION_MODEL'),
+        'timeout' => env('OPENAI_TIMEOUT', 30),
+        'retries' => env('OPENAI_RETRIES', 3),
+        'retry_backoff_ms' => env('OPENAI_RETRY_BACKOFF_MS', 500),
     ],
 
 ];

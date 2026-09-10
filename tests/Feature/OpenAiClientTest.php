@@ -1,0 +1,117 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Services\WhatsappAgent\OpenAiClient;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Tests\TestCase;
+
+class OpenAiClientTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'services.openai.api_key' => 'test-key',
+            'services.openai.model' => 'test-model',
+            'services.openai.retries' => 2,
+            'services.openai.retry_backoff_ms' => 1,
+        ]);
+    }
+
+    public function test_devuelve_el_mensaje_del_asistente_y_manda_el_modelo_configurado_por_default(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [
+                    ['message' => ['role' => 'assistant', 'content' => 'Hola, ¿en qué te ayudo?']],
+                ],
+            ], 200),
+        ]);
+
+        $client = new OpenAiClient;
+
+        $mensaje = $client->completarChat(
+            mensajes: [['role' => 'user', 'content' => 'hola']],
+            tools: [],
+        );
+
+        $this->assertSame('Hola, ¿en qué te ayudo?', $mensaje['content']);
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://api.openai.com/v1/chat/completions'
+                && $request['model'] === 'test-model'
+                && $request->hasHeader('Authorization', 'Bearer test-key');
+        });
+    }
+
+    public function test_usa_el_modelo_explicito_cuando_se_indica(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [['message' => ['role' => 'assistant', 'content' => 'ok']]],
+            ], 200),
+        ]);
+
+        (new OpenAiClient)->completarChat([], [], modelo: 'otro-modelo');
+
+        Http::assertSent(fn ($request) => $request['model'] === 'otro-modelo');
+    }
+
+    public function test_incluye_las_tool_calls_del_mensaje_cuando_vienen(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'role' => 'assistant',
+                        'content' => null,
+                        'tool_calls' => [
+                            ['id' => 'call_1', 'type' => 'function', 'function' => ['name' => 'think', 'arguments' => '{}']],
+                        ],
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $mensaje = (new OpenAiClient)->completarChat([], []);
+
+        $this->assertSame('call_1', $mensaje['tool_calls'][0]['id']);
+    }
+
+    public function test_reintenta_ante_un_error_transitorio_y_termina_en_exito(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::sequence()
+                ->push(['error' => 'server error'], 500)
+                ->push(['choices' => [['message' => ['role' => 'assistant', 'content' => 'listo']]]], 200),
+        ]);
+
+        $mensaje = (new OpenAiClient)->completarChat([], []);
+
+        $this->assertSame('listo', $mensaje['content']);
+    }
+
+    public function test_lanza_una_excepcion_si_la_api_falla_de_forma_persistente(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['error' => 'nope'], 500)]);
+
+        $this->expectException(RuntimeException::class);
+
+        (new OpenAiClient)->completarChat([], []);
+    }
+
+    public function test_lanza_una_excepcion_si_la_respuesta_no_trae_choices(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['foo' => 'bar'], 200)]);
+
+        $this->expectException(RuntimeException::class);
+
+        (new OpenAiClient)->completarChat([], []);
+    }
+}

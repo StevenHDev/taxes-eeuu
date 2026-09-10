@@ -274,9 +274,15 @@ la atención automática"), para que el cambio de tono no lo confunda.
 - `app/Services/WhatsappAgent/OpenAiClient.php` — wrapper propio sobre `Http::` para
   chat completions + function calling, con reintentos/backoff configurables por modelo.
 - `app/Services/WhatsappAgent/EstadoConversacionResolver.php` — deriva la fase vigente de
-  la conversación (verificación de cuenta → año fiscal → determinación de forma(s) →
-  recolección → cierre) a partir de los datos ya existentes del cliente, nunca de memoria
-  de la conversación.
+  la conversación (verificación de cuenta → determinación de forma(s) → recolección →
+  cierre) a partir de los datos ya existentes del cliente, nunca de memoria de la
+  conversación. Sin fase separada para "año fiscal": no hay ninguna tool ni dato que
+  distinga "año confirmado, forma todavía no" de "nada confirmado" — igual que en
+  `prompt_actuales/promptBase.md` (PASO 0.5 y PASO A-D corren seguidos sin tool de por
+  medio), el modelo re-deriva el año ya confirmado del propio historial de la
+  conversación; `DeterminacionFormas` cubre ambos pasos. El año fiscal "en curso" para
+  las fases siguientes es el mayor `tax_year` entre las formas ya declaradas del
+  cliente — no se persiste en ningún otro lado.
 - `app/Services/WhatsappAgent/ToolDefinitions.php` — esquema de las 5 tools
   (`crear_cliente_taxes`, `declarar_formas_cliente`, `consultar_pendientes_cliente`,
   `consultar_documentos_extra`, `guardar_campo_cliente`) más `think`, con un método
@@ -387,9 +393,15 @@ la atención automática"), para que el cambio de tono no lo confunda.
       validación de catálogo, para que `ToolExecutor` valide los argumentos del tool
       call de `guardar_campo_cliente` antes de construir `EventoRecoleccionData` sin
       pasar por HTTP (el `FormRequest` la sigue usando para el camino HTTP existente).
-- [ ] `OpenAiClient`: wrapper sobre `Http::` para chat completions + function calling.
-- [ ] `EstadoConversacionResolver`: deriva la fase vigente (`FaseConversacion`) desde
-      los datos ya existentes del cliente.
+- [x] `OpenAiClient`: wrapper sobre `Http::` para chat completions + function calling,
+      con timeout/reintentos/backoff configurables (`OPENAI_TIMEOUT`,
+      `OPENAI_RETRIES`, `OPENAI_RETRY_BACKOFF_MS`). Tests con `Http::fake()`
+      (`OpenAiClientTest`, 6 casos, incluyendo reintento ante error transitorio).
+- [x] `EstadoConversacionResolver`: deriva la fase vigente (`FaseConversacion`, 4 casos —
+      ver nota sobre por qué no hay fase separada de "año fiscal") desde los datos ya
+      existentes del cliente. Tests en `EstadoConversacionResolverTest` (5 casos: sin
+      cliente, sin formas, con pendientes, sin pendientes, y que usa el tax_year más
+      reciente entre formas de años distintos).
 - [ ] `ToolDefinitions` con el esquema de las 5 tools + `think`, y `paraFase()`.
 - [ ] `ToolExecutor` llamando a los servicios internos directamente (`EventoValidator` +
       `EventoRecoleccionService::procesar()` con `EventoRecoleccionData`, no HTTP; y
