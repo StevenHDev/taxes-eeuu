@@ -358,10 +358,21 @@ la atención automática"), para que el cambio de tono no lo confunda.
 ### Fase 1 — Persistencia
 - [x] Migración + modelo `agente_prompts` (versionada por `version`+`fase`, con
       `FaseConversacion` como enum de las 5 fases).
-- [ ] Sembrar la versión inicial (`version = 1`, publicada) con el contenido de
-      `prompt_actuales/promptBase.md` y `prompt_actuales/especialista_recoleccion.md`
-      adaptado a las fases de un solo agente (ver ARQUITECTURA) — pendiente: es
-      redacción de prompt, no código de infraestructura.
+- [x] Redactar el contenido adaptado a las 4 fases (`prompt_actuales/fases/*.md`):
+      `verificacion_cuenta.md`, `determinacion_formas.md`, `recoleccion.md`,
+      `cierre.md`. Cambios de fondo respecto a los prompts originales, más allá de
+      quitar la separación orquestador/especialista: (1) ninguna tool expone
+      `cliente_id`/`tax_year` salvo `declarar_formas_cliente` — ver
+      `ToolDefinitions`; (2) no existe ya el flag `recoleccion_completa` — la
+      transición a Cierre la decide `EstadoConversacionResolver` por datos, nunca
+      el modelo (se quitaron las secciones "CIERRE REAL"/"NUNCA ANUNCIES
+      COMPLETITUD" de recolección, movidas — simplificadas — a `cierre.md`); (3)
+      `Cierre` tiene las mismas tools que `Recoleccion` (ver `ToolDefinitions`), así
+      que su prompt explica qué hacer si el cliente aporta algo nuevo después del
+      mensaje de cierre, en vez de solo despedirse.
+- [ ] Sembrar estos 4 archivos como la versión inicial (`version = 1`, publicada) en
+      `agente_prompts` — falta el comando/seeder que los lea y los inserte
+      (`FaseConversacion::value` → nombre de archivo).
 - [x] Migración + modelo `whatsapp_mensajes` (teléfono, cliente_id nullable, rol,
       contenido, `twilio_message_sid` único, `prompt_version` nullable, timestamps).
 - [x] Migración + modelo `whatsapp_control` (estado agente/humano por teléfono — ver
