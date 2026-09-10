@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call(CatalogoCamposSeeder::class);
         $this->call(RelacionesDocumentoCampoSeeder::class);
         $this->call(ParametrosFiscalesSeeder::class);
+        $this->call(AgentePromptsSeeder::class);
 
         // Usuario administrador. Se crea sin factory (no depende de faker, que
         // es require-dev y no existe en producción con --no-dev). Es idempotente

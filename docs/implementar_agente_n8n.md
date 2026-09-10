@@ -370,9 +370,11 @@ la atención automática"), para que el cambio de tono no lo confunda.
       `Cierre` tiene las mismas tools que `Recoleccion` (ver `ToolDefinitions`), así
       que su prompt explica qué hacer si el cliente aporta algo nuevo después del
       mensaje de cierre, en vez de solo despedirse.
-- [ ] Sembrar estos 4 archivos como la versión inicial (`version = 1`, publicada) en
-      `agente_prompts` — falta el comando/seeder que los lea y los inserte
-      (`FaseConversacion::value` → nombre de archivo).
+- [x] `AgentePromptsSeeder`: siembra los 4 archivos como `version = 1` publicada en
+      `agente_prompts`, leyendo `prompt_actuales/fases/{fase}.md` por cada
+      `FaseConversacion`. Idempotente (puede re-ejecutarse si los archivos cambian,
+      antes de publicar una version=2 real vía el flujo normal). Encadenado en
+      `DatabaseSeeder::run()`. Tests en `AgentePromptsSeederTest`.
 - [x] Migración + modelo `whatsapp_mensajes` (teléfono, cliente_id nullable, rol,
       contenido, `twilio_message_sid` único, `prompt_version` nullable, timestamps).
 - [x] Migración + modelo `whatsapp_control` (estado agente/humano por teléfono — ver
@@ -445,7 +447,8 @@ la atención automática"), para que el cambio de tono no lo confunda.
       repetir dentro de la misma llamada hasta texto final).
 - [ ] Guardar la respuesta del agente en `whatsapp_mensajes`, incluyendo qué versión de
       prompt la generó.
-- [ ] `WhatsappControl`: migración + modelo, con estado `agente`/`humano` por teléfono.
+- [x] `WhatsappControl`: migración + modelo, con estado `agente`/`humano` por teléfono —
+      hecho en Fase 1 (adelantado por ser también persistencia base).
 - [ ] Acciones de tomar/devolver control (panel) + botón y caja de envío manual en la
       vista de conversación.
 - [ ] `ProcesarMensajeWhatsappJob` respeta el estado de control: no invoca al agente en
