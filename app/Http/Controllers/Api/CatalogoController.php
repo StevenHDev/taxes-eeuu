@@ -4,8 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\ApiAbility;
 use App\Http\Controllers\Controller;
-use App\Models\CampoCatalogo;
-use App\Support\TaxFieldCatalog;
+use App\Services\AgenteToolService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -16,6 +15,8 @@ use Laravel\Sanctum\PersonalAccessToken;
  */
 class CatalogoController extends Controller
 {
+    public function __construct(private readonly AgenteToolService $tools) {}
+
     /**
      * Los 18 documentos opcionales que ya no se preguntan proactivamente en
      * `GET /api/clientes/{cliente}/pendientes` (ver
@@ -33,24 +34,7 @@ class CatalogoController extends Controller
         // explícito siempre, igual que el resto del camino del agente.
         $request->validate(['tax_year' => ['required', 'integer', 'digits:4']]);
 
-        $taxYear = (int) $request->query('tax_year');
-
-        return response()->json([
-            'tax_year' => $taxYear,
-            'documentos' => collect(TaxFieldCatalog::documentosExtra($taxYear))
-                ->map(fn (array $f) => [
-                    'forma' => CampoCatalogo::DOCUMENTOS_EXTRA,
-                    'campo' => $f['campo'],
-                    'tipo_campo' => $f['tipo']->value,
-                    'tipo_dato' => $f['tipo_dato']?->value,
-                    'subcampos' => $f['subcampos'],
-                    'formatos_aceptados' => $f['formatos_aceptados'],
-                    'obligatorio' => $f['obligatorio'],
-                    'sensible' => $f['sensible'],
-                    'revela' => TaxFieldCatalog::revelaPara($taxYear, $f['campo']),
-                ])
-                ->values(),
-        ]);
+        return response()->json($this->tools->documentosExtra((int) $request->query('tax_year')));
     }
 
     private function ensureAbility(Request $request, ApiAbility $ability): void

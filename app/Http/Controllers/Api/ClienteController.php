@@ -3,21 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\ApiAbility;
-use App\Enums\FormState;
 use App\Enums\TaxForm;
-use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClienteFormasRequest;
 use App\Http\Requests\ClienteStoreRequest;
 use App\Models\FormaCliente;
 use App\Models\User;
+use App\Services\AgenteToolService;
 use App\Services\ClienteExportService;
-use App\Support\TaxFieldCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -25,7 +21,10 @@ class ClienteController extends Controller
 {
     use ManagesClientes;
 
-    public function __construct(private readonly ClienteExportService $export) {}
+    public function __construct(
+        private readonly ClienteExportService $export,
+        private readonly AgenteToolService $tools,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -62,16 +61,7 @@ class ClienteController extends Controller
     {
         $this->ensureAbility($request, ApiAbility::ClientesWrite);
 
-        $actor = $request->user();
-
-        $cliente = User::query()->create([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'phone' => $request->validated('phone'),
-            'password' => Hash::make(Str::random(40)),
-            'role' => UserRole::Client,
-            'preparer_id' => $actor->role === UserRole::Preparer ? $actor->id : $request->validated('preparer_id'),
-        ]);
+        $cliente = $this->tools->crearCliente($request->validated(), $request->user());
 
         return response()->json($this->detalle($cliente, (int) config('tax.current_tax_year')), 201);
     }
@@ -163,14 +153,7 @@ class ClienteController extends Controller
     {
         $taxYear = (int) $request->validated('tax_year');
 
-        foreach ((array) $request->validated('formas') as $forma) {
-            FormaCliente::query()->firstOrCreate(
-                ['user_id' => $cliente->id, 'forma' => $forma, 'tax_year' => $taxYear],
-                ['estado' => FormState::EnProgreso],
-            );
-        }
-
-        return response()->json($this->pendientesEnvelope($cliente, $taxYear));
+        return response()->json($this->tools->declararFormas($cliente, $taxYear, (array) $request->validated('formas')));
     }
 
     /**
@@ -188,55 +171,7 @@ class ClienteController extends Controller
         // explícito siempre, igual que el resto del camino del agente.
         $request->validate(['tax_year' => ['required', 'integer', 'digits:4']]);
 
-        return response()->json($this->pendientesEnvelope($cliente, (int) $request->query('tax_year')));
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function pendientesEnvelope(User $cliente, int $taxYear): array
-    {
-        $formas = FormaCliente::query()
-            ->where('user_id', $cliente->id)
-            ->where('tax_year', $taxYear)
-            ->pluck('forma')
-            ->map(fn (string $forma) => TaxForm::tryFrom($forma))
-            ->filter()
-            ->values()
-            ->all();
-
-        // Los transversales (SSN, cónyuge, dependientes, estado_civil...) no
-        // pertenecen a ninguna forma — se piden sin importar cuál(es) apliquen,
-        // así que aparecen en `pendientes` incluso si el agente todavía no llamó
-        // a /formas (PASO A-D no ha terminado). `completo`, en cambio, sí exige
-        // al menos una forma declarada: sin eso la determinación en sí sigue
-        // pendiente, aunque ya no falte ningún transversal.
-        $pendientes = TaxFieldCatalog::pendientesPara($taxYear, $formas, $cliente->id);
-
-        // `siguiente` es el PRIMER elemento de `pendientes`, en el orden que ya
-        // trae el catálogo (transversales primero, documentos y datos
-        // opcionales incluidos) — nunca solo el primer obligatorio. El agente
-        // externo pregunta uno a uno lo que indique `siguiente`, sin importar
-        // si es opcional, para poder ofrecer un documento (ej. w2, 1099-nec)
-        // ANTES de pedirle al cliente que teclee a mano un monto que ese mismo
-        // documento ya revela (ver RelacionDocumentoCampo/`revela`) — filtrar
-        // por obligatorio acá saltaría siempre los documentos opcionales y
-        // pediría el dato manual primero, inutilizando esa relación. Si el
-        // cliente no tiene el documento, el flujo normal de "no_aplica" ya lo
-        // cubre — este cambio no afecta eso.
-        $siguiente = $pendientes[0] ?? null;
-
-        // `completo`, en cambio, sigue mirando solo obligatorios: un opcional
-        // sin resolver (el cliente nunca llegó a que se lo ofrecieran, o está
-        // pendiente de "no_aplica") nunca debe bloquear el cierre de la forma.
-        $quedaObligatorioPendiente = collect($pendientes)->contains(fn (array $p) => $p['obligatorio']);
-
-        return [
-            'tax_year' => $taxYear,
-            'completo' => $formas !== [] && ! $quedaObligatorioPendiente,
-            'pendientes' => $pendientes,
-            'siguiente' => $siguiente ? ['forma' => $siguiente['forma'], 'campo' => $siguiente['campo']] : null,
-        ];
+        return response()->json($this->tools->pendientes($cliente, (int) $request->query('tax_year')));
     }
 
     public function documentos(Request $request, User $cliente): JsonResponse
