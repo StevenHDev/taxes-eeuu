@@ -384,15 +384,16 @@ la atención automática"), para que el cambio de tono no lo confunda.
       `EventoRecoleccionData` (DTO) en vez de `EventoRequest`; `EventoController::store`
       actualizado (`EventoRecoleccionData::fromRequest($request)`). Los 38 tests de
       `EventoRecoleccionTest` siguen pasando sin cambios — el contrato HTTP no cambió.
-- [ ] Extender el mismo tratamiento a las otras 4 tools, hoy cada una acoplada a
-      Sanctum/HTTP vía `ensureAbility()` en `Api\ClienteController`
-      (`store`/`formas`/`pendientes`) y `Api\CatalogoController::documentosExtra` — más
-      simples que `EventoRequest` (sin archivos), se resuelven al construir
-      `ToolExecutor`, no antes.
-- [ ] `EventoValidator`: extraer de `EventoRequest::rules()`/`withValidator()` la
-      validación de catálogo, para que `ToolExecutor` valide los argumentos del tool
-      call de `guardar_campo_cliente` antes de construir `EventoRecoleccionData` sin
-      pasar por HTTP (el `FormRequest` la sigue usando para el camino HTTP existente).
+- [x] `AgenteToolService`: extrae `crear_cliente_taxes`/`declarar_formas_cliente`/
+      `consultar_pendientes_cliente`/`consultar_documentos_extra` de
+      `Api\ClienteController`/`Api\CatalogoController` (antes acopladas a
+      `ensureAbility()`/HTTP) — ambos controladores ahora lo invocan, y `ToolExecutor`
+      podrá invocarlo igual, directo. 70 tests existentes sin cambios.
+- [x] `EventoValidator`: extraído de `EventoRequest::withValidator()` (validación de
+      catálogo — existe el campo, calza tipo_campo/tipo_dato, acumular/subcampo
+      coherentes, formato de archivo) a una clase plana reutilizable. `EventoRequest`
+      ahora delega en ella; los 38 tests de `EventoRecoleccionTest` siguen pasando sin
+      cambios, más 8 tests nuevos que ejercitan la clase directo (`EventoValidatorTest`).
 - [x] `OpenAiClient`: wrapper sobre `Http::` para chat completions + function calling,
       con timeout/reintentos/backoff configurables (`OPENAI_TIMEOUT`,
       `OPENAI_RETRIES`, `OPENAI_RETRY_BACKOFF_MS`). Tests con `Http::fake()`

@@ -8,7 +8,7 @@ use App\Enums\FieldKind;
 use App\Enums\FieldMode;
 use App\Enums\TaxForm;
 use App\Models\CampoCatalogo;
-use App\Support\TaxFieldCatalog;
+use App\Support\EventoValidator;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -188,163 +188,25 @@ class EventoRequest extends FormRequest
         };
     }
 
+    /**
+     * Delega la validación de catálogo (todo lo que depende de datos
+     * dinámicos: existe el campo, calza tipo_campo/tipo_dato, acumular/subcampo
+     * son coherentes) a EventoValidator, compartida con ToolExecutor (agente
+     * de WhatsApp, sin request HTTP) — ver docs/implementar_agente_n8n.md.
+     */
     public function withValidator(ValidatorContract|Validator $validator): void
     {
         $validator->after(function (ValidatorContract $validator) {
-            $taxYear = (int) $this->input('tax_year');
-            $forma = (string) $this->input('forma');
+            $datos = $this->all();
+            $datos['acumular'] = $this->boolean('acumular');
 
-            if (! in_array($forma, CampoCatalogo::pseudoFormas(), true) && ! TaxForm::tryFrom($forma)) {
-                return;
-            }
+            $errores = (new EventoValidator)->validar($datos, $this->file('file'));
 
-            $field = TaxFieldCatalog::find($taxYear, $forma, (string) $this->input('campo'));
-
-            if (! $field) {
-                $validator->errors()->add('campo', 'El campo indicado no existe en el catálogo para esa forma.');
-
-                return;
-            }
-
-            $modo = FieldMode::tryFrom((string) $this->input('modo'));
-
-            $this->validarCoincidenciaCatalogo(
-                validator: $validator,
-                prefijo: '',
-                field: $field,
-                tipoCampoInput: (string) $this->input('tipo_campo'),
-                tipoDatoInput: $this->input('tipo_dato'),
-                // Sin este chequeo, un campo cuyo tipo_dato cambió en el catálogo
-                // (ej. ingresos: number -> object) seguiría aceptando en silencio
-                // el tipo_dato viejo de una integración desactualizada, corrompiendo
-                // cualquier cálculo que dependa de ese dato (ver AgiCalculator).
-                // Solo aplica en modo="texto" — un modo="archivo"/"no_aplica" no
-                // manda tipo_dato, o manda uno que no describe el contenido real.
-                verificarTipoDato: $modo === FieldMode::Texto,
-                acumular: $this->boolean('acumular'),
-                subcampo: $this->input('subcampo'),
-            );
-
-            if ($field['tipo'] === FieldKind::Documento && ! \in_array($modo, [FieldMode::Archivo, FieldMode::NoAplica], true)) {
-                $validator->errors()->add('modo', 'Este campo solo admite modo "archivo" (o "no_aplica" si es opcional).');
-            }
-
-            if ($field['tipo'] === FieldKind::Dato && ! \in_array($modo, [FieldMode::Texto, FieldMode::NoAplica], true)) {
-                $validator->errors()->add('modo', 'Este campo solo admite modo "texto" (o "no_aplica" si es opcional).');
-            }
-
-            // "no_aplica" es una respuesta del cliente ("no lo tengo"/"no aplica"),
-            // no la ausencia de un valor obligatorio — solo tiene sentido en un
-            // campo que de verdad puede faltar sin bloquear la forma.
-            if ($modo === FieldMode::NoAplica && $field['obligatorio']) {
-                $validator->errors()->add('modo', 'Este campo es obligatorio y no se puede marcar como "no_aplica".');
-            }
-
-            if ($modo === FieldMode::Archivo && $this->hasFile('file')) {
-                $extension = strtolower((string) $this->file('file')->getClientOriginalExtension());
-                $formatos = $field['formatos_aceptados'] ?? [];
-
-                if ($formatos && ! \in_array($extension, $formatos, true)) {
-                    $validator->errors()->add('file', 'Formato de archivo no aceptado para este campo. Formatos válidos: '.implode(', ', $formatos));
+            foreach ($errores as $campo => $mensajes) {
+                foreach ($mensajes as $mensaje) {
+                    $validator->errors()->add($campo, $mensaje);
                 }
             }
-
-            $this->validarRevelados($validator, $taxYear);
         });
-    }
-
-    /**
-     * Cada item de `revelados` es siempre un campo tipo dato resuelto por texto
-     * (nunca un documento, nunca "no_aplica") — ver DEFINICIÓN DE LAS TOOLS,
-     * parámetro `revelados`.
-     */
-    private function validarRevelados(ValidatorContract $validator, int $taxYear): void
-    {
-        foreach ((array) $this->input('revelados', []) as $i => $item) {
-            $prefijo = "revelados.{$i}.";
-            $forma = (string) ($item['forma'] ?? '');
-            $campo = (string) ($item['campo'] ?? '');
-
-            if (! in_array($forma, CampoCatalogo::pseudoFormas(), true) && ! TaxForm::tryFrom($forma)) {
-                continue;
-            }
-
-            $field = TaxFieldCatalog::find($taxYear, $forma, $campo);
-
-            if (! $field) {
-                $validator->errors()->add("{$prefijo}campo", 'El campo indicado no existe en el catálogo para esa forma.');
-
-                continue;
-            }
-
-            if ($field['tipo'] === FieldKind::Documento) {
-                $validator->errors()->add("{$prefijo}campo", 'Un campo revelado no puede ser de tipo documento.');
-
-                continue;
-            }
-
-            $this->validarCoincidenciaCatalogo(
-                validator: $validator,
-                prefijo: $prefijo,
-                field: $field,
-                tipoCampoInput: (string) ($item['tipo_campo'] ?? ''),
-                tipoDatoInput: $item['tipo_dato'] ?? null,
-                verificarTipoDato: true,
-                // No (bool) directo: `acumular` viaja como string ("true"/"false")
-                // y (bool) "false" da true en PHP por ser un string no vacío.
-                acumular: filter_var($item['acumular'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                subcampo: $item['subcampo'] ?? null,
-            );
-        }
-    }
-
-    /**
-     * Coincidencia tipo_campo/tipo_dato contra el catálogo maestro, y
-     * consistencia acumular/subcampo — compartido entre el campo raíz
-     * (`withValidator()`) y cada item de `revelados` (`validarRevelados()`).
-     *
-     * @param  array<string, mixed>  $field
-     */
-    private function validarCoincidenciaCatalogo(
-        ValidatorContract $validator,
-        string $prefijo,
-        array $field,
-        string $tipoCampoInput,
-        mixed $tipoDatoInput,
-        bool $verificarTipoDato,
-        bool $acumular,
-        mixed $subcampo,
-    ): void {
-        $tipoCampo = FieldKind::tryFrom($tipoCampoInput);
-
-        if ($tipoCampo !== $field['tipo']) {
-            $validator->errors()->add("{$prefijo}tipo_campo", 'El tipo_campo no coincide con el catálogo maestro para este campo.');
-        }
-
-        $tipoDatoEnviado = FieldDataType::tryFrom((string) $tipoDatoInput);
-
-        if ($verificarTipoDato && $field['tipo_dato'] !== null && $tipoDatoEnviado !== $field['tipo_dato']) {
-            $validator->errors()->add("{$prefijo}tipo_dato", 'El tipo_dato no coincide con el catálogo maestro para este campo.');
-        }
-
-        if (! $acumular) {
-            return;
-        }
-
-        if ($tipoDatoEnviado === FieldDataType::Number) {
-            if ($subcampo !== null) {
-                $validator->errors()->add("{$prefijo}subcampo", 'No se especifica subcampo cuando el campo acumulable es numérico simple.');
-            }
-        } elseif ($tipoDatoEnviado === FieldDataType::Object) {
-            $subcampos = $field['subcampos'] ?? [];
-
-            if (! is_string($subcampo) || $subcampo === '') {
-                $validator->errors()->add("{$prefijo}subcampo", 'Se requiere indicar el subcampo a acumular para un campo tipo objeto.');
-            } elseif (! \in_array($subcampo, $subcampos, true)) {
-                $validator->errors()->add("{$prefijo}subcampo", 'El subcampo indicado no existe en el catálogo para este campo.');
-            }
-        } else {
-            $validator->errors()->add("{$prefijo}acumular", 'acumular solo aplica a campos numéricos o a un subcampo de un campo tipo objeto.');
-        }
     }
 }
