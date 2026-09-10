@@ -19,6 +19,7 @@ class OpenAiClientTest extends TestCase
         config([
             'services.openai.api_key' => 'test-key',
             'services.openai.model' => 'test-model',
+            'services.openai.vision_model' => 'test-vision-model',
             'services.openai.retries' => 2,
             'services.openai.retry_backoff_ms' => 1,
         ]);
@@ -104,6 +105,28 @@ class OpenAiClientTest extends TestCase
         $this->expectException(RuntimeException::class);
 
         (new OpenAiClient)->completarChat([], []);
+    }
+
+    public function test_transcribir_imagen_manda_el_modelo_de_vision_y_el_content_como_image_url(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [['message' => ['role' => 'assistant', 'content' => 'W-2 transcrito tal cual']]],
+            ], 200),
+        ]);
+
+        $texto = (new OpenAiClient)->transcribirImagen('Transcribe todo lo visible.', 'data:image/png;base64,AAAA');
+
+        $this->assertSame('W-2 transcrito tal cual', $texto);
+
+        Http::assertSent(function ($request) {
+            $contenido = $request['messages'][0]['content'];
+
+            return $request['model'] === 'test-vision-model'
+                && $contenido[0]['type'] === 'text'
+                && $contenido[1]['type'] === 'image_url'
+                && $contenido[1]['image_url']['url'] === 'data:image/png;base64,AAAA';
+        });
     }
 
     public function test_lanza_una_excepcion_si_la_respuesta_no_trae_choices(): void

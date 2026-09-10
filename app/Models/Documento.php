@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FieldState;
+use App\Enums\MetodoExtraccionDocumento;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\URL;
  * @property int $file_size
  * @property string $formato
  * @property string|null $hash_contenido
+ * @property MetodoExtraccionDocumento|null $metodo_extraccion
  * @property FieldState $estado_validacion
  */
 #[Fillable([
@@ -33,6 +35,7 @@ use Illuminate\Support\Facades\URL;
     'file_size',
     'formato',
     'hash_contenido',
+    'metodo_extraccion',
     'estado_validacion',
 ])]
 class Documento extends Model
@@ -46,6 +49,7 @@ class Documento extends Model
     {
         return [
             'estado_validacion' => FieldState::class,
+            'metodo_extraccion' => MetodoExtraccionDocumento::class,
             'file_size' => 'integer',
         ];
     }
