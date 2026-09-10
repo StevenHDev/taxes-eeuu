@@ -44,11 +44,12 @@ class ToolDefinitionsTest extends TestCase
         ], $nombres);
     }
 
-    public function test_cierre_solo_expone_think(): void
+    public function test_cierre_expone_las_mismas_tools_que_recoleccion(): void
     {
-        $nombres = $this->nombres(ToolDefinitions::paraFase(FaseConversacion::Cierre));
+        $deRecoleccion = $this->nombres(ToolDefinitions::paraFase(FaseConversacion::Recoleccion));
+        $deCierre = $this->nombres(ToolDefinitions::paraFase(FaseConversacion::Cierre));
 
-        $this->assertSame(['think'], $nombres);
+        $this->assertEqualsCanonicalizing($deRecoleccion, $deCierre);
     }
 
     public function test_ninguna_tool_expone_cliente_id_como_parametro(): void

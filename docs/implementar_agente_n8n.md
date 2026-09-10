@@ -298,7 +298,13 @@ la atención automática"), para que el cambio de tono no lo confunda.
 - `app/Services/WhatsappAgent/AgenteConversacionalService.php` — arma prompt vigente
   (bloque de fase correspondiente) + historial + mensaje nuevo, corre el loop de
   function-calling con las tools de `paraFase()` hasta obtener una respuesta final de
-  texto.
+  texto. **Recalcula la fase (y por tanto las tools disponibles) después de CADA tool
+  call dentro del mismo turno**, no solo una vez al principio — sin esto, un tool call
+  que cambia de fase a mitad de turno (ej. `declarar_formas_cliente`, que hace que
+  `EstadoConversacionResolver` pase de `DeterminacionFormas` a `Recoleccion`) dejaría al
+  modelo sin `consultar_pendientes_cliente` disponible en ese mismo turno, perdiendo el
+  arranque inmediato de la recolección que hoy logra n8n invocando al especialista como
+  tool dentro del mismo turno del orquestador (`mensaje_cliente = "iniciar recolección"`).
 
 **Envío y medios**
 - `app/Services/Whatsapp/TwilioWhatsappClient.php` — enviar texto libre (ventana de 24h).

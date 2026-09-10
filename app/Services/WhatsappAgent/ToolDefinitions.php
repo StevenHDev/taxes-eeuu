@@ -30,14 +30,20 @@ class ToolDefinitions
         return match ($fase) {
             FaseConversacion::VerificacionCuenta => [self::crearClienteTaxes(), self::think()],
             FaseConversacion::DeterminacionFormas => [self::declararFormasCliente(), self::think()],
-            FaseConversacion::Recoleccion => [
+            // Cierre usa exactamente las mismas tools que Recoleccion: la única
+            // diferencia entre ambas fases es el bloque de prompt (tono de
+            // cierre vs. seguir preguntando), nunca qué puede hacer el modelo
+            // — si el cliente escribe algo nuevo después de "ya terminamos"
+            // (otra forma, un dato adicional), el agente sigue pudiendo
+            // guardarlo con las mismas tools, sin quedar en un callejón sin
+            // salida solo por haber llegado a esta fase.
+            FaseConversacion::Recoleccion, FaseConversacion::Cierre => [
                 self::declararFormasCliente(),
                 self::consultarPendientesCliente(),
                 self::consultarDocumentosExtra(),
                 self::guardarCampoCliente(),
                 self::think(),
             ],
-            FaseConversacion::Cierre => [self::think()],
         };
     }
 
