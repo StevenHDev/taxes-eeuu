@@ -428,22 +428,35 @@ class ClientePanelTest extends TestCase
         $this->assertSame(1000, $historial->valor_anterior);
     }
 
-    public function test_el_buscador_filtra_clientes_por_nombre_email_o_telefono(): void
+    /**
+     * El buscador es client-side (DataTable de TanStack en el navegador, ver
+     * resources/js/pages/clientes/index.tsx) — el servidor siempre entrega la
+     * colección completa visible para el actor, sin paginar ni filtrar por
+     * `search`, para que el filtrado/orden/paginado corran en el navegador
+     * sin ida y vuelta al servidor.
+     */
+    public function test_el_index_entrega_la_coleccion_completa_de_clientes_visibles_sin_filtrar_en_el_servidor(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id, 'name' => 'Jane Doe', 'phone' => '+15551112222']);
-        User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id, 'name' => 'John Smith']);
+        // created_at explícito y distinto: el controlador ordena por
+        // created_at desc (ManagesClientes/ClienteController::index), así que
+        // sin esto el orden entre ambos quedaría indeterminado si el factory
+        // les asigna el mismo segundo.
+        User::factory()->create([
+            'role' => UserRole::Client, 'preparer_id' => $preparador->id,
+            'name' => 'Jane Doe', 'phone' => '+15551112222', 'created_at' => now()->subMinute(),
+        ]);
+        User::factory()->create([
+            'role' => UserRole::Client, 'preparer_id' => $preparador->id,
+            'name' => 'John Smith', 'created_at' => now(),
+        ]);
 
         $this->actingAs($preparador)
             ->get(route('clientes.index', ['search' => 'Jane']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('clientes.data.0.name', 'Jane Doe')
-                ->where('search', 'Jane'));
-
-        $this->actingAs($preparador)
-            ->get(route('clientes.index', ['search' => '+15551112222']))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('clientes.data.0.name', 'Jane Doe'));
+                ->has('clientes', 2)
+                ->where('clientes.0.name', 'John Smith')
+                ->where('clientes.1.name', 'Jane Doe'));
     }
 }
