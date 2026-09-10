@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DataTransferObjects\EventoRecoleccionData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EventoRequest;
 use App\Services\EventoRecoleccionService;
@@ -14,7 +15,7 @@ class EventoController extends Controller
 
     public function store(EventoRequest $request): JsonResponse
     {
-        $resultado = $this->eventos->procesar($request);
+        $resultado = $this->eventos->procesar(EventoRecoleccionData::fromRequest($request));
 
         $taxYear = (int) $request->validated('tax_year');
         $campo = (string) $request->validated('campo');

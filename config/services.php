@@ -41,4 +41,18 @@ return [
         'whatsapp_table' => env('WHATSAPP_SUPABASE_TABLE_PATTERN', 'globaltax_registro_whatsapp'),
     ],
 
+    'twilio' => [
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
+    ],
+
+    // Sin default para 'model'/'vision_model': el agente de WhatsApp no debe
+    // arrancar con un modelo elegido a ciegas si falta configurarlo en .env.
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL'),
+        'vision_model' => env('OPENAI_VISION_MODEL'),
+    ],
+
 ];

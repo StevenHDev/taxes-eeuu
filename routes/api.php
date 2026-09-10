@@ -4,12 +4,22 @@ use App\Http\Controllers\Api\CampoClienteController;
 use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\EventoController;
+use App\Http\Controllers\Api\TwilioWebhookController;
+use App\Http\Middleware\VerifyTwilioSignature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+// Sin auth:sanctum: la única autenticación posible acá es que Twilio es el
+// único que puede producir una firma válida para esta URL (ver
+// VerifyTwilioSignature) — un token Sanctum no tiene sentido para un
+// webhook que no es Twilio quien lo gestiona.
+Route::post('whatsapp/webhook', TwilioWebhookController::class)
+    ->middleware(VerifyTwilioSignature::class)
+    ->name('api.whatsapp.webhook');
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('eventos', [EventoController::class, 'store'])->name('api.eventos.store');

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DataTransferObjects\EventoRecoleccionData;
 use App\Enums\EventSource;
 use App\Enums\FieldDataType;
 use App\Enums\FieldMode;
@@ -9,7 +10,6 @@ use App\Enums\FieldState;
 use App\Enums\FormState;
 use App\Enums\TaxForm;
 use App\Enums\UserRole;
-use App\Http\Requests\EventoRequest;
 use App\Models\CampoCliente;
 use App\Models\ClientIntakeSession;
 use App\Models\Documento;
@@ -32,43 +32,41 @@ class EventoRecoleccionService
      *
      * `revelados` (opcional): campos que el mismo documento ya reveló, para
      * guardarlos en la MISMA invocación en vez de que el agente tenga que
-     * decidir invocar la tool de nuevo por cada uno — ver EventoRequest y
-     * RELACIONES DOCUMENTO→CAMPO en docs/prompt.md. Cada item es siempre
+     * decidir invocar la tool de nuevo por cada uno — ver EventoRecoleccionData
+     * y RELACIONES DOCUMENTO→CAMPO en docs/prompt.md. Cada item es siempre
      * modo="texto" implícito y usa el mismo `$cliente` ya resuelto, dentro de
      * la misma transacción que el campo principal.
      *
      * @return array{cliente: User, campo_cliente: CampoCliente, forma_cliente: ?FormaCliente, revelados: array<int, array{campo_cliente: CampoCliente, forma_cliente: ?FormaCliente}>}
      */
-    public function procesar(EventoRequest $request): array
+    public function procesar(EventoRecoleccionData $data): array
     {
-        return DB::transaction(function () use ($request) {
-            $cliente = $this->resolverCliente($request);
-
-            $file = $request->validated('modo') === FieldMode::Archivo->value ? $request->file('file') : null;
+        return DB::transaction(function () use ($data) {
+            $cliente = $this->resolverCliente($data);
 
             $principal = $this->aplicarCambio(
                 cliente: $cliente,
-                taxYear: (int) $request->validated('tax_year'),
-                forma: (string) $request->validated('forma'),
-                campo: (string) $request->validated('campo'),
-                tipoCampo: (string) $request->validated('tipo_campo'),
-                modo: FieldMode::from((string) $request->validated('modo')),
-                tipoDato: $request->validated('tipo_dato') ? FieldDataType::from((string) $request->validated('tipo_dato')) : null,
-                contenido: $request->validated('contenido'),
-                file: $file,
-                nombreOriginal: $request->validated('nombre_original'),
-                actor: $request->user(),
+                taxYear: (int) $data->get('tax_year'),
+                forma: (string) $data->get('forma'),
+                campo: (string) $data->get('campo'),
+                tipoCampo: (string) $data->get('tipo_campo'),
+                modo: FieldMode::from((string) $data->get('modo')),
+                tipoDato: $data->get('tipo_dato') ? FieldDataType::from((string) $data->get('tipo_dato')) : null,
+                contenido: $data->get('contenido'),
+                file: $data->file,
+                nombreOriginal: $data->get('nombre_original'),
+                actor: $data->actor,
                 source: EventSource::AgenteIa,
-                acumular: $request->boolean('acumular'),
-                subcampoAcumular: $request->validated('subcampo'),
+                acumular: filter_var($data->get('acumular', false), FILTER_VALIDATE_BOOLEAN),
+                subcampoAcumular: $data->get('subcampo'),
             );
 
             $revelados = [];
 
-            foreach ($request->validated('revelados') ?? [] as $item) {
+            foreach ($data->get('revelados') ?? [] as $item) {
                 $resultado = $this->aplicarCambio(
                     cliente: $cliente,
-                    taxYear: (int) $request->validated('tax_year'),
+                    taxYear: (int) $data->get('tax_year'),
                     forma: (string) $item['forma'],
                     campo: (string) $item['campo'],
                     tipoCampo: (string) $item['tipo_campo'],
@@ -77,7 +75,7 @@ class EventoRecoleccionService
                     contenido: $item['contenido'],
                     file: null,
                     nombreOriginal: null,
-                    actor: $request->user(),
+                    actor: $data->actor,
                     source: EventSource::AgenteIa,
                     // No (bool) directo: `acumular` viaja como string ("true"/"false")
                     // y (bool) "false" da true en PHP por ser un string no vacío.
@@ -278,15 +276,15 @@ class EventoRecoleccionService
         $documento->delete();
     }
 
-    private function resolverCliente(EventoRequest $request): User
+    private function resolverCliente(EventoRecoleccionData $data): User
     {
-        $clienteId = $request->validated('cliente_id');
+        $clienteId = $data->get('cliente_id');
 
         if ($clienteId) {
             return User::query()->where('id', $clienteId)->firstOrFail();
         }
 
-        $externalRef = $request->validated('external_ref');
+        $externalRef = $data->get('external_ref');
 
         if ($externalRef) {
             $session = ClientIntakeSession::query()->where('external_ref', $externalRef)->first();
@@ -296,7 +294,7 @@ class EventoRecoleccionService
             }
         }
 
-        $phone = $request->validated('phone');
+        $phone = $data->get('phone');
 
         // El teléfono es un identificador más estable que external_ref para
         // reconocer al mismo cliente entre eventos: si ya existe un cliente con
