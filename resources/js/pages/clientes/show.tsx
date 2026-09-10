@@ -1,5 +1,11 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { AlertTriangle, Check, Circle, MinusCircle, Upload } from 'lucide-react';
+import {
+    AlertTriangle,
+    Check,
+    Circle,
+    MinusCircle,
+    Upload,
+} from 'lucide-react';
 import { Fragment, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
@@ -423,7 +429,9 @@ function tipoDeSubcampo(
     return 'string';
 }
 
-function valorPorDefecto(tipo: 'boolean' | 'number' | 'string'): FieldPrimitive {
+function valorPorDefecto(
+    tipo: 'boolean' | 'number' | 'string',
+): FieldPrimitive {
     return tipo === 'boolean' ? false : '';
 }
 
@@ -661,7 +669,11 @@ function ValueEditor({
     }
 
     if (kind === 'objectList') {
-        const actualizar = (idx: number, clave: string, valor: FieldPrimitive) =>
+        const actualizar = (
+            idx: number,
+            clave: string,
+            valor: FieldPrimitive,
+        ) =>
             setItems((prev) =>
                 prev.map((registro, i) =>
                     i === idx ? { ...registro, [clave]: valor } : registro,
@@ -670,10 +682,7 @@ function ValueEditor({
         const eliminar = (idx: number) =>
             setItems((prev) => prev.filter((_, i) => i !== idx));
         const agregar = () =>
-            setItems((prev) => [
-                ...prev,
-                objToRecord({}, plantilla),
-            ]);
+            setItems((prev) => [...prev, objToRecord({}, plantilla)]);
 
         return (
             <div className="grid gap-3">
@@ -1236,7 +1245,9 @@ function AgregarCampoDialog({
                                     {f === TRANSVERSAL
                                         ? t('clienteShow.transversalLabel')
                                         : f === DOCUMENTOS_EXTRA
-                                          ? t('clienteShow.documentosExtraLabel')
+                                          ? t(
+                                                'clienteShow.documentosExtraLabel',
+                                            )
                                           : f}
                                 </option>
                             ),
@@ -1276,7 +1287,8 @@ function AgregarCampoDialog({
                             <ValueEditor
                                 key={`${forma}:${campo}`}
                                 initial={
-                                    seleccionado?.tipo_dato === 'array_string' ||
+                                    seleccionado?.tipo_dato ===
+                                        'array_string' ||
                                     seleccionado?.tipo_dato === 'array_object'
                                         ? []
                                         : seleccionado?.tipo_dato === 'object'
@@ -1303,7 +1315,11 @@ function AgregarCampoDialog({
 
                 {seleccionado?.obligatorio === false && (
                     <div className="flex justify-end border-t pt-3">
-                        <Button variant="ghost" size="sm" onClick={submitNoAplica}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={submitNoAplica}
+                        >
                             {t('clienteShow.noAplica.trigger')}
                         </Button>
                     </div>
@@ -1334,8 +1350,8 @@ function MarcarNoAplicaButton({
             size="sm"
             onClick={() =>
                 router.patch(
-                    campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
-                        `?forma=${campo.forma}&tax_year=${taxYear}`,
+                    campoUpdate({ cliente: clienteId, campo: campo.campo })
+                        .url + `?forma=${campo.forma}&tax_year=${taxYear}`,
                     { modo: 'no_aplica' },
                     { preserveScroll: true },
                 )
@@ -1886,7 +1902,9 @@ function FormaSection({
                                             documento={campo.documento}
                                         />
                                         <DuplicadoBadge
-                                            duplicado={campo.documento.duplicado}
+                                            duplicado={
+                                                campo.documento.duplicado
+                                            }
                                         />
                                     </div>
                                 ) : (
@@ -1946,7 +1964,10 @@ function FormaSection({
     );
 }
 
-const RIESGO_VARIANT: Record<NivelRiesgo, 'outline' | 'secondary' | 'destructive'> = {
+const RIESGO_VARIANT: Record<
+    NivelRiesgo,
+    'outline' | 'secondary' | 'destructive'
+> = {
     bajo: 'outline',
     medio: 'secondary',
     alto: 'destructive',

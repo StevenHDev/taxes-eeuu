@@ -263,7 +263,7 @@ class DeterminacionFiscalService
     }
 
     /**
-     * @return array{disponible: bool, motivo_no_disponible: string}
+     * @return array{disponible: false, motivo_no_disponible: string}
      */
     private function noDisponible(string $motivo): array
     {

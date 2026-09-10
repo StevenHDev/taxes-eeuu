@@ -25,7 +25,7 @@ class QbiCalculator
     private const TASA = 0.20;
 
     /**
-     * @return array{disponible: bool, motivo_no_disponible: ?string, qbi?: float, deduccion?: float, requiere_revision_manual?: bool}
+     * @return array{disponible: true, motivo_no_disponible: null, qbi: float, deduccion: float, requiere_revision_manual: bool}
      */
     public function calcular(int $taxYear, FilingStatus $filingStatus, float $qbi, float $taxableIncomeAntesQbi, float $gananciaCapitalNeta): array
     {

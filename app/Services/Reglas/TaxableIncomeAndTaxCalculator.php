@@ -26,7 +26,7 @@ use App\Support\ParametrosFiscales;
 class TaxableIncomeAndTaxCalculator
 {
     /**
-     * @return array{disponible: bool, motivo_no_disponible: ?string, ingreso_gravable?: float, impuesto?: float}
+     * @return array{disponible: true, motivo_no_disponible: null, ingreso_gravable: float, impuesto: float}
      */
     public function calcular(
         int $taxYear,

@@ -42,7 +42,7 @@ class SupabaseWhatsappConversationService
             return [];
         }
 
-        return collect($response->json())
+        return collect((array) $response->json())
             ->map(fn (array $fila) => $this->normalizarMensaje($fila))
             ->filter()
             ->values()

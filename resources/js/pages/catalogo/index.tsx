@@ -451,9 +451,7 @@ export default function CatalogoIndex({
                             id="tax_year_selector"
                             className="rounded border bg-background p-2 text-sm"
                             value={taxYearActual}
-                            onChange={(e) =>
-                                cambiarAno(Number(e.target.value))
-                            }
+                            onChange={(e) => cambiarAno(Number(e.target.value))}
                         >
                             {anos.map((ano) => (
                                 <option key={ano} value={ano}>

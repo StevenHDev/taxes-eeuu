@@ -1,5 +1,11 @@
 import { Head, router } from '@inertiajs/react';
-import { AlertTriangle, Check, Circle, FileDown, MinusCircle } from 'lucide-react';
+import {
+    AlertTriangle,
+    Check,
+    Circle,
+    FileDown,
+    MinusCircle,
+} from 'lucide-react';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeterminacionFiscalPanel } from '@/components/determinacion-fiscal-panel';
@@ -83,7 +89,9 @@ function FieldValue({ value }: { value: unknown }) {
         value === undefined ||
         (typeof value === 'string' && value.trim() === '')
     ) {
-        return <span className="text-muted-foreground">{t('common.none')}</span>;
+        return (
+            <span className="text-muted-foreground">{t('common.none')}</span>
+        );
     }
 
     if (typeof value === 'boolean') {
@@ -119,7 +127,11 @@ function FieldValue({ value }: { value: unknown }) {
             return (
                 <div className="flex flex-wrap gap-1">
                     {value.map((v, i) => (
-                        <Badge key={i} variant="secondary" className="font-normal">
+                        <Badge
+                            key={i}
+                            variant="secondary"
+                            className="font-normal"
+                        >
                             {String(v)}
                         </Badge>
                     ))}
@@ -175,9 +187,7 @@ function CampoRow({ campo }: { campo: CampoCliente }) {
     const { t } = useTranslation();
 
     return (
-        <div
-            className={`border-l-2 py-3 pl-3 ${ESTADO_RIEL[campo.estado]}`}
-        >
+        <div className={`border-l-2 py-3 pl-3 ${ESTADO_RIEL[campo.estado]}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-sm font-medium text-foreground">
                     {humanizarClave(campo.campo)}

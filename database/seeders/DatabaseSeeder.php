@@ -25,10 +25,10 @@ class DatabaseSeeder extends Seeder
         // gracias a firstOrCreate. Define ADMIN_EMAIL / ADMIN_PASSWORD en el
         // entorno de producción; el password se hashea solo (cast 'hashed').
         User::firstOrCreate(
-            ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
+            ['email' => config('seeding.admin.email')],
             [
-                'name' => env('ADMIN_NAME', 'Admin'),
-                'password' => env('ADMIN_PASSWORD', 'password'),
+                'name' => config('seeding.admin.name'),
+                'password' => config('seeding.admin.password'),
                 'role' => UserRole::Administrator,
             ]
         );

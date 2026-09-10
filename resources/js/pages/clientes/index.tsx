@@ -257,9 +257,18 @@ export default function ClientesIndex({
                             columnId: 'nivel_riesgo',
                             title: t('clientesIndex.columns.risk'),
                             options: [
-                                { label: t('clientesIndex.riesgo.bajo'), value: 'bajo' },
-                                { label: t('clientesIndex.riesgo.medio'), value: 'medio' },
-                                { label: t('clientesIndex.riesgo.alto'), value: 'alto' },
+                                {
+                                    label: t('clientesIndex.riesgo.bajo'),
+                                    value: 'bajo',
+                                },
+                                {
+                                    label: t('clientesIndex.riesgo.medio'),
+                                    value: 'medio',
+                                },
+                                {
+                                    label: t('clientesIndex.riesgo.alto'),
+                                    value: 'alto',
+                                },
                             ],
                         },
                         {

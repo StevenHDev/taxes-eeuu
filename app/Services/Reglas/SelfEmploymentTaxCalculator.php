@@ -26,7 +26,7 @@ class SelfEmploymentTaxCalculator
     private const BASE_GRAVABLE = 0.9235;
 
     /**
-     * @return array{disponible: bool, motivo_no_disponible: ?string, ingreso_neto_se?: float, base_gravable?: float, impuesto_se?: float, mitad_deducible?: float}
+     * @return array{disponible: true, motivo_no_disponible: null, ingreso_neto_se: float, base_gravable: float, impuesto_se: float, mitad_deducible: float}
      */
     public function calcular(int $taxYear, float $ingresoNetoAutoempleo): array
     {

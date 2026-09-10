@@ -14,7 +14,7 @@ class FilingStatusCalculator
 {
     /**
      * @param  array<string, mixed>  $estadoCivil
-     * @return array{disponible: bool, motivo_no_disponible: ?string, estado?: string}
+     * @return array{disponible: true, motivo_no_disponible: null, estado: string}
      */
     public function calcular(int $taxYear, array $estadoCivil, bool $existeQualifyingChild, bool $existeAlgunDependienteCalificado): array
     {
@@ -48,7 +48,7 @@ class FilingStatusCalculator
     }
 
     /**
-     * @return array{disponible: bool, motivo_no_disponible: ?string, estado: string}
+     * @return array{disponible: true, motivo_no_disponible: null, estado: string}
      */
     private function resultado(FilingStatus $estado): array
     {

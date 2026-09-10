@@ -31,7 +31,7 @@ class AgiCalculator
      *                                            nunca llegaba al AGI — bug
      *                                            real encontrado en pruebas
      *                                            end-to-end, corregido acá.
-     * @return array{disponible: bool, motivo_no_disponible: ?string, agi?: float, ingreso_bruto_total?: float, ajustes?: float}
+     * @return array{disponible: true, motivo_no_disponible: null, agi: float, ingreso_bruto_total: float, ajustes: float}
      */
     public function calcular(array $ingresos, float $ajustesAdicionales = 0.0, float $ingresoNegocioRentaGranja = 0.0): array
     {

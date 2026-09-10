@@ -24,7 +24,7 @@ class AdditionalMedicareTaxCalculator
     private const TASA = 0.009;
 
     /**
-     * @return array{disponible: bool, motivo_no_disponible: ?string, base_combinada?: float, umbral?: float, impuesto?: float}
+     * @return array{disponible: true, motivo_no_disponible: null, base_combinada: float, umbral: float, impuesto: float}
      */
     public function calcular(int $taxYear, FilingStatus $filingStatus, float $salariosMedicare, float $baseGravableSe): array
     {

@@ -20,7 +20,7 @@ class CreditEligibilityCalculator
     /**
      * @param  array<string, mixed>  $dependientesResultado  resultado de DependentQualificationCalculator
      * @param  array<string, mixed>|null  $gastosCuidado
-     * @return array{disponible: bool, motivo_no_disponible: ?string, ctc?: float, odc?: float, cuidado_dependientes?: float, reduccion_por_agi?: float, total?: float}
+     * @return array{disponible: true, motivo_no_disponible: null, ctc: float, odc: float, cuidado_dependientes: float, reduccion_por_agi: float, total: float}
      */
     public function calcular(int $taxYear, FilingStatus $filingStatus, float $agi, array $dependientesResultado, ?array $gastosCuidado): array
     {

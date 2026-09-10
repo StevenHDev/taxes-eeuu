@@ -18,14 +18,14 @@ class DependentQualificationCalculator
     /**
      * @param  array<int, array<string, mixed>>  $dependientes
      * @return array{
-     *     disponible: bool,
-     *     motivo_no_disponible: ?string,
-     *     dependientes?: array<int, array<string, mixed>>,
-     *     conteo_qualifying_child?: int,
-     *     conteo_qualifying_relative?: int,
-     *     conteo_ctc?: int,
-     *     conteo_odc?: int,
-     *     conteo_cuidado?: int,
+     *     disponible: true,
+     *     motivo_no_disponible: null,
+     *     dependientes: array<int, array<string, mixed>>,
+     *     conteo_qualifying_child: int,
+     *     conteo_qualifying_relative: int,
+     *     conteo_ctc: int,
+     *     conteo_odc: int,
+     *     conteo_cuidado: int,
      * }
      */
     public function calcular(int $taxYear, array $dependientes): array
@@ -59,8 +59,11 @@ class DependentQualificationCalculator
             $calificacion = $esQualifyingChild ? 'qualifying_child' : ($esQualifyingRelative ? 'qualifying_relative' : 'ninguna');
 
             // CTC exige qualifying child Y menor de 17 al cierre del año — un
-            // qualifying child de 17-18 años solo habilita ODC, no CTC.
-            $elegibleCtc = $esQualifyingChild && $edad !== null && $edad < 17;
+            // qualifying child de 17-18 años solo habilita ODC, no CTC. Sin
+            // chequeo redundante de $edad !== null: $esQualifyingChild ya lo
+            // exige (línea 51), y PHPStan lo rastrea a través del && corto-
+            // circuito.
+            $elegibleCtc = $esQualifyingChild && $edad < 17;
             $elegibleOdc = ($esQualifyingChild || $esQualifyingRelative) && ! $elegibleCtc;
             // Tope de Form 2441: cuenta cualquier dependiente calificado menor
             // de la edad límite o discapacitado, sin cruzar contra
@@ -117,7 +120,11 @@ class DependentQualificationCalculator
         }
 
         try {
-            return Carbon::parse($fechaNacimiento)->diffInYears($finDeAnio);
+            // Carbon::diffInYears() devuelve float (con fracción de año), no
+            // int — sin este cast explícito, PHP lo trunca en silencio al
+            // retornar (el tipo declarado ?int no está bajo strict_types),
+            // lo cual funciona pero deja el contrato del método incorrecto.
+            return (int) Carbon::parse($fechaNacimiento)->diffInYears($finDeAnio);
         } catch (\Throwable) {
             return null;
         }

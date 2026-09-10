@@ -20,7 +20,7 @@ use App\Support\ParametrosFiscales;
 class StandardDeductionCalculator
 {
     /**
-     * @return array{disponible: bool, motivo_no_disponible: ?string, deduccion_estandar?: float, deduccion_itemizada?: float, deduccion_aplicable?: float, usa_itemizada?: bool}
+     * @return array{disponible: true, motivo_no_disponible: null, deduccion_estandar: float, deduccion_itemizada: float, deduccion_aplicable: float, usa_itemizada: bool}
      */
     public function calcular(int $taxYear, FilingStatus $filingStatus, float $deduccionItemizada): array
     {

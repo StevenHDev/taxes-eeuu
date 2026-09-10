@@ -28,7 +28,7 @@ class NiitCalculator
     private const TASA = 0.038;
 
     /**
-     * @return array{disponible: bool, motivo_no_disponible: ?string, ingreso_neto_inversion?: float, exceso_magi?: float, impuesto?: float}
+     * @return array{disponible: true, motivo_no_disponible: null, ingreso_neto_inversion: float, exceso_magi: float, impuesto: float}
      */
     public function calcular(int $taxYear, FilingStatus $filingStatus, float $magi, float $ingresoNetoInversion): array
     {
