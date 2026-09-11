@@ -16,6 +16,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('clientes/{cliente}/export', [ClienteController::class, 'export'])->name('clientes.export');
     Route::get('clientes/{cliente}/conversacion-whatsapp', [ClienteController::class, 'conversacionWhatsapp'])
         ->name('clientes.conversacion-whatsapp');
+    Route::post('clientes/{cliente}/whatsapp/tomar-control', [ClienteController::class, 'tomarControlWhatsapp'])
+        ->name('clientes.whatsapp.tomar-control');
+    Route::post('clientes/{cliente}/whatsapp/devolver-control', [ClienteController::class, 'devolverControlWhatsapp'])
+        ->name('clientes.whatsapp.devolver-control');
+    Route::post('clientes/{cliente}/whatsapp/enviar', [ClienteController::class, 'enviarMensajeWhatsapp'])
+        ->name('clientes.whatsapp.enviar');
     Route::post('clientes/{cliente}/formas/{forma}/marcar-revisado', [ClienteController::class, 'marcarRevisado'])
         ->name('clientes.marcar-revisado');
     Route::post('clientes/{cliente}/determinaciones', [DeterminacionFiscalController::class, 'store'])

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EstadoControlConversacion;
 use App\Enums\NivelRiesgo;
+use App\Enums\RolMensajeWhatsapp;
 use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
@@ -13,11 +15,15 @@ use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\NivelRiesgoManual;
 use App\Models\User;
+use App\Models\WhatsappControl;
+use App\Models\WhatsappMensaje;
 use App\Services\ClienteExportService;
 use App\Services\DocumentoDuplicadoService;
 use App\Services\RiesgoCasoService;
 use App\Services\SupabaseWhatsappConversationService;
+use App\Services\Whatsapp\TwilioWhatsappClient;
 use App\Support\TaxFieldCatalog;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +43,7 @@ class ClienteController extends Controller
         private readonly DocumentoDuplicadoService $duplicados,
         private readonly RiesgoCasoService $riesgo,
         private readonly SupabaseWhatsappConversationService $whatsapp,
+        private readonly TwilioWhatsappClient $twilio,
     ) {}
 
     public function index(Request $request): Response
@@ -317,16 +324,124 @@ class ClienteController extends Controller
         return response()->download($zipPath, "cliente-{$cliente->id}-{$taxYear}.zip")->deleteFileAfterSend();
     }
 
+    /**
+     * Historial completo de la conversación: el de Supabase (n8n, hoy de solo
+     * lectura) más lo que ya exista localmente en `whatsapp_mensajes` (el
+     * nuevo agente, y cualquier mensaje enviado manualmente por un
+     * preparador) — mezclados y ordenados por instante real, no por el
+     * string crudo de `created_at` (Supabase devuelve formatos mixtos, ver
+     * SupabaseWhatsappConversationService). Ver ESCALAMIENTO A HUMANO en
+     * docs/implementar_agente_n8n.md.
+     */
     public function conversacionWhatsapp(User $cliente): JsonResponse
     {
         $this->authorize('view', $cliente);
 
         if (! $cliente->phone) {
-            return response()->json(['mensajes' => []]);
+            return response()->json(['mensajes' => [], 'control' => null]);
         }
 
+        $mensajes = collect($this->whatsapp->paraTelefono($cliente->phone))
+            ->concat($this->mensajesLocales($cliente->phone))
+            ->sortBy(fn (array $m) => $m['created_at'] ? Carbon::parse($m['created_at'])->timestamp : 0)
+            ->values();
+
         return response()->json([
-            'mensajes' => $this->whatsapp->paraTelefono($cliente->phone),
+            'mensajes' => $mensajes,
+            'control' => $this->controlEnvelope($cliente->phone),
         ]);
+    }
+
+    public function tomarControlWhatsapp(User $cliente): JsonResponse
+    {
+        $this->authorize('update', $cliente);
+
+        abort_unless($cliente->phone !== null, 422, 'El cliente no tiene teléfono registrado.');
+
+        $control = WhatsappControl::query()->firstOrCreate(
+            ['telefono' => $cliente->phone],
+            ['cliente_id' => $cliente->id],
+        );
+        $control->tomar(request()->user());
+
+        return response()->json(['control' => $this->controlEnvelope($cliente->phone)]);
+    }
+
+    public function devolverControlWhatsapp(User $cliente): JsonResponse
+    {
+        $this->authorize('update', $cliente);
+
+        WhatsappControl::query()->where('telefono', $cliente->phone)->first()?->devolver();
+
+        return response()->json(['control' => $this->controlEnvelope($cliente->phone)]);
+    }
+
+    /**
+     * Envío manual de un preparador durante el modo `humano` — el mensaje
+     * enviado se persiste con rol=preparador para que el agente, al retomar,
+     * lo vea con su propio rol en el historial (nunca lo confunda con algo
+     * que él mismo dijo — ver ESCALAMIENTO A HUMANO).
+     */
+    public function enviarMensajeWhatsapp(Request $request, User $cliente): JsonResponse
+    {
+        $this->authorize('update', $cliente);
+
+        abort_unless($cliente->phone !== null, 422, 'El cliente no tiene teléfono registrado.');
+
+        $request->validate(['mensaje' => ['required', 'string', 'max:1600']]);
+
+        $control = WhatsappControl::query()->where('telefono', $cliente->phone)->first();
+
+        abort_unless($control?->esHumano(), 422, 'Solo se puede enviar un mensaje manual mientras la conversación está en modo humano.');
+
+        $mensaje = (string) $request->string('mensaje');
+        $sid = $this->twilio->enviarTexto($cliente->phone, $mensaje);
+
+        $enviado = WhatsappMensaje::query()->create([
+            'telefono' => $cliente->phone,
+            'cliente_id' => $cliente->id,
+            'rol' => RolMensajeWhatsapp::Preparador,
+            'contenido' => $mensaje,
+            'twilio_message_sid' => $sid,
+        ]);
+
+        return response()->json([
+            'mensaje' => ['role' => 'preparador', 'content' => $enviado->contenido, 'created_at' => $enviado->created_at?->toISOString()],
+        ]);
+    }
+
+    /**
+     * @return array<int, array{role: string, content: string, created_at: ?string}>
+     */
+    private function mensajesLocales(string $telefono): array
+    {
+        return WhatsappMensaje::query()
+            ->where('telefono', $telefono)
+            ->orderBy('id')
+            ->get()
+            ->map(fn (WhatsappMensaje $m) => [
+                'role' => match ($m->rol) {
+                    RolMensajeWhatsapp::Cliente => 'human',
+                    RolMensajeWhatsapp::Agente => 'ai',
+                    RolMensajeWhatsapp::Preparador => 'preparador',
+                    RolMensajeWhatsapp::Sistema => 'system',
+                },
+                'content' => $m->contenido,
+                'created_at' => $m->created_at?->toISOString(),
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array{estado: string, tomado_por: ?string}
+     */
+    private function controlEnvelope(string $telefono): array
+    {
+        $control = WhatsappControl::query()->where('telefono', $telefono)->with('tomadoPor')->first();
+
+        return [
+            'estado' => $control?->estado->value ?? EstadoControlConversacion::Agente->value,
+            'tomado_por' => $control?->tomadoPor?->name,
+        ];
     }
 }
