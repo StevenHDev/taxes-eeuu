@@ -62,6 +62,23 @@ class EventoValidatorTest extends TestCase
         $this->assertArrayHasKey('modo', $errores);
     }
 
+    public function test_modo_archivo_sin_archivo_produce_error(): void
+    {
+        // Sin este chequeo, esto pasaba la validación sin error y tronaba
+        // después con un TypeError dentro de
+        // EventoRecoleccionService::procesarArchivo() (exige un UploadedFile
+        // no nulo) — ver el comentario en EventoValidator.
+        $errores = (new EventoValidator)->validar($this->datosValidos([
+            'campo' => 'w2',
+            'tipo_campo' => 'documento',
+            'modo' => 'archivo',
+            'tipo_dato' => null,
+            'contenido' => null,
+        ]));
+
+        $this->assertArrayHasKey('file', $errores);
+    }
+
     public function test_no_aplica_en_un_campo_obligatorio_produce_error(): void
     {
         // 'ingresos' es obligatorio en form_1040.

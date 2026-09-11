@@ -349,8 +349,8 @@ la atención automática"), para que el cambio de tono no lo confunda.
 - `app/Services/Whatsapp/TwilioMediaDownloader.php` — descarga un media de Twilio a un
   archivo local (`{ruta_local, mime_type}`) — solo descarga; la extracción de texto y la
   entrega a `EventoRecoleccionService`/`ToolExecutor::guardarCampoCliente` (con archivo
-  real) es responsabilidad de quien orquesta la recepción del media (pendiente de
-  conectar dentro del job, ver Fase 4).
+  real) las orquesta `AdjuntosWhatsappService`, invocado desde
+  `ProcesarMensajeWhatsappJob` (ver Fase 4, "Punto de integración cerrado").
 
 **Escalamiento a humano**
 - `database/migrations/xxxx_create_whatsapp_control_table.php`
@@ -559,26 +559,41 @@ la atención automática"), para que el cambio de tono no lo confunda.
       resuelto se pasa acá, y si se guardó correctamente, el `Documento` resultante queda
       con su `metodo_extraccion`.
 
-**Punto de integración pendiente:** `AgenteConversacionalService` ya existe (Fase 3
-completa) y `ToolExecutor::ejecutar()` ya acepta `?UploadedFile $file`/
-`?MetodoExtraccionDocumento $metodoExtraccion`, pero todavía nadie llena esos parámetros
-con datos reales — hoy el job siempre invoca al agente sin media, aunque el mensaje traiga
-`MensajeEntranteWhatsapp::$mediaReferencias` no vacío. Falta, dentro de
-`ProcesarMensajeWhatsappJob`/`AgenteConversacionalService`:
-1. Cuando el mensaje trae `mediaReferencias`, invocar `WhatsappChannel::descargarMedia()`
-   por cada una (agnóstico de proveedor: Twilio o Meta, según el canal vigente) y luego
-   `DocumentoExtraccionService::extraer($rutaLocal, $mimeType)` — antes de llamar al
-   agente — y agregar el/los `texto` resultantes al contenido del mensaje que ve el
-   modelo (mismo formato `archivo_url`/`texto_extraido` que ya describe
-   `prompt_actuales/fases/recoleccion.md`, sección RECEPCIÓN DE DOCUMENTOS).
-2. Si el modelo decide invocar `guardar_campo_cliente` con `modo="archivo"` para uno de
-   esos documentos, hace falta envolver la ruta/mime ya descargados como
-   `Illuminate\Http\UploadedFile` (`TwilioMediaDownloader::comoArchivoSubido()`, o su
-   equivalente si se agrega para Meta) y pasarlo a
-   `ToolExecutor::ejecutar(..., file: $archivo, metodoExtraccion: $metodo)` — hace falta
-   decidir cómo se correlaciona "cuál de los N documentos de este mensaje" con el tool
-   call concreto del modelo (ej. por posición si solo llega uno, o por una referencia
-   explícita si llegan varios a la vez).
+- [x] **Punto de integración cerrado.** `AdjuntosWhatsappService` (nuevo) resuelve
+      `MensajeEntranteWhatsapp::$mediaReferencias` — agnóstico de proveedor, solo conoce
+      `WhatsappChannel` — descargando cada una y pasándola por
+      `DocumentoExtraccionService::extraer()`; una falla en UNA referencia (proveedor
+      caído, media expirado) se registra con `Log::warning()` y se omite, nunca tumba el
+      turno completo (mismo principio que el fix de `WhatsappMensajeObserver`).
+      `ProcesarMensajeWhatsappJob` la invoca antes de guardar el mensaje entrante y anota
+      el texto extraído directamente en `WhatsappMensaje.contenido` con el formato
+      `archivo_url`/`texto_extraido` (`prompt_actuales/fases/recoleccion.md`, RECEPCIÓN DE
+      DOCUMENTOS) — como ya queda en la fila persistida, cualquier turno futuro que
+      re-lea el historial lo sigue viendo, no solo el turno en que llegó.
+
+      La correlación "cuál de los N documentos del mensaje" con el tool call del modelo
+      se resolvió por **referencia explícita**, no por posición: `AdjuntoWhatsapp::$referencia`
+      es la misma URL/media-id que se le mostró como `archivo_url`, y el modelo la repite
+      tal cual en `contenido` al invocar `guardar_campo_cliente` con `modo="archivo"` — así
+      que `AgenteConversacionalService::resolverArchivo()` la busca por igualdad exacta
+      dentro de `$adjuntos`, construye un `UploadedFile` sintético (extensión derivada del
+      `mime_type` real, nunca de un nombre de archivo — WhatsApp no manda uno útil) y lo
+      pasa a `ToolExecutor::ejecutar(..., file:, metodoExtraccion:)`.
+
+      Bug real encontrado y corregido de paso: `EventoValidator` no exigía `$file` para
+      `modo="archivo"` — si `resolverArchivo()` no encontraba match (adjunto no descargado,
+      referencia inventada por el modelo), `EventoRecoleccionService::procesarArchivo()`
+      truena con un `TypeError` (espera un `UploadedFile` no nulo) en vez de fallar como
+      error de validación recuperable. Ahora `EventoValidator` lo marca como error de
+      `file` explícito.
+
+      Tests: `AdjuntosWhatsappServiceTest`, casos nuevos en `AgenteConversacionalServiceTest`
+      (correlación exitosa y sin match) y en `EventoValidatorTest`, y un test end-to-end en
+      `TwilioWebhookTest` (`NumMedia=1` real → `Documento` creado con `metodo_extraccion`
+      correcto) — este último obligó a mover `fakeAgenteConversacional()` de `setUp()` a
+      cada test: `Http::fake()` resuelve por orden de REGISTRO, no el último llamado, así
+      que un fake genérico en `setUp()` le ganaba siempre a una secuencia armada dentro
+      de un test individual.
 
 ### Fase 5 — Pruebas
 - [ ] Flujo completo en el Sandbox de Twilio con los tres casos de documento: imagen,

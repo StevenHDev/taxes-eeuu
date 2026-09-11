@@ -5,12 +5,15 @@ namespace Tests\Feature;
 use App\Enums\EstadoControlConversacion;
 use App\Enums\RolMensajeWhatsapp;
 use App\Enums\UserRole;
+use App\Models\Documento;
+use App\Models\FormaCliente;
 use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
 use Database\Seeders\AgentePromptsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use Twilio\AuthStrategy\AuthStrategy;
 use Twilio\Http\Client as TwilioHttpClient;
@@ -34,7 +37,6 @@ class TwilioWebhookTest extends TestCase
         ]);
 
         $this->seed(AgentePromptsSeeder::class);
-        $this->fakeAgenteConversacional();
         $this->fakeTwilioSend();
     }
 
@@ -42,7 +44,11 @@ class TwilioWebhookTest extends TestCase
      * El job invoca a AgenteConversacionalService, que le pega a OpenAI —
      * fake genérico de "respuesta final sin tool calls" para no acoplar
      * estos tests (sobre el webhook/idempotencia/control) al contenido real
-     * de la conversación.
+     * de la conversación. Cada test la invoca explícitamente (no vive en
+     * setUp): Http::fake() resuelve por orden de REGISTRO, no el último
+     * llamado — si esto quedara en setUp(), un test que necesite su propia
+     * secuencia de respuestas (ver test_un_mensaje_con_media_...) nunca
+     * podría reemplazarla, porque la de acá siempre matchearía primero.
      */
     private function fakeAgenteConversacional(): void
     {
@@ -106,6 +112,7 @@ class TwilioWebhookTest extends TestCase
 
     public function test_una_firma_valida_guarda_el_mensaje_y_crea_el_control_en_modo_agente(): void
     {
+        $this->fakeAgenteConversacional();
         $payload = $this->payload();
         $url = route('api.whatsapp.webhook');
 
@@ -134,6 +141,7 @@ class TwilioWebhookTest extends TestCase
 
     public function test_una_firma_invalida_se_rechaza_y_no_guarda_nada(): void
     {
+        $this->fakeAgenteConversacional();
         $payload = $this->payload();
         $url = route('api.whatsapp.webhook');
 
@@ -147,6 +155,7 @@ class TwilioWebhookTest extends TestCase
 
     public function test_sin_cabecera_de_firma_se_rechaza(): void
     {
+        $this->fakeAgenteConversacional();
         $payload = $this->payload();
         $url = route('api.whatsapp.webhook');
 
@@ -155,6 +164,7 @@ class TwilioWebhookTest extends TestCase
 
     public function test_un_reintento_con_el_mismo_message_sid_no_duplica_el_mensaje(): void
     {
+        $this->fakeAgenteConversacional();
         $payload = $this->payload();
         $url = route('api.whatsapp.webhook');
         $firma = $this->firmar($url, $payload);
@@ -170,6 +180,7 @@ class TwilioWebhookTest extends TestCase
 
     public function test_vincula_el_cliente_existente_por_telefono(): void
     {
+        $this->fakeAgenteConversacional();
         $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
 
         $payload = $this->payload();
@@ -186,8 +197,100 @@ class TwilioWebhookTest extends TestCase
         $this->assertSame($cliente->id, $control->cliente_id);
     }
 
+    /**
+     * Mismo generador de PDF mínimo válido que PdfTextExtractorServiceTest.
+     */
+    private function pdfConTexto(string $texto): string
+    {
+        $streamContenido = "BT /F1 12 Tf 20 700 Td ({$texto}) Tj ET";
+
+        $objetos = [
+            1 => '<< /Type /Catalog /Pages 2 0 R >>',
+            2 => '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+            3 => '<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >>',
+            4 => '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+            5 => '<< /Length '.strlen($streamContenido).' >>'."\nstream\n{$streamContenido}\nendstream",
+        ];
+
+        $pdf = "%PDF-1.4\n";
+        $offsets = [];
+
+        foreach ($objetos as $numero => $cuerpo) {
+            $offsets[$numero] = strlen($pdf);
+            $pdf .= "{$numero} 0 obj\n{$cuerpo}\nendobj\n";
+        }
+
+        $xrefOffset = strlen($pdf);
+        $total = count($objetos) + 1;
+        $pdf .= "xref\n0 {$total}\n0000000000 65535 f \n";
+
+        foreach ($offsets as $offset) {
+            $pdf .= sprintf("%010d 00000 n \n", $offset);
+        }
+
+        $pdf .= "trailer\n<< /Size {$total} /Root 1 0 R >>\nstartxref\n{$xrefOffset}\n%%EOF";
+
+        return $pdf;
+    }
+
+    public function test_un_mensaje_con_media_descarga_extrae_y_guarda_el_documento(): void
+    {
+        Storage::fake('local');
+
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
+
+        $mediaUrl = 'https://api.twilio.com/2010-04-01/Accounts/AC_test/Messages/MM_test/Media/ME_test';
+
+        Http::fake([
+            'api.openai.com/*' => Http::sequence()
+                ->push([
+                    'choices' => [['message' => [
+                        'role' => 'assistant',
+                        'content' => null,
+                        'tool_calls' => [
+                            ['id' => 'call_1', 'type' => 'function', 'function' => [
+                                'name' => 'guardar_campo_cliente',
+                                'arguments' => json_encode([
+                                    'forma' => 'form_1040',
+                                    'campo' => 'w2',
+                                    'tipo_campo' => 'documento',
+                                    'modo' => 'archivo',
+                                    'contenido' => $mediaUrl,
+                                ]),
+                            ]],
+                        ],
+                    ]]],
+                ])
+                ->push([
+                    'choices' => [['message' => ['role' => 'assistant', 'content' => 'Recibí tu W-2, gracias.']]],
+                ]),
+            $mediaUrl => Http::response($this->pdfConTexto('W-2 de prueba enviado por WhatsApp.'), 200, ['Content-Type' => 'application/pdf']),
+        ]);
+
+        $payload = $this->payload(['NumMedia' => '1', 'MediaUrl0' => $mediaUrl, 'Body' => '']);
+        $url = route('api.whatsapp.webhook');
+
+        $this->withHeaders(['X-Twilio-Signature' => $this->firmar($url, $payload)])
+            ->post($url, $payload)
+            ->assertOk();
+
+        $documento = Documento::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first();
+        $this->assertNotNull($documento);
+        $this->assertSame('texto_pdf', $documento->metodo_extraccion->value);
+
+        $mensaje = WhatsappMensaje::query()->where('mensaje_externo_id', $payload['MessageSid'])->first();
+        $this->assertStringContainsString("archivo_url: {$mediaUrl}", $mensaje->contenido);
+        $this->assertStringContainsString('W-2 de prueba enviado por WhatsApp.', $mensaje->contenido);
+    }
+
     public function test_en_modo_humano_igual_guarda_el_mensaje_entrante(): void
     {
+        // Necesario para que Http::assertNothingSent() de abajo sea una
+        // aserción válida (exige que Http::fake() haya estado activo) — en
+        // modo humano el job nunca llega a invocar al agente, así que este
+        // fake nunca se consume, pero igual debe registrarse.
+        $this->fakeAgenteConversacional();
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
 
         WhatsappControl::query()->create([

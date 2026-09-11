@@ -2,10 +2,13 @@
 
 namespace App\Services\WhatsappAgent;
 
+use App\DataTransferObjects\AdjuntoWhatsapp;
+use App\Enums\MetodoExtraccionDocumento;
 use App\Enums\RolMensajeWhatsapp;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Support\AgentePromptVigente;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -41,9 +44,16 @@ class AgenteConversacionalService
     /**
      * @param  Collection<int, WhatsappMensaje>  $historial  orden cronológico ascendente;
      *                                                       ya incluye el mensaje entrante de este turno
+     * @param  array<int, AdjuntoWhatsapp>  $adjuntos  ya descargados/extraídos por
+     *                                                 AdjuntosWhatsappService para el mensaje de este
+     *                                                 turno — el texto ya quedó anotado en el propio
+     *                                                 $historial (ver ProcesarMensajeWhatsappJob), esto
+     *                                                 solo sirve para resolver el archivo real si el
+     *                                                 modelo invoca guardar_campo_cliente sobre uno de
+     *                                                 ellos (ver resolverArchivo()).
      * @return array{texto: string, prompt_version: ?int, cliente: ?User}
      */
-    public function responder(?User $cliente, Collection $historial, User $actor): array
+    public function responder(?User $cliente, Collection $historial, User $actor, array $adjuntos = []): array
     {
         $mensajes = $this->mensajesDesdeHistorial($historial);
         $promptVersion = AgentePromptVigente::version();
@@ -84,7 +94,17 @@ class AgenteConversacionalService
                 $argumentos = json_decode((string) ($toolCall['function']['arguments'] ?? '{}'), true);
                 $argumentos = is_array($argumentos) ? $argumentos : [];
 
-                $resultado = $this->toolExecutor->ejecutar($nombre, $argumentos, $cliente, $actor, telefono: $telefono);
+                [$archivo, $metodoExtraccion] = $this->resolverArchivo($nombre, $argumentos, $adjuntos);
+
+                $resultado = $this->toolExecutor->ejecutar(
+                    $nombre,
+                    $argumentos,
+                    $cliente,
+                    $actor,
+                    file: $archivo,
+                    metodoExtraccion: $metodoExtraccion,
+                    telefono: $telefono,
+                );
 
                 // crear_cliente_taxes puede correr a mitad de este mismo turno
                 // (fase VerificacionCuenta) — el resto del loop, y el propio
@@ -112,6 +132,47 @@ class AgenteConversacionalService
             'texto' => 'Dame un momento, ya te respondo.',
             'prompt_version' => $promptVersion,
             'cliente' => $cliente,
+        ];
+    }
+
+    /**
+     * Correlaciona un tool call de guardar_campo_cliente (modo="archivo") con
+     * el adjunto real que le corresponde: el modelo devuelve en `contenido`
+     * el mismo `archivo_url` que se le mostró (ver AdjuntoWhatsapp), así que
+     * alcanza con buscarlo por igualdad exacta — sin depender de posición ni
+     * de que solo llegue un adjunto por mensaje.
+     *
+     * @param  array<string, mixed>  $argumentos
+     * @param  array<int, AdjuntoWhatsapp>  $adjuntos
+     * @return array{0: ?UploadedFile, 1: ?MetodoExtraccionDocumento}
+     */
+    private function resolverArchivo(string $nombreTool, array $argumentos, array $adjuntos): array
+    {
+        if ($nombreTool !== 'guardar_campo_cliente' || ($argumentos['modo'] ?? null) !== 'archivo') {
+            return [null, null];
+        }
+
+        $referencia = (string) ($argumentos['contenido'] ?? '');
+        $adjunto = collect($adjuntos)->first(fn (AdjuntoWhatsapp $a) => $a->referencia === $referencia);
+
+        if ($adjunto === null) {
+            return [null, null];
+        }
+
+        // La extensión decide qué acepta EventoValidator/EventoRecoleccionService
+        // (formatos_aceptados) — se deriva del mime_type real ya resuelto por el
+        // canal, nunca del nombre del archivo (WhatsApp no manda uno útil).
+        $extension = match ($adjunto->mimeType) {
+            'application/pdf' => 'pdf',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            default => 'bin',
+        };
+
+        return [
+            new UploadedFile($adjunto->rutaLocal, "documento.{$extension}", $adjunto->mimeType, test: true),
+            $adjunto->metodo,
         ];
     }
 

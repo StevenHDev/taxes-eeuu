@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\DataTransferObjects\AdjuntoWhatsapp;
 use App\DataTransferObjects\MensajeEntranteWhatsapp;
 use App\Enums\EstadoControlConversacion;
 use App\Enums\RolMensajeWhatsapp;
@@ -10,6 +11,7 @@ use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
 use App\Services\Whatsapp\WhatsappChannel;
+use App\Services\WhatsappAgent\AdjuntosWhatsappService;
 use App\Services\WhatsappAgent\AgenteConversacionalService;
 use App\Support\AgenteWhatsappUser;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,7 +42,7 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
 
     public function __construct(private readonly MensajeEntranteWhatsapp $mensaje) {}
 
-    public function handle(AgenteConversacionalService $agente, WhatsappChannel $canal): void
+    public function handle(AgenteConversacionalService $agente, WhatsappChannel $canal, AdjuntosWhatsappService $adjuntosService): void
     {
         if ($this->mensaje->mensajeId === '') {
             return;
@@ -73,11 +75,20 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
                 ],
             );
 
+            // Se resuelven ANTES de guardar el mensaje: el texto extraído
+            // queda anotado en el propio `contenido` persistido (ver
+            // construirContenido), para que el historial re-leído en
+            // cualquier turno futuro —no solo este— siga viendo qué decía el
+            // documento, sin depender de que el agente lo procese ahora mismo.
+            $adjuntos = $this->mensaje->mediaReferencias !== []
+                ? $adjuntosService->resolver($this->mensaje->mediaReferencias)
+                : [];
+
             WhatsappMensaje::query()->create([
                 'telefono' => $telefono,
                 'cliente_id' => $control->cliente_id,
                 'rol' => RolMensajeWhatsapp::Cliente,
-                'contenido' => $this->mensaje->texto,
+                'contenido' => $this->construirContenido($this->mensaje->texto, $adjuntos),
                 'mensaje_externo_id' => $this->mensaje->mensajeId,
                 'proveedor' => $this->mensaje->proveedor,
             ]);
@@ -89,7 +100,7 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
             $cliente = $control->cliente_id ? User::query()->whereKey($control->cliente_id)->first() : null;
             $historial = WhatsappMensaje::query()->where('telefono', $telefono)->orderBy('id')->get();
 
-            $resultado = $agente->responder($cliente, $historial, AgenteWhatsappUser::resolver());
+            $resultado = $agente->responder($cliente, $historial, AgenteWhatsappUser::resolver(), $adjuntos);
 
             // crear_cliente_taxes puede haber corrido a mitad del turno — deja
             // el vínculo de la conversación con el cliente recién creado, en
@@ -119,5 +130,25 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
         } finally {
             $lock->release();
         }
+    }
+
+    /**
+     * Formato exacto que espera el prompt (prompt_actuales/fases/
+     * recoleccion.md, RECEPCIÓN DE DOCUMENTOS) — el modelo nunca "ve" un
+     * archivo, solo este texto plano por cada adjunto ya resuelto.
+     *
+     * @param  array<int, AdjuntoWhatsapp>  $adjuntos
+     */
+    private function construirContenido(string $texto, array $adjuntos): string
+    {
+        if ($adjuntos === []) {
+            return $texto;
+        }
+
+        $bloques = collect($adjuntos)
+            ->map(fn (AdjuntoWhatsapp $a) => "archivo_url: {$a->referencia}\ntexto_extraido: {$a->texto}")
+            ->implode("\n\n");
+
+        return $texto === '' ? $bloques : "{$texto}\n\n{$bloques}";
     }
 }

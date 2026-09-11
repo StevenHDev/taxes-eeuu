@@ -82,12 +82,22 @@ class EventoValidator
             $errores['modo'][] = 'Este campo es obligatorio y no se puede marcar como "no_aplica".';
         }
 
-        if ($modo === FieldMode::Archivo && $file !== null) {
-            $extension = strtolower($file->getClientOriginalExtension());
-            $formatos = $field['formatos_aceptados'] ?? [];
+        if ($modo === FieldMode::Archivo) {
+            if ($file === null) {
+                // Sin esto, un modo="archivo" sin archivo real pasaba la
+                // validación sin error y tronaba después con un TypeError
+                // dentro de EventoRecoleccionService::procesarArchivo() (que
+                // exige un UploadedFile no nulo) — acá sí es una situación
+                // conversacional recuperable, no un fallo del turno entero
+                // (ver ToolExecutor::guardarCampoCliente).
+                $errores['file'][] = 'Falta el archivo.';
+            } else {
+                $extension = strtolower($file->getClientOriginalExtension());
+                $formatos = $field['formatos_aceptados'] ?? [];
 
-            if ($formatos && ! in_array($extension, $formatos, true)) {
-                $errores['file'][] = 'Formato de archivo no aceptado para este campo. Formatos válidos: '.implode(', ', $formatos);
+                if ($formatos && ! in_array($extension, $formatos, true)) {
+                    $errores['file'][] = 'Formato de archivo no aceptado para este campo. Formatos válidos: '.implode(', ', $formatos);
+                }
             }
         }
 
