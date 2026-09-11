@@ -21,4 +21,18 @@ php artisan view:cache 2>/dev/null || true
 # Migraciones (no aborta el arranque si la BD todavía no está lista)
 php artisan migrate --force 2>/dev/null || true
 
+# CONTAINER_ROLE=worker: este servicio (misma imagen, mismo autodeploy que el
+# de web) procesa la cola en vez de servir HTTP — Dokploy no necesita un
+# comando de arranque distinto por servicio, alcanza con esta variable de
+# entorno puesta solo en el servicio worker. reverb (WebSockets/realtime)
+# se levanta igual, como tercer servicio con CONTAINER_ROLE=reverb.
+case "$CONTAINER_ROLE" in
+    worker)
+        exec php artisan queue:work --tries=3 --max-time=3600
+        ;;
+    reverb)
+        exec php artisan reverb:start --host=0.0.0.0 --port="${REVERB_SERVER_PORT:-8080}"
+        ;;
+esac
+
 exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
