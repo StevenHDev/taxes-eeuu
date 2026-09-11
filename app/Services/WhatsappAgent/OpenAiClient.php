@@ -56,4 +56,31 @@ class OpenAiClient
 
         return $mensaje;
     }
+
+    /**
+     * Transcripción estricta de una imagen (Nivel 2 de extracción de
+     * documentos — ver docs/implementar_agente_n8n.md) reutilizando
+     * completarChat() para no duplicar timeout/reintentos: la API de chat
+     * completions de OpenAI acepta contenido `image_url` dentro de un
+     * mensaje `user` en el mismo endpoint, no hace falta uno separado.
+     *
+     * @param  string  $imagenDataUrl  data URL completa (`data:image/png;base64,...`) —
+     *                                 nunca se expone el archivo por una URL pública para esto.
+     */
+    public function transcribirImagen(string $prompt, string $imagenDataUrl): string
+    {
+        $mensaje = $this->completarChat(
+            mensajes: [[
+                'role' => 'user',
+                'content' => [
+                    ['type' => 'text', 'text' => $prompt],
+                    ['type' => 'image_url', 'image_url' => ['url' => $imagenDataUrl]],
+                ],
+            ]],
+            tools: [],
+            modelo: (string) config('services.openai.vision_model'),
+        );
+
+        return (string) ($mensaje['content'] ?? '');
+    }
 }

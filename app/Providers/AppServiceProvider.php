@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Twilio\Rest\Client as TwilioClient;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,7 +34,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Enlazado explícito (no dejar que el contenedor lo auto-resuelva por
+        // reflexión): el constructor de TwilioClient acepta todos sus
+        // argumentos como nullable y cae a leer variables de entorno crudas
+        // (getenv()) si no se le pasan — con esto, siempre usa
+        // config('services.twilio.*'), igual que el resto de la app.
+        $this->app->singleton(TwilioClient::class, fn () => new TwilioClient(
+            (string) config('services.twilio.account_sid'),
+            (string) config('services.twilio.auth_token'),
+        ));
     }
 
     /**

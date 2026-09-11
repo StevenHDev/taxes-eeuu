@@ -456,16 +456,55 @@ la atención automática"), para que el cambio de tono no lo confunda.
       del agente (condición de carrera con una toma de control a mitad de proceso).
 
 ### Fase 4 — Extracción de documentos, envío y medios
-- [ ] `PdfTextExtractorService` (Nivel 1) con la heurística de calidad del texto
-      extraído.
-- [ ] `DocumentoVisionExtractorService` (Nivel 2, respaldo) con rasterizado de páginas
-      PDF cuando aplique.
-- [ ] `DocumentoExtraccionService` orquestando ambos niveles y registrando
-      `metodo_extraccion` por documento.
-- [ ] `TwilioMediaDownloader`: descarga `MediaUrl0..N` con Basic Auth y entrega a
-      `DocumentoExtraccionService`; el resultado se procesa con
-      `EventoRecoleccionService::procesarArchivo`.
-- [ ] `TwilioWhatsappClient::enviarTexto()` para mandar la respuesta final del job.
+- [x] `PdfTextExtractorService` (Nivel 1) con `smalot/pdfparser` y heurística de calidad
+      (longitud mínima + proporción de caracteres alfanuméricos). No implementa el
+      sub-paso opcional "texto_pdf_normalizado" — el plan lo marca como opcional; el
+      enum `MetodoExtraccionDocumento::TextoPdfNormalizado` ya existe para cuando se
+      implemente.
+- [x] `DocumentoVisionExtractorService` (Nivel 2, respaldo), con rasterizado de páginas
+      PDF vía `pdftoppm` (poppler-utils) — requisito de infraestructura nuevo: **el host
+      que corre la cola necesita `poppler-utils` instalado** (a diferencia del Nivel 1,
+      deliberadamente sin binario externo). Lanza una excepción clara si no está
+      disponible, en vez de fallar en silencio. `OpenAiClient::transcribirImagen()` nuevo,
+      reutiliza `completarChat()` (la API de OpenAI acepta `image_url` en el mismo
+      endpoint de chat completions).
+- [x] `DocumentoExtraccionService` orquesta ambos niveles (Nivel 1 solo si el archivo es
+      PDF; si no da texto útil o el archivo ya es imagen, cae a Nivel 2) y devuelve
+      `metodo_extraccion` junto con el texto. Migración + cast nuevo en `Documento`
+      (`metodo_extraccion`, enum `MetodoExtraccionDocumento`).
+- [x] `TwilioMediaDownloader`: descarga cada `MediaUrlN` del payload con Basic Auth
+      (`services.twilio.account_sid`/`auth_token` — Twilio exige esto para `MediaUrlN`, a
+      diferencia del webhook en sí) y lo entrega a `DocumentoExtraccionService`. Expone
+      `comoArchivoSubido()` para envolver el archivo ya descargado como un
+      `Illuminate\Http\UploadedFile` real (`test: true`, evita el chequeo
+      `is_uploaded_file()` — el archivo no llegó por un POST HTTP, ya está en disco).
+- [x] `TwilioWhatsappClient::enviarTexto()` — usa el SDK de Twilio inyectado (nuevo binding
+      explícito en `AppServiceProvider::register()`, en vez de dejar que el contenedor
+      auto-resuelva `Twilio\Rest\Client` por reflexión, que caería a leer variables de
+      entorno crudas si no se le pasan credenciales).
+- [x] `ToolExecutor::ejecutar()`/`guardarCampoCliente()` extendidos para aceptar un
+      `?UploadedFile $file` y un `?MetodoExtraccionDocumento $metodoExtraccion` opcionales
+      — cuando `guardar_campo_cliente` llega con modo="archivo", el archivo real ya
+      resuelto se pasa acá, y si se guardó correctamente, el `Documento` resultante queda
+      con su `metodo_extraccion`.
+
+**Punto de integración pendiente para `AgenteConversacionalService` (Fase 3, todavía sin
+construir):** todas las piezas de Fase 4 están listas y probadas por separado, pero nadie
+las conecta todavía dentro de un turno real de conversación. Falta, dentro del loop de
+function-calling:
+1. Cuando `ProcesarMensajeWhatsappJob` recibe un mensaje con media, invocar
+   `TwilioMediaDownloader::descargarYExtraer($payload)` **antes** de llamar al agente, y
+   agregar el/los `texto` resultantes al contenido del mensaje que ve el modelo (mismo
+   formato `archivo_url`/`texto_extraido` que ya describe
+   `prompt_actuales/fases/recoleccion.md`, sección RECEPCIÓN DE DOCUMENTOS).
+2. Si el modelo decide invocar `guardar_campo_cliente` con `modo="archivo"` para uno de
+   esos documentos, `AgenteConversacionalService` (no `ToolExecutor`) es quien debe
+   llamar `TwilioMediaDownloader::comoArchivoSubido(...)` con la ruta/mime/nombre de ESE
+   documento concreto y pasar el `UploadedFile` + `MetodoExtraccionDocumento` resultantes
+   a `ToolExecutor::ejecutar(..., file: $archivo, metodoExtraccion: $metodo)` — hace
+   falta decidir cómo `AgenteConversacionalService` correlaciona "cuál de los N
+   documentos de este mensaje" con el tool call concreto del modelo (ej. por posición si
+   solo llega uno, o por una referencia explícita si llegan varios a la vez).
 
 ### Fase 5 — Pruebas
 - [ ] Flujo completo en el Sandbox de Twilio con los tres casos de documento: imagen,
