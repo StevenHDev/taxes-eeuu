@@ -1433,6 +1433,7 @@ function WhatsappConversationDialog({
     clienteName: string;
 }) {
     const { t, i18n } = useTranslation();
+    const [open, setOpen] = useState(false);
     const [mensajes, setMensajes] = useState<MensajeWhatsapp[] | null>(null);
     const [control, setControl] = useState<ControlWhatsapp | null>(null);
     const [error, setError] = useState(false);
@@ -1487,6 +1488,39 @@ function WhatsappConversationDialog({
             setMensajes([]);
         }
     };
+
+    // Refresco silencioso mientras el diálogo está abierto: sin esto, la
+    // conversación solo se actualiza al reabrir el diálogo. No usa `load()`
+    // tal cual porque esa limpia `mensajes` antes de traer los nuevos (buen
+    // spinner en la carga inicial, parpadeo feo cada 5s) y no debe tapar una
+    // conversación ya cargada con el estado de error por un solo tick fallido
+    // (la red de un momento a otro, no algo que el usuario deba ver).
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        const intervalo = setInterval(async () => {
+            try {
+                const response = await fetch(
+                    conversacionWhatsapp({ cliente: clienteId }).url,
+                    { headers: { Accept: 'application/json' } },
+                );
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const json = await response.json();
+                setMensajes(json.mensajes ?? []);
+                setControl(json.control ?? null);
+            } catch {
+                // Silencioso a propósito — ver comentario arriba.
+            }
+        }, 5000);
+
+        return () => clearInterval(intervalo);
+    }, [open, clienteId]);
 
     const cambiarControl = async (
         accion: typeof tomarControlWhatsapp | typeof devolverControlWhatsapp,
@@ -1551,7 +1585,16 @@ function WhatsappConversationDialog({
     };
 
     return (
-        <Dialog onOpenChange={(open) => open && load()}>
+        <Dialog
+            open={open}
+            onOpenChange={(nuevoOpen) => {
+                setOpen(nuevoOpen);
+
+                if (nuevoOpen) {
+                    load();
+                }
+            }}
+        >
             <DialogTrigger asChild>
                 <Button variant="secondary">
                     {t('clienteShow.whatsapp.trigger')}
