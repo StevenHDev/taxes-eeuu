@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/data-table';
@@ -88,6 +89,12 @@ function useColumns(): ColumnDef<MensajeAgenteLog>[] {
                     )}
                 </div>
             ),
+            // Filtra por el teléfono crudo (no por el string combinado que usa
+            // el accessor para orden/búsqueda) — así el filtro de facetas deja
+            // aislar todos los mensajes de una misma línea, sin importar si el
+            // nombre del cliente cambió entre mensajes.
+            filterFn: (row, _id, value) =>
+                (value as string[]).includes(row.original.telefono),
         },
         {
             accessorKey: 'rol',
@@ -155,6 +162,33 @@ function useColumns(): ColumnDef<MensajeAgenteLog>[] {
     ];
 }
 
+/**
+ * Una entrada por línea telefónica distinta, para el filtro de facetas
+ * "origen" — deja aislar de un click todos los mensajes de una misma
+ * conversación en esta bandeja general, sin depender de que cada mensaje
+ * traiga cliente_id (agrupa por teléfono, que sí está siempre presente).
+ */
+function useTelefonoOptions(
+    mensajes: MensajeAgenteLog[],
+): { label: string; value: string }[] {
+    return useMemo(() => {
+        const vistos = new Map<string, string>();
+
+        for (const m of mensajes) {
+            if (!vistos.has(m.telefono)) {
+                vistos.set(
+                    m.telefono,
+                    m.cliente_nombre
+                        ? `${m.telefono} — ${m.cliente_nombre}`
+                        : m.telefono,
+                );
+            }
+        }
+
+        return Array.from(vistos, ([value, label]) => ({ label, value }));
+    }, [mensajes]);
+}
+
 export default function AgenteMensajes({
     mensajes,
 }: {
@@ -163,6 +197,7 @@ export default function AgenteMensajes({
     const { t } = useTranslation();
     const rolLabel = useRolLabel();
     const columns = useColumns();
+    const telefonoOptions = useTelefonoOptions(mensajes);
 
     return (
         <>
@@ -192,6 +227,11 @@ export default function AgenteMensajes({
                             label: rolLabel[rol],
                             value: rol,
                         })),
+                    },
+                    {
+                        columnId: 'origen',
+                        title: t('agente.mensajes.columns.origin'),
+                        options: telefonoOptions,
                     },
                 ]}
             />

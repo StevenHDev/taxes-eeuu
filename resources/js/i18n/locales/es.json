@@ -253,6 +253,9 @@
             "emailLabel": "Email",
             "phoneLabel": "Teléfono (opcional)",
             "submit": "Crear"
+        },
+        "whatsapp": {
+            "trigger": "Ver conversación de WhatsApp"
         }
     },
     "determinacionFiscal": {

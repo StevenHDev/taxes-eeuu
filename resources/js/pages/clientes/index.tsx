@@ -1,5 +1,6 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ClienteController from '@/actions/App/Http/Controllers/ClienteController';
 import InputError from '@/components/input-error';
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { WhatsappConversationDialog } from '@/components/whatsapp-conversation-dialog';
 import { dashboard } from '@/routes';
 import { index as clientesIndex, show as clienteShow } from '@/routes/clientes';
 import type { Cliente, EstadoGeneral, FormaOption, NivelRiesgo } from '@/types';
@@ -145,6 +147,36 @@ function useColumns(): ColumnDef<Cliente>[] {
             ),
             filterFn: 'arrIncludesSome',
             enableSorting: false,
+        },
+        {
+            id: 'whatsapp',
+            header: () => null,
+            cell: ({ row }) => {
+                const c = row.original;
+
+                if (!c.phone) {
+                    return null;
+                }
+
+                return (
+                    <WhatsappConversationDialog
+                        clienteId={c.id}
+                        clienteName={c.name}
+                        trigger={
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                title={t('clientesIndex.whatsapp.trigger')}
+                            >
+                                <MessageCircle className="size-4 text-green-600 dark:text-green-500" />
+                            </Button>
+                        }
+                    />
+                );
+            },
+            enableSorting: false,
+            enableHiding: false,
         },
     ];
 }
