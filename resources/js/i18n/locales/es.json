@@ -485,7 +485,8 @@
     "agente": {
         "nav": {
             "mensajes": "Mensajes",
-            "prompts": "Prompts"
+            "prompts": "Prompts",
+            "tools": "Tools"
         },
         "layout": {
             "title": "Agente IA",
@@ -524,6 +525,16 @@
                 "title": "¿Publicar esta versión?",
                 "description": "La versión {{version}} queda vigente de inmediato para todas las conversaciones nuevas y en curso. Esta acción no se puede deshacer desde acá.",
                 "confirm": "Sí, publicar"
+            }
+        },
+        "tools": {
+            "title": "Tools",
+            "subtitle": "Qué puede hacer el agente en cada fase de la conversación. Acá solo se activa o desactiva una tool existente por fase — crear una tool nueva sigue siendo trabajo de código.",
+            "empty": "Sin tools en esta fase.",
+            "columns": {
+                "tool": "Tool",
+                "description": "Descripción",
+                "active": "Activa"
             }
         }
     },

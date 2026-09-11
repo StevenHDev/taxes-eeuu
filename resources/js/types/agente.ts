@@ -18,3 +18,15 @@ export type FasePrompt = {
     label: string;
     contenido: string;
 };
+
+export type AgenteTool = {
+    nombre: string;
+    descripcion: string;
+    activo: boolean;
+};
+
+export type FaseTools = {
+    fase: string;
+    label: string;
+    tools: AgenteTool[];
+};

@@ -485,7 +485,8 @@
     "agente": {
         "nav": {
             "mensajes": "Messages",
-            "prompts": "Prompts"
+            "prompts": "Prompts",
+            "tools": "Tools"
         },
         "layout": {
             "title": "AI Agent",
@@ -524,6 +525,16 @@
                 "title": "Publish this version?",
                 "description": "Version {{version}} takes effect immediately for all new and ongoing conversations. This action can't be undone from here.",
                 "confirm": "Yes, publish"
+            }
+        },
+        "tools": {
+            "title": "Tools",
+            "subtitle": "What the agent can do in each phase of the conversation. This only turns an existing tool on or off per phase — creating a new tool is still code work.",
+            "empty": "No tools in this phase.",
+            "columns": {
+                "tool": "Tool",
+                "description": "Description",
+                "active": "Active"
             }
         }
     },

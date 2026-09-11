@@ -8,6 +8,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { index as mensajesIndex } from '@/routes/agente/mensajes';
 import { index as promptsIndex } from '@/routes/agente/prompts';
+import { index as toolsIndex } from '@/routes/agente/tools';
 import type { NavItem } from '@/types';
 
 /**
@@ -30,6 +31,11 @@ export default function AgenteLayout({ children }: PropsWithChildren) {
         {
             title: t('agente.nav.prompts'),
             href: promptsIndex(),
+            icon: null,
+        },
+        {
+            title: t('agente.nav.tools'),
+            href: toolsIndex(),
             icon: null,
         },
     ];

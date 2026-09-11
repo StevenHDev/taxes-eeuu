@@ -56,7 +56,7 @@ class AgenteConversacionalService
                     ['role' => 'system', 'content' => (string) AgentePromptVigente::paraFase($fase)],
                     ...$mensajes,
                 ],
-                tools: ToolDefinitions::paraFase($fase),
+                tools: ToolDefinitions::habilitadasParaFase($fase),
             );
 
             $toolCalls = $respuesta['tool_calls'] ?? [];

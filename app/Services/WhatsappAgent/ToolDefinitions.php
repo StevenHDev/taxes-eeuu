@@ -4,6 +4,7 @@ namespace App\Services\WhatsappAgent;
 
 use App\Enums\FaseConversacion;
 use App\Enums\TaxForm;
+use App\Support\AgenteToolEstados;
 
 /**
  * Esquema de las 5 tools del agente (más `think`) en formato function-calling
@@ -23,6 +24,10 @@ use App\Enums\TaxForm;
 class ToolDefinitions
 {
     /**
+     * Catálogo completo de tools de la fase (para uso administrativo, ver
+     * AgenteToolController) — nunca filtra por AgenteToolEstados, así el
+     * panel siempre puede mostrar y reactivar una tool desactivada.
+     *
      * @return array<int, array<string, mixed>>
      */
     public static function paraFase(FaseConversacion $fase): array
@@ -45,6 +50,23 @@ class ToolDefinitions
                 self::think(),
             ],
         };
+    }
+
+    /**
+     * Igual que paraFase(), pero descartando las tools desactivadas para
+     * esta fase desde el panel de administración (AgenteToolEstados) — es
+     * la que realmente ve el modelo en cada turno (ver
+     * AgenteConversacionalService). `think` nunca se ofrece en el panel para
+     * desactivar, así que siempre queda incluida.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function habilitadasParaFase(FaseConversacion $fase): array
+    {
+        return array_values(array_filter(
+            self::paraFase($fase),
+            fn (array $tool) => AgenteToolEstados::activo($fase, $tool['function']['name']),
+        ));
     }
 
     /**

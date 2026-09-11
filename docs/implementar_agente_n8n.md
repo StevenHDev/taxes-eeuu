@@ -639,11 +639,15 @@ policies equivalentes de cada pieza) — mismo patrón de layout con tabs que
       fila por fila, para no dejar una fase huérfana sin contenido). Confirmación
       explícita antes de publicar (cambia el comportamiento en vivo de todas las
       conversaciones en curso). 7 tests (`AgentePromptEditorTest`).
-- [ ] **Tools por fase** (`/agente/tools` o similar) — ver las 5 tools existentes y en
-      qué fase las expone `ToolDefinitions::paraFase()`, con un interruptor para
-      activar/desactivar una tool puntual en una fase sin tocar código (para probar
-      comportamiento). No permite crear tools nuevas — siguen siendo código PHP con
-      comportamiento real detrás (`ToolExecutor`).
+- [x] **Tools por fase** (`/agente/tools`) — catálogo de solo lectura (`ToolDefinitions::
+      paraFase()` sigue siendo código, no se crean tools nuevas desde la UI) con un
+      interruptor activo/inactivo por fase, respaldado por `agente_tool_estados`
+      (`App\Support\AgenteToolEstados`, mismo patrón de caché de una sola clave que
+      `AgentePromptVigente`). Sin fila = activa, así que una instalación nueva se
+      comporta igual que antes de este panel. Recoleccion/Cierre se togglean siempre
+      juntas — nunca pueden divergir, según ya documenta el propio comentario de
+      `ToolDefinitions::paraFase()`. `AgenteToolController`, `AgenteToolPolicy`. 10 tests
+      (`AgenteToolEstadosTest`, `AgenteToolControllerTest`).
 - [ ] **Base de conocimiento** (`/agente/base-conocimiento`) — subir PDFs, convertirlos a
       Markdown (más eficiente que mandarle PDF crudo a un modelo), y una tool nueva
       (`consultar_base_conocimiento`) que el agente invoca bajo demanda con búsqueda de
