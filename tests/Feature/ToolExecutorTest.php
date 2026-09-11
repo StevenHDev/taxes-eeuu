@@ -64,6 +64,17 @@ class ToolExecutorTest extends TestCase
         $this->assertSame(UserRole::Client, $cliente->role);
     }
 
+    public function test_crear_cliente_taxes_vincula_el_telefono_de_la_conversacion(): void
+    {
+        $resultado = $this->tools->ejecutar('crear_cliente_taxes', [
+            'nombre' => 'Jane Doe',
+            'email' => 'jane@example.com',
+        ], null, $this->actor, telefono: '+15551234567');
+
+        $cliente = User::find($resultado['cliente_id']);
+        $this->assertSame('+15551234567', $cliente->phone);
+    }
+
     public function test_declarar_formas_cliente_crea_las_formas_y_devuelve_pendientes(): void
     {
         $cliente = User::factory()->create(['role' => UserRole::Client]);

@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -58,6 +60,33 @@ class User extends Authenticatable implements PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'role' => UserRole::class,
         ];
+    }
+
+    /**
+     * Normaliza a "+dígitos" (siempre con "+", sin espacios/guiones/paréntesis)
+     * cualquier valor que se le asigne a `phone` — mismo formato en el que
+     * Twilio/Meta entregan `WhatsappMensaje.telefono` (ver TwilioChannel::
+     * normalizarEntrante/MetaChannel::normalizarEntrante). Sin esto, un
+     * teléfono tecleado a mano en /usuarios con un formato distinto (sin "+",
+     * con guiones, etc.) no calza con el `where('telefono', ...)` exacto de
+     * ClienteController::conversacionWhatsapp, y esa conversación se ve vacía
+     * pese a existir en whatsapp_mensajes.
+     *
+     * @return Attribute<?string, ?string>
+     */
+    protected function phone(): Attribute
+    {
+        return Attribute::make(
+            set: function (?string $value) {
+                if ($value === null || trim($value) === '') {
+                    return null;
+                }
+
+                $limpio = (string) preg_replace('/[^\d+]/', '', $value);
+
+                return Str::startsWith($limpio, '+') ? $limpio : '+'.$limpio;
+            },
+        );
     }
 
     /**

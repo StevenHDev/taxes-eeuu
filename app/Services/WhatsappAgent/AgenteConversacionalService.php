@@ -47,6 +47,10 @@ class AgenteConversacionalService
     {
         $mensajes = $this->mensajesDesdeHistorial($historial);
         $promptVersion = AgentePromptVigente::version();
+        // Todas las filas de $historial son de esta misma conversación (ver
+        // ProcesarMensajeWhatsappJob, que las trae con where('telefono', ...))
+        // — se deriva de ahí en vez de agregar un parámetro nuevo al método.
+        $telefono = $historial->last()?->telefono;
 
         for ($i = 0; $i < self::MAX_ITERACIONES; $i++) {
             $fase = $this->resolver->resolver($cliente);
@@ -80,7 +84,7 @@ class AgenteConversacionalService
                 $argumentos = json_decode((string) ($toolCall['function']['arguments'] ?? '{}'), true);
                 $argumentos = is_array($argumentos) ? $argumentos : [];
 
-                $resultado = $this->toolExecutor->ejecutar($nombre, $argumentos, $cliente, $actor);
+                $resultado = $this->toolExecutor->ejecutar($nombre, $argumentos, $cliente, $actor, telefono: $telefono);
 
                 // crear_cliente_taxes puede correr a mitad de este mismo turno
                 // (fase VerificacionCuenta) — el resto del loop, y el propio

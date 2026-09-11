@@ -122,6 +122,11 @@ class AgenteConversacionalServiceTest extends TestCase
         $this->assertNotNull($resultado['cliente']);
         $this->assertSame('Jane Doe', $resultado['cliente']->name);
         $this->assertSame(UserRole::Client, $resultado['cliente']->role);
+        // El teléfono se deriva del historial, no de un argumento del modelo
+        // — así la cuenta recién creada queda vinculada por teléfono desde ya
+        // (ver ToolExecutor::crearClienteTaxes), sin depender de que alguien
+        // lo escriba a mano después en /usuarios.
+        $this->assertSame('+15551234567', $resultado['cliente']->phone);
     }
 
     public function test_recalcula_la_fase_entre_tool_calls_dentro_del_mismo_turno(): void

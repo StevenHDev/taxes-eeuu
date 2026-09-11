@@ -37,6 +37,10 @@ class ToolExecutor
      * @param  ?MetodoExtraccionDocumento  $metodoExtraccion  qué nivel de DocumentoExtraccionService
      *                                                        resolvió el texto de `$file`, para dejarlo
      *                                                        registrado en el Documento resultante.
+     * @param  ?string  $telefono  el de esta conversación (ver AgenteConversacionalService) — solo lo
+     *                             usa crear_cliente_taxes, para que la cuenta recién creada quede
+     *                             vinculada por teléfono desde el primer momento, no solo por
+     *                             WhatsappControl.cliente_id (ver User::phone() y su normalización).
      * @return array<string, mixed> resultado a incluir en el historial como respuesta de la tool
      */
     public function ejecutar(
@@ -46,13 +50,14 @@ class ToolExecutor
         User $actor,
         ?UploadedFile $file = null,
         ?MetodoExtraccionDocumento $metodoExtraccion = null,
+        ?string $telefono = null,
     ): array {
         if ($nombreTool === 'think') {
             return ['ok' => true];
         }
 
         if ($nombreTool === 'crear_cliente_taxes') {
-            return $this->crearClienteTaxes($argumentos, $actor);
+            return $this->crearClienteTaxes($argumentos, $actor, $telefono);
         }
 
         if ($cliente === null) {
@@ -73,11 +78,12 @@ class ToolExecutor
      * @param  array<string, mixed>  $argumentos
      * @return array<string, mixed>
      */
-    private function crearClienteTaxes(array $argumentos, User $actor): array
+    private function crearClienteTaxes(array $argumentos, User $actor, ?string $telefono): array
     {
         $cliente = $this->tools->crearCliente([
             'name' => $argumentos['nombre'] ?? null,
             'email' => $argumentos['email'] ?? null,
+            'phone' => $telefono,
         ], $actor);
 
         return ['cliente_id' => $cliente->id];
