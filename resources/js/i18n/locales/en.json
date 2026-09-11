@@ -31,6 +31,7 @@
         "catalog": "Catalog",
         "users": "Users",
         "auditLog": "Audit log",
+        "agente": "AI Agent",
         "apiDocs": "API docs",
         "platform": "Platform",
         "repository": "Repository",
@@ -479,6 +480,37 @@
             "record": "Affected record",
             "fields": "Fields",
             "ip": "IP"
+        }
+    },
+    "agente": {
+        "nav": {
+            "mensajes": "Messages"
+        },
+        "layout": {
+            "title": "AI Agent",
+            "description": "Configuration, prompts, and activity of the WhatsApp conversational agent.",
+            "navAriaLabel": "Agent sections"
+        },
+        "mensajes": {
+            "title": "Messages",
+            "subtitle": "Everything received and sent by the WhatsApp agent, for any client, in the last 30 days — useful to validate its behavior and as a webhook log.",
+            "searchPlaceholder": "Search by phone, client, or content…",
+            "empty": "No messages recorded.",
+            "sinCuenta": "No account yet",
+            "rol": {
+                "cliente": "Client",
+                "agente": "Agent",
+                "preparador": "Preparer",
+                "sistema": "System"
+            },
+            "columns": {
+                "date": "Date",
+                "origin": "Origin",
+                "role": "Role",
+                "content": "Content",
+                "provider": "Provider",
+                "promptVersion": "Prompt version"
+            }
         }
     },
     "catalogo": {

@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Bot,
     Code2,
     History,
     LayoutGrid,
@@ -18,6 +19,7 @@ import {
     SidebarHeader,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as agenteMensajesIndex } from '@/routes/agente/mensajes';
 import { index as apiDocsIndex } from '@/routes/api-docs';
 import { index as bitacoraIndex } from '@/routes/bitacora';
 import { index as catalogoIndex } from '@/routes/catalogo';
@@ -66,6 +68,11 @@ export function AppSidebar() {
                       title: t('nav.auditLog'),
                       href: bitacoraIndex(),
                       icon: History,
+                  },
+                  {
+                      title: t('nav.agente'),
+                      href: agenteMensajesIndex(),
+                      icon: Bot,
                   },
               ]
             : []),

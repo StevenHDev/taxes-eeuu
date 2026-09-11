@@ -1,3 +1,4 @@
+export type * from './agente';
 export type * from './api-token';
 export type * from './auth';
 export type * from './navigation';

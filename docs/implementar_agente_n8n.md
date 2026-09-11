@@ -611,7 +611,37 @@ con datos reales — hoy el job siempre invoca al agente sin media, aunque el me
 ### Fase 7 — Fuera de este alcance (dejar anotado para después)
 - [ ] Mensajes proactivos con plantillas `ContentSid` (seguimiento de casos, priorizado
       en el análisis del cuestionario de descubrimiento).
-- [ ] Panel de administración para publicar nuevas versiones de `agente_prompts` sin
-      deploy.
+- [x] ~~Panel de administración para publicar nuevas versiones de `agente_prompts` sin
+      deploy.~~ Adelantado — ver "Panel de administración del agente" más abajo.
 - [ ] "Meta-agente" que sugiere cambios al prompt a partir de conversaciones reales,
       con aprobación humana obligatoria antes de activarlos.
+
+## Panel de administración del agente
+
+Adelantado desde Fase 7 (decisión tomada al conectar el webhook de producción: el
+despacho quiere poder ver/gestionar el agente sin depender de un deploy). Sección nueva
+del panel, `/agente/*`, exclusiva de administradores (`WhatsappMensajePolicy` y las
+policies equivalentes de cada pieza) — mismo patrón de layout con tabs que
+`settings/*` (`AgenteLayout`, análogo a `SettingsLayout`).
+
+- [x] **Bandeja de mensajes** (`/agente/mensajes`) — todo lo recibido/enviado por el
+      agente, de cualquier cliente, últimos 30 días/500 filas (mismo límite que
+      `BitacoraController`) — sirve como log del webhook y para validar comportamiento.
+      `AgenteMensajesController`, `WhatsappMensajePolicy`, DataTable con filtro por rol.
+      4 tests (`AgenteMensajesTest`).
+- [ ] **Editor de prompts** (`/agente/prompts`) — ver contenido vigente por fase, editar,
+      guardar como borrador, y publicar como nueva versión de `agente_prompts` (mismo
+      concepto que `AgentePromptsSeeder`, pero desde la UI en vez de archivo+seeder).
+- [ ] **Tools por fase** (`/agente/tools` o similar) — ver las 5 tools existentes y en
+      qué fase las expone `ToolDefinitions::paraFase()`, con un interruptor para
+      activar/desactivar una tool puntual en una fase sin tocar código (para probar
+      comportamiento). No permite crear tools nuevas — siguen siendo código PHP con
+      comportamiento real detrás (`ToolExecutor`).
+- [ ] **Base de conocimiento** (`/agente/base-conocimiento`) — subir PDFs, convertirlos a
+      Markdown (más eficiente que mandarle PDF crudo a un modelo), y una tool nueva
+      (`consultar_base_conocimiento`) que el agente invoca bajo demanda con búsqueda de
+      texto simple sobre esos `.md` — nunca se le agrega todo el contenido al prompt de
+      sistema en cada turno (no escala en costo/tamaño a medida que se suben más
+      documentos). Descartado por ahora: búsqueda semántica con embeddings/pgvector — más
+      trabajo de infraestructura del que se justifica hoy; se puede reevaluar si la
+      búsqueda por texto no da resultados suficientemente buenos en la práctica.

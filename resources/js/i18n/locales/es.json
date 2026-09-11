@@ -31,6 +31,7 @@
         "catalog": "Catálogo",
         "users": "Usuarios",
         "auditLog": "Bitácora",
+        "agente": "Agente IA",
         "apiDocs": "Documentación API",
         "platform": "Plataforma",
         "repository": "Repositorio",
@@ -479,6 +480,37 @@
             "record": "Registro afectado",
             "fields": "Campos",
             "ip": "IP"
+        }
+    },
+    "agente": {
+        "nav": {
+            "mensajes": "Mensajes"
+        },
+        "layout": {
+            "title": "Agente IA",
+            "description": "Configuración, prompts y actividad del agente conversacional de WhatsApp.",
+            "navAriaLabel": "Secciones del agente"
+        },
+        "mensajes": {
+            "title": "Mensajes",
+            "subtitle": "Todo lo recibido y enviado por el agente de WhatsApp, de cualquier cliente, en los últimos 30 días — sirve para validar su comportamiento y como log del webhook.",
+            "searchPlaceholder": "Buscar por teléfono, cliente o contenido…",
+            "empty": "Sin mensajes registrados.",
+            "sinCuenta": "Sin cuenta todavía",
+            "rol": {
+                "cliente": "Cliente",
+                "agente": "Agente",
+                "preparador": "Preparador",
+                "sistema": "Sistema"
+            },
+            "columns": {
+                "date": "Fecha",
+                "origin": "Origen",
+                "role": "Rol",
+                "content": "Contenido",
+                "provider": "Proveedor",
+                "promptVersion": "Versión de prompt"
+            }
         }
     },
     "catalogo": {

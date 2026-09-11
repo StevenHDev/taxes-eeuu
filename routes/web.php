@@ -15,3 +15,4 @@ require __DIR__.'/clientes.php';
 require __DIR__.'/catalogo.php';
 require __DIR__.'/usuarios.php';
 require __DIR__.'/bitacora.php';
+require __DIR__.'/agente.php';

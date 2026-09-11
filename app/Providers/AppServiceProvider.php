@@ -12,10 +12,12 @@ use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\NivelRiesgoManual;
 use App\Models\User;
+use App\Models\WhatsappMensaje;
 use App\Observers\AuditoriaObserver;
 use App\Policies\BitacoraPolicy;
 use App\Policies\CatalogoPolicy;
 use App\Policies\ClientePolicy;
+use App\Policies\WhatsappMensajePolicy;
 use App\Services\Whatsapp\Meta\MetaChannel;
 use App\Services\Whatsapp\Twilio\TwilioChannel;
 use App\Services\Whatsapp\WhatsappChannel;
@@ -67,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, ClientePolicy::class);
         Gate::policy(CampoCatalogo::class, CatalogoPolicy::class);
         Gate::policy(BitacoraActividad::class, BitacoraPolicy::class);
+        Gate::policy(WhatsappMensaje::class, WhatsappMensajePolicy::class);
 
         // Bitácora general de la plataforma (ver App\Observers\AuditoriaObserver
         // para por qué nunca registra valores, solo nombres de atributo).
