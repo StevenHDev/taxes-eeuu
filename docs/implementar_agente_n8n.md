@@ -442,18 +442,30 @@ la atención automática"), para que el cambio de tono no lo confunda.
       `EventoRecoleccionService` para el camino de WhatsApp (sin token Sanctum/HTTP) —
       necesario porque `campos_cliente.actualizado_por`/`historial_cambios.modificado_por`
       son FKs reales a `users.id`.
-- [ ] `AgenteConversacionalService`: **una sola** llamada de function-calling por turno
-      (prompt de la fase vigente + historial + mensaje nuevo → tool calls → resultado →
-      repetir dentro de la misma llamada hasta texto final).
-- [ ] Guardar la respuesta del agente en `whatsapp_mensajes`, incluyendo qué versión de
-      prompt la generó.
+- [x] `AgenteConversacionalService`: loop de function-calling (prompt de la fase vigente
+      + historial + mensaje nuevo → tool calls → resultado → repetir hasta texto final).
+      Recalcula la fase al inicio de CADA iteración del loop (no solo una vez), tal como
+      se decidió — verificado con test específico (`test_recalcula_la_fase_entre_tool_calls_dentro_del_mismo_turno`).
+      Tope de 8 iteraciones por turno para no quedar en loop infinito si el modelo nunca
+      produce texto final (con warning de log si se alcanza). 6 tests
+      (`AgenteConversacionalServiceTest`).
+- [x] Guardar la respuesta del agente en `whatsapp_mensajes`, incluyendo qué versión de
+      prompt la generó — hecho dentro de `ProcesarMensajeWhatsappJob`.
 - [x] `WhatsappControl`: migración + modelo, con estado `agente`/`humano` por teléfono —
       hecho en Fase 1 (adelantado por ser también persistencia base).
 - [ ] Acciones de tomar/devolver control (panel) + botón y caja de envío manual en la
       vista de conversación.
-- [ ] `ProcesarMensajeWhatsappJob` respeta el estado de control: no invoca al agente en
+- [x] `ProcesarMensajeWhatsappJob` respeta el estado de control: no invoca al agente en
       modo `humano`, y vuelve a comprobar el estado justo antes de enviar la respuesta
-      del agente (condición de carrera con una toma de control a mitad de proceso).
+      del agente (`$control->fresh()->esHumano()`, condición de carrera con una toma de
+      control a mitad de proceso). El job ahora invoca `AgenteConversacionalService` con
+      el historial completo, actualiza `WhatsappControl.cliente_id` si `crear_cliente_taxes`
+      corrió a mitad del turno, envía la respuesta vía `TwilioWhatsappClient`, y la
+      persiste. **Límite conocido, documentado en el propio job:** si el job falla
+      después de guardar el mensaje entrante pero antes de terminar de enviar la
+      respuesta, un reintento del job (no de Twilio) no reprocesaría ese mensaje — haría
+      falta un patrón outbox (estado explícito "respuesta enviada") para cerrar del todo
+      ese caso; se deja como deuda conocida, no se resuelve en esta fase.
 
 ### Fase 4 — Extracción de documentos, envío y medios
 - [x] `PdfTextExtractorService` (Nivel 1) con `smalot/pdfparser` y heurística de calidad

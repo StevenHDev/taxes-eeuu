@@ -8,8 +8,14 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
+use Database\Seeders\AgentePromptsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
+use Twilio\AuthStrategy\AuthStrategy;
+use Twilio\Http\Client as TwilioHttpClient;
+use Twilio\Http\Response as TwilioResponse;
+use Twilio\Rest\Client as TwilioClient;
 use Twilio\Security\RequestValidator;
 
 class TwilioWebhookTest extends TestCase
@@ -20,7 +26,58 @@ class TwilioWebhookTest extends TestCase
     {
         parent::setUp();
 
-        config(['services.twilio.auth_token' => 'test-auth-token']);
+        config([
+            'services.twilio.auth_token' => 'test-auth-token',
+            'services.twilio.whatsapp_from' => '+15557654321',
+            'services.openai.api_key' => 'test-key',
+            'services.openai.model' => 'test-model',
+        ]);
+
+        $this->seed(AgentePromptsSeeder::class);
+        $this->fakeAgenteConversacional();
+        $this->fakeTwilioSend();
+    }
+
+    /**
+     * El job invoca a AgenteConversacionalService, que le pega a OpenAI —
+     * fake genérico de "respuesta final sin tool calls" para no acoplar
+     * estos tests (sobre el webhook/idempotencia/control) al contenido real
+     * de la conversación.
+     */
+    private function fakeAgenteConversacional(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [['message' => ['role' => 'assistant', 'content' => 'Gracias, en un momento seguimos.']]],
+            ], 200),
+        ]);
+    }
+
+    /**
+     * El SDK de Twilio usa Guzzle directo, no Http:: de Laravel (ver
+     * TwilioWhatsappClientTest) — se reemplaza el TwilioClient del
+     * contenedor por uno con un transporte fake.
+     */
+    private function fakeTwilioSend(): void
+    {
+        $fake = new class implements TwilioHttpClient
+        {
+            public function request(
+                string $method,
+                string $url,
+                array $params = [],
+                array $data = [],
+                array $headers = [],
+                ?string $user = null,
+                ?string $password = null,
+                ?int $timeout = null,
+                ?AuthStrategy $authStrategy = null,
+            ): TwilioResponse {
+                return new TwilioResponse(201, json_encode(['sid' => 'SM_respuesta_test', 'status' => 'queued']));
+            }
+        };
+
+        $this->app->instance(TwilioClient::class, new TwilioClient('AC_test', 'token_test', null, null, $fake));
     }
 
     /**
@@ -67,6 +124,12 @@ class TwilioWebhookTest extends TestCase
         $control = WhatsappControl::query()->where('telefono', '+15551234567')->first();
         $this->assertNotNull($control);
         $this->assertSame(EstadoControlConversacion::Agente, $control->estado);
+
+        $respuesta = WhatsappMensaje::query()->where('telefono', '+15551234567')->where('rol', RolMensajeWhatsapp::Agente)->first();
+        $this->assertNotNull($respuesta);
+        $this->assertSame('Gracias, en un momento seguimos.', $respuesta->contenido);
+        $this->assertSame('SM_respuesta_test', $respuesta->twilio_message_sid);
+        $this->assertSame(1, $respuesta->prompt_version);
     }
 
     public function test_una_firma_invalida_se_rechaza_y_no_guarda_nada(): void
@@ -145,5 +208,10 @@ class TwilioWebhookTest extends TestCase
             'twilio_message_sid' => $payload['MessageSid'],
             'telefono' => '+15551234567',
         ]);
+
+        // En modo humano el job nunca invoca al agente ni envía nada — solo
+        // el mensaje entrante queda guardado.
+        $this->assertDatabaseCount('whatsapp_mensajes', 1);
+        Http::assertNothingSent();
     }
 }

@@ -8,17 +8,27 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
+use App\Services\Whatsapp\TwilioWhatsappClient;
+use App\Services\WhatsappAgent\AgenteConversacionalService;
+use App\Support\AgenteWhatsappUser;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
 
 /**
  * Procesa un mensaje entrante de WhatsApp: idempotencia por MessageSid,
- * resuelve/crea el estado de control de la conversación, y guarda el mensaje.
- * La invocación al agente conversacional (Fase 3) se agrega dentro de este
- * mismo job, justo donde se indica más abajo — solo corre si la conversación
- * no está en modo `humano` (ver ESCALAMIENTO A HUMANO en
- * docs/implementar_agente_n8n.md).
+ * resuelve/crea el estado de control de la conversación, guarda el mensaje,
+ * invoca al agente conversacional (si la conversación no está en modo
+ * `humano` — ver ESCALAMIENTO A HUMANO en docs/implementar_agente_n8n.md), y
+ * envía + persiste la respuesta.
+ *
+ * Límite conocido, aceptado por ahora: si el job falla DESPUÉS de guardar el
+ * mensaje entrante pero ANTES de terminar de enviar la respuesta (ej. Twilio
+ * caído), un reintento del propio job (no un reintento de Twilio) se
+ * detendría en el chequeo de idempotencia de abajo sin generar ni enviar la
+ * respuesta pendiente — requeriría un estado explícito de "respuesta ya
+ * enviada" (patrón outbox) para cerrarse del todo; se documenta como deuda
+ * conocida en vez de resolverse acá.
  */
 class ProcesarMensajeWhatsappJob implements ShouldQueue
 {
@@ -28,11 +38,13 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
      * @param  array<string, mixed>  $payload  Payload crudo del webhook de Twilio
      *                                         (MessageSid, From, Body, NumMedia, MediaUrl0.., etc.) — se conserva completo,
      *                                         sin whitelistear campos, porque la Fase 4 (extracción de documentos) todavía
-     *                                         necesita leer los campos de media de acá.
+     *                                         necesita leer los campos de media de acá (esa conexión, mensaje con media →
+     *                                         DocumentoExtraccionService → guardar_campo_cliente con archivo, queda como
+     *                                         siguiente paso: hoy este job solo pasa mensajes de texto al agente).
      */
     public function __construct(private readonly array $payload) {}
 
-    public function handle(): void
+    public function handle(AgenteConversacionalService $agente, TwilioWhatsappClient $twilio): void
     {
         $messageSid = (string) ($this->payload['MessageSid'] ?? '');
 
@@ -79,10 +91,35 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
                 return;
             }
 
-            // Fase 3: invocar aquí a AgenteConversacionalService con el historial de
-            // whatsapp_mensajes para este teléfono, y volver a comprobar
-            // WhatsappControl::esHumano() justo antes de enviar la respuesta (condición
-            // de carrera — ver ESCALAMIENTO A HUMANO).
+            $cliente = $control->cliente_id ? User::query()->whereKey($control->cliente_id)->first() : null;
+            $historial = WhatsappMensaje::query()->where('telefono', $telefono)->orderBy('id')->get();
+
+            $resultado = $agente->responder($cliente, $historial, AgenteWhatsappUser::resolver());
+
+            // crear_cliente_taxes puede haber corrido a mitad del turno — deja
+            // el vínculo de la conversación con el cliente recién creado, en
+            // vez de esperar a que un mensaje futuro lo resuelva por teléfono.
+            if ($resultado['cliente'] !== null && $resultado['cliente']->id !== $control->cliente_id) {
+                $control->update(['cliente_id' => $resultado['cliente']->id]);
+            }
+
+            // Condición de carrera: si un preparador tomó control mientras se
+            // generaba la respuesta, no se envía por encima de él — se
+            // vuelve a leer de la base, no del objeto en memoria de arriba.
+            if ($control->fresh()->esHumano()) {
+                return;
+            }
+
+            $sidRespuesta = $twilio->enviarTexto($telefono, $resultado['texto']);
+
+            WhatsappMensaje::query()->create([
+                'telefono' => $telefono,
+                'cliente_id' => $resultado['cliente']?->id,
+                'rol' => RolMensajeWhatsapp::Agente,
+                'contenido' => $resultado['texto'],
+                'twilio_message_sid' => $sidRespuesta,
+                'prompt_version' => $resultado['prompt_version'],
+            ]);
         } finally {
             $lock->release();
         }
