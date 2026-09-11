@@ -147,4 +147,15 @@ class ToolExecutorTest extends TestCase
         $this->assertArrayHasKey('campo', $resultado['detalles']);
         $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'campo_inventado']);
     }
+
+    public function test_consultar_base_conocimiento_delega_en_el_servicio_de_busqueda(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $resultado = $this->tools->ejecutar('consultar_base_conocimiento', [
+            'consulta' => 'palabra_que_no_existe_en_ningun_documento',
+        ], $cliente, $this->actor);
+
+        $this->assertSame(['resultados' => []], $resultado);
+    }
 }

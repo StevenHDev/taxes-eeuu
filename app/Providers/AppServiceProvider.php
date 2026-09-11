@@ -6,6 +6,7 @@ use App\Listeners\RegistrarCierreSesion;
 use App\Listeners\RegistrarInicioSesion;
 use App\Models\AgentePrompt;
 use App\Models\AgenteToolEstado;
+use App\Models\BaseConocimientoDocumento;
 use App\Models\BitacoraActividad;
 use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
@@ -19,6 +20,7 @@ use App\Observers\AuditoriaObserver;
 use App\Observers\WhatsappMensajeObserver;
 use App\Policies\AgentePromptPolicy;
 use App\Policies\AgenteToolPolicy;
+use App\Policies\BaseConocimientoPolicy;
 use App\Policies\BitacoraPolicy;
 use App\Policies\CatalogoPolicy;
 use App\Policies\ClientePolicy;
@@ -77,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(WhatsappMensaje::class, WhatsappMensajePolicy::class);
         Gate::policy(AgentePrompt::class, AgentePromptPolicy::class);
         Gate::policy(AgenteToolEstado::class, AgenteToolPolicy::class);
+        Gate::policy(BaseConocimientoDocumento::class, BaseConocimientoPolicy::class);
 
         // Bitácora general de la plataforma (ver App\Observers\AuditoriaObserver
         // para por qué nunca registra valores, solo nombres de atributo).

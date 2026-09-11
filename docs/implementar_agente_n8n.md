@@ -648,7 +648,7 @@ policies equivalentes de cada pieza) — mismo patrón de layout con tabs que
       juntas — nunca pueden divergir, según ya documenta el propio comentario de
       `ToolDefinitions::paraFase()`. `AgenteToolController`, `AgenteToolPolicy`. 10 tests
       (`AgenteToolEstadosTest`, `AgenteToolControllerTest`).
-- [ ] **Base de conocimiento** (`/agente/base-conocimiento`) — subir PDFs, convertirlos a
+- [x] **Base de conocimiento** (`/agente/base-conocimiento`) — subir PDFs, convertirlos a
       Markdown (más eficiente que mandarle PDF crudo a un modelo), y una tool nueva
       (`consultar_base_conocimiento`) que el agente invoca bajo demanda con búsqueda de
       texto simple sobre esos `.md` — nunca se le agrega todo el contenido al prompt de
@@ -656,3 +656,18 @@ policies equivalentes de cada pieza) — mismo patrón de layout con tabs que
       documentos). Descartado por ahora: búsqueda semántica con embeddings/pgvector — más
       trabajo de infraestructura del que se justifica hoy; se puede reevaluar si la
       búsqueda por texto no da resultados suficientemente buenos en la práctica.
+      `AgenteBaseConocimientoController`, `BaseConocimientoPolicy` (administrador, igual
+      que las 3 piezas anteriores). `BaseConocimientoService` guarda el PDF en disco
+      (`base_conocimiento/{uuid}.pdf`, disco `local` privado, misma convención que
+      `documentos/`) y extrae su texto con `PdfTextExtractorService` ya existente (solo
+      Nivel 1 — es una carga manual de un administrador, no un escaneo de cliente, así
+      que no cae a Nivel 2/visión); el resultado se guarda directo en la columna
+      `contenido_markdown`, no como segundo archivo en disco (sin I/O de disco en cada
+      búsqueda). Un PDF sin capa de texto útil queda `estado = error` con
+      `error_mensaje`, nunca se descarta en silencio. `consultar_base_conocimiento` se
+      conecta a `ToolDefinitions`/`ToolExecutor`/`AgenteToolEstados` igual que el resto de
+      tools (togglea por fase desde el panel de Tools) — solo en Recoleccion/Cierre por
+      ahora. Búsqueda: puntaje simple por apariciones del término por párrafo, sobre los
+      documentos en `estado=procesado`, sin embeddings (confirma la decisión de arriba).
+      14 tests (`BaseConocimientoServiceTest`, `AgenteBaseConocimientoControllerTest`,
+      más los ajustes de `ToolDefinitionsTest`/`ToolExecutorTest` para la tool nueva).

@@ -30,3 +30,13 @@ export type FaseTools = {
     label: string;
     tools: AgenteTool[];
 };
+
+export type BaseConocimientoDocumento = {
+    id: number;
+    nombre_original: string;
+    tamano: number;
+    estado: 'procesado' | 'error';
+    error_mensaje: string | null;
+    subido_por: string | null;
+    created_at: string;
+};

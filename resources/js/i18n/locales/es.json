@@ -486,7 +486,8 @@
         "nav": {
             "mensajes": "Mensajes",
             "prompts": "Prompts",
-            "tools": "Tools"
+            "tools": "Tools",
+            "baseConocimiento": "Base de conocimiento"
         },
         "layout": {
             "title": "Agente IA",
@@ -535,6 +536,35 @@
                 "tool": "Tool",
                 "description": "Descripción",
                 "active": "Activa"
+            }
+        },
+        "baseConocimiento": {
+            "title": "Base de conocimiento",
+            "subtitle": "PDFs con documentación general que el agente puede consultar bajo demanda (búsqueda de texto, no semántica) — se convierten a Markdown al subirlos, para no tener que mandarle el PDF crudo al modelo.",
+            "empty": "Sin documentos cargados.",
+            "upload": {
+                "selectFile": "Seleccionar un PDF",
+                "hint": "PDF, hasta {{max}} MB",
+                "errorSize": "El archivo supera los {{max}} MB permitidos.",
+                "errorFormat": "Solo se aceptan archivos PDF.",
+                "submit": "Subir documento",
+                "uploading": "Subiendo…"
+            },
+            "columns": {
+                "name": "Documento",
+                "size": "Tamaño",
+                "status": "Estado",
+                "uploadedBy": "Subido por",
+                "date": "Fecha"
+            },
+            "estado": {
+                "procesado": "Procesado",
+                "error": "Error"
+            },
+            "confirmarEliminar": {
+                "title": "¿Eliminar este documento?",
+                "description": "\"{{nombre}}\" se borra de la base de conocimiento y el agente deja de poder consultarlo. Esta acción no se puede deshacer.",
+                "confirm": "Sí, eliminar"
             }
         }
     },

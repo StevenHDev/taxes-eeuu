@@ -486,7 +486,8 @@
         "nav": {
             "mensajes": "Messages",
             "prompts": "Prompts",
-            "tools": "Tools"
+            "tools": "Tools",
+            "baseConocimiento": "Knowledge base"
         },
         "layout": {
             "title": "AI Agent",
@@ -535,6 +536,35 @@
                 "tool": "Tool",
                 "description": "Description",
                 "active": "Active"
+            }
+        },
+        "baseConocimiento": {
+            "title": "Knowledge base",
+            "subtitle": "PDFs with general documentation the agent can search on demand (plain text search, not semantic) — converted to Markdown on upload, so the model never gets a raw PDF.",
+            "empty": "No documents uploaded.",
+            "upload": {
+                "selectFile": "Select a PDF",
+                "hint": "PDF, up to {{max}} MB",
+                "errorSize": "The file exceeds the {{max}} MB limit.",
+                "errorFormat": "Only PDF files are accepted.",
+                "submit": "Upload document",
+                "uploading": "Uploading…"
+            },
+            "columns": {
+                "name": "Document",
+                "size": "Size",
+                "status": "Status",
+                "uploadedBy": "Uploaded by",
+                "date": "Date"
+            },
+            "estado": {
+                "procesado": "Processed",
+                "error": "Error"
+            },
+            "confirmarEliminar": {
+                "title": "Delete this document?",
+                "description": "\"{{nombre}}\" is removed from the knowledge base and the agent can no longer search it. This action can't be undone.",
+                "confirm": "Yes, delete"
             }
         }
     },

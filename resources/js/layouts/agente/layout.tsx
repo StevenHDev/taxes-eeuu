@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
+import { index as baseConocimientoIndex } from '@/routes/agente/base-conocimiento';
 import { index as mensajesIndex } from '@/routes/agente/mensajes';
 import { index as promptsIndex } from '@/routes/agente/prompts';
 import { index as toolsIndex } from '@/routes/agente/tools';
@@ -14,8 +15,7 @@ import type { NavItem } from '@/types';
 /**
  * Layout compartido de la sección "Agente" (panel de administración del
  * agente conversacional de WhatsApp) — mismo patrón de tabs que
- * SettingsLayout. Mensajes es la primera pestaña; Prompts, Tools y Base de
- * Conocimiento se agregan acá a medida que se construyen (ver
+ * SettingsLayout: Mensajes, Prompts, Tools y Base de Conocimiento (ver
  * docs/implementar_agente_n8n.md).
  */
 export default function AgenteLayout({ children }: PropsWithChildren) {
@@ -36,6 +36,11 @@ export default function AgenteLayout({ children }: PropsWithChildren) {
         {
             title: t('agente.nav.tools'),
             href: toolsIndex(),
+            icon: null,
+        },
+        {
+            title: t('agente.nav.baseConocimiento'),
+            href: baseConocimientoIndex(),
             icon: null,
         },
     ];

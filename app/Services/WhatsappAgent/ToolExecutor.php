@@ -8,6 +8,7 @@ use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\User;
 use App\Services\AgenteToolService;
+use App\Services\BaseConocimientoService;
 use App\Services\EventoRecoleccionService;
 use App\Support\EventoValidator;
 use App\Support\TaxFieldCatalog;
@@ -25,6 +26,7 @@ class ToolExecutor
         private readonly AgenteToolService $tools,
         private readonly EventoRecoleccionService $eventos,
         private readonly EventoValidator $eventoValidator,
+        private readonly BaseConocimientoService $baseConocimiento,
     ) {}
 
     /**
@@ -62,6 +64,7 @@ class ToolExecutor
             'consultar_pendientes_cliente' => $this->tools->pendientes($cliente, $this->taxYearVigente($cliente)),
             'consultar_documentos_extra' => $this->tools->documentosExtra($this->taxYearVigente($cliente)),
             'guardar_campo_cliente' => $this->guardarCampoCliente($cliente, $argumentos, $actor, $file, $metodoExtraccion),
+            'consultar_base_conocimiento' => ['resultados' => $this->baseConocimiento->buscar((string) ($argumentos['consulta'] ?? ''))],
             default => ['error' => "Tool desconocida: {$nombreTool}"],
         };
     }

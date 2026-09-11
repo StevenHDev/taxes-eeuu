@@ -47,6 +47,7 @@ class ToolDefinitions
                 self::consultarPendientesCliente(),
                 self::consultarDocumentosExtra(),
                 self::guardarCampoCliente(),
+                self::consultarBaseConocimiento(),
                 self::think(),
             ],
         };
@@ -209,6 +210,27 @@ class ToolDefinitions
                         ],
                     ],
                     'required' => ['forma', 'campo', 'tipo_campo', 'modo'],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function consultarBaseConocimiento(): array
+    {
+        return [
+            'type' => 'function',
+            'function' => [
+                'name' => 'consultar_base_conocimiento',
+                'description' => 'Búsqueda de texto libre sobre la base de conocimiento cargada por un administrador (documentación general de impuestos). Úsala cuando el cliente pregunte algo general que no depende de sus datos puntuales — nunca para preguntas sobre el estado de SU declaración, que se resuelven con consultar_pendientes_cliente.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'consulta' => ['type' => 'string', 'description' => 'Términos de búsqueda — palabras clave de lo que el cliente preguntó, no la pregunta completa tal cual.'],
+                    ],
+                    'required' => ['consulta'],
                 ],
             ],
         ];

@@ -31,7 +31,7 @@ class ToolDefinitionsTest extends TestCase
         $this->assertEqualsCanonicalizing(['declarar_formas_cliente', 'think'], $nombres);
     }
 
-    public function test_recoleccion_expone_las_4_tools_de_recoleccion_mas_declarar_formas_y_think(): void
+    public function test_recoleccion_expone_las_5_tools_de_recoleccion_mas_declarar_formas_y_think(): void
     {
         $nombres = $this->nombres(ToolDefinitions::paraFase(FaseConversacion::Recoleccion));
 
@@ -40,6 +40,7 @@ class ToolDefinitionsTest extends TestCase
             'consultar_pendientes_cliente',
             'consultar_documentos_extra',
             'guardar_campo_cliente',
+            'consultar_base_conocimiento',
             'think',
         ], $nombres);
     }
