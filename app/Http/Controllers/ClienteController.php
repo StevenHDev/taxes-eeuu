@@ -21,7 +21,7 @@ use App\Services\ClienteExportService;
 use App\Services\DocumentoDuplicadoService;
 use App\Services\RiesgoCasoService;
 use App\Services\SupabaseWhatsappConversationService;
-use App\Services\Whatsapp\TwilioWhatsappClient;
+use App\Services\Whatsapp\WhatsappChannel;
 use App\Support\TaxFieldCatalog;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -43,7 +43,7 @@ class ClienteController extends Controller
         private readonly DocumentoDuplicadoService $duplicados,
         private readonly RiesgoCasoService $riesgo,
         private readonly SupabaseWhatsappConversationService $whatsapp,
-        private readonly TwilioWhatsappClient $twilio,
+        private readonly WhatsappChannel $canal,
     ) {}
 
     public function index(Request $request): Response
@@ -395,14 +395,15 @@ class ClienteController extends Controller
         abort_unless($control?->esHumano(), 422, 'Solo se puede enviar un mensaje manual mientras la conversación está en modo humano.');
 
         $mensaje = (string) $request->string('mensaje');
-        $sid = $this->twilio->enviarTexto($cliente->phone, $mensaje);
+        $idExterno = $this->canal->enviarTexto($cliente->phone, $mensaje);
 
         $enviado = WhatsappMensaje::query()->create([
             'telefono' => $cliente->phone,
             'cliente_id' => $cliente->id,
             'rol' => RolMensajeWhatsapp::Preparador,
             'contenido' => $mensaje,
-            'twilio_message_sid' => $sid,
+            'mensaje_externo_id' => $idExterno,
+            'proveedor' => config('services.whatsapp.provider'),
         ]);
 
         return response()->json([

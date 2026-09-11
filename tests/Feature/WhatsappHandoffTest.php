@@ -126,7 +126,7 @@ class WhatsappHandoffTest extends TestCase
         $mensaje = WhatsappMensaje::query()->where('telefono', '+15551234567')->first();
         $this->assertSame(RolMensajeWhatsapp::Preparador, $mensaje->rol);
         $this->assertSame('Hola, soy tu preparador, ¿en qué te ayudo?', $mensaje->contenido);
-        $this->assertSame('SM_manual_test', $mensaje->twilio_message_sid);
+        $this->assertSame('SM_manual_test', $mensaje->mensaje_externo_id);
         $this->assertSame($cliente->id, $mensaje->cliente_id);
     }
 
@@ -150,7 +150,7 @@ class WhatsappHandoffTest extends TestCase
             'cliente_id' => $cliente->id,
             'rol' => RolMensajeWhatsapp::Agente,
             'contenido' => 'mensaje nuevo local',
-            'twilio_message_sid' => 'SM'.str_repeat('a', 32),
+            'mensaje_externo_id' => 'SM'.str_repeat('a', 32),
             'created_at' => now(),
         ]);
 

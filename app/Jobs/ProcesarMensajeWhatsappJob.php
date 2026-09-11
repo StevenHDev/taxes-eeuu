@@ -2,13 +2,14 @@
 
 namespace App\Jobs;
 
+use App\DataTransferObjects\MensajeEntranteWhatsapp;
 use App\Enums\EstadoControlConversacion;
 use App\Enums\RolMensajeWhatsapp;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
-use App\Services\Whatsapp\TwilioWhatsappClient;
+use App\Services\Whatsapp\WhatsappChannel;
 use App\Services\WhatsappAgent\AgenteConversacionalService;
 use App\Support\AgenteWhatsappUser;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,57 +17,50 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Procesa un mensaje entrante de WhatsApp: idempotencia por MessageSid,
+ * Procesa un mensaje entrante de WhatsApp: idempotencia por mensajeId,
  * resuelve/crea el estado de control de la conversación, guarda el mensaje,
  * invoca al agente conversacional (si la conversación no está en modo
  * `humano` — ver ESCALAMIENTO A HUMANO en docs/implementar_agente_n8n.md), y
- * envía + persiste la respuesta.
+ * envía + persiste la respuesta. Agnóstico de proveedor: no sabe si el
+ * mensaje llegó por Twilio o Meta — eso ya lo resolvió `WhatsappChannel` al
+ * construir `MensajeEntranteWhatsapp`, y el mismo canal (según
+ * `config('services.whatsapp.provider')`) se usa para responder.
  *
  * Límite conocido, aceptado por ahora: si el job falla DESPUÉS de guardar el
- * mensaje entrante pero ANTES de terminar de enviar la respuesta (ej. Twilio
- * caído), un reintento del propio job (no un reintento de Twilio) se
- * detendría en el chequeo de idempotencia de abajo sin generar ni enviar la
- * respuesta pendiente — requeriría un estado explícito de "respuesta ya
- * enviada" (patrón outbox) para cerrarse del todo; se documenta como deuda
- * conocida en vez de resolverse acá.
+ * mensaje entrante pero ANTES de terminar de enviar la respuesta (ej. el
+ * proveedor caído), un reintento del propio job (no un reintento del
+ * proveedor) se detendría en el chequeo de idempotencia de abajo sin generar
+ * ni enviar la respuesta pendiente — requeriría un estado explícito de
+ * "respuesta ya enviada" (patrón outbox) para cerrarse del todo; se
+ * documenta como deuda conocida en vez de resolverse acá.
  */
 class ProcesarMensajeWhatsappJob implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * @param  array<string, mixed>  $payload  Payload crudo del webhook de Twilio
-     *                                         (MessageSid, From, Body, NumMedia, MediaUrl0.., etc.) — se conserva completo,
-     *                                         sin whitelistear campos, porque la Fase 4 (extracción de documentos) todavía
-     *                                         necesita leer los campos de media de acá (esa conexión, mensaje con media →
-     *                                         DocumentoExtraccionService → guardar_campo_cliente con archivo, queda como
-     *                                         siguiente paso: hoy este job solo pasa mensajes de texto al agente).
-     */
-    public function __construct(private readonly array $payload) {}
+    public function __construct(private readonly MensajeEntranteWhatsapp $mensaje) {}
 
-    public function handle(AgenteConversacionalService $agente, TwilioWhatsappClient $twilio): void
+    public function handle(AgenteConversacionalService $agente, WhatsappChannel $canal): void
     {
-        $messageSid = (string) ($this->payload['MessageSid'] ?? '');
-
-        if ($messageSid === '') {
+        if ($this->mensaje->mensajeId === '') {
             return;
         }
 
-        // Reintentos de Twilio (mismo MessageSid) no deben duplicar el mensaje ni
-        // procesarse dos veces en paralelo — lock de caché + la columna única de
-        // whatsapp_mensajes.twilio_message_sid como respaldo final.
-        $lock = Cache::lock("whatsapp-mensaje-procesado:{$messageSid}", 10);
+        // Reintentos del proveedor (mismo mensajeId) no deben duplicar el
+        // mensaje ni procesarse dos veces en paralelo — lock de caché + la
+        // columna única whatsapp_mensajes.mensaje_externo_id como respaldo final.
+        $lock = Cache::lock("whatsapp-mensaje-procesado:{$this->mensaje->mensajeId}", 10);
 
         if (! $lock->get()) {
             return;
         }
 
         try {
-            if (WhatsappMensaje::query()->where('twilio_message_sid', $messageSid)->exists()) {
+            if (WhatsappMensaje::query()->where('mensaje_externo_id', $this->mensaje->mensajeId)->exists()) {
                 return;
             }
 
-            $telefono = $this->normalizarTelefono((string) ($this->payload['From'] ?? ''));
+            $telefono = $this->mensaje->telefono;
 
             $control = WhatsappControl::query()->firstOrCreate(
                 ['telefono' => $telefono],
@@ -83,8 +77,9 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
                 'telefono' => $telefono,
                 'cliente_id' => $control->cliente_id,
                 'rol' => RolMensajeWhatsapp::Cliente,
-                'contenido' => (string) ($this->payload['Body'] ?? ''),
-                'twilio_message_sid' => $messageSid,
+                'contenido' => $this->mensaje->texto,
+                'mensaje_externo_id' => $this->mensaje->mensajeId,
+                'proveedor' => $this->mensaje->proveedor,
             ]);
 
             if ($control->esHumano()) {
@@ -110,23 +105,19 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
                 return;
             }
 
-            $sidRespuesta = $twilio->enviarTexto($telefono, $resultado['texto']);
+            $idRespuesta = $canal->enviarTexto($telefono, $resultado['texto']);
 
             WhatsappMensaje::query()->create([
                 'telefono' => $telefono,
                 'cliente_id' => $resultado['cliente']?->id,
                 'rol' => RolMensajeWhatsapp::Agente,
                 'contenido' => $resultado['texto'],
-                'twilio_message_sid' => $sidRespuesta,
+                'mensaje_externo_id' => $idRespuesta,
+                'proveedor' => $this->mensaje->proveedor,
                 'prompt_version' => $resultado['prompt_version'],
             ]);
         } finally {
             $lock->release();
         }
-    }
-
-    private function normalizarTelefono(string $from): string
-    {
-        return str_starts_with($from, 'whatsapp:') ? substr($from, strlen('whatsapp:')) : $from;
     }
 }

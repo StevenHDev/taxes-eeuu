@@ -4,8 +4,7 @@ use App\Http\Controllers\Api\CampoClienteController;
 use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\EventoController;
-use App\Http\Controllers\Api\TwilioWebhookController;
-use App\Http\Middleware\VerifyTwilioSignature;
+use App\Http\Controllers\Api\WhatsappWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -13,12 +12,13 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Sin auth:sanctum: la única autenticación posible acá es que Twilio es el
-// único que puede producir una firma válida para esta URL (ver
-// VerifyTwilioSignature) — un token Sanctum no tiene sentido para un
-// webhook que no es Twilio quien lo gestiona.
-Route::post('whatsapp/webhook', TwilioWebhookController::class)
-    ->middleware(VerifyTwilioSignature::class)
+// Sin auth:sanctum: la única autenticación posible acá es la firma propia
+// del proveedor de WhatsApp vigente (ver WhatsappChannel::validarFirma(),
+// resuelta dentro del propio controlador) — un token Sanctum no tiene
+// sentido para un webhook que no es un usuario de la plataforma quien lo
+// gestiona. GET también se acepta: es el handshake de verificación que Meta
+// exige al configurar el webhook (Twilio no lo usa).
+Route::match(['get', 'post'], 'whatsapp/webhook', WhatsappWebhookController::class)
     ->name('api.whatsapp.webhook');
 
 Route::middleware(['auth:sanctum'])->group(function () {

@@ -42,7 +42,7 @@ class AgenteConversacionalServiceTest extends TestCase
             'telefono' => $telefono,
             'rol' => RolMensajeWhatsapp::Cliente,
             'contenido' => $mensajeCliente,
-            'twilio_message_sid' => 'SM'.str_repeat('a', 32),
+            'mensaje_externo_id' => 'SM'.str_repeat('a', 32),
         ]);
 
         return collect([$mensaje]);
@@ -181,7 +181,7 @@ class AgenteConversacionalServiceTest extends TestCase
         ]);
 
         $telefono = '+15551234567';
-        WhatsappMensaje::query()->create(['telefono' => $telefono, 'rol' => RolMensajeWhatsapp::Cliente, 'contenido' => 'primer mensaje', 'twilio_message_sid' => 'SM'.str_repeat('a', 32)]);
+        WhatsappMensaje::query()->create(['telefono' => $telefono, 'rol' => RolMensajeWhatsapp::Cliente, 'contenido' => 'primer mensaje', 'mensaje_externo_id' => 'SM'.str_repeat('a', 32)]);
         WhatsappMensaje::query()->create(['telefono' => $telefono, 'rol' => RolMensajeWhatsapp::Agente, 'contenido' => 'respuesta del agente']);
         $historial = WhatsappMensaje::query()->where('telefono', $telefono)->orderBy('id')->get();
 

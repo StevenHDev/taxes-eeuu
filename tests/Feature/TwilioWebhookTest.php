@@ -113,7 +113,7 @@ class TwilioWebhookTest extends TestCase
             ->post($url, $payload)
             ->assertOk();
 
-        $mensaje = WhatsappMensaje::query()->where('twilio_message_sid', $payload['MessageSid'])->first();
+        $mensaje = WhatsappMensaje::query()->where('mensaje_externo_id', $payload['MessageSid'])->first();
 
         $this->assertNotNull($mensaje);
         $this->assertSame('+15551234567', $mensaje->telefono);
@@ -128,7 +128,7 @@ class TwilioWebhookTest extends TestCase
         $respuesta = WhatsappMensaje::query()->where('telefono', '+15551234567')->where('rol', RolMensajeWhatsapp::Agente)->first();
         $this->assertNotNull($respuesta);
         $this->assertSame('Gracias, en un momento seguimos.', $respuesta->contenido);
-        $this->assertSame('SM_respuesta_test', $respuesta->twilio_message_sid);
+        $this->assertSame('SM_respuesta_test', $respuesta->mensaje_externo_id);
         $this->assertSame(1, $respuesta->prompt_version);
     }
 
@@ -164,7 +164,7 @@ class TwilioWebhookTest extends TestCase
 
         $this->assertSame(
             1,
-            WhatsappMensaje::query()->where('twilio_message_sid', $payload['MessageSid'])->count(),
+            WhatsappMensaje::query()->where('mensaje_externo_id', $payload['MessageSid'])->count(),
         );
     }
 
@@ -179,7 +179,7 @@ class TwilioWebhookTest extends TestCase
             ->post($url, $payload)
             ->assertOk();
 
-        $mensaje = WhatsappMensaje::query()->where('twilio_message_sid', $payload['MessageSid'])->first();
+        $mensaje = WhatsappMensaje::query()->where('mensaje_externo_id', $payload['MessageSid'])->first();
         $control = WhatsappControl::query()->where('telefono', '+15551234567')->first();
 
         $this->assertSame($cliente->id, $mensaje->cliente_id);
@@ -205,7 +205,7 @@ class TwilioWebhookTest extends TestCase
             ->assertOk();
 
         $this->assertDatabaseHas('whatsapp_mensajes', [
-            'twilio_message_sid' => $payload['MessageSid'],
+            'mensaje_externo_id' => $payload['MessageSid'],
             'telefono' => '+15551234567',
         ]);
 

@@ -17,10 +17,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $cliente_id
  * @property RolMensajeWhatsapp $rol
  * @property string $contenido
- * @property string|null $twilio_message_sid
+ * @property string|null $mensaje_externo_id
+ * @property string|null $proveedor
  * @property int|null $prompt_version
  */
-#[Fillable(['telefono', 'cliente_id', 'rol', 'contenido', 'twilio_message_sid', 'prompt_version'])]
+#[Fillable(['telefono', 'cliente_id', 'rol', 'contenido', 'mensaje_externo_id', 'proveedor', 'prompt_version'])]
 class WhatsappMensaje extends Model
 {
     protected $table = 'whatsapp_mensajes';

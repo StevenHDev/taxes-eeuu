@@ -95,6 +95,27 @@ completo (se construye, se valida, y se apaga n8n de una vez — no convive en p
   misma por HTTP solo para hablarse a sí misma.
 - **Escalamiento a humano: interrupción y devolución de control**, no solo derivación
   para revisión posterior — ver sección dedicada más abajo.
+- **Soporte de dos proveedores de WhatsApp — Twilio y Meta Cloud API — detrás de una
+  interfaz común `App\Services\Whatsapp\WhatsappChannel`, con un switch de
+  configuración (`WHATSAPP_PROVIDER=twilio|meta`).** Decisión tomada al conectar el
+  webhook de producción: el despacho quiere poder evaluar/migrar entre ambos sin tocar
+  código. `ProcesarMensajeWhatsappJob`, `AgenteConversacionalService` y `ToolExecutor`
+  nunca conocen el proveedor concreto — reciben un `MensajeEntranteWhatsapp` ya
+  normalizado y responden vía `WhatsappChannel::enviarTexto()`, sin importar cuál está
+  activo. Cada proveedor difiere en varios puntos que si importan y por eso viven
+  detrás de la interfaz, nunca en el job:
+  - **Payload del webhook:** form-encoded plano (Twilio) vs. JSON anidado
+    (`entry[].changes[].value.messages[]`, Meta).
+  - **Firma:** `X-Twilio-Signature` sobre URL+parámetros (Twilio) vs.
+    `X-Hub-Signature-256` HMAC-SHA256 sobre el body crudo (Meta).
+  - **Handshake de webhook:** Twilio no tiene; Meta exige un `GET` de verificación
+    (`hub.mode`/`hub.verify_token`/`hub.challenge`) al configurar la URL en su consola.
+  - **Envío:** SDK de Twilio vs. Graph API con Bearer token (Meta).
+  - **Media:** Twilio da una URL directa con Basic Auth; Meta resuelve en dos pasos
+    (el id da una URL temporal + mime_type, luego se descarga esa URL).
+  Ambos proveedores comparten la MISMA URL de webhook (`/api/whatsapp/webhook`, `GET` y
+  `POST`) — se registra igual en la consola de Twilio y en el dashboard de Meta; cuál
+  interpreta la petición lo decide el switch, no la URL.
 
 ## Prerrequisitos (credenciales e info a confirmar)
 
@@ -111,20 +132,28 @@ completo (se construye, se valida, y se apaga n8n de una vez — no convive en p
 - [x] Agregar `twilio/sdk` y `smalot/pdfparser` vía Composer (ya evaluados — ver
       decisiones de arquitectura — solo falta instalarlos). El cliente de OpenAI es un
       wrapper propio sobre `Http::`, no un paquete nuevo.
+- [ ] Meta: App Secret, Verify Token (uno propio, inventado por el despacho — Meta solo
+      lo repite de vuelta en el handshake), Access Token (permanente, de un usuario de
+      sistema — uno temporal de prueba expira en 24h), Phone Number ID. Solo hace falta
+      si van a operar con `WHATSAPP_PROVIDER=meta` en algún momento; si el despacho se
+      queda solo con Twilio, este punto no bloquea nada.
 
 ## Arquitectura
 
 ```
-Twilio (webhook) → TwilioWebhookController        [valida X-Twilio-Signature, responde 200]
-                          │
+Twilio/Meta (webhook) → WhatsappWebhookController  [GET: handshake (solo Meta) — POST:
+                          │                          valida firma vía WhatsappChannel
+                          │                          vigente, responde 200 de inmediato]
                           ▼
-                ProcesarMensajeWhatsappJob          [cola: redis/database, ya configuradas]
-                          │  (idempotente por MessageSid)
+                ProcesarMensajeWhatsappJob          [cola: redis/database, ya configuradas;
+                          │                          recibe MensajeEntranteWhatsapp, ya
+                          │                          normalizado — no sabe de qué proveedor
+                          │                          vino (idempotente por mensajeId)]
                           │
-                          ├── si el mensaje trae media ──► DocumentoExtraccionService
+                          ├── si el mensaje trae media ──► WhatsappChannel::descargarMedia()
+                          │                                  → DocumentoExtraccionService
                           │                                  1) texto embebido del PDF (gratis)
                           │                                  2) si falla/pobre → visión (fallback)
-                          │                                  → produce texto_extraido + archivo_url
                           ▼
               EstadoConversacionResolver           [deriva la fase vigente desde datos ya
                           │                          existentes: cuenta, tax_year, formas,
@@ -140,7 +169,7 @@ Twilio (webhook) → TwilioWebhookController        [valida X-Twilio-Signature, 
                   WhatsappMensaje (BD local)     [reemplaza globaltax_registro_whatsapp]
                           │
                           ▼
-                 TwilioWhatsappClient  ──────►  Twilio (respuesta al cliente)
+    WhatsappChannel::enviarTexto()  ──────►  Twilio o Meta (según el switch), respuesta al cliente
 ```
 
 ## Extracción de documentos
@@ -249,10 +278,19 @@ la atención automática"), para que el cambio de tono no lo confunda.
 - `app/Support/AgentePromptVigente.php` — resuelve la versión activa (mismo patrón que
   `App\Support\ParametrosFiscales`).
 
-**Recepción y validación**
-- `app/Http/Middleware/VerifyTwilioSignature.php` (o clase de validación equivalente).
-- `app/Http/Controllers/Api/TwilioWebhookController.php` — `handleIncoming(Request $request)`.
-- `app/Jobs/ProcesarMensajeWhatsappJob.php`.
+**Canal de WhatsApp (Twilio/Meta, ver decisión de arquitectura)**
+- `app/Services/Whatsapp/WhatsappChannel.php` — interfaz: `manejarHandshake()`,
+  `validarFirma()`, `normalizarEntrante()`, `enviarTexto()`, `descargarMedia()`.
+- `app/DataTransferObjects/MensajeEntranteWhatsapp.php` — mensaje ya normalizado
+  (proveedor, mensajeId, teléfono, texto, referencias de media), lo que recibe
+  `ProcesarMensajeWhatsappJob` en vez del payload crudo de un proveedor en particular.
+- `app/Services/Whatsapp/Twilio/TwilioChannel.php` — implementación para Twilio; la
+  validación de firma que antes vivía en un middleware ahora vive acá.
+- `app/Services/Whatsapp/Meta/MetaChannel.php` — implementación para Meta Cloud API.
+- `app/Http/Controllers/Api/WhatsappWebhookController.php` — agnóstico de proveedor,
+  delega todo en el `WhatsappChannel` que `AppServiceProvider` enlace según
+  `config('services.whatsapp.provider')`.
+- `app/Jobs/ProcesarMensajeWhatsappJob.php` — recibe un `MensajeEntranteWhatsapp`.
 
 **Extracción de documentos**
 - `app/Services/DocumentoExtraccion/PdfTextExtractorService.php` — Nivel 1: intenta
@@ -306,12 +344,13 @@ la atención automática"), para que el cambio de tono no lo confunda.
   arranque inmediato de la recolección que hoy logra n8n invocando al especialista como
   tool dentro del mismo turno del orquestador (`mensaje_cliente = "iniciar recolección"`).
 
-**Envío y medios**
+**Envío y medios (implementación de Twilio detrás de `WhatsappChannel`)**
 - `app/Services/Whatsapp/TwilioWhatsappClient.php` — enviar texto libre (ventana de 24h).
-- `app/Services/Whatsapp/TwilioMediaDownloader.php` — descarga el archivo desde Twilio y
-  lo entrega a `DocumentoExtraccionService`; el resultado (texto_extraido + archivo
-  almacenado) se procesa con el mismo `EventoRecoleccionService::procesarArchivo` que ya
-  usa el panel — heredando detección de duplicados, estados y validación de formato.
+- `app/Services/Whatsapp/TwilioMediaDownloader.php` — descarga un media de Twilio a un
+  archivo local (`{ruta_local, mime_type}`) — solo descarga; la extracción de texto y la
+  entrega a `EventoRecoleccionService`/`ToolExecutor::guardarCampoCliente` (con archivo
+  real) es responsabilidad de quien orquesta la recepción del media (pendiente de
+  conectar dentro del job, ver Fase 4).
 
 **Escalamiento a humano**
 - `database/migrations/xxxx_create_whatsapp_control_table.php`
@@ -383,20 +422,25 @@ la atención automática"), para que el cambio de tono no lo confunda.
       que `ParametrosFiscales` (con tests en `AgentePromptVigenteTest`).
 
 ### Fase 2 — Recepción (inbound) — completa
-- [x] `VerifyTwilioSignature` (middleware) — valida `X-Twilio-Signature` con
-      `Twilio\Security\RequestValidator`; reemplaza cualquier auth de sesión/Sanctum en
-      esta ruta pública.
-- [x] Ruta pública `POST /api/whatsapp/webhook` + `TwilioWebhookController` (invokable,
-      un solo `__invoke`) — responde 200 de inmediato y despacha el job (nada síncrono).
-- [x] `ProcesarMensajeWhatsappJob`: idempotencia por `MessageSid` (columna única +
-      `Cache::lock`) para tolerar reintentos de Twilio sin duplicar el procesamiento.
+- [x] `WhatsappChannel` (interfaz) + `TwilioChannel`/`MetaChannel` — la validación de
+      firma (antes en un middleware `VerifyTwilioSignature` específico de Twilio) ahora
+      vive en cada implementación, resuelta según el proveedor vigente (ver decisión de
+      arquitectura sobre soportar ambos).
+- [x] Ruta pública `GET|POST /api/whatsapp/webhook` + `WhatsappWebhookController`
+      (invokable, agnóstico de proveedor) — `GET` es el handshake de Meta (Twilio lo
+      ignora, responde 404), `POST` responde 200 de inmediato y despacha el job (nada
+      síncrono).
+- [x] `ProcesarMensajeWhatsappJob`: idempotencia por `mensajeId` (columna única
+      `mensaje_externo_id` + `Cache::lock`) para tolerar reintentos del proveedor sin
+      duplicar el procesamiento. Recibe un `MensajeEntranteWhatsapp` ya normalizado, no
+      el payload crudo de un proveedor en particular.
 - [x] Guarda el mensaje entrante en `whatsapp_mensajes` antes de invocar al agente, y
       resuelve/crea `whatsapp_control` (vinculando `cliente_id` si ya existe un cliente
-      con ese teléfono). El punto donde Fase 3 conecta `AgenteConversacionalService`
-      queda marcado dentro del propio job.
-- [x] Tests (`TwilioWebhookTest`, 6 casos): firma válida/inválida/ausente, no duplica
-      por reintento, vincula cliente existente por teléfono, guarda igual en modo
-      `humano`.
+      con ese teléfono).
+- [x] Tests: `TwilioWebhookTest` (6 casos, canal Twilio vía la ruta genérica),
+      `MetaWebhookTest` (5 casos: handshake válido/inválido, firma válida/inválida,
+      evento sin `messages`), `MetaChannelTest` (4 casos: descarga de media,
+      error de resolución, error de envío, payload correcto a la Graph API).
 - Nota de escala pendiente de decidir: el job hoy corre en la conexión de cola por
   defecto (`database` en dev, `sync` en test). Enrutarlo a `redis` es un solo
   `Queue::route(ProcesarMensajeWhatsappJob::class, connection: 'redis')` en
@@ -492,12 +536,19 @@ la atención automática"), para que el cambio de tono no lo confunda.
       PDF; si no da texto útil o el archivo ya es imagen, cae a Nivel 2) y devuelve
       `metodo_extraccion` junto con el texto. Migración + cast nuevo en `Documento`
       (`metodo_extraccion`, enum `MetodoExtraccionDocumento`).
-- [x] `TwilioMediaDownloader`: descarga cada `MediaUrlN` del payload con Basic Auth
-      (`services.twilio.account_sid`/`auth_token` — Twilio exige esto para `MediaUrlN`, a
-      diferencia del webhook en sí) y lo entrega a `DocumentoExtraccionService`. Expone
-      `comoArchivoSubido()` para envolver el archivo ya descargado como un
-      `Illuminate\Http\UploadedFile` real (`test: true`, evita el chequeo
-      `is_uploaded_file()` — el archivo no llegó por un POST HTTP, ya está en disco).
+- [x] `TwilioMediaDownloader::descargar(string $url)`: descarga un media de Twilio con
+      Basic Auth (`services.twilio.account_sid`/`auth_token` — Twilio exige esto para
+      `MediaUrlN`, a diferencia del webhook en sí) a un archivo local
+      (`{ruta_local, mime_type}`, el mime real de la respuesta, no un campo del payload
+      — ver decisión de arquitectura del canal). Solo descarga: la extracción de texto
+      es responsabilidad de quien orquesta (`DocumentoExtraccionService`, invocado por
+      quien conecte esto al job). Expone además `comoArchivoSubido()` para envolver el
+      archivo ya descargado como un `Illuminate\Http\UploadedFile` real (`test: true`,
+      evita el chequeo `is_uploaded_file()` — el archivo no llegó por un POST HTTP, ya
+      está en disco). Es la implementación Twilio detrás de
+      `WhatsappChannel::descargarMedia()` — `MetaChannel::descargarMedia()` hace el
+      equivalente para Meta (resolución en dos pasos: id → URL temporal + mime_type →
+      descarga).
 - [x] `TwilioWhatsappClient::enviarTexto()` — usa el SDK de Twilio inyectado (nuevo binding
       explícito en `AppServiceProvider::register()`, en vez de dejar que el contenedor
       auto-resuelva `Twilio\Rest\Client` por reflexión, que caería a leer variables de
@@ -508,23 +559,26 @@ la atención automática"), para que el cambio de tono no lo confunda.
       resuelto se pasa acá, y si se guardó correctamente, el `Documento` resultante queda
       con su `metodo_extraccion`.
 
-**Punto de integración pendiente para `AgenteConversacionalService` (Fase 3, todavía sin
-construir):** todas las piezas de Fase 4 están listas y probadas por separado, pero nadie
-las conecta todavía dentro de un turno real de conversación. Falta, dentro del loop de
-function-calling:
-1. Cuando `ProcesarMensajeWhatsappJob` recibe un mensaje con media, invocar
-   `TwilioMediaDownloader::descargarYExtraer($payload)` **antes** de llamar al agente, y
-   agregar el/los `texto` resultantes al contenido del mensaje que ve el modelo (mismo
-   formato `archivo_url`/`texto_extraido` que ya describe
+**Punto de integración pendiente:** `AgenteConversacionalService` ya existe (Fase 3
+completa) y `ToolExecutor::ejecutar()` ya acepta `?UploadedFile $file`/
+`?MetodoExtraccionDocumento $metodoExtraccion`, pero todavía nadie llena esos parámetros
+con datos reales — hoy el job siempre invoca al agente sin media, aunque el mensaje traiga
+`MensajeEntranteWhatsapp::$mediaReferencias` no vacío. Falta, dentro de
+`ProcesarMensajeWhatsappJob`/`AgenteConversacionalService`:
+1. Cuando el mensaje trae `mediaReferencias`, invocar `WhatsappChannel::descargarMedia()`
+   por cada una (agnóstico de proveedor: Twilio o Meta, según el canal vigente) y luego
+   `DocumentoExtraccionService::extraer($rutaLocal, $mimeType)` — antes de llamar al
+   agente — y agregar el/los `texto` resultantes al contenido del mensaje que ve el
+   modelo (mismo formato `archivo_url`/`texto_extraido` que ya describe
    `prompt_actuales/fases/recoleccion.md`, sección RECEPCIÓN DE DOCUMENTOS).
 2. Si el modelo decide invocar `guardar_campo_cliente` con `modo="archivo"` para uno de
-   esos documentos, `AgenteConversacionalService` (no `ToolExecutor`) es quien debe
-   llamar `TwilioMediaDownloader::comoArchivoSubido(...)` con la ruta/mime/nombre de ESE
-   documento concreto y pasar el `UploadedFile` + `MetodoExtraccionDocumento` resultantes
-   a `ToolExecutor::ejecutar(..., file: $archivo, metodoExtraccion: $metodo)` — hace
-   falta decidir cómo `AgenteConversacionalService` correlaciona "cuál de los N
-   documentos de este mensaje" con el tool call concreto del modelo (ej. por posición si
-   solo llega uno, o por una referencia explícita si llegan varios a la vez).
+   esos documentos, hace falta envolver la ruta/mime ya descargados como
+   `Illuminate\Http\UploadedFile` (`TwilioMediaDownloader::comoArchivoSubido()`, o su
+   equivalente si se agrega para Meta) y pasarlo a
+   `ToolExecutor::ejecutar(..., file: $archivo, metodoExtraccion: $metodo)` — hace falta
+   decidir cómo se correlaciona "cuál de los N documentos de este mensaje" con el tool
+   call concreto del modelo (ej. por posición si solo llega uno, o por una referencia
+   explícita si llegan varios a la vez).
 
 ### Fase 5 — Pruebas
 - [ ] Flujo completo en el Sandbox de Twilio con los tres casos de documento: imagen,

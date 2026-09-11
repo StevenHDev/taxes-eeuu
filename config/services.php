@@ -41,10 +41,25 @@ return [
         'whatsapp_table' => env('WHATSAPP_SUPABASE_TABLE_PATTERN', 'globaltax_registro_whatsapp'),
     ],
 
+    // 'twilio' | 'meta' — qué WhatsappChannel enlaza AppServiceProvider. Ver
+    // docs/implementar_agente_n8n.md, decisión de arquitectura sobre soportar
+    // ambos proveedores.
+    'whatsapp' => [
+        'provider' => env('WHATSAPP_PROVIDER', 'twilio'),
+    ],
+
     'twilio' => [
         'account_sid' => env('TWILIO_ACCOUNT_SID'),
         'auth_token' => env('TWILIO_AUTH_TOKEN'),
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
+    ],
+
+    'meta' => [
+        'app_secret' => env('META_APP_SECRET'),
+        'verify_token' => env('META_VERIFY_TOKEN'),
+        'access_token' => env('META_ACCESS_TOKEN'),
+        'phone_number_id' => env('META_PHONE_NUMBER_ID'),
+        'api_version' => env('META_API_VERSION', 'v21.0'),
     ],
 
     // Sin default para 'model'/'vision_model': el agente de WhatsApp no debe

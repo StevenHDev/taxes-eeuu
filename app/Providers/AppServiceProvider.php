@@ -16,6 +16,9 @@ use App\Observers\AuditoriaObserver;
 use App\Policies\BitacoraPolicy;
 use App\Policies\CatalogoPolicy;
 use App\Policies\ClientePolicy;
+use App\Services\Whatsapp\Meta\MetaChannel;
+use App\Services\Whatsapp\Twilio\TwilioChannel;
+use App\Services\Whatsapp\WhatsappChannel;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -43,6 +46,15 @@ class AppServiceProvider extends ServiceProvider
             (string) config('services.twilio.account_sid'),
             (string) config('services.twilio.auth_token'),
         ));
+
+        // "El switch" entre proveedores de WhatsApp (ver
+        // App\Services\Whatsapp\WhatsappChannel) — cambiar WHATSAPP_PROVIDER
+        // en .env es lo único que hace falta para pasar de Twilio a Meta o
+        // viceversa; el resto del sistema nunca conoce cuál está activo.
+        $this->app->bind(WhatsappChannel::class, fn ($app) => match (config('services.whatsapp.provider')) {
+            'meta' => $app->make(MetaChannel::class),
+            default => $app->make(TwilioChannel::class),
+        });
     }
 
     /**
