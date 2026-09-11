@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\RegistrarCierreSesion;
 use App\Listeners\RegistrarInicioSesion;
+use App\Models\AgentePrompt;
 use App\Models\BitacoraActividad;
 use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
@@ -14,6 +15,8 @@ use App\Models\NivelRiesgoManual;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Observers\AuditoriaObserver;
+use App\Observers\WhatsappMensajeObserver;
+use App\Policies\AgentePromptPolicy;
 use App\Policies\BitacoraPolicy;
 use App\Policies\CatalogoPolicy;
 use App\Policies\ClientePolicy;
@@ -70,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(CampoCatalogo::class, CatalogoPolicy::class);
         Gate::policy(BitacoraActividad::class, BitacoraPolicy::class);
         Gate::policy(WhatsappMensaje::class, WhatsappMensajePolicy::class);
+        Gate::policy(AgentePrompt::class, AgentePromptPolicy::class);
 
         // Bitácora general de la plataforma (ver App\Observers\AuditoriaObserver
         // para por qué nunca registra valores, solo nombres de atributo).
@@ -80,6 +84,10 @@ class AppServiceProvider extends ServiceProvider
         FormaCliente::observe(AuditoriaObserver::class);
         DeterminacionFiscal::observe(AuditoriaObserver::class);
         NivelRiesgoManual::observe(AuditoriaObserver::class);
+
+        // Realtime: cada WhatsappMensaje guardado se transmite por Reverb en
+        // el canal privado de su teléfono (ver WhatsappMensajeRecibido).
+        WhatsappMensaje::observe(WhatsappMensajeObserver::class);
 
         Event::listen(Login::class, RegistrarInicioSesion::class);
         Event::listen(Logout::class, RegistrarCierreSesion::class);

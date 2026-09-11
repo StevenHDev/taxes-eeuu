@@ -629,9 +629,16 @@ policies equivalentes de cada pieza) — mismo patrón de layout con tabs que
       `BitacoraController`) — sirve como log del webhook y para validar comportamiento.
       `AgenteMensajesController`, `WhatsappMensajePolicy`, DataTable con filtro por rol.
       4 tests (`AgenteMensajesTest`).
-- [ ] **Editor de prompts** (`/agente/prompts`) — ver contenido vigente por fase, editar,
+- [x] **Editor de prompts** (`/agente/prompts`) — ver contenido vigente por fase, editar,
       guardar como borrador, y publicar como nueva versión de `agente_prompts` (mismo
       concepto que `AgentePromptsSeeder`, pero desde la UI en vez de archivo+seeder).
+      `AgentePromptController`, `AgentePromptPolicy`. Siempre hay a lo sumo UN borrador
+      en curso (la versión inmediatamente siguiente a la vigente, sin publicar) —
+      guardar reutiliza esa misma versión en vez de crear una nueva en cada guardado;
+      publicar marca las 4 fases de esa versión como vigentes de una sola vez (nunca
+      fila por fila, para no dejar una fase huérfana sin contenido). Confirmación
+      explícita antes de publicar (cambia el comportamiento en vivo de todas las
+      conversaciones en curso). 7 tests (`AgentePromptEditorTest`).
 - [ ] **Tools por fase** (`/agente/tools` o similar) — ver las 5 tools existentes y en
       qué fase las expone `ToolDefinitions::paraFase()`, con un interruptor para
       activar/desactivar una tool puntual en una fase sin tocar código (para probar

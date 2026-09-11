@@ -12,3 +12,9 @@ export type MensajeAgenteLog = {
     mensaje_externo_id: string | null;
     prompt_version: number | null;
 };
+
+export type FasePrompt = {
+    fase: string;
+    label: string;
+    contenido: string;
+};

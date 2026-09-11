@@ -484,7 +484,8 @@
     },
     "agente": {
         "nav": {
-            "mensajes": "Messages"
+            "mensajes": "Messages",
+            "prompts": "Prompts"
         },
         "layout": {
             "title": "AI Agent",
@@ -510,6 +511,19 @@
                 "content": "Content",
                 "provider": "Provider",
                 "promptVersion": "Prompt version"
+            }
+        },
+        "prompts": {
+            "title": "Prompts",
+            "subtitle": "The agent's content by phase. Saving leaves an unpublished draft; publishing takes effect immediately for all ongoing conversations.",
+            "versionVigente": "Active version: {{version}}",
+            "borradorPendiente": "Unpublished draft: version {{version}}",
+            "guardarBorrador": "Save draft",
+            "publicar": "Publish version",
+            "confirmarPublicar": {
+                "title": "Publish this version?",
+                "description": "Version {{version}} takes effect immediately for all new and ongoing conversations. This action can't be undone from here.",
+                "confirm": "Yes, publish"
             }
         }
     },

@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { index as mensajesIndex } from '@/routes/agente/mensajes';
+import { index as promptsIndex } from '@/routes/agente/prompts';
 import type { NavItem } from '@/types';
 
 /**
@@ -24,6 +25,11 @@ export default function AgenteLayout({ children }: PropsWithChildren) {
         {
             title: t('agente.nav.mensajes'),
             href: mensajesIndex(),
+            icon: null,
+        },
+        {
+            title: t('agente.nav.prompts'),
+            href: promptsIndex(),
             icon: null,
         },
     ];

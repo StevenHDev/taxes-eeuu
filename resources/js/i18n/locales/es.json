@@ -484,7 +484,8 @@
     },
     "agente": {
         "nav": {
-            "mensajes": "Mensajes"
+            "mensajes": "Mensajes",
+            "prompts": "Prompts"
         },
         "layout": {
             "title": "Agente IA",
@@ -510,6 +511,19 @@
                 "content": "Contenido",
                 "provider": "Proveedor",
                 "promptVersion": "Versión de prompt"
+            }
+        },
+        "prompts": {
+            "title": "Prompts",
+            "subtitle": "Contenido del agente por fase. Guardar deja un borrador sin publicar; publicar lo pone en efecto de inmediato para todas las conversaciones en curso.",
+            "versionVigente": "Versión vigente: {{version}}",
+            "borradorPendiente": "Borrador sin publicar: versión {{version}}",
+            "guardarBorrador": "Guardar borrador",
+            "publicar": "Publicar versión",
+            "confirmarPublicar": {
+                "title": "¿Publicar esta versión?",
+                "description": "La versión {{version}} queda vigente de inmediato para todas las conversaciones nuevas y en curso. Esta acción no se puede deshacer desde acá.",
+                "confirm": "Sí, publicar"
             }
         }
     },
