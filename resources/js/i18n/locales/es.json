@@ -365,8 +365,18 @@
             "role": {
                 "human": "Cliente",
                 "ai": "Agente",
-                "system": "Sistema"
-            }
+                "system": "Sistema",
+                "preparador": "Preparador"
+            },
+            "control": {
+                "agente": "El agente está atendiendo esta conversación.",
+                "humano": "{{name}} tomó el control de esta conversación.",
+                "alguien": "Un preparador",
+                "tomar": "Tomar control",
+                "devolver": "Devolver al agente"
+            },
+            "manualPlaceholder": "Escribe un mensaje para enviar como preparador…",
+            "send": "Enviar"
         },
         "deleteClient": {
             "trigger": "Eliminar cliente",

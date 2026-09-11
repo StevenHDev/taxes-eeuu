@@ -108,9 +108,14 @@ export type HistorialCambio = {
 };
 
 export type MensajeWhatsapp = {
-    role: 'human' | 'ai' | 'system';
+    role: 'human' | 'ai' | 'system' | 'preparador';
     content: string;
     created_at: string | null;
+};
+
+export type ControlWhatsapp = {
+    estado: 'agente' | 'humano';
+    tomado_por: string | null;
 };
 
 export type CatalogoDisponibleItem = {

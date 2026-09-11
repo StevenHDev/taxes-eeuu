@@ -453,8 +453,16 @@ la atención automática"), para que el cambio de tono no lo confunda.
       prompt la generó — hecho dentro de `ProcesarMensajeWhatsappJob`.
 - [x] `WhatsappControl`: migración + modelo, con estado `agente`/`humano` por teléfono —
       hecho en Fase 1 (adelantado por ser también persistencia base).
-- [ ] Acciones de tomar/devolver control (panel) + botón y caja de envío manual en la
-      vista de conversación.
+- [x] Acciones de tomar/devolver control (panel) + botón y caja de envío manual en la
+      vista de conversación. `ClienteController::tomarControlWhatsapp`/
+      `devolverControlWhatsapp`/`enviarMensajeWhatsapp` (autorización `update`, misma
+      que el resto del panel). `conversacionWhatsapp` ahora mezcla el historial de
+      Supabase con `whatsapp_mensajes` (ordenado por instante real, no por el string
+      crudo de `created_at`) y devuelve el estado de control vigente. Frontend en
+      `WhatsappConversationDialog` (`clientes/show.tsx`): barra de estado + botón
+      tomar/devolver, caja de envío visible solo en modo `humano`, burbuja propia para
+      mensajes de `preparador`. 7 tests (`WhatsappHandoffTest`) + eslint/prettier/tsc
+      en verde.
 - [x] `ProcesarMensajeWhatsappJob` respeta el estado de control: no invoca al agente en
       modo `humano`, y vuelve a comprobar el estado justo antes de enviar la respuesta
       del agente (`$control->fresh()->esHumano()`, condición de carrera con una toma de
