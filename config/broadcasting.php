@@ -43,6 +43,14 @@ return [
             ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                // Solo mientras Reverb sirva con un certificado autofirmado
+                // (ver docker/entrypoint.sh, servicio reverb) — esto NO ayuda
+                // a la conexión WebSocket del navegador (esa sí necesita un
+                // certificado real; un navegador nunca acepta un autofirmado
+                // en wss://), solo evita que la publicación del evento desde
+                // PHP truene y se lleve por delante el guardado del mensaje
+                // (ver WhatsappMensajeObserver).
+                'verify' => ! env('REVERB_ACEPTAR_AUTOFIRMADO', false),
             ],
         ],
 
