@@ -531,7 +531,8 @@ la atención automática"), para que el cambio de tono no lo confunda.
       deliberadamente sin binario externo). Lanza una excepción clara si no está
       disponible, en vez de fallar en silencio. Confirmado en producción (2026-09-15) que
       faltaba en el runtime de Dokploy — agregado al `Dockerfile` (stage runtime, mismo
-      que sirve web/worker/reverb). `OpenAiClient::transcribirImagen()` nuevo,
+      que sirve web/worker/reverb) y verificado (`pdftoppm -v`) ya disponible en el
+      worker tras el rebuild. `OpenAiClient::transcribirImagen()` nuevo,
       reutiliza `completarChat()` (la API de OpenAI acepta `image_url` en el mismo
       endpoint de chat completions).
 - [x] `DocumentoExtraccionService` orquesta ambos niveles (Nivel 1 solo si el archivo es
