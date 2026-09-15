@@ -529,7 +529,9 @@ la atención automática"), para que el cambio de tono no lo confunda.
       PDF vía `pdftoppm` (poppler-utils) — requisito de infraestructura nuevo: **el host
       que corre la cola necesita `poppler-utils` instalado** (a diferencia del Nivel 1,
       deliberadamente sin binario externo). Lanza una excepción clara si no está
-      disponible, en vez de fallar en silencio. `OpenAiClient::transcribirImagen()` nuevo,
+      disponible, en vez de fallar en silencio. Confirmado en producción (2026-09-15) que
+      faltaba en el runtime de Dokploy — agregado al `Dockerfile` (stage runtime, mismo
+      que sirve web/worker/reverb). `OpenAiClient::transcribirImagen()` nuevo,
       reutiliza `completarChat()` (la API de OpenAI acepta `image_url` en el mismo
       endpoint de chat completions).
 - [x] `DocumentoExtraccionService` orquesta ambos niveles (Nivel 1 solo si el archivo es

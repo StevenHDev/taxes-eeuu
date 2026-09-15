@@ -47,9 +47,16 @@ RUN pnpm run build
 # ---------------------------------------------------------------------------
 FROM php:8.4-fpm AS runtime
 
+# poppler-utils (pdftoppm): rasteriza un PDF escaneado antes de mandarlo a
+# visión — ver App\Services\DocumentoExtraccion\DocumentoVisionExtractorService
+# (Nivel 2 de extracción de documentos, requisito de infraestructura ya
+# documentado ahí). Mismo runtime que sirve web/worker/reverb (ver
+# docker/entrypoint.sh, CONTAINER_ROLE), así que instalarlo acá alcanza para
+# los tres servicios.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         nginx supervisor \
         libpng-dev libonig-dev libxml2-dev libzip-dev libpq-dev unzip \
+        poppler-utils \
     && docker-php-ext-install pdo pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
