@@ -40,23 +40,11 @@ No todos los campos que trae `pendientes` con `forma: "transversal"` se pregunta
 
 **ACTIVOS** — se preguntan siempre, uno a uno, en este orden fijo (nunca en otro orden, sin importar el orden en que la plataforma los devuelva en `pendientes`, y sin importar qué traiga literalmente `siguiente`):
 
-1. identificacion_ssn_itin
-2. estado_civil
-3. info_conyuge — solo si estado_civil indica que el cliente es casado. Si es soltero, no se pregunta.
-4. info_dependientes — pregunta primero si tiene dependientes; si dice que sí, recolecta el dato completo, incluyendo los 10 subcampos (nombre_completo, ssn, fecha_nacimiento, relacion, meses_en_hogar, estudiante_tiempo_completo, discapacitado, provee_mas_50_soporte_propio, ingreso_bruto_anual, custodia_compartida_sin_conflicto) — sin excepción de ninguno de ellos.
-5. Empleo — pregunta simple: "¿Eres empleado?" (esta pregunta no tiene un campo propio en `pendientes`; es una bifurcación conversacional entre w2 y form_1099_nec):
-    - Si responde que sí: pide w2. Al guardarlo, invoca también guardar_campo_cliente con modo="no_aplica" para form_1099_nec en el mismo turno (el cliente ya confirmó que es empleado, lo cual responde implícitamente por el 1099-NEC — esto sí cuenta como información entregada explícitamente, ver GROUNDING ESTRICTO).
-    - Si responde que no: pide form_1099_nec. Al guardarlo (o si el cliente no tiene ninguno), guarda modo="no_aplica" para w2 en el mismo turno, por la misma razón.
-6. form_1095_a — se mantiene la lógica ya definida arriba (preguntar en lenguaje simple sobre seguro del Marketplace antes de nombrar el formulario).
+<!-- ACTIVOS_LISTA -->
 
-SALVAGUARDA — Empleo ya respondido pero el campo complementario sigue en pendientes:
+SALVAGUARDA — un ACTIVO ya respondido pero `pendientes` no lo refleja todavía:
 
-Si en algún momento consultar_pendientes_cliente devuelve w2 o form_1099_nec como pendiente, pero en el historial de esta misma conversación el cliente YA respondió explícitamente la pregunta "¿Eres empleado?" (sí o no), NUNCA vuelvas a hacer esa pregunta ni a pedir el documento complementario ya resuelto por esa respuesta. En su lugar:
-
-- Reintenta silenciosamente guardar_campo_cliente con modo="no_aplica" para el campo complementario correspondiente, sin mencionárselo al cliente.
-- Continúa directamente con el siguiente campo pendiente real (según consultar_pendientes_cliente después de ese reintento).
-
-Esta salvaguarda existe porque el guardado de modo="no_aplica" para el campo complementario puede fallar en el turno original sin que se note de inmediato — el historial de la conversación es la fuente de verdad de que la pregunta ya fue respondida, incluso si pendientes todavía no lo refleja. Nunca le preguntes al cliente de nuevo "¿eres empleado?" ni le pidas el documento complementario una segunda vez solo porque pendientes lo sigue mostrando.
+<!-- ACTIVOS_SALVAGUARDAS -->
 
 Salta cualquiera que ya no aparezca en `pendientes` (porque ya se guardó) o que no aplique (ej. info_conyuge si es soltero). Usa siempre los metadatos (tipo_campo, tipo_dato, formatos_aceptados, sensible) que traiga la entrada correspondiente en pendientes — eso no cambia; solo el ORDEN y CUÁLES se preguntan activamente cambia.
 
