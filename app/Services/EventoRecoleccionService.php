@@ -222,6 +222,37 @@ class EventoRecoleccionService
     }
 
     /**
+     * Re-valida una fila ya guardada de campos_cliente con la lógica ACTUAL de
+     * validarContenido() — pensado para reparar filas que quedaron Invalido
+     * por un bug de validación ya corregido (ej. SUBCAMPOS_OPCIONALES),
+     * cuyo valor_texto guardado en su momento en realidad sí era válido. No
+     * vuelve a tocar valor_texto ni crea historial_cambios (no es una edición
+     * de contenido, solo una re-evaluación de su estado); si el estado
+     * cambia, recalcula la completitud de las formas afectadas igual que un
+     * evento normal.
+     */
+    public function revalidarValorExistente(CampoCliente $campoCliente): CampoCliente
+    {
+        return DB::transaction(function () use ($campoCliente) {
+            $field = TaxFieldCatalog::find($campoCliente->tax_year, $campoCliente->forma, $campoCliente->campo);
+
+            $estado = $this->validarContenido(
+                $campoCliente->campo,
+                $field['tipo_dato'] ?? null,
+                $field['subcampos'] ?? null,
+                $campoCliente->valor_texto,
+            );
+
+            if ($estado !== $campoCliente->estado) {
+                $campoCliente->update(['estado' => $estado]);
+                $this->recalcularAfectadas($campoCliente->user, $campoCliente->tax_year, $campoCliente->forma, $campoCliente->campo);
+            }
+
+            return $campoCliente->refresh();
+        });
+    }
+
+    /**
      * Elimina un campo cargado por error (sección 6.1 del plan: el preparador debe
      * poder corregir o quitar un dato mal capturado). Se conserva `historial_cambios`
      * (con `valor_nuevo: null`) para trazabilidad; lo que se borra es la fila
@@ -438,10 +469,10 @@ class EventoRecoleccionService
         $valido = match ($tipoDato) {
             FieldDataType::String => $this->validarString($campo, $valor),
             FieldDataType::Number => is_numeric($valor) && (float) $valor >= 0,
-            FieldDataType::Object => is_array($valor) && $this->objetoTieneSubcampos($valor, $subcampos),
+            FieldDataType::Object => is_array($valor) && $this->objetoTieneSubcampos($campo, $valor, $subcampos),
             FieldDataType::ArrayString => is_array($valor) && collect($valor)->every(fn ($item) => is_string($item)),
             FieldDataType::ArrayObject => is_array($valor) && collect($valor)->every(
-                fn ($item) => is_array($item) && $this->objetoTieneSubcampos($item, $subcampos),
+                fn ($item) => is_array($item) && $this->objetoTieneSubcampos($campo, $item, $subcampos),
             ),
             null => false,
         };
@@ -463,12 +494,42 @@ class EventoRecoleccionService
     }
 
     /**
+     * Subcampos que el prompt del agente instruye deliberadamente a NUNCA
+     * preguntar ni incluir en ciertas ramas de la conversación (ver
+     * prompt_actuales/fases/recoleccion.md) — exigir su presencia con
+     * array_key_exists marcaría el campo como Invalido aunque el cliente ya
+     * haya respondido todo lo que se le pidió. `objetoTieneSubcampos` los
+     * trata como opcionales: si están presentes se validan igual (ver
+     * validaciones de ssn/fecha_nacimiento más abajo), pero su ausencia no
+     * invalida el objeto.
+     *
+     * - info_conyuge.fecha_nacimiento: excepción documentada en el prompt
+     *   ("FECHA DE NACIMIENTO DEL CÓNYUGE — NUNCA SE PREGUNTA").
+     * - estado_civil.conyuge_fallecio_en_anio / anio_fallecimiento_conyuge:
+     *   solo aplican a un cliente viudo; el prompt no instruye rellenarlos
+     *   con un valor neutro para clientes solteros/casados, así que quedan
+     *   ausentes del JSON guardado en esos casos.
+     *
+     * @var array<string, array<int, string>>
+     */
+    private const SUBCAMPOS_OPCIONALES = [
+        'info_conyuge' => ['fecha_nacimiento'],
+        'estado_civil' => ['conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge'],
+    ];
+
+    /**
      * @param  array<string, mixed>  $valor
      * @param  array<int, string>|null  $subcampos
      */
-    private function objetoTieneSubcampos(array $valor, ?array $subcampos): bool
+    private function objetoTieneSubcampos(string $campo, array $valor, ?array $subcampos): bool
     {
+        $opcionales = self::SUBCAMPOS_OPCIONALES[$campo] ?? [];
+
         foreach ($subcampos ?? [] as $subcampo) {
+            if (in_array($subcampo, $opcionales, true)) {
+                continue;
+            }
+
             if (! array_key_exists($subcampo, $valor)) {
                 return false;
             }

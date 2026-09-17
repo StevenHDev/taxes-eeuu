@@ -11,6 +11,7 @@ use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\RelacionDocumentoCampo;
 use App\Models\User;
+use App\Services\EventoRecoleccionService;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -1293,5 +1294,125 @@ class EventoRecoleccionTest extends TestCase
         $this->assertEquals(55665.0, $campo->valor_texto['salarios']);
         $this->assertEquals(18200.5, $campo->valor_texto['seguridad_social']);
         $this->assertEquals(0.0, $campo->valor_texto['intereses_dividendos']);
+    }
+
+    /**
+     * Bug real reportado en producción: un cliente soltero respondía las 4
+     * preguntas de estado_civil que sí aplican, pero el agente nunca
+     * pregunta (ni el prompt instruye rellenar con un valor neutro) los 2
+     * subcampos de viudez — el objeto quedaba Invalido por faltarle esas 2
+     * claves, así que consultar_pendientes_cliente lo seguía devolviendo
+     * como pendiente y el agente repetía la misma pregunta indefinidamente.
+     * Ver EventoRecoleccionService::SUBCAMPOS_OPCIONALES.
+     */
+    public function test_estado_civil_sin_datos_de_viudez_es_valido_para_un_cliente_soltero(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'estado_civil',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => [
+                'casado_al_31_dic' => false,
+                'convivio_conyuge_ultimos_6_meses' => false,
+                'costeo_mas_mitad_hogar' => true,
+                'existe_persona_calificable' => true,
+            ],
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('estado', 'recibido');
+    }
+
+    /**
+     * Mismo bug que el test anterior, para info_conyuge: el prompt instruye
+     * explícitamente omitir fecha_nacimiento del JSON guardado (limitación
+     * temporal documentada), pero el objeto igual exigía esa clave.
+     */
+    public function test_info_conyuge_sin_fecha_nacimiento_es_valido(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'info_conyuge',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => [
+                'nombre_completo' => 'Jane Doe',
+                'ssn' => '987654321',
+            ],
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('estado', 'recibido');
+    }
+
+    /**
+     * Control: un objeto SIN subcampos opcionales conocidos (info_bancaria)
+     * sigue exigiendo todas sus claves — el fix de SUBCAMPOS_OPCIONALES es
+     * una excepción puntual, no una relajación general de la validación.
+     */
+    public function test_info_bancaria_incompleta_sigue_siendo_invalida(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'info_bancaria',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => ['banco' => 'Banco X', 'tipo_cuenta' => 'checking'],
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('estado', 'invalido');
+    }
+
+    /**
+     * revalidarValorExistente() repara, sin re-enviar el evento, una fila que
+     * quedó Invalido por el bug ya corregido — el caso real fue un cliente
+     * cuyo estado_civil quedó atascado como pendiente en el agente de
+     * WhatsApp porque nunca pasaba de Invalido a Recibido.
+     */
+    public function test_revalidar_valor_existente_corrige_un_campo_invalido_por_el_bug_ya_arreglado(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $campo = CampoCliente::query()->create([
+            'user_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'estado_civil',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'valor_texto' => [
+                'casado_al_31_dic' => false,
+                'convivio_conyuge_ultimos_6_meses' => false,
+                'costeo_mas_mitad_hogar' => true,
+                'existe_persona_calificable' => true,
+            ],
+            'estado' => 'invalido',
+            'source' => 'agente_ia',
+        ]);
+
+        $actualizada = app(EventoRecoleccionService::class)->revalidarValorExistente($campo);
+
+        $this->assertSame('recibido', $actualizada->estado->value);
     }
 }
