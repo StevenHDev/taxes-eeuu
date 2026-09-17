@@ -106,9 +106,24 @@ class ClienteController extends Controller
         return to_route('clientes.show', $cliente);
     }
 
-    public function destroy(User $cliente): RedirectResponse
+    /**
+     * Eliminar un cliente NUNCA borra su historial de WhatsApp por default —
+     * es la fuente de verdad de la conversación, y un cliente real puede
+     * necesitar volver a tenerla visible aunque se corrija/recree su
+     * cuenta. `eliminar_conversacion_whatsapp` es una opción explícita,
+     * pensada para números de prueba: sin ella, el mismo teléfono reutilizado
+     * por un cliente nuevo hereda los mensajes huérfanos del anterior (bug
+     * real encontrado en producción — el agente llegó a mencionarle a un
+     * cliente nuevo el nombre de un dependiente del cliente ya borrado).
+     */
+    public function destroy(Request $request, User $cliente): RedirectResponse
     {
         $this->authorize('delete', $cliente);
+
+        if ($request->boolean('eliminar_conversacion_whatsapp') && $cliente->phone) {
+            WhatsappMensaje::query()->where('telefono', $cliente->phone)->delete();
+            WhatsappControl::query()->where('telefono', $cliente->phone)->delete();
+        }
 
         $this->eliminarArchivosDe($cliente);
         $cliente->delete();

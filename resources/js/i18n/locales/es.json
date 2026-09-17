@@ -386,6 +386,7 @@
             "trigger": "Eliminar cliente",
             "title": "¿Eliminar a {{name}}?",
             "description": "Se borran todos sus campos, documentos e historial. Esta acción no se puede deshacer.",
+            "alsoDeleteConversation": "También eliminar su conversación de WhatsApp (mensajes y estado de control). Úsalo solo para números de prueba — si el teléfono es de un cliente real, no lo marques: sin esto, el historial queda disponible para revisión aunque se borre la cuenta.",
             "confirm": "Eliminar definitivamente"
         },
         "formState": {

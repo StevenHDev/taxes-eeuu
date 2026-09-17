@@ -1983,6 +1983,8 @@ export default function ClienteShow({
     const { auth } = usePage<PageProps>().props;
     const esAdministrador = auth.user.role === 'administrator';
 
+    const [eliminarConversacion, setEliminarConversacion] = useState(false);
+
     // Rango simple alrededor del año actual — alcanza para elegir un año
     // distinto al que trae el backend sin depender de otro prop adicional.
     const anosSeleccionables = Array.from(
@@ -2120,6 +2122,29 @@ export default function ClienteShow({
                                             'clienteShow.deleteClient.description',
                                         )}
                                     </DialogDescription>
+
+                                    {cliente.phone && (
+                                        <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
+                                            <Checkbox
+                                                id="eliminar-conversacion"
+                                                checked={eliminarConversacion}
+                                                onCheckedChange={(v) =>
+                                                    setEliminarConversacion(
+                                                        v === true,
+                                                    )
+                                                }
+                                            />
+                                            <Label
+                                                htmlFor="eliminar-conversacion"
+                                                className="text-sm font-normal"
+                                            >
+                                                {t(
+                                                    'clienteShow.deleteClient.alsoDeleteConversation',
+                                                )}
+                                            </Label>
+                                        </div>
+                                    )}
+
                                     <DialogFooter>
                                         <Button
                                             variant="destructive"
@@ -2127,6 +2152,12 @@ export default function ClienteShow({
                                                 router.delete(
                                                     clienteDestroy(cliente.id)
                                                         .url,
+                                                    {
+                                                        data: {
+                                                            eliminar_conversacion_whatsapp:
+                                                                eliminarConversacion,
+                                                        },
+                                                    },
                                                 )
                                             }
                                         >

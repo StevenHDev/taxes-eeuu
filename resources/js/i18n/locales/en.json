@@ -386,6 +386,7 @@
             "trigger": "Delete client",
             "title": "Delete {{name}}?",
             "description": "All of their fields, documents, and history will be deleted. This action cannot be undone.",
+            "alsoDeleteConversation": "Also delete their WhatsApp conversation (messages and control state). Use this only for test numbers — if the phone belongs to a real client, leave it unchecked: without this, the history stays available for review even after the account is deleted.",
             "confirm": "Delete permanently"
         },
         "formState": {

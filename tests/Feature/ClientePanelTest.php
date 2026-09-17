@@ -11,6 +11,8 @@ use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\User;
+use App\Models\WhatsappControl;
+use App\Models\WhatsappMensaje;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -385,6 +387,48 @@ class ClientePanelTest extends TestCase
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
         $this->actingAs($admin)->delete(route('clientes.destroy', $cliente))->assertRedirect();
         $this->assertDatabaseMissing('users', ['id' => $cliente->id]);
+    }
+
+    /**
+     * Bug real encontrado en producción: al eliminar un cliente de prueba,
+     * su historial de WhatsApp queda huérfano bajo el mismo teléfono — un
+     * cliente nuevo que reciba ese número después hereda esos mensajes como
+     * si fueran suyos (el agente llegó a mencionarle a un cliente nuevo el
+     * nombre de un dependiente del cliente ya borrado). Por default NO se
+     * borra (es la fuente de verdad para un cliente real, incluso ya
+     * eliminado) — `eliminar_conversacion_whatsapp` es la opción explícita
+     * para números de prueba.
+     */
+    public function test_eliminar_cliente_sin_la_opcion_conserva_su_conversacion_de_whatsapp(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
+
+        WhatsappControl::query()->create(['telefono' => '+15551234567', 'estado' => 'agente', 'cliente_id' => $cliente->id]);
+        WhatsappMensaje::query()->create(['telefono' => '+15551234567', 'rol' => 'cliente', 'contenido' => 'hola', 'cliente_id' => $cliente->id]);
+
+        $this->actingAs($admin)->delete(route('clientes.destroy', $cliente))->assertRedirect();
+
+        $this->assertDatabaseMissing('users', ['id' => $cliente->id]);
+        $this->assertDatabaseHas('whatsapp_control', ['telefono' => '+15551234567']);
+        $this->assertDatabaseHas('whatsapp_mensajes', ['telefono' => '+15551234567']);
+    }
+
+    public function test_eliminar_cliente_con_la_opcion_tambien_borra_su_conversacion_de_whatsapp(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
+
+        WhatsappControl::query()->create(['telefono' => '+15551234567', 'estado' => 'agente', 'cliente_id' => $cliente->id]);
+        WhatsappMensaje::query()->create(['telefono' => '+15551234567', 'rol' => 'cliente', 'contenido' => 'hola', 'cliente_id' => $cliente->id]);
+
+        $this->actingAs($admin)
+            ->delete(route('clientes.destroy', $cliente), ['eliminar_conversacion_whatsapp' => true])
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('users', ['id' => $cliente->id]);
+        $this->assertDatabaseMissing('whatsapp_control', ['telefono' => '+15551234567']);
+        $this->assertDatabaseMissing('whatsapp_mensajes', ['telefono' => '+15551234567']);
     }
 
     public function test_agregar_un_campo_que_nunca_envio_el_agente(): void
