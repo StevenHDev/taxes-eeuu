@@ -26,7 +26,12 @@ import {
 } from '@/components/ui/table';
 import { dashboard } from '@/routes';
 import { index as catalogoIndex } from '@/routes/catalogo';
-import type { CampoCatalogo, FormaOption } from '@/types';
+import type {
+    CampoCatalogo,
+    DerivationStats,
+    FormaOption,
+    RelacionDocumento,
+} from '@/types';
 
 type Errors = Partial<
     Record<
@@ -231,6 +236,103 @@ function CampoForm({
     );
 }
 
+/**
+ * Inspector de relaciones documento→campo (Fase 3, ver
+ * agentes-subagentes-flujos-motor-decision.md) — muestra al admin
+ * exactamente lo que el agente ve vía `revela` cuando procesa este
+ * documento, más el rastro real de uso del log de derivación (Fase 1).
+ */
+function RelacionesButton({
+    clave,
+    relaciones,
+    stats,
+}: {
+    clave: string;
+    relaciones: RelacionDocumento[];
+    stats: DerivationStats | undefined;
+}) {
+    const { t } = useTranslation();
+
+    if (relaciones.length === 0) {
+        return null;
+    }
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                    {t('catalogo.relations.viewButton', {
+                        count: relaciones.length,
+                    })}
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>
+                    {t('catalogo.relations.dialogTitle', { key: clave })}
+                </DialogTitle>
+                <p className="text-sm text-muted-foreground">
+                    {t('catalogo.relations.dialogDescription')}
+                </p>
+
+                <ul className="space-y-2">
+                    {relaciones.map((r) => (
+                        <li
+                            key={`${r.forma}-${r.campo}-${r.subcampo ?? ''}`}
+                            className="rounded-md border p-3 text-sm"
+                        >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="font-mono font-medium">
+                                    {t('catalogo.relations.target', {
+                                        forma: r.forma,
+                                        campo: r.subcampo
+                                            ? `${r.campo}.${r.subcampo}`
+                                            : r.campo,
+                                    })}
+                                </span>
+                                {r.acumulable && (
+                                    <Badge variant="outline">
+                                        {t('catalogo.relations.accumulable')}
+                                    </Badge>
+                                )}
+                            </div>
+                            {r.descripcion && (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {r.descripcion}
+                                </p>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+
+                <div className="rounded-md bg-muted/50 p-3 text-xs">
+                    <p className="mb-1 font-medium">
+                        {t('catalogo.relations.statsTitle')}
+                    </p>
+                    {stats ? (
+                        <p className="text-muted-foreground">
+                            {t('catalogo.relations.stats', {
+                                count: stats.total,
+                            })}
+                            {stats.con_faltantes > 0 && (
+                                <>
+                                    {' · '}
+                                    {t('catalogo.relations.statsMissing', {
+                                        count: stats.con_faltantes,
+                                    })}
+                                </>
+                            )}
+                        </p>
+                    ) : (
+                        <p className="text-muted-foreground">
+                            {t('catalogo.relations.statsNone')}
+                        </p>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function CampoRowActions({ campo }: { campo: CampoCatalogo }) {
     const { t } = useTranslation();
     const [editar, setEditar] = useState(false);
@@ -281,10 +383,14 @@ function FormaSection({
     forma,
     taxYear,
     campos,
+    relacionesPorDocumento,
+    statsPorDocumento,
 }: {
     forma: FormaOption;
     taxYear: number;
     campos: CampoCatalogo[];
+    relacionesPorDocumento: Record<string, RelacionDocumento[]>;
+    statsPorDocumento: Record<string, DerivationStats>;
 }) {
     const { t } = useTranslation();
     const [nuevo, setNuevo] = useState(false);
@@ -381,7 +487,20 @@ function FormaSection({
                                     )}
                                 </TableCell>
                                 <TableCell>
-                                    <CampoRowActions campo={campo} />
+                                    <div className="flex items-center justify-end gap-1">
+                                        <RelacionesButton
+                                            clave={campo.clave}
+                                            relaciones={
+                                                relacionesPorDocumento[
+                                                    campo.clave
+                                                ] ?? []
+                                            }
+                                            stats={
+                                                statsPorDocumento[campo.clave]
+                                            }
+                                        />
+                                        <CampoRowActions campo={campo} />
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -408,11 +527,15 @@ export default function CatalogoIndex({
     campos,
     taxYearActual,
     anosDisponibles,
+    relacionesPorDocumento,
+    statsPorDocumento,
 }: {
     formas: FormaOption[];
     campos: CampoCatalogo[];
     taxYearActual: number;
     anosDisponibles: number[];
+    relacionesPorDocumento: Record<string, RelacionDocumento[]>;
+    statsPorDocumento: Record<string, DerivationStats>;
 }) {
     const { t } = useTranslation();
 
@@ -470,6 +593,8 @@ export default function CatalogoIndex({
                         campos={(campos ?? []).filter(
                             (c) => c.forma === forma.value,
                         )}
+                        relacionesPorDocumento={relacionesPorDocumento ?? {}}
+                        statsPorDocumento={statsPorDocumento ?? {}}
                     />
                 ))}
             </div>

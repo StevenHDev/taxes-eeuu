@@ -144,6 +144,19 @@ export type CampoCatalogo = {
     sensible: boolean;
 };
 
+export type RelacionDocumento = {
+    forma: string;
+    campo: string;
+    subcampo: string | null;
+    descripcion: string | null;
+    acumulable: boolean;
+};
+
+export type DerivationStats = {
+    total: number;
+    con_faltantes: number;
+};
+
 export type TipoDeterminacion =
     | 'filing_status'
     | 'dependientes'

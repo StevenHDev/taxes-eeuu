@@ -621,7 +621,21 @@
             "addFieldTo": "Add field to {{form}}"
         },
         "fieldCount_one": "{{count}} field",
-        "fieldCount_other": "{{count}} fields"
+        "fieldCount_other": "{{count}} fields",
+        "relations": {
+            "viewButton": "View relations ({{count}})",
+            "dialogTitle": "What «{{key}}» reveals",
+            "dialogDescription": "These are the fields this document resolves automatically when the agent processes it — without asking the client for them again.",
+            "target": "→ {{forma}}.{{campo}}",
+            "accumulable": "Accumulable (more than one document can contribute)",
+            "empty": "This document has no declared relations — the agent only stores it as a file, without resolving other fields automatically.",
+            "statsTitle": "In production",
+            "stats_one": "{{count}} document processed",
+            "stats_other": "{{count}} documents processed",
+            "statsMissing_one": "{{count}} with some relation left uncovered",
+            "statsMissing_other": "{{count}} with some relation left uncovered",
+            "statsNone": "No usage data yet for this tax year."
+        }
     },
     "settings": {
         "layout": {

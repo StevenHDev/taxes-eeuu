@@ -621,7 +621,21 @@
             "addFieldTo": "Agregar campo a {{form}}"
         },
         "fieldCount_one": "{{count}} campo",
-        "fieldCount_other": "{{count}} campos"
+        "fieldCount_other": "{{count}} campos",
+        "relations": {
+            "viewButton": "Ver relaciones ({{count}})",
+            "dialogTitle": "Qué revela «{{key}}»",
+            "dialogDescription": "Estos son los campos que este documento resuelve automáticamente cuando el agente lo procesa — el mismo texto y datos que recibe el agente al subirlo, sin que tenga que volver a preguntarlos.",
+            "target": "→ {{forma}}.{{campo}}",
+            "accumulable": "Acumulable (varios documentos pueden aportar)",
+            "empty": "Este documento no tiene ninguna relación declarada — el agente solo lo guarda como archivo, sin resolver otros campos automáticamente.",
+            "statsTitle": "En producción",
+            "stats_one": "{{count}} documento procesado",
+            "stats_other": "{{count}} documentos procesados",
+            "statsMissing_one": "{{count}} con alguna relación sin cubrir",
+            "statsMissing_other": "{{count}} con alguna relación sin cubrir",
+            "statsNone": "Sin datos de uso todavía para este año fiscal."
+        }
     },
     "settings": {
         "layout": {

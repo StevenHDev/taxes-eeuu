@@ -5,6 +5,9 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
+use App\Models\CampoDerivationLog;
+use App\Models\Documento;
+use App\Models\RelacionDocumentoCampo;
 use App\Models\User;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,6 +64,69 @@ class CatalogoPanelTest extends TestCase
 
         $this->assertDatabaseHas('catalogo_campos', ['forma' => 'form_1040', 'tax_year' => 2025, 'clave' => 'ingresos']);
         $this->assertDatabaseHas('catalogo_campos', ['forma' => 'form_1040', 'tax_year' => 2026, 'clave' => 'ingresos']);
+    }
+
+    /**
+     * Ver agentes-subagentes-flujos-motor-decision.md (Fase 3, inspector de
+     * catálogo): el admin debe ver, por documento, exactamente lo que el
+     * agente ve vía `revela` (RelacionDocumentoCampo) y el rastro real de
+     * uso (CampoDerivationLog, Fase 1).
+     */
+    public function test_expone_las_relaciones_declaradas_y_las_estadisticas_de_uso_por_documento(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        RelacionDocumentoCampo::query()->create([
+            'documento_forma' => 'transversal',
+            'documento_campo' => 'w2',
+            'campo_destino_forma' => 'form_1040',
+            'campo_destino' => 'ingresos',
+            'subcampo_destino' => 'salarios',
+            'descripcion' => 'Box 1 del W-2.',
+            'acumulable' => false,
+            'tax_year' => 2025,
+        ]);
+
+        $documento = Documento::query()->create([
+            'user_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'w2',
+            'file_path' => 'clientes/w2.pdf',
+            'file_original_name' => 'w2.pdf',
+            'file_mime_type' => 'application/pdf',
+            'file_size' => 10,
+            'formato' => 'pdf',
+            'estado_validacion' => 'recibido',
+        ]);
+
+        CampoDerivationLog::query()->create([
+            'user_id' => $cliente->id,
+            'tax_year' => 2025,
+            'documento_id' => $documento->id,
+            'documento_campo' => 'w2',
+            'relaciones_esperadas' => [['forma' => 'form_1040', 'campo' => 'ingresos', 'subcampo' => 'salarios', 'descripcion' => null, 'acumulable' => false]],
+            'revelados_recibidos' => [],
+            'relaciones_faltantes' => [['forma' => 'form_1040', 'campo' => 'ingresos', 'subcampo' => 'salarios', 'descripcion' => null, 'acumulable' => false]],
+        ]);
+
+        // w2 ya trae otras relaciones reales sembradas por migración (ver
+        // Fase de Medicare wages) además de la que este test crea — no se
+        // asume posición, se busca la propia por nombre.
+        $response = $this->actingAs($admin)
+            ->get(route('catalogo.index', ['tax_year' => 2025]))
+            ->assertOk();
+
+        $relacionesW2 = collect($response->viewData('page')['props']['relacionesPorDocumento']['w2']);
+        $ingresos = $relacionesW2->firstWhere('subcampo', 'salarios');
+
+        $this->assertNotNull($ingresos);
+        $this->assertSame('ingresos', $ingresos['campo']);
+
+        $stats = $response->viewData('page')['props']['statsPorDocumento']['w2'];
+        $this->assertSame(1, $stats['total']);
+        $this->assertSame(1, $stats['con_faltantes']);
     }
 
     public function test_duplicar_el_mismo_campo_dentro_del_mismo_ano_falla(): void
