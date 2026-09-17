@@ -14,6 +14,7 @@ use App\Services\Whatsapp\WhatsappChannel;
 use App\Services\WhatsappAgent\AdjuntosWhatsappService;
 use App\Services\WhatsappAgent\AgenteConversacionalService;
 use App\Support\AgenteWhatsappUser;
+use App\Support\TelefonoWhatsapp;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
@@ -62,7 +63,11 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
                 return;
             }
 
-            $telefono = $this->mensaje->telefono;
+            // Normalizado de nuevo acá (no solo en el canal): este es el
+            // punto real donde el teléfono se usa para comparar/guardar en
+            // whatsapp_control/whatsapp_mensajes — ver App\Support\TelefonoWhatsapp
+            // para el bug real que motivó esta doble garantía.
+            $telefono = TelefonoWhatsapp::normalizar($this->mensaje->telefono) ?? $this->mensaje->telefono;
 
             $control = WhatsappControl::query()->firstOrCreate(
                 ['telefono' => $telefono],

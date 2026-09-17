@@ -4,6 +4,7 @@ namespace App\Services\Whatsapp\Meta;
 
 use App\DataTransferObjects\MensajeEntranteWhatsapp;
 use App\Services\Whatsapp\WhatsappChannel;
+use App\Support\TelefonoWhatsapp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -75,12 +76,12 @@ class MetaChannel implements WhatsappChannel
             ->values()
             ->all();
 
-        $telefono = (string) ($mensaje['from'] ?? '');
+        $telefono = TelefonoWhatsapp::normalizar((string) ($mensaje['from'] ?? '')) ?? '';
 
         return new MensajeEntranteWhatsapp(
             proveedor: 'meta',
             mensajeId: (string) ($mensaje['id'] ?? ''),
-            telefono: $telefono === '' ? '' : '+'.ltrim($telefono, '+'),
+            telefono: $telefono,
             texto: $texto,
             mediaReferencias: $referencias,
         );

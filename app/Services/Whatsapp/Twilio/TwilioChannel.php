@@ -6,6 +6,7 @@ use App\DataTransferObjects\MensajeEntranteWhatsapp;
 use App\Services\Whatsapp\TwilioMediaDownloader;
 use App\Services\Whatsapp\TwilioWhatsappClient;
 use App\Services\Whatsapp\WhatsappChannel;
+use App\Support\TelefonoWhatsapp;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Twilio\Security\RequestValidator;
@@ -57,7 +58,7 @@ class TwilioChannel implements WhatsappChannel
         }
 
         $from = (string) $request->input('From', '');
-        $telefono = str_starts_with($from, 'whatsapp:') ? substr($from, strlen('whatsapp:')) : $from;
+        $telefono = TelefonoWhatsapp::normalizar($from) ?? '';
 
         $numMedia = (int) $request->input('NumMedia', 0);
         $referencias = [];

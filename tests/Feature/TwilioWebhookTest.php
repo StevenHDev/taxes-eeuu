@@ -139,6 +139,37 @@ class TwilioWebhookTest extends TestCase
         $this->assertSame(1, $respuesta->prompt_version);
     }
 
+    /**
+     * Bug real reportado en producción: Twilio no siempre garantiza el "+"
+     * en `From` (o el valor llegó contaminado por otra vía) — sin
+     * normalización, ese mensaje creaba una SEGUNDA fila de whatsapp_control
+     * ("573213445027", cliente_id null) distinta de la que ya existía para
+     * el mismo cliente ("+573213445027"), y whatsapp_mensajes quedaba
+     * fragmentado entre los dos formatos. Ver App\Support\TelefonoWhatsapp.
+     */
+    public function test_un_from_sin_signo_mas_se_normaliza_y_calza_con_el_cliente_existente(): void
+    {
+        $this->fakeAgenteConversacional();
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
+
+        $payload = $this->payload(['From' => 'whatsapp:15551234567']);
+        $url = route('api.whatsapp.webhook');
+
+        $this->withHeaders(['X-Twilio-Signature' => $this->firmar($url, $payload)])
+            ->post($url, $payload)
+            ->assertOk();
+
+        $mensaje = WhatsappMensaje::query()->where('mensaje_externo_id', $payload['MessageSid'])->first();
+        $this->assertSame('+15551234567', $mensaje->telefono);
+        $this->assertSame($cliente->id, $mensaje->cliente_id);
+
+        $this->assertSame(1, WhatsappControl::query()->where('telefono', '+15551234567')->count());
+        $this->assertSame(0, WhatsappControl::query()->where('telefono', '15551234567')->count());
+
+        $control = WhatsappControl::query()->where('telefono', '+15551234567')->first();
+        $this->assertSame($cliente->id, $control->cliente_id);
+    }
+
     public function test_una_firma_invalida_se_rechaza_y_no_guarda_nada(): void
     {
         $this->fakeAgenteConversacional();
