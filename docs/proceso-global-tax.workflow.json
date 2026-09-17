@@ -1,0 +1,267 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Proceso de Global Tax Services",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "conversacion",
+        "label": "Conversación con el cliente",
+        "focus": [
+          "cliente",
+          "verificacion",
+          "formas",
+          "recoleccion",
+          "catalogo"
+        ],
+        "note": "Desde que el cliente escribe por WhatsApp hasta que ya dio todos sus datos."
+      },
+      {
+        "id": "resultado",
+        "label": "Cálculo y cierre",
+        "focus": [
+          "campos_guardados",
+          "motor_reglas",
+          "determinacion_fiscal",
+          "preparador",
+          "cliente_final"
+        ],
+        "note": "Cómo los datos guardados se convierten en el resultado — y cuándo interviene un preparador."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "ui",
+      "label": "Cliente"
+    },
+    {
+      "id": "agent",
+      "label": "Agente de WhatsApp"
+    },
+    {
+      "id": "platform",
+      "label": "Plataforma"
+    },
+    {
+      "id": "engine",
+      "label": "Motor de Reglas Fiscales"
+    }
+  ],
+  "phases": [
+    {
+      "id": "conversacion",
+      "label": "Conversación por WhatsApp",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "recoleccion_fase",
+      "label": "Recolección de datos",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "calculo_fase",
+      "label": "Cálculo fiscal",
+      "fromCol": 4,
+      "toCol": 4
+    },
+    {
+      "id": "entrega_fase",
+      "label": "Entrega y revisión",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "cliente",
+    "verificacion",
+    "formas",
+    "recoleccion",
+    "campos_guardados",
+    "motor_reglas",
+    "determinacion_fiscal",
+    "cliente_final"
+  ],
+  "nodes": [
+    {
+      "id": "cliente",
+      "lane": "ui",
+      "col": 0,
+      "type": "external",
+      "label": "Cliente",
+      "sublabel": "por WhatsApp"
+    },
+    {
+      "id": "verificacion",
+      "lane": "agent",
+      "col": 1,
+      "type": "backend",
+      "label": "Verificación",
+      "sublabel": "crea o vincula cliente",
+      "width": 122
+    },
+    {
+      "id": "formas",
+      "lane": "agent",
+      "col": 2,
+      "type": "backend",
+      "label": "Forma(s)",
+      "sublabel": "año + Schedules",
+      "width": 110
+    },
+    {
+      "id": "recoleccion",
+      "lane": "agent",
+      "col": 3,
+      "type": "backend",
+      "label": "Recolección",
+      "sublabel": "preguntas + documentos",
+      "tag": "tool calls",
+      "width": 120
+    },
+    {
+      "id": "catalogo",
+      "lane": "platform",
+      "col": 3,
+      "type": "database",
+      "label": "Catálogo de Campos",
+      "sublabel": "qué pedir y qué revela",
+      "width": 140
+    },
+    {
+      "id": "campos_guardados",
+      "lane": "platform",
+      "col": 4,
+      "type": "database",
+      "label": "Datos Guardados",
+      "sublabel": "campos_cliente, documentos",
+      "width": 120
+    },
+    {
+      "id": "motor_reglas",
+      "lane": "engine",
+      "col": 4,
+      "type": "backend",
+      "label": "Motor de Reglas",
+      "sublabel": "AGI + créditos",
+      "width": 120
+    },
+    {
+      "id": "determinacion_fiscal",
+      "lane": "engine",
+      "col": 5,
+      "type": "backend",
+      "label": "Determinación",
+      "sublabel": "liquidación calculada",
+      "width": 130
+    },
+    {
+      "id": "preparador",
+      "lane": "platform",
+      "col": 5,
+      "type": "security",
+      "label": "Preparador Revisa",
+      "sublabel": "caso de riesgo alto",
+      "tag": "solo si aplica",
+      "width": 130
+    },
+    {
+      "id": "cliente_final",
+      "lane": "ui",
+      "col": 5,
+      "type": "external",
+      "label": "Cliente",
+      "sublabel": "recibe declaración"
+    }
+  ],
+  "edges": [
+    {
+      "id": "cliente-verificacion",
+      "from": "cliente",
+      "to": "verificacion",
+      "variant": "default"
+    },
+    {
+      "id": "verificacion-formas",
+      "from": "verificacion",
+      "to": "formas",
+      "label": "cuenta creada",
+      "variant": "default"
+    },
+    {
+      "id": "formas-recoleccion",
+      "from": "formas",
+      "to": "recoleccion",
+      "label": "forma(s) + año fiscal",
+      "variant": "emphasis"
+    },
+    {
+      "id": "recoleccion-catalogo",
+      "from": "recoleccion",
+      "to": "catalogo",
+      "label": "consulta pendientes",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "recoleccion-campos",
+      "from": "recoleccion",
+      "to": "campos_guardados",
+      "label": "guarda cada campo",
+      "variant": "default"
+    },
+    {
+      "id": "campos-motor",
+      "from": "campos_guardados",
+      "to": "motor_reglas",
+      "label": "datos completos",
+      "variant": "emphasis"
+    },
+    {
+      "id": "motor-determinacion",
+      "from": "motor_reglas",
+      "to": "determinacion_fiscal",
+      "label": "AGI, créditos, liquidación",
+      "variant": "default"
+    },
+    {
+      "id": "determinacion-preparador",
+      "from": "determinacion_fiscal",
+      "to": "preparador",
+      "label": "riesgo alto",
+      "variant": "security",
+      "role": "branch"
+    },
+    {
+      "id": "determinacion-cliente",
+      "from": "determinacion_fiscal",
+      "to": "cliente_final",
+      "label": "declaración lista",
+      "variant": "default"
+    },
+    {
+      "id": "preparador-cliente",
+      "from": "preparador",
+      "to": "cliente_final",
+      "label": "aprueba",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Cómo funciona",
+      "items": [
+        "El catálogo (no el prompt) dice qué pedir, en qué formato y qué es obligatorio",
+        "Un documento puede revelar otro campo sin que el agente vuelva a preguntarlo",
+        "El motor de reglas solo usa datos ya guardados, nunca lo que el cliente escribió sin confirmar"
+      ]
+    }
+  ]
+}
