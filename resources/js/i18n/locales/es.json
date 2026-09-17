@@ -406,6 +406,14 @@
             "invalido": "Inválido",
             "no_aplica": "No aplica"
         },
+        "derivationLogs": {
+            "title": "Derivación de documentos",
+            "description": "Qué campos resolvió cada documento subido, y cuáles relaciones declaradas en el catálogo quedaron sin cubrir.",
+            "complete": "Todas las relaciones se cubrieron",
+            "missing_one": "{{count}} relación sin cubrir",
+            "missing_other": "{{count}} relaciones sin cubrir",
+            "unnamedDocument": "Documento sin nombre"
+        },
         "noAplica": {
             "trigger": "No aplica"
         },

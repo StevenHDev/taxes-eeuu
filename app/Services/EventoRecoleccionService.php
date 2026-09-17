@@ -11,6 +11,7 @@ use App\Enums\FormState;
 use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Models\CampoCliente;
+use App\Models\CampoDerivationLog;
 use App\Models\ClientIntakeSession;
 use App\Models\Documento;
 use App\Models\FormaCliente;
@@ -89,8 +90,62 @@ class EventoRecoleccionService
                 ];
             }
 
+            $this->registrarDerivacion($cliente, (int) $data->get('tax_year'), $principal['campo_cliente'], $data->get('revelados') ?? []);
+
             return [...$principal, 'revelados' => $revelados];
         });
+    }
+
+    /**
+     * Traza de un documento con relaciones documento→campo declaradas (ver
+     * RelacionDocumentoCampo): compara lo que TaxFieldCatalog::revelaPara()
+     * dice que este documento debería resolver contra lo que realmente llegó
+     * en `revelados` en esta misma invocación, y deja registrado cualquier
+     * relación declarada que no se haya cubierto — pensado para depurar "por
+     * qué no se guardó tal campo desde tal documento" sin releer el
+     * historial completo de la conversación a mano (ver
+     * CampoDerivationLog). No bloquea ni afecta el resultado del evento:
+     * una falla acá nunca debe tumbar el guardado real.
+     *
+     * @param  array<int, array<string, mixed>>  $revelados  tal cual llegó en $data->get('revelados'), no el resultado ya procesado
+     */
+    private function registrarDerivacion(User $cliente, int $taxYear, CampoCliente $documentoCampo, array $revelados): void
+    {
+        if ($documentoCampo->documento_id === null) {
+            return;
+        }
+
+        $esperadas = TaxFieldCatalog::revelaPara($taxYear, $documentoCampo->campo);
+
+        if ($esperadas === []) {
+            return;
+        }
+
+        $recibidos = collect($revelados)
+            ->map(fn (array $r) => [
+                'forma' => $r['forma'] ?? null,
+                'campo' => $r['campo'] ?? null,
+                'subcampo' => $r['subcampo'] ?? null,
+            ])
+            ->values()
+            ->all();
+
+        $faltantes = collect($esperadas)
+            ->reject(fn (array $rel) => collect($recibidos)->contains(
+                fn (array $r) => $r['forma'] === $rel['forma'] && $r['campo'] === $rel['campo'] && $r['subcampo'] === $rel['subcampo'],
+            ))
+            ->values()
+            ->all();
+
+        CampoDerivationLog::query()->create([
+            'user_id' => $cliente->id,
+            'tax_year' => $taxYear,
+            'documento_id' => $documentoCampo->documento_id,
+            'documento_campo' => $documentoCampo->campo,
+            'relaciones_esperadas' => $esperadas,
+            'revelados_recibidos' => $recibidos,
+            'relaciones_faltantes' => $faltantes,
+        ]);
     }
 
     /**

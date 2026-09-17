@@ -406,6 +406,14 @@
             "invalido": "Invalid",
             "no_aplica": "Not applicable"
         },
+        "derivationLogs": {
+            "title": "Document derivation",
+            "description": "Which fields each uploaded document resolved, and which relations declared in the catalog were left uncovered.",
+            "complete": "All relations were covered",
+            "missing_one": "{{count}} relation not covered",
+            "missing_other": "{{count}} relations not covered",
+            "unnamedDocument": "Unnamed document"
+        },
         "noAplica": {
             "trigger": "Not applicable"
         },

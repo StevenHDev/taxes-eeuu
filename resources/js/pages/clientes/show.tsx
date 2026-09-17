@@ -9,6 +9,8 @@ import {
 import { Fragment, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
+import { DerivationLogsPanel } from '@/components/derivation-logs-panel';
+import type { DerivationLog } from '@/components/derivation-logs-panel';
 import { DeterminacionFiscalPanel } from '@/components/determinacion-fiscal-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -1965,6 +1967,7 @@ export default function ClienteShow({
     catalogoDisponible,
     taxYearActual,
     determinaciones,
+    derivationLogs,
     nivelRiesgo,
 }: {
     cliente: { id: number; name: string; email: string; phone: string | null };
@@ -1973,6 +1976,7 @@ export default function ClienteShow({
     catalogoDisponible: CatalogoDisponibleItem[];
     taxYearActual: number;
     determinaciones: Determinacion[];
+    derivationLogs: DerivationLog[];
     nivelRiesgo: NivelRiesgoEfectivo;
 }) {
     const { t } = useTranslation();
@@ -2148,6 +2152,8 @@ export default function ClienteShow({
                     taxYear={taxYearActual}
                     determinaciones={determinaciones}
                 />
+
+                <DerivationLogsPanel logs={derivationLogs} />
 
                 <div className="flex justify-end">
                     <AgregarCampoDialog

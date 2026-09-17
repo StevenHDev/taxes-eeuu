@@ -10,6 +10,7 @@ use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
 use App\Http\Requests\ClienteStoreRequest;
 use App\Models\CampoCatalogo;
+use App\Models\CampoDerivationLog;
 use App\Models\DeterminacionFiscal;
 use App\Models\Documento;
 use App\Models\FormaCliente;
@@ -224,6 +225,23 @@ class ClienteController extends Controller
                 'version_reglas' => $d->version_reglas,
                 'calculado_en' => $d->calculado_en,
             ]),
+            // Traza de qué relaciones documento→campo se cubrieron (o no) al
+            // guardar cada documento — ver CampoDerivationLog y
+            // EventoRecoleccionService::registrarDerivacion(). Solo interesa
+            // al preparador para depurar, así que va aparte de `campos`.
+            'derivationLogs' => CampoDerivationLog::query()
+                ->where('user_id', $cliente->id)
+                ->where('tax_year', $taxYear)
+                ->with('documento:id,file_original_name')
+                ->latest('id')
+                ->get()
+                ->map(fn (CampoDerivationLog $log) => [
+                    'documento_campo' => $log->documento_campo,
+                    'documento_nombre' => $log->documento?->file_original_name,
+                    'relaciones_esperadas' => $log->relaciones_esperadas,
+                    'relaciones_faltantes' => $log->relaciones_faltantes,
+                    'created_at' => $log->created_at,
+                ]),
         ]);
     }
 

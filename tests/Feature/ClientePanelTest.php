@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\CampoCliente;
+use App\Models\CampoDerivationLog;
 use App\Models\CampoReveal;
 use App\Models\Documento;
 use App\Models\FormaCliente;
@@ -458,5 +459,50 @@ class ClientePanelTest extends TestCase
                 ->has('clientes', 2)
                 ->where('clientes.0.name', 'John Smith')
                 ->where('clientes.1.name', 'Jane Doe'));
+    }
+
+    /**
+     * Ver CampoDerivationLog / EventoRecoleccionService::registrarDerivacion().
+     */
+    public function test_el_show_expone_los_derivation_logs_del_ano_fiscal_actual(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $documento = Documento::query()->create([
+            'user_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'w2',
+            'file_path' => 'clientes/w2.pdf',
+            'file_original_name' => 'w2.pdf',
+            'file_mime_type' => 'application/pdf',
+            'file_size' => 10,
+            'formato' => 'pdf',
+            'estado_validacion' => 'recibido',
+        ]);
+
+        CampoDerivationLog::query()->create([
+            'user_id' => $cliente->id,
+            'tax_year' => 2025,
+            'documento_id' => $documento->id,
+            'documento_campo' => 'w2',
+            'relaciones_esperadas' => [
+                ['forma' => 'form_1040', 'campo' => 'salarios_medicare', 'subcampo' => null, 'descripcion' => null, 'acumulable' => true],
+            ],
+            'revelados_recibidos' => [],
+            'relaciones_faltantes' => [
+                ['forma' => 'form_1040', 'campo' => 'salarios_medicare', 'subcampo' => null, 'descripcion' => null, 'acumulable' => true],
+            ],
+        ]);
+
+        $this->actingAs($preparador)
+            ->get(route('clientes.show', ['cliente' => $cliente, 'tax_year' => 2025]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('derivationLogs', 1)
+                ->where('derivationLogs.0.documento_campo', 'w2')
+                ->where('derivationLogs.0.documento_nombre', 'w2.pdf')
+                ->has('derivationLogs.0.relaciones_faltantes', 1));
     }
 }
