@@ -40,57 +40,21 @@ class EventoRequest extends FormRequest
      * en vez de exploded fields. Se decodifican aquí, antes de que corran las
      * reglas de 'array', para aceptar ambas formas de envío (string JSON o
      * arreglo/objeto nativo, como en una request JSON pura) sin duplicar
-     * validación. `revelados` se decodifica primero porque cada uno de sus
-     * items puede a su vez traer su propio `contenido` en la misma forma.
+     * validación. Delega en EventoValidator::decodificarContenido(), la misma
+     * lógica que usa ToolExecutor (agente de WhatsApp, sin request HTTP) para
+     * no repetir esta decodificación en dos lugares.
      */
     protected function prepareForValidation(): void
     {
-        $revelados = $this->decodificarSiEsJson($this->input('revelados'));
+        $cambios = (new EventoValidator)->decodificarContenido([
+            'revelados' => $this->input('revelados'),
+            'contenido' => $this->input('contenido'),
+            'tipo_dato' => $this->input('tipo_dato'),
+        ]);
 
-        if (is_array($revelados)) {
-            foreach ($revelados as $i => $item) {
-                if (is_array($item) && array_key_exists('contenido', $item)) {
-                    $tipoDato = FieldDataType::tryFrom((string) ($item['tipo_dato'] ?? ''));
-
-                    if (in_array($tipoDato, [FieldDataType::Object, FieldDataType::ArrayString, FieldDataType::ArrayObject], true)) {
-                        $revelados[$i]['contenido'] = $this->decodificarSiEsJson($item['contenido']) ?? $item['contenido'];
-                    }
-                }
-            }
-
-            $this->merge(['revelados' => $revelados]);
+        if ($cambios !== []) {
+            $this->merge($cambios);
         }
-
-        $tipoDatoRaiz = FieldDataType::tryFrom((string) $this->input('tipo_dato'));
-
-        if (in_array($tipoDatoRaiz, [FieldDataType::Object, FieldDataType::ArrayString, FieldDataType::ArrayObject], true)) {
-            $contenido = $this->decodificarSiEsJson($this->input('contenido'));
-
-            if ($contenido !== null) {
-                $this->merge(['contenido' => $contenido]);
-            }
-        }
-    }
-
-    /**
-     * Decodifica $valor si es un string JSON que representa un arreglo/objeto;
-     * si ya es un arreglo (request JSON pura, o item ya decodificado dentro de
-     * `revelados`) o no es JSON válido, lo devuelve tal cual (null si no era
-     * string ni array, para que el llamador decida el fallback).
-     */
-    private function decodificarSiEsJson(mixed $valor): mixed
-    {
-        if (is_array($valor)) {
-            return $valor;
-        }
-
-        if (! is_string($valor) || $valor === '') {
-            return null;
-        }
-
-        $decodificado = json_decode($valor, true);
-
-        return is_array($decodificado) ? $decodificado : null;
     }
 
     /**

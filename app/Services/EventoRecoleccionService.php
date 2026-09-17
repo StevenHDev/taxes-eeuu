@@ -222,29 +222,44 @@ class EventoRecoleccionService
     }
 
     /**
-     * Re-valida una fila ya guardada de campos_cliente con la lógica ACTUAL de
-     * validarContenido() — pensado para reparar filas que quedaron Invalido
-     * por un bug de validación ya corregido (ej. SUBCAMPOS_OPCIONALES),
-     * cuyo valor_texto guardado en su momento en realidad sí era válido. No
-     * vuelve a tocar valor_texto ni crea historial_cambios (no es una edición
-     * de contenido, solo una re-evaluación de su estado); si el estado
-     * cambia, recalcula la completitud de las formas afectadas igual que un
-     * evento normal.
+     * Re-valida (y si hace falta, repara) una fila ya guardada de
+     * campos_cliente con la lógica ACTUAL — pensado para corregir filas que
+     * quedaron Invalido por un bug ya arreglado:
+     *
+     * - SUBCAMPOS_OPCIONALES (validarContenido/objetoTieneSubcampos): el
+     *   valor_texto guardado en su momento en realidad sí era válido, no
+     *   hace falta tocarlo, solo re-evaluar el estado.
+     * - ToolExecutor no decodificaba `contenido` antes de guardarlo (ver
+     *   EventoValidator::decodificarContenido): para un campo tipo
+     *   objeto/arreglo del agente de WhatsApp, valor_texto quedó como el
+     *   string JSON crudo en vez del array real — acá se decodifica antes
+     *   de validar, y si resulta un array válido, se persiste corregido.
+     *
+     * No crea historial_cambios (no es una edición de contenido del
+     * cliente, es una reparación de un bug de persistencia/validación); si
+     * el estado o el valor cambian, recalcula la completitud de las formas
+     * afectadas igual que un evento normal.
      */
     public function revalidarValorExistente(CampoCliente $campoCliente): CampoCliente
     {
         return DB::transaction(function () use ($campoCliente) {
             $field = TaxFieldCatalog::find($campoCliente->tax_year, $campoCliente->forma, $campoCliente->campo);
+            $tipoDato = $field['tipo_dato'] ?? null;
 
-            $estado = $this->validarContenido(
-                $campoCliente->campo,
-                $field['tipo_dato'] ?? null,
-                $field['subcampos'] ?? null,
-                $campoCliente->valor_texto,
-            );
+            $valor = $campoCliente->valor_texto;
 
-            if ($estado !== $campoCliente->estado) {
-                $campoCliente->update(['estado' => $estado]);
+            if (is_string($valor) && in_array($tipoDato, [FieldDataType::Object, FieldDataType::ArrayString, FieldDataType::ArrayObject], true)) {
+                $decodificado = json_decode($valor, true);
+
+                if (is_array($decodificado)) {
+                    $valor = $decodificado;
+                }
+            }
+
+            $estado = $this->validarContenido($campoCliente->campo, $tipoDato, $field['subcampos'] ?? null, $valor);
+
+            if ($estado !== $campoCliente->estado || $valor !== $campoCliente->valor_texto) {
+                $campoCliente->update(['estado' => $estado, 'valor_texto' => $valor]);
                 $this->recalcularAfectadas($campoCliente->user, $campoCliente->tax_year, $campoCliente->forma, $campoCliente->campo);
             }
 

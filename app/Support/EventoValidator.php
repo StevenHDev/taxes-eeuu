@@ -25,6 +25,77 @@ use Illuminate\Http\UploadedFile;
 class EventoValidator
 {
     /**
+     * Decodifica `contenido` (y cada `revelados[].contenido`) cuando llega
+     * como string JSON en vez de array/objeto nativo — ambos caminos que
+     * arman `$datos` (EventoRequest::prepareForValidation() para el agente
+     * externo por HTTP, ToolExecutor::guardarCampoCliente() para el agente
+     * de WhatsApp) reciben el mismo shape de "contenido siempre como string,
+     * incluso para una estructura compleja" (ver docs/prompt.md, punto 8 y
+     * 10 de guardar_campo_cliente) y ambos deben decodificarlo igual antes
+     * de validar/persistir — bug real en producción: ToolExecutor no lo
+     * hacía, así que un campo tipo objeto/arreglo del agente de WhatsApp
+     * quedaba guardado como el string JSON crudo, no como array real, y
+     * validarContenido() lo marcaba FieldState::Invalido sin que nadie lo
+     * notara (el cliente lo veía "Inválido" y el agente lo repreguntaba
+     * indefinidamente porque nunca pasaba a Recibido).
+     *
+     * @param  array<string, mixed>  $datos  con llaves 'contenido', 'tipo_dato', y opcionalmente 'revelados'
+     * @return array<string, mixed> solo las llaves que deben sobreescribirse (vacío si nada cambia)
+     */
+    public function decodificarContenido(array $datos): array
+    {
+        $cambios = [];
+
+        $revelados = $this->decodificarSiEsJson($datos['revelados'] ?? null);
+
+        if (is_array($revelados)) {
+            foreach ($revelados as $i => $item) {
+                if (is_array($item) && array_key_exists('contenido', $item)) {
+                    $tipoDato = FieldDataType::tryFrom((string) ($item['tipo_dato'] ?? ''));
+
+                    if (in_array($tipoDato, [FieldDataType::Object, FieldDataType::ArrayString, FieldDataType::ArrayObject], true)) {
+                        $revelados[$i]['contenido'] = $this->decodificarSiEsJson($item['contenido']) ?? $item['contenido'];
+                    }
+                }
+            }
+
+            $cambios['revelados'] = $revelados;
+        }
+
+        $tipoDatoRaiz = FieldDataType::tryFrom((string) ($datos['tipo_dato'] ?? ''));
+
+        if (in_array($tipoDatoRaiz, [FieldDataType::Object, FieldDataType::ArrayString, FieldDataType::ArrayObject], true)) {
+            $contenido = $this->decodificarSiEsJson($datos['contenido'] ?? null);
+
+            if ($contenido !== null) {
+                $cambios['contenido'] = $contenido;
+            }
+        }
+
+        return $cambios;
+    }
+
+    /**
+     * Decodifica $valor si es un string JSON que representa un arreglo/objeto;
+     * si ya es un arreglo o no es JSON válido, devuelve null para que el
+     * llamador decida el fallback (conservar el valor original).
+     */
+    private function decodificarSiEsJson(mixed $valor): mixed
+    {
+        if (is_array($valor)) {
+            return $valor;
+        }
+
+        if (! is_string($valor) || $valor === '') {
+            return null;
+        }
+
+        $decodificado = json_decode($valor, true);
+
+        return is_array($decodificado) ? $decodificado : null;
+    }
+
+    /**
      * @param  array<string, mixed>  $datos  mismo shape que EventoRequest::validated()
      * @param  ?UploadedFile  $file  presente solo cuando modo="archivo"; valida su extensión
      *                               contra `formatos_aceptados` del catálogo

@@ -1415,4 +1415,48 @@ class EventoRecoleccionTest extends TestCase
 
         $this->assertSame('recibido', $actualizada->estado->value);
     }
+
+    /**
+     * Segundo bug real, más grave, del mismo caso en producción:
+     * ToolExecutor no decodificaba `contenido` antes de guardarlo (ver
+     * EventoValidator::decodificarContenido) — un campo tipo objeto del
+     * agente de WhatsApp quedaba con valor_texto literalmente el string
+     * JSON crudo, no un array. revalidarValorExistente() también repara
+     * este caso: decodifica el string y persiste el array real (no solo
+     * re-evalúa el estado sobre el string, que seguiría siendo Invalido).
+     */
+    public function test_revalidar_valor_existente_decodifica_un_valor_texto_guardado_como_string_json(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $contenido = [
+            'casado_al_31_dic' => false,
+            'convivio_conyuge_ultimos_6_meses' => false,
+            'costeo_mas_mitad_hogar' => true,
+            'existe_persona_calificable' => true,
+            'conyuge_fallecio_en_anio' => false,
+            'anio_fallecimiento_conyuge' => null,
+        ];
+
+        $campo = CampoCliente::query()->create([
+            'user_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'estado_civil',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'valor_texto' => json_encode($contenido),
+            'estado' => 'invalido',
+            'source' => 'agente_ia',
+        ]);
+
+        $this->assertIsString($campo->fresh()->valor_texto, 'Precondición: reproduce el bug real (guardado como string, no array).');
+
+        $actualizada = app(EventoRecoleccionService::class)->revalidarValorExistente($campo);
+
+        $this->assertSame('recibido', $actualizada->estado->value);
+        $this->assertIsArray($actualizada->valor_texto);
+        $this->assertTrue($actualizada->valor_texto['costeo_mas_mitad_hogar']);
+    }
 }

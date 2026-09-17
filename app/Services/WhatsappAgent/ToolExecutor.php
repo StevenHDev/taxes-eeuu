@@ -115,6 +115,14 @@ class ToolExecutor
         $taxYear = $this->taxYearVigente($cliente);
         $datos = [...$argumentos, 'tax_year' => $taxYear, 'cliente_id' => $cliente->id];
 
+        // El modelo siempre manda `contenido` (y cada revelados[].contenido)
+        // como string, incluso para una estructura compleja (ver
+        // ToolDefinitions) — decodificarlo es lo mismo que ya hace
+        // EventoRequest::prepareForValidation() para el camino HTTP; ver
+        // EventoValidator::decodificarContenido() para el bug real que
+        // causaba omitir este paso acá.
+        $datos = [...$datos, ...$this->eventoValidator->decodificarContenido($datos)];
+
         $errores = $this->eventoValidator->validar($datos, $file);
 
         if ($errores !== []) {

@@ -140,6 +140,49 @@ class ToolExecutorTest extends TestCase
         $this->assertSame($this->actor->id, $campo->actualizado_por);
     }
 
+    /**
+     * Bug real reportado en producción: el modelo del agente de WhatsApp
+     * manda `contenido` SIEMPRE como string, incluso para un objeto
+     * (serializado — ver ToolDefinitions), pero ToolExecutor nunca lo
+     * decodificaba de vuelta a un array antes de guardarlo (a diferencia de
+     * EventoRequest::prepareForValidation(), que sí lo hacía para el camino
+     * HTTP). El campo quedaba guardado con el string JSON crudo como
+     * valor_texto, y validarContenido() lo marcaba Invalido para siempre —
+     * el cliente lo veía "Inválido" sin explicación y el agente lo
+     * repreguntaba indefinidamente porque nunca pasaba a Recibido. Ver
+     * EventoValidator::decodificarContenido().
+     */
+    public function test_guardar_campo_cliente_decodifica_contenido_objeto_enviado_como_string_json(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
+
+        $contenido = [
+            'salarios' => 52000,
+            'intereses_dividendos' => 0,
+            'ganancias_capital' => 0,
+            'ingresos_jubilacion' => 0,
+            'otros_ingresos' => 0,
+            'ajustes_ingreso' => 0,
+            'seguridad_social' => 0,
+        ];
+
+        $resultado = $this->tools->ejecutar('guardar_campo_cliente', [
+            'forma' => 'form_1040',
+            'campo' => 'ingresos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => json_encode($contenido),
+        ], $cliente, $this->actor);
+
+        $this->assertSame('recibido', $resultado['estado']->value);
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
+        $this->assertIsArray($campo->valor_texto);
+        $this->assertSame(52000.0, (float) $campo->valor_texto['salarios']);
+    }
+
     public function test_guardar_campo_cliente_invalido_no_guarda_y_devuelve_los_errores(): void
     {
         $cliente = User::factory()->create(['role' => UserRole::Client]);
