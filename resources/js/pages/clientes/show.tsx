@@ -39,6 +39,11 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { WhatsappConversationDialog } from '@/components/whatsapp-conversation-dialog';
 import { dashboard } from '@/routes';
 import {
@@ -1800,7 +1805,19 @@ function FormaSection({
                                 )}
                             </TableCell>
                             <TableCell className="align-top">
-                                <EstadoTag estado={campo.estado} />
+                                <div className="flex items-center gap-1.5">
+                                    <EstadoTag estado={campo.estado} />
+                                    {campo.advertencia && (
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <AlertTriangle className="size-4 text-amber-500" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                {campo.advertencia}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    )}
+                                </div>
                             </TableCell>
                             <TableCell className="text-right align-top">
                                 <HistorialDialog

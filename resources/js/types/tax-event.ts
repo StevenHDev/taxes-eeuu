@@ -91,6 +91,7 @@ export type CampoCliente = {
     subcampos: string[] | null;
     modo: 'archivo' | 'texto' | 'no_aplica';
     estado: FieldState;
+    advertencia: string | null;
     valor: unknown;
     es_sensible: boolean;
     documento: CampoDocumento | null;

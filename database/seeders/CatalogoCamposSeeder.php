@@ -170,6 +170,16 @@ class CatalogoCamposSeeder extends Seeder
                 ]),
                 $this->campo('deducciones', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg']),
                 $this->campo('impuestos_retenidos', FieldKind::Dato, tipoDato: FieldDataType::Number),
+                // Box 5 del W-2 (Medicare wages) — necesario para
+                // AdditionalMedicareTaxCalculator (Form 8959). Antes de este
+                // campo, DeterminacionFiscalService sustituía este valor por
+                // ingresos.salarios (Box 1), que subestima el impuesto para
+                // cualquier cliente con descuentos pre-tax de nómina (401k,
+                // HSA, sección 125): Box 5 siempre es >= Box 1 en esos casos.
+                // Fila nueva vía CatalogoCamposSeeder — instalaciones ya
+                // provisionadas la reciben aparte (ver
+                // 2026_09_17_130000_agrega_salarios_medicare_a_catalogo.php).
+                $this->campo('salarios_medicare', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('info_bancaria', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: ['banco', 'tipo_cuenta', 'numero_cuenta', 'routing_number'], sensible: true),
                 // Alimenta el Child and Dependent Care Credit (Form 2441) — ver
                 // App\Services\Reglas\CreditEligibilityCalculator. No todos los

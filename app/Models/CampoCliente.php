@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property mixed $valor_texto
  * @property int|null $documento_id
  * @property FieldState $estado
+ * @property string|null $advertencia
  * @property EventSource $source
  * @property int|null $actualizado_por
  * @property-read mixed $valor
@@ -38,6 +39,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'valor_texto',
     'documento_id',
     'estado',
+    'advertencia',
     'source',
     'actualizado_por',
 ])]

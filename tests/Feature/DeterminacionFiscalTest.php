@@ -110,6 +110,91 @@ class DeterminacionFiscalTest extends TestCase
         $this->assertGreaterThan(0, $creditos->resultado['total']);
     }
 
+    /**
+     * Bug real encontrado evaluando un W-2 de ejemplo: Additional Medicare
+     * Tax (Form 8959) usaba ingresos.salarios (Box 1) como sustituto de
+     * Medicare wages (Box 5) — subestima el impuesto cuando hay descuentos
+     * pre-tax de nómina (401k, HSA), porque Box 5 siempre es >= Box 1 en esos
+     * casos. Este cliente tiene Box 1 = 195,000 (bajo el umbral soltero de
+     * 200,000) pero Box 5 = 210,000 (sobre el umbral) — sin el fix, el
+     * impuesto adicional daría 0.
+     */
+    public function test_additional_medicare_tax_usa_salarios_medicare_cuando_esta_disponible(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->cargarCampo($cliente, 'transversal', 'estado_civil', [
+            'casado_al_31_dic' => false,
+            'convivio_conyuge_ultimos_6_meses' => false,
+            'costeo_mas_mitad_hogar' => false,
+            'existe_persona_calificable' => false,
+            'conyuge_fallecio_en_anio' => false,
+            'anio_fallecimiento_conyuge' => null,
+        ]);
+
+        $this->cargarCampo($cliente, 'form_1040', 'ingresos', [
+            'salarios' => 195000,
+            'intereses_dividendos' => 0,
+            'ganancias_capital' => 0,
+            'ingresos_jubilacion' => 0,
+            'otros_ingresos' => 0,
+            'ajustes_ingreso' => 0,
+            'seguridad_social' => 0,
+        ]);
+
+        $this->cargarCampo($cliente, 'form_1040', 'salarios_medicare', 210000);
+
+        $this->actingAs($preparador)
+            ->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025])
+            ->assertRedirect();
+
+        $determinacion = DeterminacionFiscal::query()
+            ->where('user_id', $cliente->id)
+            ->where('tipo', 'impuesto_medicare_adicional')
+            ->first();
+
+        $this->assertTrue($determinacion->resultado['disponible']);
+        $this->assertEqualsWithDelta(90.0, $determinacion->resultado['impuesto'], 0.01);
+    }
+
+    public function test_additional_medicare_tax_cae_a_salarios_si_no_hay_salarios_medicare_guardado(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->cargarCampo($cliente, 'transversal', 'estado_civil', [
+            'casado_al_31_dic' => false,
+            'convivio_conyuge_ultimos_6_meses' => false,
+            'costeo_mas_mitad_hogar' => false,
+            'existe_persona_calificable' => false,
+            'conyuge_fallecio_en_anio' => false,
+            'anio_fallecimiento_conyuge' => null,
+        ]);
+
+        $this->cargarCampo($cliente, 'form_1040', 'ingresos', [
+            'salarios' => 195000,
+            'intereses_dividendos' => 0,
+            'ganancias_capital' => 0,
+            'ingresos_jubilacion' => 0,
+            'otros_ingresos' => 0,
+            'ajustes_ingreso' => 0,
+            'seguridad_social' => 0,
+        ]);
+
+        $this->actingAs($preparador)
+            ->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025])
+            ->assertRedirect();
+
+        $determinacion = DeterminacionFiscal::query()
+            ->where('user_id', $cliente->id)
+            ->where('tipo', 'impuesto_medicare_adicional')
+            ->first();
+
+        $this->assertTrue($determinacion->resultado['disponible']);
+        $this->assertEqualsWithDelta(0.0, $determinacion->resultado['impuesto'], 0.01);
+    }
+
     public function test_un_preparador_no_asignado_no_puede_calcular(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);

@@ -347,6 +347,7 @@ class EventoRecoleccionTest extends TestCase
             ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => $this->ingresosPayload()],
             ['campo' => 'deducciones', 'tipo_campo' => 'mixto', 'tipo_dato' => 'number', 'contenido' => 1000],
             ['campo' => 'impuestos_retenidos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 0],
+            ['campo' => 'salarios_medicare', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 52000],
             ['campo' => 'info_bancaria', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'banco' => 'Banco X', 'tipo_cuenta' => 'checking', 'numero_cuenta' => '123', 'routing_number' => '456',
             ]],
@@ -510,6 +511,7 @@ class EventoRecoleccionTest extends TestCase
             ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => $this->ingresosPayload()],
             ['campo' => 'deducciones', 'tipo_campo' => 'mixto', 'tipo_dato' => 'number', 'contenido' => 1000],
             ['campo' => 'impuestos_retenidos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 0],
+            ['campo' => 'salarios_medicare', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 52000],
             ['campo' => 'info_bancaria', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'banco' => 'Banco X', 'tipo_cuenta' => 'checking', 'numero_cuenta' => '123', 'routing_number' => '456',
             ]],
@@ -872,18 +874,23 @@ class EventoRecoleccionTest extends TestCase
         $response->assertCreated();
         $revela = $response->json('revela');
 
-        $this->assertCount(1, $revela);
-        $this->assertSame('form_1040', $revela[0]['forma']);
-        $this->assertSame('ingresos', $revela[0]['campo']);
-        $this->assertSame('salarios', $revela[0]['subcampo']);
-        $this->assertSame(false, $revela[0]['acumulable']);
+        // No se filtra a un único elemento: las migraciones de datos ya
+        // siembran también la relación real w2 → salarios_medicare (Box 5),
+        // presente en toda base de datos (incluida la de tests) — no solo la
+        // que este test crea a mano.
+        $salarios = collect($revela)->firstWhere('subcampo', 'salarios');
+
+        $this->assertNotNull($salarios);
+        $this->assertSame('form_1040', $salarios['forma']);
+        $this->assertSame('ingresos', $salarios['campo']);
+        $this->assertSame(false, $salarios['acumulable']);
         // El agente necesita el tipo_campo/tipo_dato del campo DESTINO (no del
         // documento) para armar el item de `revelados` sin adivinarlos —
         // encontrado en producción: sin esto, el agente asumía "dato"/"number"
         // en vez del tipo real en el catálogo ("dato"/"object" para `ingresos`,
         // o "mixto" para campos como gastos_cuidado_dependientes).
-        $this->assertSame('dato', $revela[0]['tipo_campo']);
-        $this->assertSame('object', $revela[0]['tipo_dato']);
+        $this->assertSame('dato', $salarios['tipo_campo']);
+        $this->assertSame('object', $salarios['tipo_dato']);
     }
 
     /**
@@ -1458,5 +1465,152 @@ class EventoRecoleccionTest extends TestCase
         $this->assertSame('recibido', $actualizada->estado->value);
         $this->assertIsArray($actualizada->valor_texto);
         $this->assertTrue($actualizada->valor_texto['costeo_mas_mitad_hogar']);
+    }
+
+    /**
+     * Bug real evaluando un W-2 de ejemplo: `deducciones` terminó guardado
+     * con el mismo valor exacto que `impuestos_retenidos` (ambos 3291.79, el
+     * número de Box 2 reutilizado por error) — no existía ninguna relación
+     * documento→campo que justificara eso. Este guardarraíl no bloquea el
+     * guardado, solo deja una nota (`advertencia`) para que el preparador lo
+     * revise. Ver EventoRecoleccionService::detectarValorDuplicado().
+     */
+    public function test_un_campo_numerico_con_el_mismo_valor_que_otro_ya_guardado_queda_con_advertencia(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 3291.79,
+        ])->assertCreated();
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'deducciones',
+            'tipo_campo' => 'mixto',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 3291.79,
+        ])->assertCreated();
+
+        $retenido = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
+        $deducciones = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'deducciones')->first();
+
+        $this->assertNull($retenido->advertencia);
+        $this->assertNotNull($deducciones->advertencia);
+        $this->assertStringContainsString('impuestos_retenidos', $deducciones->advertencia);
+    }
+
+    public function test_dos_campos_numericos_con_valores_distintos_no_generan_advertencia(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 3291.79,
+        ])->assertCreated();
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'deducciones',
+            'tipo_campo' => 'mixto',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 1500,
+        ])->assertCreated();
+
+        $deducciones = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'deducciones')->first();
+        $this->assertNull($deducciones->advertencia);
+    }
+
+    public function test_dos_campos_numericos_en_cero_no_generan_advertencia(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 0,
+        ])->assertCreated();
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'deducciones',
+            'tipo_campo' => 'mixto',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 0,
+        ])->assertCreated();
+
+        $deducciones = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'deducciones')->first();
+        $this->assertNull($deducciones->advertencia);
+    }
+
+    public function test_corregir_el_valor_duplicado_limpia_la_advertencia(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'impuestos_retenidos',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 3291.79,
+        ])->assertCreated();
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'deducciones',
+            'tipo_campo' => 'mixto',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 3291.79,
+        ])->assertCreated();
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'form_1040',
+            'tax_year' => 2025,
+            'campo' => 'deducciones',
+            'tipo_campo' => 'mixto',
+            'modo' => 'texto',
+            'tipo_dato' => 'number',
+            'contenido' => 4200,
+        ])->assertCreated();
+
+        $deducciones = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'deducciones')->first();
+        $this->assertNull($deducciones->advertencia);
     }
 }

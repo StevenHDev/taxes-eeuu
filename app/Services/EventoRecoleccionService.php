@@ -166,6 +166,7 @@ class EventoRecoleccionService
 
         $documento = null;
         $valor = null;
+        $advertencia = null;
 
         if ($modo === FieldMode::Archivo) {
             [$documento, $estado] = $this->procesarArchivo($file, $cliente, $taxYear, $formaAlmacen, $campo, $nombreOriginal, $field['formatos_aceptados'] ?? []);
@@ -179,6 +180,7 @@ class EventoRecoleccionService
                 ? $this->resolverSubcampo($contenido, $subcampoAcumular, $anterior?->valor_texto, $acumular, $field['subcampos'] ?? [])
                 : ($acumular ? $this->acumularValor($contenido, $tipoDato, $anterior?->valor_texto) : $contenido);
             $estado = $this->validarContenido($campo, $tipoDato, $field['subcampos'] ?? null, $valor);
+            $advertencia = $this->detectarValorDuplicado($cliente, $taxYear, $campo, $tipoDato, $valor);
         }
 
         // Si el campo ya tenía un documento asociado (ej. un archivo inválido
@@ -196,6 +198,7 @@ class EventoRecoleccionService
                 'valor_texto' => $modo === FieldMode::Texto ? $valor : null,
                 'documento_id' => $documento?->id,
                 'estado' => $estado,
+                'advertencia' => $advertencia,
                 'source' => $source,
                 'actualizado_por' => $actor->id,
             ],
@@ -435,6 +438,48 @@ class EventoRecoleccionService
         $previo = is_numeric($valorAnterior) ? (float) $valorAnterior : 0.0;
 
         return $previo + (float) $contenido;
+    }
+
+    /**
+     * Guardarraíl de calidad de datos, no de validación: cuando un campo
+     * numérico se guarda con el mismo valor exacto que OTRO campo ya
+     * guardado del mismo cliente/año fiscal, es indicio de que la
+     * extracción de un documento confundió dos casillas distintas. Caso
+     * real en producción: un W-2 cuyo `deducciones` terminó siendo un
+     * duplicado exacto de `impuestos_retenidos` (ambos con el valor de Box
+     * 2, Federal income tax withheld) — no existía ninguna relación
+     * documento→campo que justificara eso, el valor simplemente se
+     * reutilizó por error.
+     *
+     * Deliberadamente no bloquea el guardado ni cambia FieldState — el
+     * cliente puede legítimamente tener dos cifras iguales por coincidencia
+     * (poco común pero posible); esto solo dispara una nota visible para
+     * que el preparador la revise, ver ClienteController::show().
+     */
+    private function detectarValorDuplicado(User $cliente, int $taxYear, string $campoActual, ?FieldDataType $tipoDato, mixed $valor): ?string
+    {
+        if ($tipoDato !== FieldDataType::Number || ! is_numeric($valor)) {
+            return null;
+        }
+
+        $valorRedondeado = round((float) $valor, 2);
+
+        if ($valorRedondeado === 0.0) {
+            return null;
+        }
+
+        $coincidencia = CampoCliente::query()
+            ->where('user_id', $cliente->id)
+            ->where('tax_year', $taxYear)
+            ->where('campo', '!=', $campoActual)
+            ->get(['campo', 'valor_texto'])
+            ->first(fn (CampoCliente $c) => is_numeric($c->valor_texto) && round((float) $c->valor_texto, 2) === $valorRedondeado);
+
+        if ($coincidencia === null) {
+            return null;
+        }
+
+        return "Mismo valor ({$valorRedondeado}) que el campo '{$coincidencia->campo}' ya guardado — verificar que no sea un error de extracción de documento.";
     }
 
     /**

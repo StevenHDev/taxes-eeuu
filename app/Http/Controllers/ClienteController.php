@@ -200,6 +200,7 @@ class ClienteController extends Controller
                     'subcampos' => $definicion['subcampos'] ?? null,
                     'modo' => $c->modo,
                     'estado' => $c->estado,
+                    'advertencia' => $c->advertencia,
                     'valor' => $c->valor,
                     'es_sensible' => $c->esSensible(),
                     'formatos_aceptados' => $definicion['formatos_aceptados'] ?? null,

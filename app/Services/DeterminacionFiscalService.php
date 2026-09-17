@@ -170,7 +170,17 @@ class DeterminacionFiscalService
                 : $this->noDisponible('depende de estado_civil, ingresos, deducciones y QBI');
 
             // --- Additional Medicare Tax (Form 8959) ---
-            $salariosMedicare = is_array($ingresos) ? (float) ($ingresos['salarios'] ?? 0) : 0.0;
+            // salarios_medicare (Box 5 del W-2) puede ser mayor que
+            // ingresos.salarios (Box 1) cuando hay descuentos pre-tax de
+            // nómina (401k, HSA, sección 125) — usar Box 1 como sustituto
+            // subestimaba este impuesto. Fallback a salarios solo para
+            // clientes cuyo dato ya existía antes de este campo (0 = nunca
+            // se guardó salarios_medicare).
+            $salariosMedicare = $this->leerNumero($cliente, $taxYear, 'form_1040', 'salarios_medicare');
+
+            if ($salariosMedicare <= 0.0) {
+                $salariosMedicare = is_array($ingresos) ? (float) ($ingresos['salarios'] ?? 0) : 0.0;
+            }
             $impuestoMedicareAdicional = $filingStatus['disponible']
                 ? $this->impuestoMedicareAdicional->calcular(
                     $taxYear,

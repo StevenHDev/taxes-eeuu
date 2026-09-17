@@ -92,6 +92,14 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'gastos_cuidado_dependientes', 'subcampo_destino' => 'monto_anual',
                 'descripcion' => 'Box 10 (Dependent care benefits) del W-2 es el monto anual de beneficios de cuidado de dependientes recibido vía el empleador.',
             ],
+            [
+                'documento_forma' => $transversal, 'documento_campo' => 'w2',
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'salarios_medicare', 'subcampo_destino' => null,
+                'descripcion' => 'Box 5 (Medicare wages and tips) del W-2 — puede ser distinto de Box 1 (salarios) cuando hay descuentos pre-tax de nómina (401k, HSA, sección 125); necesario para Additional Medicare Tax (Form 8959).',
+                // Igual que impuestos_retenidos: un cliente con más de un W-2
+                // en el año suma los Medicare wages de cada empleador.
+                'acumulable' => true,
+            ],
 
             // 1099-NEC — ver matriz pestaña Source_Forms + relación ya confirmada
             // en docs/prompt.md antes de esta migración.
