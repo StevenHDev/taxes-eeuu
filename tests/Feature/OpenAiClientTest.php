@@ -137,4 +137,54 @@ class OpenAiClientTest extends TestCase
 
         (new OpenAiClient)->completarChat([], []);
     }
+
+    /**
+     * Bug real reportado en producción: al cambiar a gpt-5.6-luna, cada
+     * turno con tools fallaba con 400 ("Function tools with
+     * reasoning_effort are not supported... set reasoning_effort to
+     * 'none'") — probado directo contra la API real. Un modelo NO
+     * razonador (ej. gpt-4.1-mini) hace lo contrario: rechaza este
+     * parámetro si no lo espera, así que solo debe mandarse cuando el
+     * modelo en uso es de razonamiento Y la llamada trae tools.
+     */
+    private function unTool(): array
+    {
+        return [['type' => 'function', 'function' => ['name' => 'think', 'parameters' => ['type' => 'object']]]];
+    }
+
+    public function test_no_manda_reasoning_effort_si_no_hay_tools(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'ok']]]], 200)]);
+
+        (new OpenAiClient)->completarChat([], [], modelo: 'gpt-5.6-luna');
+
+        Http::assertSent(fn ($request) => ! array_key_exists('reasoning_effort', $request->data()));
+    }
+
+    public function test_no_manda_reasoning_effort_para_un_modelo_no_razonador_aunque_haya_tools(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'ok']]]], 200)]);
+
+        (new OpenAiClient)->completarChat([], $this->unTool(), modelo: 'gpt-4.1-mini');
+
+        Http::assertSent(fn ($request) => ! array_key_exists('reasoning_effort', $request->data()));
+    }
+
+    public function test_manda_reasoning_effort_none_para_un_modelo_de_razonamiento_con_tools(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'ok']]]], 200)]);
+
+        (new OpenAiClient)->completarChat([], $this->unTool(), modelo: 'gpt-5.6-luna');
+
+        Http::assertSent(fn ($request) => $request['reasoning_effort'] === 'none');
+    }
+
+    public function test_manda_reasoning_effort_none_tambien_para_la_familia_o(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'ok']]]], 200)]);
+
+        (new OpenAiClient)->completarChat([], $this->unTool(), modelo: 'o4-mini');
+
+        Http::assertSent(fn ($request) => $request['reasoning_effort'] === 'none');
+    }
 }

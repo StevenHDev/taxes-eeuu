@@ -29,6 +29,8 @@ class OpenAiClient
      */
     public function completarChat(array $mensajes, array $tools, ?string $modelo = null): array
     {
+        $modeloResuelto = $modelo ?? (string) config('services.openai.model');
+
         $respuesta = Http::withToken((string) config('services.openai.api_key'))
             ->timeout((int) config('services.openai.timeout', 30))
             ->retry(
@@ -37,9 +39,22 @@ class OpenAiClient
                 throw: false,
             )
             ->post(self::URL_CHAT_COMPLETIONS, array_filter([
-                'model' => $modelo ?? config('services.openai.model'),
+                'model' => $modeloResuelto,
                 'messages' => $mensajes,
                 'tools' => $tools,
+                // Un modelo de razonamiento (o1/o3/o4, gpt-5.x) rechaza tool
+                // calling en /v1/chat/completions con 400 a menos que esto
+                // se mande explícitamente en "none" — encontrado en
+                // producción al cambiar a gpt-5.6-luna: cada turno con
+                // tools fallaba (400 "Function tools with reasoning_effort
+                // are not supported... set reasoning_effort to 'none'"), y
+                // por el límite ya documentado de este job (reintento
+                // silencioso vía el chequeo de idempotencia) el cliente
+                // nunca recibía respuesta. Un modelo NO razonador (ej.
+                // gpt-4.1-mini) hace lo contrario — RECHAZA este parámetro
+                // si no lo reconoce (probado contra la API real) — por eso
+                // solo se manda cuando el propio modelo lo requiere.
+                'reasoning_effort' => $tools !== [] && $this->esModeloDeRazonamiento($modeloResuelto) ? 'none' : null,
             ]));
 
         if ($respuesta->failed()) {
@@ -55,6 +70,19 @@ class OpenAiClient
         }
 
         return $mensaje;
+    }
+
+    /**
+     * Heurística sobre el nombre del modelo, no una lista fija: la familia
+     * "o" (o1/o3/o4/...) y toda gpt-5.x son modelos de razonamiento — las
+     * familias anteriores (gpt-4.x, gpt-3.5) no lo son. Si OpenAI lanza una
+     * familia nueva que rompa este patrón, hay que actualizar esto — no hay
+     * forma de detectarlo desde la propia respuesta de la API sin haber
+     * hecho ya la llamada.
+     */
+    private function esModeloDeRazonamiento(string $modelo): bool
+    {
+        return (bool) preg_match('/^(o\d|gpt-5)/', $modelo);
     }
 
     /**
