@@ -147,6 +147,12 @@ class CatalogoCamposSeeder extends Seeder
             // info_dependientes.custodia_compartida_sin_conflicto) — no todo
             // cliente con dependientes lo tiene, por eso obligatorio: false.
             $this->campo('form_8332', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            // Fase 3b del plan de cierre de brecha GTS: compuerta que hace que
+            // el agente vuelva a preguntar por w2 tantas veces como haga
+            // falta (múltiples empleadores) — ver ActivosResolver::resolverCondicional
+            // y PromptActivoStepsSeeder. Solo se guarda con valor "no"
+            // (terminal); un "si" nunca se persiste acá, ver la nota del paso.
+            $this->campo('mas_w2', FieldKind::Dato, tipoDato: FieldDataType::String, unicoPorCliente: true),
         ];
     }
 

@@ -24,7 +24,8 @@ use Tests\TestCase;
  * (compliance crítico P1); pasos 11-26 agregados en la Fase 2 (documentos
  * promovidos de documentos_extra a ACTIVO); pasos 27-33 agregados en la
  * Fase 3a (identidad y eventos del contribuyente), que también extiende la
- * nota del paso 2 (estado_civil) — ver PromptActivoStepsSeeder.
+ * nota del paso 2 (estado_civil); paso 34 agregado en la Fase 3b (múltiples
+ * W-2) — ver PromptActivoStepsSeeder.
  */
 class ActivosPromptComposerTest extends TestCase
 {
@@ -79,6 +80,9 @@ class ActivosPromptComposerTest extends TestCase
         31. vivio_trabajo_fuera_eeuu — pregunta obligatoria (nunca modo="no_aplica"), en lenguaje simple: "¿Viviste o trabajaste fuera de Estados Unidos en algún momento del año?". Guarda la respuesta como "si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante.
         32. ip_pin — pregunta simple si el IRS le asignó un IP PIN (un código de 6 dígitos, distinto del reembolso) y, si lo tiene, cuál es.
         33. form_8332 — pregunta simple si existe un acuerdo de custodia compartida o un Form 8332 firmado por el otro padre/madre, cediendo el derecho a reclamar a un dependiente.
+        34. mas_w2 — solo si el cliente ya entregó al menos un w2. Si todavía no entregó ningún w2, no se pregunta.
+            - Pregunta en lenguaje simple: "¿Tienes otro W-2 de otro empleador?". Si responde que sí: pide ese W-2 y guárdalo con guardar_campo_cliente(campo="w2", modo="archivo", acumular=true) — nunca guardes mas_w2 en este caso, ni con ningún valor; simplemente vuelve a invocar consultar_pendientes_cliente, que va a volver a ofrecer esta misma pregunta hasta que la respuesta sea "no".
+            - Si responde que no (ya no tiene más W-2): recién ahí guarda guardar_campo_cliente(campo="mas_w2", modo="texto", contenido="no") — es el único valor que este campo admite.
         TXT;
 
         $this->assertSame($esperado, app(ActivosPromptComposer::class)->compilarLista());
@@ -109,6 +113,7 @@ class ActivosPromptComposerTest extends TestCase
         $this->assertStringContainsString('declaracion_anio_anterior', $texto);
         $this->assertStringContainsString('direccion_contribuyente', $texto);
         $this->assertStringContainsString('form_8332', $texto);
+        $this->assertStringContainsString('mas_w2', $texto);
         $this->assertStringContainsString('fuente de verdad', $texto);
     }
 }

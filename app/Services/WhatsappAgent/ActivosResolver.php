@@ -126,6 +126,7 @@ class ActivosResolver
         $aplica = match ($paso->campo) {
             'info_conyuge' => $this->esCasado($taxYear, $clienteId),
             'cuentas_extranjero_detalle' => $this->respondioSi($taxYear, $clienteId, 'cuentas_extranjero'),
+            'mas_w2' => $this->tieneAlMenosUnDocumento($taxYear, $clienteId, 'w2'),
             default => true,
         };
 
@@ -159,5 +160,23 @@ class ActivosResolver
             ->first();
 
         return $respuesta?->valor_texto === 'si';
+    }
+
+    /**
+     * Fase 3b (múltiples W-2): "mas_w2" solo se ofrece una vez que el
+     * cliente ya entregó al menos un documento para `campo` — antes de eso
+     * no tiene sentido preguntar "¿tienes OTRO?". `documento_id` no null
+     * alcanza (no hace falta filtrar por estado: incluso un archivo
+     * ilegible cuenta como "ya se intentó subir uno").
+     */
+    private function tieneAlMenosUnDocumento(int $taxYear, int $clienteId, string $campo): bool
+    {
+        return CampoCliente::query()
+            ->where('user_id', $clienteId)
+            ->where('tax_year', $taxYear)
+            ->where('forma', CampoCatalogo::TRANSVERSAL)
+            ->where('campo', $campo)
+            ->whereNotNull('documento_id')
+            ->exists();
     }
 }

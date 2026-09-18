@@ -40,7 +40,13 @@ class ActivosPromptComposer
             TipoPromptActivoStep::Simple => $p->nota !== null
                 ? "{$p->orden}. {$p->campo} — {$p->nota}"
                 : "{$p->orden}. {$p->campo}",
-            TipoPromptActivoStep::Condicional => "{$p->orden}. {$p->campo} — solo si {$p->condicion}. {$p->nota_si_no_aplica}",
+            TipoPromptActivoStep::Condicional => $p->campo === 'mas_w2'
+                ? implode("\n", [
+                    "{$p->orden}. {$p->campo} — solo si {$p->condicion}. {$p->nota_si_no_aplica}",
+                    '    - Pregunta en lenguaje simple: "¿Tienes otro W-2 de otro empleador?". Si responde que sí: pide ese W-2 y guárdalo con guardar_campo_cliente(campo="w2", modo="archivo", acumular=true) — nunca guardes mas_w2 en este caso, ni con ningún valor; simplemente vuelve a invocar consultar_pendientes_cliente, que va a volver a ofrecer esta misma pregunta hasta que la respuesta sea "no".',
+                    '    - Si responde que no (ya no tiene más W-2): recién ahí guarda guardar_campo_cliente(campo="mas_w2", modo="texto", contenido="no") — es el único valor que este campo admite.',
+                ])
+                : "{$p->orden}. {$p->campo} — solo si {$p->condicion}. {$p->nota_si_no_aplica}",
             TipoPromptActivoStep::DocumentoConNota => "{$p->orden}. {$p->campo} — {$p->nota}",
             TipoPromptActivoStep::Bifurcacion => implode("\n", [
                 "{$p->orden}. {$p->etiqueta} — pregunta simple: \"{$p->pregunta}\" (esta pregunta no tiene un campo propio en `pendientes`; es una bifurcación conversacional entre {$p->campo_si} y {$p->campo_no}):",
@@ -80,7 +86,10 @@ class ActivosPromptComposer
         return match ($p->tipo) {
             TipoPromptActivoStep::Bifurcacion => "- {$p->etiqueta}: si `pendientes` devuelve {$p->campo_si} o {$p->campo_no} pero el historial ya muestra que el cliente respondió \"{$p->pregunta}\" (sí o no), no vuelvas a preguntarlo ni a pedir el documento complementario ya resuelto por esa respuesta.",
             TipoPromptActivoStep::Grupo => "- {$p->etiqueta}: si `pendientes` devuelve cualquiera de ".implode(', ', $p->miembros ?? []).' pero el historial ya muestra que el cliente respondió "'.$p->pregunta.'", no vuelvas a hacer esa pregunta compuesta — retoma solo los miembros que quedaron sin resolver de esa respuesta (guardando el dato/documento, o modo="no_aplica" si el cliente no lo tiene).',
-            TipoPromptActivoStep::Simple, TipoPromptActivoStep::Condicional, TipoPromptActivoStep::DocumentoConNota => "- {$p->campo}: si `pendientes` lo devuelve pero el historial ya muestra la respuesta del cliente (o el documento ya subido), no lo vuelvas a preguntar ni a pedir.",
+            TipoPromptActivoStep::Condicional => $p->campo === 'mas_w2'
+                ? '- mas_w2: ESTA es la única excepción al principio general de arriba — un "sí" a "¿tienes otro W-2?" nunca se guarda, así que va a seguir apareciendo como pendiente después de cada W-2 adicional que agregues; eso es esperado, no un bug, no lo trates como una repregunta indebida. Solo deja de aparecer cuando guardas mas_w2="no".'
+                : "- {$p->campo}: si `pendientes` lo devuelve pero el historial ya muestra la respuesta del cliente (o el documento ya subido), no lo vuelvas a preguntar ni a pedir.",
+            TipoPromptActivoStep::Simple, TipoPromptActivoStep::DocumentoConNota => "- {$p->campo}: si `pendientes` lo devuelve pero el historial ya muestra la respuesta del cliente (o el documento ya subido), no lo vuelvas a preguntar ni a pedir.",
         };
     }
 }

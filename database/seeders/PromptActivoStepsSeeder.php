@@ -205,6 +205,15 @@ class PromptActivoStepsSeeder extends Seeder
                 'nota' => 'pregunta simple si existe un acuerdo de custodia compartida o un Form 8332 firmado '
                     .'por el otro padre/madre, cediendo el derecho a reclamar a un dependiente.',
             ],
+            // Fase 3b del plan de cierre de brecha GTS: soporte de múltiples
+            // W-2 (más de un empleador) — ver ActivosResolver::resolverCondicional
+            // y ActivosPromptComposer, que le dan a este paso un tratamiento
+            // especial (nunca se guarda con valor "si", ver ambas clases).
+            [
+                'orden' => 34, 'tipo' => TipoPromptActivoStep::Condicional, 'campo' => 'mas_w2',
+                'condicion' => 'el cliente ya entregó al menos un w2',
+                'nota_si_no_aplica' => 'Si todavía no entregó ningún w2, no se pregunta.',
+            ],
         ];
 
         foreach ($pasos as $paso) {

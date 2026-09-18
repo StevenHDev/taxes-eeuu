@@ -253,6 +253,16 @@ class EventoValidator
             return;
         }
 
+        // Fase 3b del plan de cierre de brecha GTS (múltiples W-2): un campo
+        // tipo documento (modo="archivo" siempre, nunca manda tipo_dato) usa
+        // acumular=true para agregar un archivo más sin reemplazar/borrar el
+        // anterior — ver EventoRecoleccionService::aplicarCambio(). No
+        // aplica ningún chequeo de subcampo acá, a diferencia de los campos
+        // numéricos/objeto de abajo.
+        if ($field['tipo'] === FieldKind::Documento) {
+            return;
+        }
+
         if ($tipoDatoEnviado === FieldDataType::Number) {
             if ($subcampo !== null) {
                 $errores["{$prefijo}subcampo"][] = 'No se especifica subcampo cuando el campo acumulable es numérico simple.';

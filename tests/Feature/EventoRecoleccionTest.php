@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
 use App\Models\ClientIntakeSession;
+use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\RelacionDocumentoCampo;
@@ -350,6 +351,9 @@ class EventoRecoleccionTest extends TestCase
             ['campo' => 'ocupacion', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'Contador'],
             ['campo' => 'puede_ser_reclamado_como_dependiente', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'vivio_trabajo_fuera_eeuu', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
+            // Fase 3b: mas_w2 es obligatorio:true, solo admite "no" (ver
+            // EventoRecoleccionService::validarString).
+            ['campo' => 'mas_w2', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'info_conyuge', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'nombre_completo' => 'Jane Doe', 'fecha_nacimiento' => '1990-01-01', 'ssn' => '987654321',
             ]],
@@ -528,6 +532,9 @@ class EventoRecoleccionTest extends TestCase
             ['campo' => 'ocupacion', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'Contador'],
             ['campo' => 'puede_ser_reclamado_como_dependiente', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'vivio_trabajo_fuera_eeuu', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
+            // Fase 3b: mas_w2 es obligatorio:true, solo admite "no" (ver
+            // EventoRecoleccionService::validarString).
+            ['campo' => 'mas_w2', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'info_conyuge', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'nombre_completo' => 'Jane Doe', 'fecha_nacimiento' => '1990-01-01', 'ssn' => '987654321',
             ]],
@@ -1646,5 +1653,107 @@ class EventoRecoleccionTest extends TestCase
 
         $deducciones = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'deducciones')->first();
         $this->assertNull($deducciones->advertencia);
+    }
+
+    /**
+     * Fase 3b del plan de cierre de brecha GTS (múltiples W-2): sin
+     * acumular=true, subir un segundo archivo para el mismo campo reemplaza
+     * y BORRA el anterior — comportamiento ya existente, que este test deja
+     * como regresión guardada antes de tocar aplicarCambio() para el caso
+     * acumular=true de abajo.
+     */
+    public function test_sin_acumular_el_segundo_archivo_reemplaza_y_borra_el_anterior(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id, 'forma' => 'transversal', 'tax_year' => 2025,
+            'campo' => 'w2', 'tipo_campo' => 'documento', 'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2_empleador_1.pdf', 10),
+        ])->assertCreated();
+
+        $primerDocumentoId = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first()->documento_id;
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id, 'forma' => 'transversal', 'tax_year' => 2025,
+            'campo' => 'w2', 'tipo_campo' => 'documento', 'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2_corregido.pdf', 10),
+        ])->assertCreated();
+
+        $this->assertDatabaseMissing('documentos', ['id' => $primerDocumentoId]);
+        $this->assertSame(1, Documento::query()->where('user_id', $cliente->id)->count());
+    }
+
+    public function test_acumular_true_en_modo_archivo_agrega_un_documento_sin_borrar_el_anterior(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id, 'forma' => 'transversal', 'tax_year' => 2025,
+            'campo' => 'w2', 'tipo_campo' => 'documento', 'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2_empleador_1.pdf', 10),
+        ])->assertCreated();
+
+        $primerDocumentoId = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first()->documento_id;
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id, 'forma' => 'transversal', 'tax_year' => 2025,
+            'campo' => 'w2', 'tipo_campo' => 'documento', 'modo' => 'archivo', 'acumular' => true,
+            'file' => UploadedFile::fake()->create('w2_empleador_2.pdf', 10),
+        ])->assertCreated();
+
+        // Ninguno de los dos documentos se borró.
+        $this->assertDatabaseHas('documentos', ['id' => $primerDocumentoId]);
+        $this->assertSame(2, Documento::query()->where('user_id', $cliente->id)->count());
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first();
+
+        // documento_id apunta al más reciente (para compatibilidad con los
+        // paneles que hoy solo leen el documento_id de la fila).
+        $segundoDocumentoId = $campo->documento_id;
+        $this->assertNotSame($primerDocumentoId, $segundoDocumentoId);
+
+        // valor_texto acumula la referencia a AMBOS documentos, en orden.
+        $this->assertSame([
+            ['documento_id' => $primerDocumentoId, 'file_original_name' => 'w2_empleador_1.pdf'],
+            ['documento_id' => $segundoDocumentoId, 'file_original_name' => 'w2_empleador_2.pdf'],
+        ], $campo->valor_texto);
+    }
+
+    /**
+     * Bug real que este cambio previene: sin la relación w2→salarios marcada
+     * acumulable, un segundo W-2 sobrescribiría el salario del primero en
+     * vez de sumarlo — ver RelacionesDocumentoCampoSeeder.
+     */
+    public function test_dos_w2_acumulan_salarios_e_impuestos_retenidos_via_revelados(): void
+    {
+        Storage::fake('local');
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id, 'forma' => 'transversal', 'tax_year' => 2025,
+            'campo' => 'w2', 'tipo_campo' => 'documento', 'modo' => 'archivo',
+            'file' => UploadedFile::fake()->create('w2_empleador_1.pdf', 10),
+            'revelados' => [
+                ['forma' => 'form_1040', 'campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'subcampo' => 'salarios', 'contenido' => ['salarios' => 40000], 'acumular' => true],
+            ],
+        ])->assertCreated();
+
+        $this->post('/api/eventos', [
+            'cliente_id' => $cliente->id, 'forma' => 'transversal', 'tax_year' => 2025,
+            'campo' => 'w2', 'tipo_campo' => 'documento', 'modo' => 'archivo', 'acumular' => true,
+            'file' => UploadedFile::fake()->create('w2_empleador_2.pdf', 10),
+            'revelados' => [
+                ['forma' => 'form_1040', 'campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'subcampo' => 'salarios', 'contenido' => ['salarios' => 25000], 'acumular' => true],
+            ],
+        ])->assertCreated();
+
+        $ingresos = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
+        $this->assertEquals(65000.0, $ingresos->valor_texto['salarios']);
     }
 }

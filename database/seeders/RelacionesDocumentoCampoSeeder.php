@@ -80,6 +80,9 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'w2',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'salarios',
                 'descripcion' => 'Box 1 (Wages, tips, other compensation) del W-2 es el salario total del cliente.',
+                // Fase 3b (múltiples W-2): un cliente con más de un empleador
+                // suma el salario de cada W-2, no se queda solo con el último.
+                'acumulable' => true,
             ],
             [
                 'documento_forma' => $transversal, 'documento_campo' => 'w2',
@@ -91,6 +94,8 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'documento_forma' => $transversal, 'documento_campo' => 'w2',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'gastos_cuidado_dependientes', 'subcampo_destino' => 'monto_anual',
                 'descripcion' => 'Box 10 (Dependent care benefits) del W-2 es el monto anual de beneficios de cuidado de dependientes recibido vía el empleador.',
+                // Fase 3b (múltiples W-2): mismo criterio que salarios arriba.
+                'acumulable' => true,
             ],
             [
                 'documento_forma' => $transversal, 'documento_campo' => 'w2',

@@ -222,9 +222,20 @@ class EventoRecoleccionService
         $documento = null;
         $valor = null;
         $advertencia = null;
+        // Fase 3b del plan de cierre de brecha GTS (múltiples W-2): true solo
+        // cuando este evento agrega un documento MÁS a un campo que ya tenía
+        // uno, sin reemplazarlo — distingue este caso del reemplazo normal
+        // (corregir un archivo subido por error), que sí debe seguir
+        // borrando el anterior.
+        $acumulaDocumento = false;
 
         if ($modo === FieldMode::Archivo) {
             [$documento, $estado] = $this->procesarArchivo($file, $cliente, $taxYear, $formaAlmacen, $campo, $nombreOriginal, $field['formatos_aceptados'] ?? []);
+
+            if ($acumular) {
+                $acumulaDocumento = true;
+                $valor = $this->acumularDocumento($documento, $anterior);
+            }
         } elseif ($modo === FieldMode::NoAplica) {
             // Respuesta explícita del cliente ("no lo tengo"/"no aplica"), no la
             // ausencia de un valor — EventoRequest/CampoClienteUpdateRequest ya
@@ -239,8 +250,11 @@ class EventoRecoleccionService
         }
 
         // Si el campo ya tenía un documento asociado (ej. un archivo inválido
-        // reemplazado, o ahora marcado "no aplica"), el anterior queda obsoleto.
-        if ($anterior?->documento_id && $anterior->documento_id !== $documento?->id) {
+        // reemplazado, o ahora marcado "no aplica"), el anterior queda
+        // obsoleto — excepto cuando este evento ACUMULA un documento más
+        // (Fase 3b): ahí el anterior sigue vigente, referenciado dentro de
+        // `valor_texto` (ver acumularDocumento()).
+        if ($anterior?->documento_id && $anterior->documento_id !== $documento?->id && ! $acumulaDocumento) {
             $this->borrarDocumento($anterior->documento);
         }
 
@@ -250,7 +264,7 @@ class EventoRecoleccionService
             [
                 'tipo_campo' => $tipoCampo,
                 'modo' => $modo,
-                'valor_texto' => $modo === FieldMode::Texto ? $valor : null,
+                'valor_texto' => $modo === FieldMode::Texto || $acumulaDocumento ? $valor : null,
                 'documento_id' => $documento?->id,
                 'estado' => $estado,
                 'advertencia' => $advertencia,
@@ -368,6 +382,43 @@ class EventoRecoleccionService
 
             $this->recalcularAfectadas($cliente, $taxYear, $forma, $campo);
         });
+    }
+
+    /**
+     * Fase 3b del plan de cierre de brecha GTS (múltiples W-2): agrega un
+     * documento más a la lista ya guardada, sin tocar los anteriores. Cada
+     * elemento guarda solo `documento_id` — nunca una URL, porque
+     * Documento::downloadUrl() es firmada y expira a los 10 minutos; quien
+     * lea esta lista genera la URL al momento a partir del id.
+     *
+     * La PRIMERA vez que un campo se acumula, `$anterior->valor_texto`
+     * todavía es null — ese primer documento se guardó por el camino normal
+     * (modo="archivo" sin acumular, ej. la bifurcación Empleo), así que
+     * nunca quedó en un array. Acá se recupera desde `$anterior->documento_id`
+     * para que la lista arranque con AMBOS documentos, no solo el nuevo.
+     *
+     * Límite conocido, fuera del alcance de la Fase 3b: los paneles que
+     * listan "documentos ya subidos" de un cliente (DashboardController,
+     * ClienteController, Api\ClienteController) filtran por `documento_id`
+     * de campos_cliente — para un campo acumulado solo muestran el más
+     * reciente (el que documento_id sigue señalando), no toda la lista de
+     * `valor_texto`. Ningún documento se pierde (siguen en la tabla
+     * `documentos`, referenciados acá), pero verlos todos ahí requiere
+     * actualizar esos paneles aparte.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function acumularDocumento(Documento $documento, ?CampoCliente $anterior): array
+    {
+        $lista = is_array($anterior?->valor_texto) ? $anterior->valor_texto : [];
+
+        if ($lista === [] && $anterior?->documento_id) {
+            $lista[] = ['documento_id' => $anterior->documento_id, 'file_original_name' => $anterior->documento?->file_original_name];
+        }
+
+        $lista[] = ['documento_id' => $documento->id, 'file_original_name' => $documento->file_original_name];
+
+        return $lista;
     }
 
     private function borrarDocumento(?Documento $documento): void
@@ -613,6 +664,17 @@ class EventoRecoleccionService
             'activos_digitales', 'cuentas_extranjero', 'puede_ser_reclamado_como_dependiente', 'vivio_trabajo_fuera_eeuu',
         ], true)) {
             return in_array($valor, ['si', 'no'], true);
+        }
+
+        // mas_w2 (Fase 3b, múltiples W-2) solo se guarda como "no" (terminal:
+        // no hay más W-2 por agregar) — un "si" nunca debe persistirse (ver
+        // la nota del paso en PromptActivoStepsSeeder: significa "pide el
+        // archivo siguiente", no "guarda esta respuesta"). Si el agente lo
+        // intentara de todos modos, esto lo deja en estado inválido en vez
+        // de guardarlo — sin esto, la pregunta dejaría de repetirse antes de
+        // tiempo y un empleador quedaría sin capturar.
+        if ($campo === 'mas_w2') {
+            return $valor === 'no';
         }
 
         return true;

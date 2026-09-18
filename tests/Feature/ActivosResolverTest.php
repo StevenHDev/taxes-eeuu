@@ -7,6 +7,7 @@ use App\Enums\TipoPromptActivoStep;
 use App\Enums\UserRole;
 use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
+use App\Models\Documento;
 use App\Models\PromptActivoStep;
 use App\Models\User;
 use App\Services\WhatsappAgent\ActivosResolver;
@@ -365,5 +366,102 @@ class ActivosResolverTest extends TestCase
         $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
 
         $this->assertSame('cuentas_extranjero_detalle', $siguiente['campo']);
+    }
+
+    /**
+     * Deja resueltos los pasos 1-33 salvo w2/form_1099_nec/mas_w2, con w2
+     * "recibido" (un Documento real, para que tieneAlMenosUnDocumento() lo
+     * cuente) — el estado exacto en el que mas_w2 (Fase 3b, múltiples W-2)
+     * debería empezar a ofrecerse.
+     */
+    private function marcarTodoResueltoConUnW2YaEntregado(): void
+    {
+        foreach (['identificacion_ssn_itin', 'estado_civil', 'info_dependientes', 'form_1095_a'] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'no_aplica',
+                'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+            ]);
+        }
+
+        $documento = Documento::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'tax_year' => 2025, 'campo' => 'w2',
+            'file_path' => 'documentos/w2.pdf', 'file_original_name' => 'w2.pdf', 'file_mime_type' => 'application/pdf',
+            'file_size' => 100, 'formato' => 'pdf', 'estado_validacion' => 'recibido',
+        ]);
+
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'w2',
+            'tax_year' => 2025, 'tipo_campo' => 'documento', 'modo' => 'archivo',
+            'valor_texto' => null, 'documento_id' => $documento->id, 'estado' => 'recibido', 'source' => 'agente_ia',
+        ]);
+
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'form_1099_nec',
+            'tax_year' => 2025, 'tipo_campo' => 'documento', 'modo' => 'no_aplica',
+            'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+        ]);
+
+        foreach ([
+            'activos_digitales', 'cuentas_extranjero', 'puede_ser_reclamado_como_dependiente',
+            'vivio_trabajo_fuera_eeuu',
+        ] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+                'valor_texto' => 'no', 'estado' => 'recibido', 'source' => 'agente_ia',
+            ]);
+        }
+
+        foreach (['fecha_nacimiento_contribuyente', 'ocupacion'] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+                'valor_texto' => 'x', 'estado' => 'recibido', 'source' => 'agente_ia',
+            ]);
+        }
+
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'direccion_contribuyente',
+            'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+            'valor_texto' => ['calle' => 'x'], 'estado' => 'recibido', 'source' => 'agente_ia',
+        ]);
+
+        foreach ([
+            'venta_residencia_principal', 'form_1099_r', 'ssa_1099', 'form_1099_int', 'form_1099_div',
+            'form_1099_b', 'form_1099_g', 'form_1098', 'form_1098_e', 'form_1099_misc', 'form_1099_k',
+            'form_1099_s', 'k1_recibido', 'form_w2g', 'form_1099_c', 'form_1099_sa', 'form_5498_sa',
+            'declaracion_anio_anterior', 'ip_pin', 'form_8332',
+        ] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'mixto', 'modo' => 'no_aplica',
+                'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+            ]);
+        }
+    }
+
+    public function test_mas_w2_se_ofrece_una_vez_que_el_cliente_ya_entrego_al_menos_un_w2(): void
+    {
+        $this->marcarTodoResueltoConUnW2YaEntregado();
+
+        $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
+
+        $this->assertSame('mas_w2', $siguiente['campo']);
+    }
+
+    public function test_mas_w2_deja_de_ofrecerse_una_vez_guardado_como_no(): void
+    {
+        $this->marcarTodoResueltoConUnW2YaEntregado();
+
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'mas_w2',
+            'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+            'valor_texto' => 'no', 'estado' => 'recibido', 'source' => 'agente_ia',
+        ]);
+
+        $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
+
+        $this->assertNull($siguiente);
     }
 }
