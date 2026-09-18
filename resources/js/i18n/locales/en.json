@@ -33,6 +33,7 @@
         "users": "Users",
         "auditLog": "Audit log",
         "agente": "AI Agent",
+        "metaAgente": "Meta-agent",
         "apiDocs": "API docs",
         "platform": "Platform",
         "repository": "Repository",
@@ -714,5 +715,41 @@
     "proceso": {
         "title": "Global Tax Process",
         "description": "The full client flow: WhatsApp, data collection, tax rules engine, and closing."
+    },
+    "metaAgente": {
+        "title": "Meta-agent",
+        "description": "Audits already-closed conversations against the current prompt and catalog — never acts on its own, only leaves findings for review.",
+        "severidad": {
+            "alta": "High",
+            "media": "Medium",
+            "baja": "Low"
+        },
+        "origen": {
+            "manual": "Manual",
+            "programado": "Scheduled"
+        },
+        "conversaciones": {
+            "title": "Conversations",
+            "description": "Pick one or several to analyze them right now.",
+            "seleccionadas_one": "{{count}} selected",
+            "seleccionadas_other": "{{count}} selected",
+            "analizar": "Analyze selected",
+            "empty": "No conversations logged yet.",
+            "sinCuenta": "No account yet",
+            "columns": {
+                "telefono": "Phone",
+                "cliente": "Client",
+                "ultimoMensaje": "Last message",
+                "total": "Messages"
+            }
+        },
+        "reportes": {
+            "title": "Recent reports",
+            "description": "Manual and from the daily scheduled run — none applies changes on its own.",
+            "empty": "No report has been generated yet.",
+            "sinHallazgos": "No findings — the conversation showed no detectable divergence.",
+            "hallazgos_one": "{{count}} finding",
+            "hallazgos_other": "{{count}} findings"
+        }
     }
 }

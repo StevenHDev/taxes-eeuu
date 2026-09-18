@@ -28,6 +28,13 @@ php artisan migrate --force 2>/dev/null || true
 # se levanta igual, como tercer servicio con CONTAINER_ROLE=reverb.
 case "$CONTAINER_ROLE" in
     worker)
+        # No hay cron del sistema operativo en este despliegue: el propio
+        # rol worker (el único servicio de larga duración además de reverb)
+        # también corre el scheduler de Laravel, en segundo plano, con el
+        # loop de "poor man's cron" de un minuto que la propia documentación
+        # de Laravel recomienda para entornos sin cron real — ver
+        # routes/console.php (meta-agente:analizar) para lo que dispara.
+        (while true; do php artisan schedule:run >> /dev/null 2>&1; sleep 60; done) &
         exec php artisan queue:work --tries=3 --max-time=3600
         ;;
     reverb)

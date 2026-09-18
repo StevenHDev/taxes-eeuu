@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     Bot,
+    ClipboardCheck,
     Code2,
     History,
     LayoutGrid,
@@ -25,6 +26,7 @@ import { index as apiDocsIndex } from '@/routes/api-docs';
 import { index as bitacoraIndex } from '@/routes/bitacora';
 import { index as catalogoIndex } from '@/routes/catalogo';
 import { index as clientesIndex } from '@/routes/clientes';
+import { index as metaAgenteIndex } from '@/routes/meta-agente';
 import { show as procesoShow } from '@/routes/proceso';
 import { index as usuariosIndex } from '@/routes/usuarios';
 import type { NavItem } from '@/types';
@@ -80,6 +82,11 @@ export function AppSidebar() {
                       title: t('nav.agente'),
                       href: agenteMensajesIndex(),
                       icon: Bot,
+                  },
+                  {
+                      title: t('nav.metaAgente'),
+                      href: metaAgenteIndex(),
+                      icon: ClipboardCheck,
                   },
               ]
             : []),

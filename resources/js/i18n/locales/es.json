@@ -33,6 +33,7 @@
         "users": "Usuarios",
         "auditLog": "Bitácora",
         "agente": "Agente IA",
+        "metaAgente": "Meta-agente",
         "apiDocs": "Documentación API",
         "platform": "Plataforma",
         "repository": "Repositorio",
@@ -714,5 +715,41 @@
     "proceso": {
         "title": "Proceso de Global Tax",
         "description": "El flujo completo del cliente: WhatsApp, recolección de datos, motor de reglas fiscal y cierre."
+    },
+    "metaAgente": {
+        "title": "Meta-agente",
+        "description": "Audita conversaciones ya cerradas contra el prompt vigente y el catálogo — nunca actúa solo, solo deja hallazgos para revisión.",
+        "severidad": {
+            "alta": "Alta",
+            "media": "Media",
+            "baja": "Baja"
+        },
+        "origen": {
+            "manual": "Manual",
+            "programado": "Programado"
+        },
+        "conversaciones": {
+            "title": "Conversaciones",
+            "description": "Elige una o varias para analizarlas ahora mismo.",
+            "seleccionadas_one": "{{count}} seleccionada",
+            "seleccionadas_other": "{{count}} seleccionadas",
+            "analizar": "Analizar seleccionadas",
+            "empty": "Todavía no hay conversaciones registradas.",
+            "sinCuenta": "Sin cuenta todavía",
+            "columns": {
+                "telefono": "Teléfono",
+                "cliente": "Cliente",
+                "ultimoMensaje": "Último mensaje",
+                "total": "Mensajes"
+            }
+        },
+        "reportes": {
+            "title": "Reportes recientes",
+            "description": "Manuales y de la corrida automática diaria — ninguno aplica cambios por su cuenta.",
+            "empty": "Todavía no se ha generado ningún reporte.",
+            "sinHallazgos": "Sin hallazgos — la conversación no mostró ninguna divergencia detectable.",
+            "hallazgos_one": "{{count}} hallazgo",
+            "hallazgos_other": "{{count}} hallazgos"
+        }
     }
 }
