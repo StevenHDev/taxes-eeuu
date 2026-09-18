@@ -228,6 +228,52 @@ class DeterminacionFiscalTest extends TestCase
         $this->assertNotNull($filingStatus->resultado['motivo_no_disponible']);
     }
 
+    /**
+     * Bug real encontrado evaluando la conversación con 3213445027
+     * (2026-09-18): un cliente sin dependientes responde que no tiene, y eso
+     * se guarda como modo="no_aplica" — pero antes del fix, leerValor() solo
+     * contaba Recibido, así que trataba "confirmó que no tiene" exactamente
+     * igual que "nunca se le preguntó" y bloqueaba créditos/liquidación para
+     * el caso más común de la plataforma (cliente soltero sin hijos).
+     */
+    public function test_info_dependientes_marcado_no_aplica_se_calcula_como_cero_dependientes(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->cargarCampo($cliente, 'transversal', 'estado_civil', [
+            'casado_al_31_dic' => false,
+            'convivio_conyuge_ultimos_6_meses' => false,
+            'costeo_mas_mitad_hogar' => false,
+            'existe_persona_calificable' => false,
+            'conyuge_fallecio_en_anio' => false,
+            'anio_fallecimiento_conyuge' => null,
+        ]);
+        CampoCliente::query()->create([
+            'user_id' => $cliente->id, 'forma' => 'transversal', 'tax_year' => 2025, 'campo' => 'info_dependientes',
+            'tipo_campo' => 'dato', 'modo' => 'no_aplica', 'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+        ]);
+        $this->cargarCampo($cliente, 'form_1040', 'ingresos', [
+            'salarios' => 55665, 'intereses_dividendos' => 0, 'ganancias_capital' => 0,
+            'ingresos_jubilacion' => 0, 'otros_ingresos' => 0, 'ajustes_ingreso' => 0, 'seguridad_social' => 0,
+        ]);
+
+        $this->actingAs($preparador)
+            ->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025])
+            ->assertRedirect();
+
+        $dependientes = DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tipo', 'dependientes')->first();
+        $this->assertTrue($dependientes->resultado['disponible']);
+        $this->assertSame(0, $dependientes->resultado['conteo_qualifying_child']);
+        $this->assertSame([], $dependientes->resultado['dependientes']);
+
+        $creditos = DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tipo', 'creditos')->first();
+        $this->assertTrue($creditos->resultado['disponible']);
+
+        $liquidacion = DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tipo', 'liquidacion')->first();
+        $this->assertTrue($liquidacion->resultado['disponible']);
+    }
+
     public function test_ingresos_con_formato_antiguo_de_antes_de_la_fase_2_no_truena_sino_queda_no_disponible(): void
     {
         // Regresión: un campo `ingresos` cargado antes de la Fase 2 (cuando

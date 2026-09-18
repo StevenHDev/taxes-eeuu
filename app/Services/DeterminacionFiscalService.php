@@ -78,11 +78,23 @@ class DeterminacionFiscalService
             // un array y tronaría con un TypeError (500), en vez de mostrar
             // "no disponible" con un motivo claro para que el preparador
             // vuelva a cargar el campo.
-            $dependientes = is_array($dependientesRaw)
-                ? $this->dependientes->calcular($taxYear, $dependientesRaw)
-                : $this->noDisponible($dependientesRaw === null
+            //
+            // leerValor() solo cuenta Recibido, así que no distingue "el
+            // cliente confirmó que no tiene dependientes" (modo="no_aplica")
+            // de "nunca se le preguntó" — ambos llegan acá como null. Para
+            // este campo sí importa la diferencia: un cliente sin
+            // dependientes es un resultado válido y calculable (cero
+            // dependientes), no "no disponible". Encontrado evaluando la
+            // conversación real con 3213445027 (2026-09-18): bloqueaba
+            // créditos/liquidación para el caso más común (cliente soltero
+            // sin hijos) pese a que el dato SÍ estaba resuelto.
+            $dependientes = match (true) {
+                is_array($dependientesRaw) => $this->dependientes->calcular($taxYear, $dependientesRaw),
+                $this->estadoDe($cliente, $taxYear, 'transversal', 'info_dependientes') === FieldState::NoAplica => $this->dependientes->calcular($taxYear, []),
+                default => $this->noDisponible($dependientesRaw === null
                     ? 'info_dependientes no ha sido capturado todavía'
-                    : 'info_dependientes tiene un formato inesperado — vuelve a cargarlo');
+                    : 'info_dependientes tiene un formato inesperado — vuelve a cargarlo'),
+            };
 
             // Los dependientes se calculan primero: su resultado alimenta el
             // filing status (existe qualifying child / algún calificado), en
@@ -258,6 +270,24 @@ class DeterminacionFiscalService
             ->where('estado', FieldState::Recibido)
             ->first()
             ?->valor_texto;
+    }
+
+    /**
+     * El estado actual de un campo, sin filtrar por Recibido (a diferencia de
+     * `leerValor()`) — para distinguir explícitamente `NoAplica` (el cliente
+     * respondió que no aplica) de la ausencia total de fila (nunca se
+     * preguntó), algo que `leerValor()` por sí solo no puede diferenciar
+     * porque ambos casos le devuelven `null`.
+     */
+    private function estadoDe(User $cliente, int $taxYear, string $forma, string $campo): ?FieldState
+    {
+        return CampoCliente::query()
+            ->where('user_id', $cliente->id)
+            ->where('forma', $forma)
+            ->where('campo', $campo)
+            ->where('tax_year', $taxYear)
+            ->first(['estado'])
+            ?->estado;
     }
 
     /**
