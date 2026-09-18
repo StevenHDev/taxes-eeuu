@@ -25,7 +25,9 @@ use Tests\TestCase;
  * promovidos de documentos_extra a ACTIVO); pasos 27-33 agregados en la
  * Fase 3a (identidad y eventos del contribuyente), que también extiende la
  * nota del paso 2 (estado_civil); paso 34 agregado en la Fase 3b (múltiples
- * W-2) — ver PromptActivoStepsSeeder.
+ * W-2); pasos 35-40 agregados en la Fase 3c (resto de negocio/inversión/
+ * K-1/propiedad), que también extiende los miembros del paso 11 (Retiro y
+ * jubilación) — ver PromptActivoStepsSeeder.
  */
 class ActivosPromptComposerTest extends TestCase
 {
@@ -54,7 +56,7 @@ class ActivosPromptComposerTest extends TestCase
         8. cuentas_extranjero — compuerta obligatoria (nunca modo="no_aplica"), en lenguaje simple: "¿Tuviste en algún momento del año cuentas bancarias, de inversión, u otros activos financieros fuera de Estados Unidos?". Guarda la respuesta como "si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante. Si responde "si", a continuación se pide el detalle (país, institución, valor máximo del año) — no lo pidas en este mismo turno.
         9. cuentas_extranjero_detalle — solo si cuentas_extranjero fue respondido como "si". Si respondió "no", no se pregunta.
         10. venta_residencia_principal — pregunta en lenguaje simple si vendió su residencia principal durante el año (distinto de cualquier otra propiedad de alquiler/inversión, que se cubre en Schedule E); si confirma que sí, pide fecha de venta, precio de venta y costo base original (para evaluar la exclusión de $250,000/$500,000, que solo aplica a la residencia principal) — nunca calcules tú la exclusión, solo recolecta los datos.
-        11. Retiro y jubilación — pregunta compuesta: "¿Recibiste dinero de tu retiro, pensión, o Seguro Social (Social Security) este año?" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: form_1099_r, ssa_1099):
+        11. Retiro y jubilación — pregunta compuesta: "¿Recibiste dinero de tu retiro, pensión, o Seguro Social (Social Security) este año?" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: form_1099_r, ssa_1099, retiro_rollover_o_conversion_roth, retiro_distribucion_anticipada, railroad_retirement):
             - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.
             - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.
             - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.
@@ -83,6 +85,18 @@ class ActivosPromptComposerTest extends TestCase
         34. mas_w2 — solo si el cliente ya entregó al menos un w2. Si todavía no entregó ningún w2, no se pregunta.
             - Pregunta en lenguaje simple: "¿Tienes otro W-2 de otro empleador?". Si responde que sí: pide ese W-2 y guárdalo con guardar_campo_cliente(campo="w2", modo="archivo", acumular=true) — nunca guardes mas_w2 en este caso, ni con ningún valor; simplemente vuelve a invocar consultar_pendientes_cliente, que va a volver a ofrecer esta misma pregunta hasta que la respuesta sea "no".
             - Si responde que no (ya no tiene más W-2): recién ahí guarda guardar_campo_cliente(campo="mas_w2", modo="texto", contenido="no") — es el único valor que este campo admite.
+        35. salarios_empleado_domestico — pregunta simple si recibió salarios como empleado doméstico durante el año sin que le hayan dado un W-2 (ej. cuidado de niños, limpieza de casa, jardinería) — distinto del W-2/1099-NEC ya cubiertos en la bifurcación de empleo.
+        36. intereses_exentos_impuestos — pregunta simple si recibió intereses exentos de impuestos federales (ej. de bonos municipales) durante el año — distinto de los intereses gravables ya cubiertos en form_1099_int.
+        37. mejoras_propiedad_vendida — pregunta simple si hizo mejoras importantes (no reparaciones normales) a una propiedad que vendió durante el año — afecta la base de costo, no el ingreso en sí.
+        38. venta_a_plazos — pregunta simple si vendió alguna propiedad a plazos (installment sale, recibiendo pagos en más de un año fiscal) en vez de recibir el pago completo de una sola vez.
+        39. Inversiones menos comunes — pregunta compuesta: "¿Tienes alguna pérdida de capital de un año anterior por aplicar, o recibiste compensación en forma de acciones de tu empleador (stock options, RSUs)?" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: perdida_capital_arrastrada, compensacion_acciones):
+            - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.
+            - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.
+            - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.
+        40. K-1 — distribuciones y pérdidas pasivas — pregunta compuesta: "¿Recibiste distribuciones de dinero de esa sociedad/S-corp/fideicomiso, o tienes pérdidas pasivas o basis pendiente de años anteriores relacionados con ella?" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: k1_distribuciones_recibidas, k1_perdidas_pasivas_o_basis_pendiente):
+            - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.
+            - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.
+            - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.
         TXT;
 
         $this->assertSame($esperado, app(ActivosPromptComposer::class)->compilarLista());
@@ -114,6 +128,8 @@ class ActivosPromptComposerTest extends TestCase
         $this->assertStringContainsString('direccion_contribuyente', $texto);
         $this->assertStringContainsString('form_8332', $texto);
         $this->assertStringContainsString('mas_w2', $texto);
+        $this->assertStringContainsString('Inversiones menos comunes', $texto);
+        $this->assertStringContainsString('K-1 — distribuciones y pérdidas pasivas', $texto);
         $this->assertStringContainsString('fuente de verdad', $texto);
     }
 }

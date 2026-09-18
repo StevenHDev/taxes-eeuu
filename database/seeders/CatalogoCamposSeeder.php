@@ -153,6 +153,27 @@ class CatalogoCamposSeeder extends Seeder
             // y PromptActivoStepsSeeder. Solo se guarda con valor "no"
             // (terminal); un "si" nunca se persiste acá, ver la nota del paso.
             $this->campo('mas_w2', FieldKind::Dato, tipoDato: FieldDataType::String, unicoPorCliente: true),
+            // Fase 3c del plan de cierre de brecha GTS: resto de negocio/
+            // inversión/retiro/K-1/propiedad del artifact "Matriz GTS 1040"
+            // (secciones 3, 5, 6, 8, 9). Ninguno de estos es P1 — todos
+            // obligatorio: false, sin wire a ningún calculador nuevo (solo
+            // recolección, igual que el resto de "falta" de baja prioridad).
+            $this->campo('salarios_empleado_domestico', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            $this->campo('intereses_exentos_impuestos', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            $this->campo('mejoras_propiedad_vendida', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('venta_a_plazos', FieldKind::Dato, tipoDato: FieldDataType::String, obligatorio: false, unicoPorCliente: true),
+            // Se unen al Grupo "Retiro y jubilación" ya existente (junto con
+            // form_1099_r/ssa_1099 de la Fase 3b) — ver PromptActivoStepsSeeder.
+            $this->campo('retiro_rollover_o_conversion_roth', FieldKind::Dato, tipoDato: FieldDataType::String, obligatorio: false, unicoPorCliente: true),
+            $this->campo('retiro_distribucion_anticipada', FieldKind::Dato, tipoDato: FieldDataType::String, obligatorio: false, unicoPorCliente: true),
+            $this->campo('railroad_retirement', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            // Nuevo Grupo "Inversiones menos comunes" — ver PromptActivoStepsSeeder.
+            $this->campo('perdida_capital_arrastrada', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            $this->campo('compensacion_acciones', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            // Nuevo Grupo "K-1 — distribuciones y pérdidas pasivas" — ver
+            // PromptActivoStepsSeeder.
+            $this->campo('k1_distribuciones_recibidas', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            $this->campo('k1_perdidas_pasivas_o_basis_pendiente', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
         ];
     }
 
@@ -304,6 +325,13 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('millaje', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 $this->campo('activos', FieldKind::Mixto, tipoDato: FieldDataType::ArrayObject, formatos: ['pdf', 'xlsx']),
                 $this->campo('costo_ventas', FieldKind::Dato, tipoDato: FieldDataType::Number),
+                // Fase 3c del plan de cierre de brecha GTS (Form 8829): campo
+                // propio de schedule_c, no transversal — se pregunta vía
+                // `siguiente` como cualquier otro campo de esta forma, sin
+                // necesidad de un paso en PromptActivoStepsSeeder.
+                $this->campo('oficina_en_casa', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'jpg', 'jpeg'], subcampos: [
+                    'metros_cuadrados_oficina', 'metros_cuadrados_totales', 'gastos_hogar_anuales',
+                ], obligatorio: false),
             ],
             TaxForm::ScheduleE->value => [
                 $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),

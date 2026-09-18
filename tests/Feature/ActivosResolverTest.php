@@ -198,6 +198,11 @@ class ActivosResolverTest extends TestCase
             'form_1099_b', 'form_1099_g', 'form_1098', 'form_1098_e', 'form_1099_misc', 'form_1099_k',
             'form_1099_s', 'k1_recibido', 'form_w2g', 'form_1099_c', 'form_1099_sa', 'form_5498_sa',
             'declaracion_anio_anterior', 'ip_pin', 'form_8332',
+            // Fase 3c
+            'salarios_empleado_domestico', 'intereses_exentos_impuestos', 'mejoras_propiedad_vendida',
+            'venta_a_plazos', 'retiro_rollover_o_conversion_roth', 'retiro_distribucion_anticipada',
+            'railroad_retirement', 'perdida_capital_arrastrada', 'compensacion_acciones',
+            'k1_distribuciones_recibidas', 'k1_perdidas_pasivas_o_basis_pendiente',
         ] as $campo) {
             CampoCliente::query()->create([
                 'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
@@ -432,6 +437,11 @@ class ActivosResolverTest extends TestCase
             'form_1099_b', 'form_1099_g', 'form_1098', 'form_1098_e', 'form_1099_misc', 'form_1099_k',
             'form_1099_s', 'k1_recibido', 'form_w2g', 'form_1099_c', 'form_1099_sa', 'form_5498_sa',
             'declaracion_anio_anterior', 'ip_pin', 'form_8332',
+            // Fase 3c
+            'salarios_empleado_domestico', 'intereses_exentos_impuestos', 'mejoras_propiedad_vendida',
+            'venta_a_plazos', 'retiro_rollover_o_conversion_roth', 'retiro_distribucion_anticipada',
+            'railroad_retirement', 'perdida_capital_arrastrada', 'compensacion_acciones',
+            'k1_distribuciones_recibidas', 'k1_perdidas_pasivas_o_basis_pendiente',
         ] as $campo) {
             CampoCliente::query()->create([
                 'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,

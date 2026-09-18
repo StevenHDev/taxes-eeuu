@@ -93,7 +93,17 @@ class PromptActivoStepsSeeder extends Seeder
                 'orden' => 11, 'tipo' => TipoPromptActivoStep::Grupo, 'etiqueta' => 'Retiro y jubilación',
                 'pregunta' => '¿Recibiste dinero de tu retiro, pensión, o Seguro Social (Social Security) '
                     .'este año?',
-                'miembros' => ['form_1099_r', 'ssa_1099'],
+                // retiro_rollover_o_conversion_roth/retiro_distribucion_anticipada/
+                // railroad_retirement se agregaron en la Fase 3c — mismo grupo
+                // ya existente desde la Fase 3b, no uno nuevo (ver el artifact:
+                // el card "Retiro y jubilación" ya proponía las 5 preguntas
+                // juntas). Si el cliente confirma un rollover/distribución
+                // anticipada, no hay documento que pedir — solo guarda la
+                // respuesta como dato; para railroad_retirement sí (RRB-1099).
+                'miembros' => [
+                    'form_1099_r', 'ssa_1099', 'retiro_rollover_o_conversion_roth',
+                    'retiro_distribucion_anticipada', 'railroad_retirement',
+                ],
             ],
             [
                 'orden' => 12, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_int',
@@ -213,6 +223,43 @@ class PromptActivoStepsSeeder extends Seeder
                 'orden' => 34, 'tipo' => TipoPromptActivoStep::Condicional, 'campo' => 'mas_w2',
                 'condicion' => 'el cliente ya entregó al menos un w2',
                 'nota_si_no_aplica' => 'Si todavía no entregó ningún w2, no se pregunta.',
+            ],
+            // Fase 3c del plan de cierre de brecha GTS: resto de negocio/
+            // inversión/K-1/propiedad (secciones 3, 5, 8, 9 del artifact) —
+            // se agregan al final de la lista existente.
+            [
+                'orden' => 35, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'salarios_empleado_domestico',
+                'nota' => 'pregunta simple si recibió salarios como empleado doméstico durante el año sin que '
+                    .'le hayan dado un W-2 (ej. cuidado de niños, limpieza de casa, jardinería) — distinto del '
+                    .'W-2/1099-NEC ya cubiertos en la bifurcación de empleo.',
+            ],
+            [
+                'orden' => 36, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'intereses_exentos_impuestos',
+                'nota' => 'pregunta simple si recibió intereses exentos de impuestos federales (ej. de bonos '
+                    .'municipales) durante el año — distinto de los intereses gravables ya cubiertos en '
+                    .'form_1099_int.',
+            ],
+            [
+                'orden' => 37, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'mejoras_propiedad_vendida',
+                'nota' => 'pregunta simple si hizo mejoras importantes (no reparaciones normales) a una '
+                    .'propiedad que vendió durante el año — afecta la base de costo, no el ingreso en sí.',
+            ],
+            [
+                'orden' => 38, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'venta_a_plazos',
+                'nota' => 'pregunta simple si vendió alguna propiedad a plazos (installment sale, recibiendo '
+                    .'pagos en más de un año fiscal) en vez de recibir el pago completo de una sola vez.',
+            ],
+            [
+                'orden' => 39, 'tipo' => TipoPromptActivoStep::Grupo, 'etiqueta' => 'Inversiones menos comunes',
+                'pregunta' => '¿Tienes alguna pérdida de capital de un año anterior por aplicar, o recibiste '
+                    .'compensación en forma de acciones de tu empleador (stock options, RSUs)?',
+                'miembros' => ['perdida_capital_arrastrada', 'compensacion_acciones'],
+            ],
+            [
+                'orden' => 40, 'tipo' => TipoPromptActivoStep::Grupo, 'etiqueta' => 'K-1 — distribuciones y pérdidas pasivas',
+                'pregunta' => '¿Recibiste distribuciones de dinero de esa sociedad/S-corp/fideicomiso, o '
+                    .'tienes pérdidas pasivas o basis pendiente de años anteriores relacionados con ella?',
+                'miembros' => ['k1_distribuciones_recibidas', 'k1_perdidas_pasivas_o_basis_pendiente'],
             ],
         ];
 
