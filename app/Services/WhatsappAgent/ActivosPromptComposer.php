@@ -44,6 +44,7 @@ class ActivosPromptComposer
             TipoPromptActivoStep::DocumentoConNota => "{$p->orden}. {$p->campo} — {$p->nota}",
             TipoPromptActivoStep::Bifurcacion => implode("\n", [
                 "{$p->orden}. {$p->etiqueta} — pregunta simple: \"{$p->pregunta}\" (esta pregunta no tiene un campo propio en `pendientes`; es una bifurcación conversacional entre {$p->campo_si} y {$p->campo_no}):",
+                "    - {$p->campo_si} y {$p->campo_no} suelen traer obligatorio:false en `pendientes` — eso significa que un cliente sin ESTE tipo de ingreso no necesita ninguno de los dos, nunca que esta bifurcación en sí sea opcional. La respuesta del cliente a esta pregunta determina siempre cuál de los dos pedir; nunca marques los dos como no_aplica sin haber pedido primero el que corresponde según la respuesta.",
                 "    - Si responde que sí: pide {$p->campo_si}. Al guardarlo, invoca también guardar_campo_cliente con modo=\"no_aplica\" para {$p->campo_no} en el mismo turno (el cliente ya confirmó que es empleado, lo cual responde implícitamente por el 1099-NEC — esto sí cuenta como información entregada explícitamente, ver GROUNDING ESTRICTO).",
                 "    - Si responde que no: pide {$p->campo_no}. Al guardarlo (o si el cliente no tiene ninguno), guarda modo=\"no_aplica\" para {$p->campo_si} en el mismo turno, por la misma razón.",
             ]),
