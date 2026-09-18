@@ -149,9 +149,10 @@ class ActivosResolverTest extends TestCase
     }
 
     /**
-     * Resuelve los 10 pasos ACTIVOS sembrados hoy por PromptActivoStepsSeeder
-     * (los 6 originales + los 4 de compliance de la Fase 1 — ver esa clase),
-     * dejando la conversación en "no queda ningún ACTIVO real pendiente".
+     * Resuelve los 26 pasos ACTIVOS sembrados hoy por PromptActivoStepsSeeder
+     * (los 6 originales + los 4 de compliance de la Fase 1 + los 16 de
+     * documentos promovidos de la Fase 2 — ver esa clase), dejando la
+     * conversación en "no queda ningún ACTIVO real pendiente".
      * cuentas_extranjero_detalle se salta solo (cuentas_extranjero queda en
      * "no"), así que no hace falta resolverlo acá aparte.
      */
@@ -173,11 +174,18 @@ class ActivosResolverTest extends TestCase
             ]);
         }
 
-        CampoCliente::query()->create([
-            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'venta_residencia_principal',
-            'tax_year' => 2025, 'tipo_campo' => 'mixto', 'modo' => 'no_aplica',
-            'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
-        ]);
+        foreach ([
+            'venta_residencia_principal', 'form_1099_r', 'ssa_1099', 'form_1099_int', 'form_1099_div',
+            'form_1099_b', 'form_1099_g', 'form_1098', 'form_1098_e', 'form_1099_misc', 'form_1099_k',
+            'form_1099_s', 'k1_recibido', 'form_w2g', 'form_1099_c', 'form_1099_sa', 'form_5498_sa',
+            'declaracion_anio_anterior',
+        ] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'mixto', 'modo' => 'no_aplica',
+                'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+            ]);
+        }
     }
 
     /**

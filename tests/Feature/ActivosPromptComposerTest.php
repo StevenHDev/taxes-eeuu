@@ -21,7 +21,8 @@ use Tests\TestCase;
  *   no pedía w2 pese a confirmar ser empleado...").
  *
  * Pasos 7-10 agregados en la Fase 1 del plan de cierre de brecha GTS
- * (compliance crítico P1) — ver PromptActivoStepsSeeder.
+ * (compliance crítico P1); pasos 11-26 agregados en la Fase 2 (documentos
+ * promovidos de documentos_extra a ACTIVO) — ver PromptActivoStepsSeeder.
  */
 class ActivosPromptComposerTest extends TestCase
 {
@@ -50,6 +51,25 @@ class ActivosPromptComposerTest extends TestCase
         8. cuentas_extranjero — compuerta obligatoria (nunca modo="no_aplica"), en lenguaje simple: "¿Tuviste en algún momento del año cuentas bancarias, de inversión, u otros activos financieros fuera de Estados Unidos?". Guarda la respuesta como "si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante. Si responde "si", a continuación se pide el detalle (país, institución, valor máximo del año) — no lo pidas en este mismo turno.
         9. cuentas_extranjero_detalle — solo si cuentas_extranjero fue respondido como "si". Si respondió "no", no se pregunta.
         10. venta_residencia_principal — pregunta en lenguaje simple si vendió su residencia principal durante el año (distinto de cualquier otra propiedad de alquiler/inversión, que se cubre en Schedule E); si confirma que sí, pide fecha de venta, precio de venta y costo base original (para evaluar la exclusión de $250,000/$500,000, que solo aplica a la residencia principal) — nunca calcules tú la exclusión, solo recolecta los datos.
+        11. Retiro y jubilación — pregunta compuesta: "¿Recibiste dinero de tu retiro, pensión, o Seguro Social (Social Security) este año?" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: form_1099_r, ssa_1099):
+            - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.
+            - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.
+            - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.
+        12. form_1099_int — pregunta simple si tuvo intereses bancarios o de cuentas de inversión durante el año.
+        13. form_1099_div — pregunta simple si recibió dividendos de inversiones durante el año.
+        14. form_1099_b — pregunta simple si vendió acciones, ETFs, fondos, bonos u otras inversiones durante el año.
+        15. form_1099_g — pregunta simple si recibió desempleo o un reembolso de impuestos estatales/locales durante el año.
+        16. form_1098 — pregunta simple si pagó intereses hipotecarios sobre su residencia durante el año.
+        17. form_1098_e — pregunta simple si pagó intereses de préstamos estudiantiles durante el año.
+        18. form_1099_misc — pregunta simple si recibió regalías (royalties) u otros ingresos varios reportados en un 1099-MISC durante el año.
+        19. form_1099_k — pregunta simple si recibió ingresos por alquiler de corto plazo (Airbnb, VRBO) o pagos por plataformas de pago (Zelle, Venmo, PayPal) reportados en un 1099-K durante el año.
+        20. form_1099_s — pregunta simple si vendió una propiedad distinta de su residencia principal (terreno, segunda vivienda, propiedad de alquiler) durante el año — distinto de venta_residencia_principal, que ya tiene su propia pregunta.
+        21. k1_recibido — pregunta simple si recibió un Schedule K-1 durante el año, de una sociedad (partnership), una S corporation, o un fideicomiso/sucesión — un único documento cubre los tres casos, no hace falta distinguir cuál.
+        22. form_w2g — pregunta simple si tuvo ganancias reportables de juego (casino, lotería) durante el año.
+        23. form_1099_c — pregunta simple si tuvo una cancelación o condonación de deuda durante el año.
+        24. form_1099_sa — pregunta simple si recibió una distribución de su HSA durante el año.
+        25. form_5498_sa — pregunta simple si hizo aportes a su HSA durante el año.
+        26. declaracion_anio_anterior — pregunta simple si puede compartir su declaración de impuestos del año anterior (útil para pérdidas de capital o créditos arrastrados).
         TXT;
 
         $this->assertSame($esperado, app(ActivosPromptComposer::class)->compilarLista());
@@ -75,6 +95,9 @@ class ActivosPromptComposerTest extends TestCase
         $this->assertStringContainsString('activos_digitales', $texto);
         $this->assertStringContainsString('cuentas_extranjero', $texto);
         $this->assertStringContainsString('venta_residencia_principal', $texto);
+        $this->assertStringContainsString('Retiro y jubilación', $texto);
+        $this->assertStringContainsString('form_1099_int', $texto);
+        $this->assertStringContainsString('declaracion_anio_anterior', $texto);
         $this->assertStringContainsString('fuente de verdad', $texto);
     }
 }

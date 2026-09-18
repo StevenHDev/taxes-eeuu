@@ -201,19 +201,22 @@ class ClientePanelTest extends TestCase
 
     public function test_un_preparador_puede_marcar_un_campo_opcional_como_no_aplica(): void
     {
-        // declaracion_anio_anterior es documento y obligatorio: false — el
-        // preparador puede registrar que el cliente no lo tiene sin subir nada.
+        // form_1098_t es documento y obligatorio: false — el único que queda
+        // bajo documentos_extra desde la Fase 2 del plan de cierre de brecha
+        // GTS (declaracion_anio_anterior se promovió a transversal — ver
+        // CatalogoCamposSeeder). El preparador puede registrar que el
+        // cliente no lo tiene sin subir nada.
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 
         $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'declaracion_anio_anterior']).'?forma=documentos_extra&tax_year=2025', [
+            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'form_1098_t']).'?forma=documentos_extra&tax_year=2025', [
                 'forma' => 'documentos_extra',
                 'modo' => 'no_aplica',
             ])
             ->assertRedirect();
 
-        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'declaracion_anio_anterior')->first();
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'form_1098_t')->first();
         $this->assertNotNull($campo);
         $this->assertSame('no_aplica', $campo->estado->value);
         $this->assertSame('preparador', $campo->source->value);

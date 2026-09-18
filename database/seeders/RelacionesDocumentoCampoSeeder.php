@@ -115,65 +115,69 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'acumulable' => true,
             ],
 
-            // 1099-INT
+            // 1099-INT — promovido a ACTIVO en la Fase 2 (ver CatalogoCamposSeeder
+            // ::documentosPromovidosAActivo()): documento_forma sigue al campo,
+            // que ahora vive bajo 'transversal', no 'documentos_extra'.
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_int',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_int',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'intereses_dividendos',
                 'descripcion' => 'Casilla 1 (Interest income) del 1099-INT es interés gravable a incluir en ingresos.',
                 'acumulable' => true,
             ],
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_int',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_int',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'impuestos_retenidos', 'subcampo_destino' => null,
                 'descripcion' => 'Casilla 4 (Federal income tax withheld) del 1099-INT suma a la retención federal total.',
                 'acumulable' => true,
             ],
 
-            // 1099-DIV
+            // 1099-DIV — promovido a ACTIVO en la Fase 2.
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_div',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_div',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'intereses_dividendos',
                 'descripcion' => 'Casilla 1a (Total ordinary dividends) del 1099-DIV es dividendo gravable a incluir en ingresos.',
                 'acumulable' => true,
             ],
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_div',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_div',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'impuestos_retenidos', 'subcampo_destino' => null,
                 'descripcion' => 'Casilla 4 (Federal income tax withheld) del 1099-DIV suma a la retención federal total.',
                 'acumulable' => true,
             ],
 
-            // 1099-R
+            // 1099-R — promovido a ACTIVO en la Fase 2 (paso Grupo "Retiro y
+            // jubilación", junto con ssa_1099 — ver PromptActivoStepsSeeder).
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_r',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_r',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'ingresos_jubilacion',
                 'descripcion' => 'Casilla 2a (Taxable amount) del 1099-R es la porción gravable de la distribución de retiro/pensión.',
             ],
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_r',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_r',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'impuestos_retenidos', 'subcampo_destino' => null,
                 'descripcion' => 'Casilla 4 (Federal income tax withheld) del 1099-R suma a la retención federal total.',
                 'acumulable' => true,
             ],
 
-            // 1099-G
+            // 1099-G — promovido a ACTIVO en la Fase 2.
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_g',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_g',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'otros_ingresos',
                 'descripcion' => 'Casilla 1 (Unemployment compensation) o casilla 2 (state/local refund, si gravable) del 1099-G es otro ingreso a reportar.',
                 'acumulable' => true,
             ],
 
-            // 1098 (hipoteca)
+            // 1098 (hipoteca) — promovido a ACTIVO en la Fase 2.
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1098',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1098',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'deducciones', 'subcampo_destino' => null,
                 'descripcion' => 'Casilla 1 (Mortgage interest received) del 1098 es interés hipotecario deducible si el cliente itemiza (Schedule A).',
             ],
 
-            // 1098-E (interés préstamo estudiantil)
+            // 1098-E (interés préstamo estudiantil) — promovido a ACTIVO en la
+            // Fase 2.
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1098_e',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1098_e',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'ajustes_ingreso',
                 'descripcion' => 'Casilla 1 (Student loan interest received) del 1098-E es un ajuste al ingreso (above-the-line), sujeto a límites de MAGI.',
                 'acumulable' => true,
@@ -188,21 +192,26 @@ class RelacionesDocumentoCampoSeeder extends Seeder
             // campo destino, así que solo se recolectan como documento (ver
             // GROUNDING ESTRICTO del prompt del agente).
 
-            // SSA-1099 / RRB-1099 (Seguro Social)
+            // SSA-1099 / RRB-1099 (Seguro Social) — promovido a ACTIVO en la
+            // Fase 2 (paso Grupo "Retiro y jubilación", junto con form_1099_r).
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'ssa_1099',
+                'documento_forma' => $transversal, 'documento_campo' => 'ssa_1099',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'seguridad_social',
                 'descripcion' => 'Casilla 5 (Net benefits) del SSA-1099 es el beneficio bruto de Seguro Social; la porción gravable la calcula el motor de reglas según el ingreso combinado (Social Security Benefits Worksheet).',
             ],
 
-            // 1099-B / 1099-DA (ventas de inversiones/cripto)
+            // 1099-B / 1099-DA (ventas de inversiones/cripto) — promovido a
+            // ACTIVO en la Fase 2.
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_b',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_b',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'ganancias_capital',
                 'descripcion' => 'Ganancia/pérdida neta reportada (proceeds menos basis) del 1099-B/1099-DA es la ganancia de capital a incluir en ingresos — aproximación: no distingue corto/largo plazo ni lote por lote.',
             ],
 
-            // 1098-T (educación)
+            // 1098-T (educación) — se mantiene PASIVO a propósito (Fase 2):
+            // gastos_educacion (form_1040, Mixto) ya se pregunta como ACTIVO y
+            // acepta este mismo documento como respuesta; promover 1098-T
+            // aparte preguntaría dos veces por lo mismo.
             [
                 'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1098_t',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'gastos_educacion', 'subcampo_destino' => null,
@@ -226,17 +235,17 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'descripcion' => 'Columna C (Monthly advance payment of premium tax credit) del 1095-A, parte III, es el APTC recibido por adelantado a reconciliar en el Form 8962.',
             ],
 
-            // W-2G (ganancias de juego)
+            // W-2G (ganancias de juego) — promovido a ACTIVO en la Fase 2.
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_w2g',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_w2g',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'otros_ingresos',
                 'descripcion' => 'Casilla 1 (Reportable winnings) del W-2G es ingreso de juego a reportar como otro ingreso.',
                 'acumulable' => true,
             ],
 
-            // 1099-C (cancelación de deuda)
+            // 1099-C (cancelación de deuda) — promovido a ACTIVO en la Fase 2.
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_c',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_c',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'otros_ingresos',
                 'descripcion' => 'Casilla 2 (Amount of debt discharged) del 1099-C es ingreso por cancelación de deuda a incluir en otros ingresos, sujeto a exclusiones (insolvencia, quiebra) que el motor de reglas no evalúa — verificar con el cliente antes de usarlo tal cual.',
                 'acumulable' => true,
@@ -244,17 +253,18 @@ class RelacionesDocumentoCampoSeeder extends Seeder
 
             // 5498-SA (aportes a HSA — deducible; distinto de 1099-SA, que son
             // distribuciones y no tiene relación cierta por depender de si
-            // fueron gastos médicos calificados).
+            // fueron gastos médicos calificados) — promovido a ACTIVO en la
+            // Fase 2.
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_5498_sa',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_5498_sa',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'ingresos', 'subcampo_destino' => 'ajustes_ingreso',
                 'descripcion' => 'Casilla 2 (Total contributions made) del 5498-SA es el aporte a HSA deducible como ajuste al ingreso (Form 8889).',
             ],
 
-            // Impuesto extranjero pagado — casilla adicional del 1099-DIV que ya
-            // es transversal en el catálogo (no requiere un documento nuevo).
+            // Impuesto extranjero pagado — casilla adicional del 1099-DIV
+            // (promovido a ACTIVO en la Fase 2).
             [
-                'documento_forma' => $documentosExtra, 'documento_campo' => 'form_1099_div',
+                'documento_forma' => $transversal, 'documento_campo' => 'form_1099_div',
                 'campo_destino_forma' => $f1040, 'campo_destino' => 'impuesto_extranjero_pagado', 'subcampo_destino' => null,
                 'descripcion' => 'Casilla 7 (Foreign tax paid) del 1099-DIV es impuesto extranjero pagado, elegible para el crédito del Form 1116.',
             ],

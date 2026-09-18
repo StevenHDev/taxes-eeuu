@@ -116,14 +116,19 @@ class CampoDerivationLogTest extends TestCase
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
+        // form_1098_t es el único campo que queda bajo documentos_extra desde
+        // la Fase 2 del plan de cierre de brecha GTS (declaracion_anio_anterior
+        // se promovió a transversal — ver CatalogoCamposSeeder). El seeder de
+        // relaciones no corre acá (solo catálogo/parámetros, ver
+        // Tests\TestCase), así que no hay `revela` declarado en este test.
         $this->post('/api/eventos', [
             'cliente_id' => $cliente->id,
             'forma' => 'documentos_extra',
             'tax_year' => 2025,
-            'campo' => 'declaracion_anio_anterior',
+            'campo' => 'form_1098_t',
             'tipo_campo' => 'documento',
             'modo' => 'archivo',
-            'file' => UploadedFile::fake()->create('declaracion.pdf', 10),
+            'file' => UploadedFile::fake()->create('1098t.pdf', 10),
         ])->assertCreated();
 
         $this->assertSame(0, CampoDerivationLog::query()->count());

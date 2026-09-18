@@ -123,11 +123,14 @@ class ClientePendientesApiTest extends TestCase
     }
 
     /**
-     * Los documentos extra (form_1099_int, form_1099_div, ...) NO se
-     * preguntan proactivamente — a diferencia de los transversales, no se
-     * inyectan en `pendientes` (ver GET /api/catalogo/documentos-extra para
-     * la consulta reactiva). Sí siguen resolviéndose a su propia pseudo-forma
-     * al guardarse (ver CampoCatalogo::DOCUMENTOS_EXTRA).
+     * Desde la Fase 2 del plan de cierre de brecha GTS, form_1098_t es el
+     * único campo documentos_extra que queda (el resto se promovió a
+     * ACTIVO/transversal — ver CatalogoCamposSeeder::documentosPromovidosAActivo()).
+     * Los documentos_extra NO se preguntan proactivamente — a diferencia de
+     * los transversales, no se inyectan en `pendientes` (ver GET
+     * /api/catalogo/documentos-extra para la consulta reactiva). Sí siguen
+     * resolviéndose a su propia pseudo-forma al guardarse (ver
+     * CampoCatalogo::DOCUMENTOS_EXTRA).
      */
     public function test_documentos_extra_no_aparecen_en_pendientes(): void
     {
@@ -138,10 +141,10 @@ class ClientePendientesApiTest extends TestCase
         $response = $this->getJson("/api/clientes/{$cliente->id}/pendientes?tax_year=2025")->assertOk();
 
         $pendiente = collect($response->json('pendientes'))
-            ->firstWhere('campo', 'form_1099_int');
+            ->firstWhere('campo', 'form_1098_t');
 
         $this->assertNull($pendiente);
-        $this->assertSame('documentos_extra', TaxFieldCatalog::formaAlmacen(2025, 'form_1099_int', 'form_1040'));
+        $this->assertSame('documentos_extra', TaxFieldCatalog::formaAlmacen(2025, 'form_1098_t', 'form_1040'));
     }
 
     /**

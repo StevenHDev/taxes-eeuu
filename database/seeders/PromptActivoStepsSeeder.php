@@ -76,6 +76,90 @@ class PromptActivoStepsSeeder extends Seeder
                     .'evaluar la exclusión de $250,000/$500,000, que solo aplica a la residencia principal) — '
                     .'nunca calcules tú la exclusión, solo recolecta los datos.',
             ],
+            // Fase 2 del plan de cierre de brecha GTS: documentos que antes
+            // vivían pasivos en documentos_extra (ver CatalogoCamposSeeder
+            // ::documentosPromovidosAActivo()) y ahora se preguntan directo.
+            // form_1099_r + ssa_1099 van juntos como Grupo ("Retiro y
+            // jubilación", el único de los 8 grupos propuestos en el artifact
+            // con más de un campo real en el catálogo hoy); el resto,
+            // individualmente — sus demás compañeros de grupo en el artifact
+            // todavía no existen como campo (Fase 3).
+            [
+                'orden' => 11, 'tipo' => TipoPromptActivoStep::Grupo, 'etiqueta' => 'Retiro y jubilación',
+                'pregunta' => '¿Recibiste dinero de tu retiro, pensión, o Seguro Social (Social Security) '
+                    .'este año?',
+                'miembros' => ['form_1099_r', 'ssa_1099'],
+            ],
+            [
+                'orden' => 12, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_int',
+                'nota' => 'pregunta simple si tuvo intereses bancarios o de cuentas de inversión durante el año.',
+            ],
+            [
+                'orden' => 13, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_div',
+                'nota' => 'pregunta simple si recibió dividendos de inversiones durante el año.',
+            ],
+            [
+                'orden' => 14, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_b',
+                'nota' => 'pregunta simple si vendió acciones, ETFs, fondos, bonos u otras inversiones '
+                    .'durante el año.',
+            ],
+            [
+                'orden' => 15, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_g',
+                'nota' => 'pregunta simple si recibió desempleo o un reembolso de impuestos estatales/locales '
+                    .'durante el año.',
+            ],
+            [
+                'orden' => 16, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1098',
+                'nota' => 'pregunta simple si pagó intereses hipotecarios sobre su residencia durante el año.',
+            ],
+            [
+                'orden' => 17, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1098_e',
+                'nota' => 'pregunta simple si pagó intereses de préstamos estudiantiles durante el año.',
+            ],
+            [
+                'orden' => 18, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_misc',
+                'nota' => 'pregunta simple si recibió regalías (royalties) u otros ingresos varios reportados '
+                    .'en un 1099-MISC durante el año.',
+            ],
+            [
+                'orden' => 19, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_k',
+                'nota' => 'pregunta simple si recibió ingresos por alquiler de corto plazo (Airbnb, VRBO) o '
+                    .'pagos por plataformas de pago (Zelle, Venmo, PayPal) reportados en un 1099-K durante el año.',
+            ],
+            [
+                'orden' => 20, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_s',
+                'nota' => 'pregunta simple si vendió una propiedad distinta de su residencia principal '
+                    .'(terreno, segunda vivienda, propiedad de alquiler) durante el año — distinto de '
+                    .'venta_residencia_principal, que ya tiene su propia pregunta.',
+            ],
+            [
+                'orden' => 21, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'k1_recibido',
+                'nota' => 'pregunta simple si recibió un Schedule K-1 durante el año, de una sociedad '
+                    .'(partnership), una S corporation, o un fideicomiso/sucesión — un único documento cubre '
+                    .'los tres casos, no hace falta distinguir cuál.',
+            ],
+            [
+                'orden' => 22, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_w2g',
+                'nota' => 'pregunta simple si tuvo ganancias reportables de juego (casino, lotería) durante '
+                    .'el año.',
+            ],
+            [
+                'orden' => 23, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_c',
+                'nota' => 'pregunta simple si tuvo una cancelación o condonación de deuda durante el año.',
+            ],
+            [
+                'orden' => 24, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_1099_sa',
+                'nota' => 'pregunta simple si recibió una distribución de su HSA durante el año.',
+            ],
+            [
+                'orden' => 25, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_5498_sa',
+                'nota' => 'pregunta simple si hizo aportes a su HSA durante el año.',
+            ],
+            [
+                'orden' => 26, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'declaracion_anio_anterior',
+                'nota' => 'pregunta simple si puede compartir su declaración de impuestos del año anterior '
+                    .'(útil para pérdidas de capital o créditos arrastrados).',
+            ],
         ];
 
         foreach ($pasos as $paso) {

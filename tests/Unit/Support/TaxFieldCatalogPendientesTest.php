@@ -68,9 +68,7 @@ class TaxFieldCatalogPendientesTest extends TestCase
     {
         $cliente = User::factory()->create();
 
-        // form_1095_a es transversal y obligatorio: false — declaracion_anio_anterior
-        // ya no sirve de ejemplo acá porque se movió a documentos_extra, que ya
-        // no se inyecta en pendientesPara() (ver GET /api/catalogo/documentos-extra).
+        // form_1095_a es transversal y obligatorio: false.
         $pendientes = collect(TaxFieldCatalog::pendientesPara(2025, [TaxForm::Form1040], $cliente->id));
 
         $opcional = $pendientes->firstWhere('campo', 'form_1095_a');
@@ -88,9 +86,11 @@ class TaxFieldCatalogPendientesTest extends TestCase
     {
         $cliente = User::factory()->create();
 
+        // declaracion_anio_anterior es transversal desde la Fase 2 del plan de
+        // cierre de brecha GTS (ver CatalogoCamposSeeder::documentosPromovidosAActivo()).
         CampoCliente::query()->create([
             'user_id' => $cliente->id,
-            'forma' => 'documentos_extra',
+            'forma' => 'transversal',
             'tax_year' => 2025,
             'campo' => 'declaracion_anio_anterior',
             'tipo_campo' => 'documento',

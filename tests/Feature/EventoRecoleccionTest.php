@@ -633,19 +633,22 @@ class EventoRecoleccionTest extends TestCase
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
-        // declaracion_anio_anterior es documento y obligatorio: false en el catálogo.
+        // form_1098_t es documento y obligatorio: false en el catálogo — el
+        // único que queda bajo documentos_extra desde la Fase 2 del plan de
+        // cierre de brecha GTS (declaracion_anio_anterior se promovió a
+        // transversal — ver CatalogoCamposSeeder).
         $response = $this->postJson('/api/eventos', [
             'cliente_id' => $cliente->id,
             'forma' => 'documentos_extra',
             'tax_year' => 2025,
-            'campo' => 'declaracion_anio_anterior',
+            'campo' => 'form_1098_t',
             'tipo_campo' => 'documento',
             'modo' => 'no_aplica',
         ]);
 
         $response->assertCreated()->assertJsonPath('estado', 'no_aplica');
 
-        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'declaracion_anio_anterior')->first();
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'form_1098_t')->first();
         $this->assertNotNull($campo);
         $this->assertNull($campo->valor);
         $this->assertNull($campo->documento_id);
@@ -675,11 +678,14 @@ class EventoRecoleccionTest extends TestCase
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
+        // form_1098_t es el único campo que queda bajo documentos_extra desde
+        // la Fase 2 del plan de cierre de brecha GTS (declaracion_anio_anterior
+        // se promovió a transversal — ver CatalogoCamposSeeder).
         $this->postJson('/api/eventos', [
             'cliente_id' => $cliente->id,
             'forma' => 'documentos_extra',
             'tax_year' => 2025,
-            'campo' => 'declaracion_anio_anterior',
+            'campo' => 'form_1098_t',
             'tipo_campo' => 'documento',
             'modo' => 'no_aplica',
         ])->assertCreated();
@@ -688,18 +694,18 @@ class EventoRecoleccionTest extends TestCase
             'cliente_id' => $cliente->id,
             'forma' => 'documentos_extra',
             'tax_year' => 2025,
-            'campo' => 'declaracion_anio_anterior',
+            'campo' => 'form_1098_t',
             'tipo_campo' => 'documento',
             'modo' => 'archivo',
-            'file' => UploadedFile::fake()->create('1040_2024.pdf', 10),
+            'file' => UploadedFile::fake()->create('1098t.pdf', 10),
         ])->assertCreated()->assertJsonPath('estado', 'recibido');
 
-        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'declaracion_anio_anterior')->first();
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'form_1098_t')->first();
         $this->assertSame('recibido', $campo->estado->value);
         $this->assertNotNull($campo->documento_id);
 
         // El historial conserva ambos movimientos, con el "no_aplica" anterior visible.
-        $historial = HistorialCambio::query()->where('user_id', $cliente->id)->where('campo', 'declaracion_anio_anterior')->orderBy('id')->get();
+        $historial = HistorialCambio::query()->where('user_id', $cliente->id)->where('campo', 'form_1098_t')->orderBy('id')->get();
         $this->assertCount(2, $historial);
         $this->assertSame('no_aplica', $historial->first()->valor_nuevo);
     }

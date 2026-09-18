@@ -32,6 +32,10 @@ class CatalogoCamposSeeder extends Seeder
             $this->crear(CampoCatalogo::TRANSVERSAL, $campo);
         }
 
+        foreach ($this->documentosPromovidosAActivo() as $campo) {
+            $this->crear(CampoCatalogo::TRANSVERSAL, $campo);
+        }
+
         foreach ($this->documentosExtra() as $campo) {
             $this->crear(CampoCatalogo::DOCUMENTOS_EXTRA, $campo);
         }
@@ -122,35 +126,60 @@ class CatalogoCamposSeeder extends Seeder
      * (CampoCatalogo::DOCUMENTOS_EXTRA) porque no son el núcleo de identidad
      * del cliente, sino documentos que puede enviar además.
      *
+     * Vacío desde la Fase 2 del plan de cierre de brecha GTS (ver el artifact
+     * "Matriz GTS 1040"): los 17 documentos que antes vivían acá se
+     * promovieron a ACTIVO (ver documentosPromovidosAActivo()) — el cliente
+     * ahora se pregunta directo por cada uno, en vez de esperar a que los
+     * suba espontáneamente. form_1098_t es la única excepción deliberada:
+     * se queda pasivo porque `gastos_educacion` (form_1040, Mixto) ya
+     * pregunta lo mismo y acepta ese mismo documento como respuesta —
+     * promoverlo aparte sería preguntar dos veces por lo mismo. El mecanismo
+     * de `documentos_extra` se mantiene disponible para que un admin agregue
+     * desde el panel un documento genuinamente pasivo en el futuro.
+     *
      * @return array<int, array<string, mixed>>
      */
     private function documentosExtra(): array
     {
         return [
-            // Documentos de inversión/retiro/vivienda — no todo cliente los
-            // recibe (depende de si tuvo intereses, dividendos, distribuciones
-            // de retiro, desempleo/reembolso estatal, o hipoteca/préstamo
-            // estudiantil ese año), por eso obligatorio: false. Ver
-            // RelacionesDocumentoCampoSeeder para a qué campo de qué forma
-            // alimenta cada uno (matriz GTS 1040 2025).
+            $this->campo('form_1098_t', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+        ];
+    }
+
+    /**
+     * Fase 2 del plan de cierre de brecha GTS: documentos que antes vivían en
+     * documentosExtra() (forma documentos_extra, pasivos — nunca se
+     * preguntaban) y ahora se preguntan directo (forma transversal, ver
+     * decisión de diseño del dueño del producto en el plan). Los mismos
+     * campo() de antes, sin cambios en tipo/formatos/sensibilidad — solo
+     * cambia la pseudo-forma bajo la que se siembran (ver run()) y que ahora
+     * tienen un PromptActivoStep (ver PromptActivoStepsSeeder). Publicar esto
+     * en producción requiere además migrar las filas ya guardadas en
+     * catalogo_campos/campos_cliente de 'documentos_extra' a 'transversal'
+     * para estas mismas claves (ver migración
+     * 2026_09_18_190000_promueve_documentos_extra_a_activo.php) — de lo
+     * contrario un cliente que ya subió alguno de estos espontáneamente
+     * volvería a que se lo pidan.
+     *
+     * form_1099_r y ssa_1099 se preguntan juntos como un solo paso `Grupo`
+     * ("Retiro y jubilación", ver PromptActivoStepsSeeder) — el resto,
+     * individualmente: ninguno de los otros grupos propuestos en el artifact
+     * tiene hoy más de un campo real en el catálogo (sus demás miembros
+     * siguen "sin modelar", trabajo de la Fase 3).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function documentosPromovidosAActivo(): array
+    {
+        return [
             $this->campo('form_1099_int', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_div', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_r', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_g', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1098', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1098_e', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            // Fase 6 (auditoría completa de la matriz GTS 1040 2025, más allá de
-            // la primera pasada): documentos que la matriz identifica pero que
-            // todavía no existían en el catálogo. Ver RelacionesDocumentoCampoSeeder
-            // para las relaciones ciertas; SSA-1099 y 1099-B/DA y 1098-T
-            // tienen `revela` — el resto (1099-MISC, 1099-K, 1099-S, K-1 personal,
-            // 1099-SA) la matriz misma los marca como "fact-dependent"/"no
-            // automáticamente gravable en su totalidad", así que solo se
-            // recolectan como documento, sin relación automática (ver
-            // GROUNDING ESTRICTO del prompt: nunca inventar una relación ambigua).
             $this->campo('ssa_1099', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_b', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
-            $this->campo('form_1098_t', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_misc', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_k', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1099_s', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),

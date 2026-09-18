@@ -15,7 +15,14 @@ class CatalogoDocumentosExtraApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_devuelve_los_18_documentos_extra_bajo_su_propia_pseudo_forma(): void
+    /**
+     * Desde la Fase 2 del plan de cierre de brecha GTS, form_1098_t es el
+     * único campo que queda bajo documentos_extra — el resto se promovió a
+     * ACTIVO (transversal, ver CatalogoCamposSeeder::documentosPromovidosAActivo()).
+     * form_1098_t se queda pasivo a propósito: gastos_educacion (form_1040)
+     * ya pregunta lo mismo y acepta este documento como respuesta.
+     */
+    public function test_devuelve_solo_form_1098_t_bajo_su_propia_pseudo_forma(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
         Sanctum::actingAs($admin, [ApiAbility::ClientesRead->value]);
@@ -26,15 +33,15 @@ class CatalogoDocumentosExtraApiTest extends TestCase
 
         $documentos = collect($response->json('documentos'));
 
-        $this->assertCount(18, $documentos);
+        $this->assertCount(1, $documentos);
+        $this->assertSame('form_1098_t', $documentos->first()['campo']);
         $this->assertTrue($documentos->every(fn (array $d) => $d['forma'] === 'documentos_extra'));
     }
 
     /**
-     * form_1099_int revela hacia form_1040.ingresos (subcampo
-     * intereses_dividendos, acumulable) y form_1040.impuestos_retenidos
-     * (acumulable) — ver RelacionesDocumentoCampoSeeder. El agente necesita
-     * ese `revela` para saber qué guardar sin volver a preguntarlo.
+     * form_1098_t revela hacia form_1040.gastos_educacion — ver
+     * RelacionesDocumentoCampoSeeder. El agente necesita ese `revela` para
+     * saber qué guardar sin volver a preguntarlo.
      */
     public function test_un_documento_extra_trae_su_revela(): void
     {
@@ -43,12 +50,12 @@ class CatalogoDocumentosExtraApiTest extends TestCase
         // test necesita.
         RelacionDocumentoCampo::query()->create([
             'documento_forma' => 'documentos_extra',
-            'documento_campo' => 'form_1099_int',
+            'documento_campo' => 'form_1098_t',
             'campo_destino_forma' => 'form_1040',
-            'campo_destino' => 'ingresos',
-            'subcampo_destino' => 'intereses_dividendos',
-            'descripcion' => 'Casilla 1 (Interest income) del 1099-INT es interés gravable a incluir en ingresos.',
-            'acumulable' => true,
+            'campo_destino' => 'gastos_educacion',
+            'subcampo_destino' => null,
+            'descripcion' => 'Casilla 1 (Payments received) del 1098-T son gastos calificados de educación.',
+            'acumulable' => false,
             'tax_year' => 2025,
         ]);
         TaxFieldCatalog::invalidate();
@@ -58,11 +65,11 @@ class CatalogoDocumentosExtraApiTest extends TestCase
 
         $response = $this->getJson('/api/catalogo/documentos-extra?tax_year=2025')->assertOk();
 
-        $documento = collect($response->json('documentos'))->firstWhere('campo', 'form_1099_int');
+        $documento = collect($response->json('documentos'))->firstWhere('campo', 'form_1098_t');
 
         $this->assertNotNull($documento);
         $this->assertNotEmpty($documento['revela']);
-        $this->assertTrue(collect($documento['revela'])->contains(fn (array $r) => $r['campo'] === 'ingresos' && $r['subcampo'] === 'intereses_dividendos'));
+        $this->assertTrue(collect($documento['revela'])->contains(fn (array $r) => $r['campo'] === 'gastos_educacion'));
     }
 
     public function test_ningun_campo_de_identidad_del_cliente_aparece_aqui(): void
