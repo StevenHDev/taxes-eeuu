@@ -174,6 +174,38 @@ class CatalogoCamposSeeder extends Seeder
             // PromptActivoStepsSeeder.
             $this->campo('k1_distribuciones_recibidas', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
             $this->campo('k1_perdidas_pasivas_o_basis_pendiente', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf'], obligatorio: false, unicoPorCliente: true),
+            // Fase 3d del plan de cierre de brecha GTS: otros ingresos,
+            // ajustes, créditos y situaciones especiales del artifact
+            // (secciones 10, 11, 13, 16) — último tramo de la Fase 3.
+            // "Foreign tax credit real" (¿impuesto_extranjero_pagado
+            // alimenta algún crédito?) y la atestación final de cierre
+            // quedan explícitamente fuera, son Fase 4.
+            //
+            // Nuevo Grupo "Otros ingresos poco frecuentes" — royalties
+            // (form_1099_misc) ya se promovió individual en la Fase 2, no
+            // se mueve acá.
+            $this->campo('foreclosure_abandono_propiedad', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('premios_hobby', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            $this->campo('ingresos_demanda_legal', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('alimony_recibido', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            // Nuevo Grupo "Ajustes menos comunes".
+            $this->campo('contribuciones_ira_sep_simple', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            $this->campo('seguro_medico_self_employed', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            $this->campo('gastos_educador', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            // Nuevo Grupo "Créditos menos comunes".
+            $this->campo('mejoras_eficiencia_energetica', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('gastos_adopcion', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            // Nuevo Grupo "Situaciones especiales poco frecuentes" — carryforwards
+            // estructurados y empleados domésticos como empleador (Schedule H)
+            // quedan fuera a propósito: el primero ya tiene cobertura como
+            // documento genérico (declaracion_anio_anterior); el segundo
+            // requiere una forma del IRS que el catálogo no modela todavía
+            // (ver nota de la matriz).
+            $this->campo('regalos_herencia_extranjero', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false, unicoPorCliente: true),
+            $this->campo('foreign_trust', FieldKind::Dato, tipoDato: FieldDataType::String, obligatorio: false, unicoPorCliente: true),
+            $this->campo('cartas_irs', FieldKind::Mixto, tipoDato: FieldDataType::String, formatos: ['pdf', 'jpg', 'jpeg'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('declaracion_enmendada', FieldKind::Dato, tipoDato: FieldDataType::String, obligatorio: false, unicoPorCliente: true),
+            $this->campo('bankruptcy', FieldKind::Dato, tipoDato: FieldDataType::String, obligatorio: false, unicoPorCliente: true),
         ];
     }
 
@@ -299,6 +331,11 @@ class CatalogoCamposSeeder extends Seeder
                     'premium_mensual', 'slcsp', 'aptc_recibido',
                 ], obligatorio: false),
                 $this->campo('impuesto_extranjero_pagado', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false),
+                // Fase 3d: el ingreso extranjero en sí (distinto del impuesto
+                // ya pagado sobre él, arriba) — campo de forma real, no
+                // transversal: se pregunta vía `siguiente` como cualquier
+                // otro campo de form_1040, sin paso en PromptActivoStepsSeeder.
+                $this->campo('ingreso_extranjero', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false),
                 // Hechos crudos para Schedule 1-A (línea 13b) — no es la
                 // conclusión de cuánto deducir, solo lo que el motor de reglas
                 // necesita para calcularlo más adelante.

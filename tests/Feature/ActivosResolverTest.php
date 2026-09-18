@@ -203,6 +203,11 @@ class ActivosResolverTest extends TestCase
             'venta_a_plazos', 'retiro_rollover_o_conversion_roth', 'retiro_distribucion_anticipada',
             'railroad_retirement', 'perdida_capital_arrastrada', 'compensacion_acciones',
             'k1_distribuciones_recibidas', 'k1_perdidas_pasivas_o_basis_pendiente',
+            // Fase 3d
+            'foreclosure_abandono_propiedad', 'premios_hobby', 'ingresos_demanda_legal', 'alimony_recibido',
+            'contribuciones_ira_sep_simple', 'seguro_medico_self_employed', 'gastos_educador',
+            'mejoras_eficiencia_energetica', 'gastos_adopcion', 'regalos_herencia_extranjero', 'foreign_trust',
+            'cartas_irs', 'declaracion_enmendada', 'bankruptcy',
         ] as $campo) {
             CampoCliente::query()->create([
                 'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
@@ -442,6 +447,11 @@ class ActivosResolverTest extends TestCase
             'venta_a_plazos', 'retiro_rollover_o_conversion_roth', 'retiro_distribucion_anticipada',
             'railroad_retirement', 'perdida_capital_arrastrada', 'compensacion_acciones',
             'k1_distribuciones_recibidas', 'k1_perdidas_pasivas_o_basis_pendiente',
+            // Fase 3d
+            'foreclosure_abandono_propiedad', 'premios_hobby', 'ingresos_demanda_legal', 'alimony_recibido',
+            'contribuciones_ira_sep_simple', 'seguro_medico_self_employed', 'gastos_educador',
+            'mejoras_eficiencia_energetica', 'gastos_adopcion', 'regalos_herencia_extranjero', 'foreign_trust',
+            'cartas_irs', 'declaracion_enmendada', 'bankruptcy',
         ] as $campo) {
             CampoCliente::query()->create([
                 'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,

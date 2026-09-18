@@ -261,6 +261,36 @@ class PromptActivoStepsSeeder extends Seeder
                     .'tienes pérdidas pasivas o basis pendiente de años anteriores relacionados con ella?',
                 'miembros' => ['k1_distribuciones_recibidas', 'k1_perdidas_pasivas_o_basis_pendiente'],
             ],
+            // Fase 3d del plan de cierre de brecha GTS: otros ingresos,
+            // ajustes, créditos y situaciones especiales — último tramo de
+            // la Fase 3, agrupados según los 4 grupos que quedaban sin usar
+            // del artifact "Matriz GTS 1040".
+            [
+                'orden' => 41, 'tipo' => TipoPromptActivoStep::Grupo, 'etiqueta' => 'Otros ingresos poco frecuentes',
+                'pregunta' => '¿Tuviste alguno de estos ingresos este año: un embargo o abandono de una '
+                    .'propiedad, premios o regalías por un hobby, dinero de una demanda legal, o pensión '
+                    .'alimenticia (alimony) recibida?',
+                'miembros' => ['foreclosure_abandono_propiedad', 'premios_hobby', 'ingresos_demanda_legal', 'alimony_recibido'],
+            ],
+            [
+                'orden' => 42, 'tipo' => TipoPromptActivoStep::Grupo, 'etiqueta' => 'Ajustes menos comunes',
+                'pregunta' => '¿Aportaste a un IRA, SEP o SIMPLE, pagaste tu propio seguro médico como '
+                    .'independiente, o eres maestro y pagaste materiales de tu bolsillo?',
+                'miembros' => ['contribuciones_ira_sep_simple', 'seguro_medico_self_employed', 'gastos_educador'],
+            ],
+            [
+                'orden' => 43, 'tipo' => TipoPromptActivoStep::Grupo, 'etiqueta' => 'Créditos menos comunes',
+                'pregunta' => '¿Instalaste energía solar o hiciste mejoras de eficiencia energética en tu '
+                    .'casa, o tuviste gastos de adopción este año?',
+                'miembros' => ['mejoras_eficiencia_energetica', 'gastos_adopcion'],
+            ],
+            [
+                'orden' => 44, 'tipo' => TipoPromptActivoStep::Grupo, 'etiqueta' => 'Situaciones especiales poco frecuentes',
+                'pregunta' => 'Antes de cerrar, ¿alguna de estas situaciones aplica este año: una herencia o '
+                    .'regalo importante del extranjero, participación en un fideicomiso extranjero, cartas '
+                    .'del IRS, una declaración anterior por corregir, o una bancarrota?',
+                'miembros' => ['regalos_herencia_extranjero', 'foreign_trust', 'cartas_irs', 'declaracion_enmendada', 'bankruptcy'],
+            ],
         ];
 
         foreach ($pasos as $paso) {

@@ -27,7 +27,9 @@ use Tests\TestCase;
  * nota del paso 2 (estado_civil); paso 34 agregado en la Fase 3b (múltiples
  * W-2); pasos 35-40 agregados en la Fase 3c (resto de negocio/inversión/
  * K-1/propiedad), que también extiende los miembros del paso 11 (Retiro y
- * jubilación) — ver PromptActivoStepsSeeder.
+ * jubilación); pasos 41-44 agregados en la Fase 3d (otros ingresos/ajustes/
+ * créditos/situaciones especiales, último tramo de la Fase 3) — ver
+ * PromptActivoStepsSeeder.
  */
 class ActivosPromptComposerTest extends TestCase
 {
@@ -97,6 +99,22 @@ class ActivosPromptComposerTest extends TestCase
             - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.
             - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.
             - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.
+        41. Otros ingresos poco frecuentes — pregunta compuesta: "¿Tuviste alguno de estos ingresos este año: un embargo o abandono de una propiedad, premios o regalías por un hobby, dinero de una demanda legal, o pensión alimenticia (alimony) recibida?" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: foreclosure_abandono_propiedad, premios_hobby, ingresos_demanda_legal, alimony_recibido):
+            - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.
+            - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.
+            - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.
+        42. Ajustes menos comunes — pregunta compuesta: "¿Aportaste a un IRA, SEP o SIMPLE, pagaste tu propio seguro médico como independiente, o eres maestro y pagaste materiales de tu bolsillo?" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: contribuciones_ira_sep_simple, seguro_medico_self_employed, gastos_educador):
+            - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.
+            - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.
+            - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.
+        43. Créditos menos comunes — pregunta compuesta: "¿Instalaste energía solar o hiciste mejoras de eficiencia energética en tu casa, o tuviste gastos de adopción este año?" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: mejoras_eficiencia_energetica, gastos_adopcion):
+            - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.
+            - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.
+            - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.
+        44. Situaciones especiales poco frecuentes — pregunta compuesta: "Antes de cerrar, ¿alguna de estas situaciones aplica este año: una herencia o regalo importante del extranjero, participación en un fideicomiso extranjero, cartas del IRS, una declaración anterior por corregir, o una bancarrota?" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: regalos_herencia_extranjero, foreign_trust, cartas_irs, declaracion_enmendada, bankruptcy):
+            - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.
+            - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.
+            - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.
         TXT;
 
         $this->assertSame($esperado, app(ActivosPromptComposer::class)->compilarLista());
@@ -130,6 +148,10 @@ class ActivosPromptComposerTest extends TestCase
         $this->assertStringContainsString('mas_w2', $texto);
         $this->assertStringContainsString('Inversiones menos comunes', $texto);
         $this->assertStringContainsString('K-1 — distribuciones y pérdidas pasivas', $texto);
+        $this->assertStringContainsString('Otros ingresos poco frecuentes', $texto);
+        $this->assertStringContainsString('Ajustes menos comunes', $texto);
+        $this->assertStringContainsString('Créditos menos comunes', $texto);
+        $this->assertStringContainsString('Situaciones especiales poco frecuentes', $texto);
         $this->assertStringContainsString('fuente de verdad', $texto);
     }
 }
