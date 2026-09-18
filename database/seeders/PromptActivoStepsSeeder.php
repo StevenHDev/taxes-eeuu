@@ -23,7 +23,12 @@ class PromptActivoStepsSeeder extends Seeder
 
         $pasos = [
             ['orden' => 1, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'identificacion_ssn_itin'],
-            ['orden' => 2, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'estado_civil'],
+            [
+                'orden' => 2, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'estado_civil',
+                'nota' => 'incluye, además del estado civil al 31 de diciembre, si se casó, se divorció o se '
+                    .'separó durante el año (subcampos se_caso_en_anio/se_divorcio_o_separo_en_anio — Fase 3a) '
+                    .'— distinto de si enviudó, que ya cubre conyuge_fallecio_en_anio.',
+            ],
             [
                 'orden' => 3, 'tipo' => TipoPromptActivoStep::Condicional, 'campo' => 'info_conyuge',
                 'condicion' => 'estado_civil indica que el cliente es casado',
@@ -159,6 +164,46 @@ class PromptActivoStepsSeeder extends Seeder
                 'orden' => 26, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'declaracion_anio_anterior',
                 'nota' => 'pregunta simple si puede compartir su declaración de impuestos del año anterior '
                     .'(útil para pérdidas de capital o créditos arrastrados).',
+            ],
+            // Fase 3a del plan de cierre de brecha GTS: identidad y eventos
+            // del propio contribuyente (secciones 1 y 2 del artifact), sin
+            // dependencias de las fases anteriores — se agregan al final.
+            [
+                'orden' => 27, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'fecha_nacimiento_contribuyente',
+                'nota' => 'pregunta simple la fecha de nacimiento del propio contribuyente — distinto de '
+                    .'info_conyuge.fecha_nacimiento (que nunca se pregunta, ver más abajo) e '
+                    .'info_dependientes.fecha_nacimiento (que sí se pregunta como parte de ese campo).',
+            ],
+            [
+                'orden' => 28, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'direccion_contribuyente',
+                'nota' => 'pregunta la dirección actual del cliente (calle, ciudad, estado, código postal), '
+                    .'en un único mensaje, no subcampo por subcampo.',
+            ],
+            [
+                'orden' => 29, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'ocupacion',
+                'nota' => 'pregunta simple la ocupación u oficio del cliente.',
+            ],
+            [
+                'orden' => 30, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'puede_ser_reclamado_como_dependiente',
+                'nota' => 'pregunta obligatoria (nunca modo="no_aplica"), en lenguaje simple: "¿Puede otra '
+                    .'persona reclamarte como dependiente en su propia declaración?". Guarda la respuesta como '
+                    .'"si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante.',
+            ],
+            [
+                'orden' => 31, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'vivio_trabajo_fuera_eeuu',
+                'nota' => 'pregunta obligatoria (nunca modo="no_aplica"), en lenguaje simple: "¿Viviste o '
+                    .'trabajaste fuera de Estados Unidos en algún momento del año?". Guarda la respuesta como '
+                    .'"si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante.',
+            ],
+            [
+                'orden' => 32, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'ip_pin',
+                'nota' => 'pregunta simple si el IRS le asignó un IP PIN (un código de 6 dígitos, distinto '
+                    .'del reembolso) y, si lo tiene, cuál es.',
+            ],
+            [
+                'orden' => 33, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'form_8332',
+                'nota' => 'pregunta simple si existe un acuerdo de custodia compartida o un Form 8332 firmado '
+                    .'por el otro padre/madre, cediendo el derecho a reclamar a un dependiente.',
             ],
         ];
 

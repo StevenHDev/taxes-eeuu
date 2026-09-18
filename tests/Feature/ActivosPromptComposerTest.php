@@ -22,7 +22,9 @@ use Tests\TestCase;
  *
  * Pasos 7-10 agregados en la Fase 1 del plan de cierre de brecha GTS
  * (compliance crítico P1); pasos 11-26 agregados en la Fase 2 (documentos
- * promovidos de documentos_extra a ACTIVO) — ver PromptActivoStepsSeeder.
+ * promovidos de documentos_extra a ACTIVO); pasos 27-33 agregados en la
+ * Fase 3a (identidad y eventos del contribuyente), que también extiende la
+ * nota del paso 2 (estado_civil) — ver PromptActivoStepsSeeder.
  */
 class ActivosPromptComposerTest extends TestCase
 {
@@ -39,7 +41,7 @@ class ActivosPromptComposerTest extends TestCase
     {
         $esperado = <<<'TXT'
         1. identificacion_ssn_itin
-        2. estado_civil
+        2. estado_civil — incluye, además del estado civil al 31 de diciembre, si se casó, se divorció o se separó durante el año (subcampos se_caso_en_anio/se_divorcio_o_separo_en_anio — Fase 3a) — distinto de si enviudó, que ya cubre conyuge_fallecio_en_anio.
         3. info_conyuge — solo si estado_civil indica que el cliente es casado. Si es soltero, no se pregunta.
         4. info_dependientes — pregunta primero si tiene dependientes; si dice que sí, recolecta el dato completo, incluyendo los 10 subcampos (nombre_completo, ssn, fecha_nacimiento, relacion, meses_en_hogar, estudiante_tiempo_completo, discapacitado, provee_mas_50_soporte_propio, ingreso_bruto_anual, custodia_compartida_sin_conflicto) — sin excepción de ninguno de ellos.
         5. Empleo — pregunta simple: "¿Eres empleado?" (esta pregunta no tiene un campo propio en `pendientes`; es una bifurcación conversacional entre w2 y form_1099_nec):
@@ -70,6 +72,13 @@ class ActivosPromptComposerTest extends TestCase
         24. form_1099_sa — pregunta simple si recibió una distribución de su HSA durante el año.
         25. form_5498_sa — pregunta simple si hizo aportes a su HSA durante el año.
         26. declaracion_anio_anterior — pregunta simple si puede compartir su declaración de impuestos del año anterior (útil para pérdidas de capital o créditos arrastrados).
+        27. fecha_nacimiento_contribuyente — pregunta simple la fecha de nacimiento del propio contribuyente — distinto de info_conyuge.fecha_nacimiento (que nunca se pregunta, ver más abajo) e info_dependientes.fecha_nacimiento (que sí se pregunta como parte de ese campo).
+        28. direccion_contribuyente — pregunta la dirección actual del cliente (calle, ciudad, estado, código postal), en un único mensaje, no subcampo por subcampo.
+        29. ocupacion — pregunta simple la ocupación u oficio del cliente.
+        30. puede_ser_reclamado_como_dependiente — pregunta obligatoria (nunca modo="no_aplica"), en lenguaje simple: "¿Puede otra persona reclamarte como dependiente en su propia declaración?". Guarda la respuesta como "si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante.
+        31. vivio_trabajo_fuera_eeuu — pregunta obligatoria (nunca modo="no_aplica"), en lenguaje simple: "¿Viviste o trabajaste fuera de Estados Unidos en algún momento del año?". Guarda la respuesta como "si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante.
+        32. ip_pin — pregunta simple si el IRS le asignó un IP PIN (un código de 6 dígitos, distinto del reembolso) y, si lo tiene, cuál es.
+        33. form_8332 — pregunta simple si existe un acuerdo de custodia compartida o un Form 8332 firmado por el otro padre/madre, cediendo el derecho a reclamar a un dependiente.
         TXT;
 
         $this->assertSame($esperado, app(ActivosPromptComposer::class)->compilarLista());
@@ -98,6 +107,8 @@ class ActivosPromptComposerTest extends TestCase
         $this->assertStringContainsString('Retiro y jubilación', $texto);
         $this->assertStringContainsString('form_1099_int', $texto);
         $this->assertStringContainsString('declaracion_anio_anterior', $texto);
+        $this->assertStringContainsString('direccion_contribuyente', $texto);
+        $this->assertStringContainsString('form_8332', $texto);
         $this->assertStringContainsString('fuente de verdad', $texto);
     }
 }

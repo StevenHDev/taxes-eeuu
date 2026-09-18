@@ -341,6 +341,15 @@ class EventoRecoleccionTest extends TestCase
             // estos dos, form_1040 nunca llega a "completo".
             ['campo' => 'activos_digitales', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'cuentas_extranjero', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
+            // Fase 3a del plan de cierre de brecha GTS: 5 campos más
+            // obligatorio:true (identidad del contribuyente).
+            ['campo' => 'fecha_nacimiento_contribuyente', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => '1990-01-01'],
+            ['campo' => 'direccion_contribuyente', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
+                'calle' => '123 Main St', 'ciudad' => 'Miami', 'estado' => 'FL', 'codigo_postal' => '33101',
+            ]],
+            ['campo' => 'ocupacion', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'Contador'],
+            ['campo' => 'puede_ser_reclamado_como_dependiente', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
+            ['campo' => 'vivio_trabajo_fuera_eeuu', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'info_conyuge', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'nombre_completo' => 'Jane Doe', 'fecha_nacimiento' => '1990-01-01', 'ssn' => '987654321',
             ]],
@@ -510,6 +519,15 @@ class EventoRecoleccionTest extends TestCase
             // estos dos, form_1040 nunca llega a "completo".
             ['campo' => 'activos_digitales', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'cuentas_extranjero', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
+            // Fase 3a del plan de cierre de brecha GTS: 5 campos más
+            // obligatorio:true (identidad del contribuyente).
+            ['campo' => 'fecha_nacimiento_contribuyente', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => '1990-01-01'],
+            ['campo' => 'direccion_contribuyente', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
+                'calle' => '123 Main St', 'ciudad' => 'Miami', 'estado' => 'FL', 'codigo_postal' => '33101',
+            ]],
+            ['campo' => 'ocupacion', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'Contador'],
+            ['campo' => 'puede_ser_reclamado_como_dependiente', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
+            ['campo' => 'vivio_trabajo_fuera_eeuu', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'info_conyuge', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'nombre_completo' => 'Jane Doe', 'fecha_nacimiento' => '1990-01-01', 'ssn' => '987654321',
             ]],

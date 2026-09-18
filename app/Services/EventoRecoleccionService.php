@@ -609,7 +609,9 @@ class EventoRecoleccionService
         // que compara cuentas_extranjero contra este mismo literal): solo "si"/"no"
         // son valores válidos, para que la condición nunca dependa de variantes de
         // texto ("Sí", "afirmativo", etc.) que el modelo pudiera escribir.
-        if (in_array($campo, ['activos_digitales', 'cuentas_extranjero'], true)) {
+        if (in_array($campo, [
+            'activos_digitales', 'cuentas_extranjero', 'puede_ser_reclamado_como_dependiente', 'vivio_trabajo_fuera_eeuu',
+        ], true)) {
             return in_array($valor, ['si', 'no'], true);
         }
 
@@ -637,7 +639,15 @@ class EventoRecoleccionService
      */
     private const SUBCAMPOS_OPCIONALES = [
         'info_conyuge' => ['fecha_nacimiento'],
-        'estado_civil' => ['conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge'],
+        // conyuge_fallecio_en_anio/anio_fallecimiento_conyuge y
+        // se_caso_en_anio/se_divorcio_o_separo_en_anio (Fase 3a) son todos
+        // hechos situacionales del año — la mayoría de los clientes no
+        // vivió ninguno de estos eventos, así que ninguno es obligatorio en
+        // el payload.
+        'estado_civil' => [
+            'conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge',
+            'se_caso_en_anio', 'se_divorcio_o_separo_en_anio',
+        ],
     ];
 
     /**

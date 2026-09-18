@@ -149,12 +149,13 @@ class ActivosResolverTest extends TestCase
     }
 
     /**
-     * Resuelve los 26 pasos ACTIVOS sembrados hoy por PromptActivoStepsSeeder
+     * Resuelve los 33 pasos ACTIVOS sembrados hoy por PromptActivoStepsSeeder
      * (los 6 originales + los 4 de compliance de la Fase 1 + los 16 de
-     * documentos promovidos de la Fase 2 — ver esa clase), dejando la
-     * conversación en "no queda ningún ACTIVO real pendiente".
-     * cuentas_extranjero_detalle se salta solo (cuentas_extranjero queda en
-     * "no"), así que no hace falta resolverlo acá aparte.
+     * documentos promovidos de la Fase 2 + los 7 de identidad del
+     * contribuyente de la Fase 3a — ver esa clase), dejando la conversación
+     * en "no queda ningún ACTIVO real pendiente". cuentas_extranjero_detalle
+     * se salta solo (cuentas_extranjero queda en "no"), así que no hace
+     * falta resolverlo acá aparte.
      */
     private function marcarTodosLosActivosComoResueltos(): void
     {
@@ -166,7 +167,10 @@ class ActivosResolverTest extends TestCase
             ]);
         }
 
-        foreach (['activos_digitales', 'cuentas_extranjero'] as $campo) {
+        foreach ([
+            'activos_digitales', 'cuentas_extranjero', 'puede_ser_reclamado_como_dependiente',
+            'vivio_trabajo_fuera_eeuu',
+        ] as $campo) {
             CampoCliente::query()->create([
                 'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
                 'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
@@ -174,11 +178,25 @@ class ActivosResolverTest extends TestCase
             ]);
         }
 
+        foreach (['fecha_nacimiento_contribuyente', 'ocupacion'] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+                'valor_texto' => 'x', 'estado' => 'recibido', 'source' => 'agente_ia',
+            ]);
+        }
+
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'direccion_contribuyente',
+            'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+            'valor_texto' => ['calle' => 'x'], 'estado' => 'recibido', 'source' => 'agente_ia',
+        ]);
+
         foreach ([
             'venta_residencia_principal', 'form_1099_r', 'ssa_1099', 'form_1099_int', 'form_1099_div',
             'form_1099_b', 'form_1099_g', 'form_1098', 'form_1098_e', 'form_1099_misc', 'form_1099_k',
             'form_1099_s', 'k1_recibido', 'form_w2g', 'form_1099_c', 'form_1099_sa', 'form_5498_sa',
-            'declaracion_anio_anterior',
+            'declaracion_anio_anterior', 'ip_pin', 'form_8332',
         ] as $campo) {
             CampoCliente::query()->create([
                 'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,

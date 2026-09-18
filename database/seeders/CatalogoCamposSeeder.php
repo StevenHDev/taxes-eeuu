@@ -95,9 +95,18 @@ class CatalogoCamposSeeder extends Seeder
             $this->campo('form_1095_a', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             // Hechos crudos (no la conclusión) para que el motor de reglas calcule
             // el filing status — ver App\Services\Reglas\FilingStatusCalculator.
+            // se_caso_en_anio/se_divorcio_o_separo_en_anio: subcampos agregados
+            // en la Fase 3a del plan de cierre de brecha GTS — la matriz
+            // distingue "¿se casó, divorció, separó o enviudó durante el año?"
+            // de "casado_al_31_dic" (estado A UN MOMENTO puntual, no si CAMBIÓ
+            // durante el año). conyuge_fallecio_en_anio/anio_fallecimiento_conyuge
+            // ya cubrían el caso de viudez. En instalaciones ya provisionadas
+            // (producción), esta fila ya existe — ver migración
+            // 2026_09_18_200000_fase3a_agrega_cambio_estado_civil_en_anio.php.
             $this->campo('estado_civil', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
                 'casado_al_31_dic', 'convivio_conyuge_ultimos_6_meses', 'costeo_mas_mitad_hogar',
                 'existe_persona_calificable', 'conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge',
+                'se_caso_en_anio', 'se_divorcio_o_separo_en_anio',
             ], unicoPorCliente: true),
             // Fase 1 del plan de cierre de brecha GTS (compliance crítico P1,
             // ver el artifact "Matriz GTS 1040"): la pregunta de activos
@@ -117,6 +126,27 @@ class CatalogoCamposSeeder extends Seeder
             $this->campo('venta_residencia_principal', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], subcampos: [
                 'fecha_venta', 'precio_venta', 'base_costo',
             ], obligatorio: false, unicoPorCliente: true),
+            // Fase 3a del plan de cierre de brecha GTS: identidad y eventos
+            // del propio contribuyente que faltaban en el catálogo (sección 1
+            // y 2 del artifact "Matriz GTS 1040") — hechos que todo cliente
+            // tiene una respuesta real para dar, sin concepto de "no aplica".
+            $this->campo('fecha_nacimiento_contribuyente', FieldKind::Dato, tipoDato: FieldDataType::String, unicoPorCliente: true),
+            $this->campo('direccion_contribuyente', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
+                'calle', 'ciudad', 'estado', 'codigo_postal',
+            ], unicoPorCliente: true),
+            $this->campo('ocupacion', FieldKind::Dato, tipoDato: FieldDataType::String, unicoPorCliente: true),
+            // Compuertas sí/no de compliance — mismo tratamiento que
+            // activos_digitales/cuentas_extranjero (Fase 1): siempre se
+            // responden "si"/"no" exactamente, nunca modo="no_aplica" (ver
+            // EventoRecoleccionService::validarString).
+            $this->campo('puede_ser_reclamado_como_dependiente', FieldKind::Dato, tipoDato: FieldDataType::String, unicoPorCliente: true),
+            $this->campo('vivio_trabajo_fuera_eeuu', FieldKind::Dato, tipoDato: FieldDataType::String, unicoPorCliente: true),
+            // No todo cliente tiene un IP PIN — obligatorio: false.
+            $this->campo('ip_pin', FieldKind::Dato, tipoDato: FieldDataType::String, obligatorio: false, unicoPorCliente: true),
+            // Solo aplica si hay un acuerdo de custodia compartida (ver
+            // info_dependientes.custodia_compartida_sin_conflicto) — no todo
+            // cliente con dependientes lo tiene, por eso obligatorio: false.
+            $this->campo('form_8332', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
         ];
     }
 
