@@ -124,12 +124,28 @@ class AgenteConversacionalService
             }
         }
 
-        Log::warning('AgenteConversacionalService: se agotaron las iteraciones sin respuesta final de texto.', [
+        Log::warning('AgenteConversacionalService: se agotaron las iteraciones de tools sin respuesta final — forzando cierre de turno en texto plano.', [
             'cliente_id' => $cliente?->id,
         ]);
 
+        // Sin esto, el turno terminaba con una frase fija ("Dame un momento,
+        // ya te respondo.") que no cumplía lo que prometía: nada volvía a
+        // intentar responder — el cliente quedaba esperando hasta que él
+        // mismo escribiera de nuevo (encontrado en la conversación real con
+        // 3213445027, 2026-09-18). Al quitar `tools` de esta última llamada,
+        // el modelo no puede seguir encadenando tool calls — está obligado a
+        // cerrar el turno con un mensaje real usando todo lo que ya se sabe.
+        $respuestaFinal = $this->openAi->completarChat(
+            mensajes: [
+                ['role' => 'system', 'content' => (string) AgentePromptVigente::paraFase($fase)],
+                ...$mensajes,
+                ['role' => 'system', 'content' => 'Ya no puedes invocar ninguna tool más en este turno. Responde ahora mismo al cliente con un mensaje de texto natural, usando lo que ya sabes de esta conversación — nunca digas que vas a revisar algo ni prometas una respuesta posterior, ciérralo ahora.'],
+            ],
+            tools: [],
+        );
+
         return [
-            'texto' => 'Dame un momento, ya te respondo.',
+            'texto' => (string) ($respuestaFinal['content'] ?? '¿Me puedes repetir eso último? Quiero asegurarme de entenderlo bien.'),
             'prompt_version' => $promptVersion,
             'cliente' => $cliente,
         ];

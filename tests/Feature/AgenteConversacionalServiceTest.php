@@ -166,7 +166,7 @@ class AgenteConversacionalServiceTest extends TestCase
         });
     }
 
-    public function test_corta_en_el_tope_de_iteraciones_si_el_modelo_nunca_da_texto_final(): void
+    public function test_corta_en_el_tope_de_iteraciones_y_fuerza_una_respuesta_de_texto_real(): void
     {
         $siempreThink = $this->respuestaOpenAi([
             'role' => 'assistant',
@@ -176,12 +176,22 @@ class AgenteConversacionalServiceTest extends TestCase
             ],
         ]);
 
-        Http::fake(['api.openai.com/*' => Http::response($siempreThink)]);
+        Http::fake([
+            'api.openai.com/*' => Http::sequence()
+                ->push($siempreThink)->push($siempreThink)->push($siempreThink)->push($siempreThink)
+                ->push($siempreThink)->push($siempreThink)->push($siempreThink)->push($siempreThink)
+                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Perdona la demora, ¿en qué te ayudo?'])),
+        ]);
 
         $resultado = $this->agente->responder(null, $this->historialCon('+15551234567', 'Hola'), $this->actor);
 
-        $this->assertNotSame('', $resultado['texto']);
-        Http::assertSentCount(8);
+        // Las 8 vueltas agotan MAX_ITERACIONES sin texto final; la 9na
+        // llamada (sin tools) fuerza un cierre real en vez del mensaje fijo
+        // "Dame un momento, ya te respondo." que antes dejaba el turno
+        // colgado sin que nada volviera a responderle al cliente.
+        $this->assertSame('Perdona la demora, ¿en qué te ayudo?', $resultado['texto']);
+        Http::assertSentCount(9);
+        Http::assertSent(fn ($request) => ! array_key_exists('tools', $request->data()));
     }
 
     public function test_mapea_el_historial_con_los_roles_correctos_para_openai(): void

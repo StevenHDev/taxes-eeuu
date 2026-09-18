@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Models\CampoCatalogo;
 use App\Models\FormaCliente;
 use App\Models\User;
+use App\Services\WhatsappAgent\ActivosResolver;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -24,6 +25,10 @@ use Illuminate\Support\Str;
  */
 class AgenteToolService
 {
+    public function __construct(
+        private readonly ActivosResolver $activosResolver,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $datos  con name, email, phone y preparer_id opcionales — mismo shape que ClienteStoreRequest::validated()
      */
@@ -90,6 +95,11 @@ class AgenteToolService
             'completo' => $formas !== [] && ! $quedaObligatorioPendiente,
             'pendientes' => $pendientes,
             'siguiente' => $siguiente ? ['forma' => $siguiente['forma'], 'campo' => $siguiente['campo']] : null,
+            // Próximo campo ACTIVO transversal a preguntar, ya resuelto (orden
+            // fijo + condiciones aplicadas) — ver ActivosResolver. El agente
+            // conversacional debe leerlo tal cual en vez de recalcular el
+            // orden de ACTIVOS él mismo turno a turno.
+            'siguiente_activo' => $this->activosResolver->siguiente($taxYear, $cliente->id, $pendientes),
         ];
     }
 
