@@ -7,6 +7,7 @@ import {
     ListChecks,
     UserCog,
     Users,
+    Workflow,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AppLogo from '@/components/app-logo';
@@ -24,6 +25,7 @@ import { index as apiDocsIndex } from '@/routes/api-docs';
 import { index as bitacoraIndex } from '@/routes/bitacora';
 import { index as catalogoIndex } from '@/routes/catalogo';
 import { index as clientesIndex } from '@/routes/clientes';
+import { show as procesoShow } from '@/routes/proceso';
 import { index as usuariosIndex } from '@/routes/usuarios';
 import type { NavItem } from '@/types';
 
@@ -49,6 +51,11 @@ export function AppSidebar() {
                       title: t('nav.clients'),
                       href: clientesIndex(),
                       icon: Users,
+                  },
+                  {
+                      title: t('nav.proceso'),
+                      href: procesoShow(),
+                      icon: Workflow,
                   },
               ]
             : []),

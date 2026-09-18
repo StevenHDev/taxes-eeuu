@@ -28,6 +28,7 @@
     "nav": {
         "dashboard": "Dashboard",
         "clients": "Clients",
+        "proceso": "Process",
         "catalog": "Catalog",
         "users": "Users",
         "auditLog": "Audit log",
@@ -709,5 +710,9 @@
         "intro": "How to authenticate and use each endpoint to upload and query tax documents.",
         "downloadSpec": "Download OpenAPI spec",
         "contents": "Contents"
+    },
+    "proceso": {
+        "title": "Global Tax Process",
+        "description": "The full client flow: WhatsApp, data collection, tax rules engine, and closing."
     }
 }

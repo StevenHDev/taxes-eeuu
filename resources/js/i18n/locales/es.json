@@ -28,6 +28,7 @@
     "nav": {
         "dashboard": "Panel",
         "clients": "Clientes",
+        "proceso": "Proceso",
         "catalog": "Catálogo",
         "users": "Usuarios",
         "auditLog": "Bitácora",
@@ -709,5 +710,9 @@
         "intro": "Cómo autenticarte y usar cada endpoint para subir y consultar documentos fiscales.",
         "downloadSpec": "Descargar spec OpenAPI",
         "contents": "Contenidos"
+    },
+    "proceso": {
+        "title": "Proceso de Global Tax",
+        "description": "El flujo completo del cliente: WhatsApp, recolección de datos, motor de reglas fiscal y cierre."
     }
 }
