@@ -108,12 +108,9 @@ class ActivosResolver
     }
 
     /**
-     * Único condicional hoy: info_conyuge, que solo aplica si estado_civil ya
-     * quedó guardado como casado. No es un motor de condiciones genérico —
-     * evalúa explícitamente este único caso (igual que
-     * ActivosPromptComposer::salvaguardaPara ya distingue por tipo); si se
-     * agrega un condicional distinto en el futuro, este método necesita un
-     * caso nuevo.
+     * No es un motor de condiciones genérico — evalúa explícitamente cada
+     * caso conocido (igual que ActivosPromptComposer::salvaguardaPara ya
+     * distingue por tipo); un condicional nuevo necesita su propio caso acá.
      *
      * @param  array<string, array<string, mixed>>  $pendientesPorCampo
      * @return array<string, mixed>|null
@@ -126,10 +123,17 @@ class ActivosResolver
             return null;
         }
 
-        if ($paso->campo !== 'info_conyuge') {
-            return $pendiente;
-        }
+        $aplica = match ($paso->campo) {
+            'info_conyuge' => $this->esCasado($taxYear, $clienteId),
+            'cuentas_extranjero_detalle' => $this->respondioSi($taxYear, $clienteId, 'cuentas_extranjero'),
+            default => true,
+        };
 
+        return $aplica ? $pendiente : null;
+    }
+
+    private function esCasado(int $taxYear, int $clienteId): bool
+    {
         $estadoCivil = CampoCliente::query()
             ->where('user_id', $clienteId)
             ->where('tax_year', $taxYear)
@@ -137,8 +141,23 @@ class ActivosResolver
             ->where('campo', 'estado_civil')
             ->first();
 
-        $esCasado = (bool) ($estadoCivil?->valor_texto['casado_al_31_dic'] ?? false);
+        return (bool) ($estadoCivil?->valor_texto['casado_al_31_dic'] ?? false);
+    }
 
-        return $esCasado ? $pendiente : null;
+    /**
+     * Compara contra el literal exacto "si" que guarda EventoRecoleccionService
+     * para las compuertas sí/no de compliance (ver validarString) — nunca
+     * "Sí", "afirmativo" ni ninguna otra variante.
+     */
+    private function respondioSi(int $taxYear, int $clienteId, string $campo): bool
+    {
+        $respuesta = CampoCliente::query()
+            ->where('user_id', $clienteId)
+            ->where('tax_year', $taxYear)
+            ->where('forma', CampoCatalogo::TRANSVERSAL)
+            ->where('campo', $campo)
+            ->first();
+
+        return $respuesta?->valor_texto === 'si';
     }
 }

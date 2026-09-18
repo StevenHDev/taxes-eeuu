@@ -336,6 +336,11 @@ class EventoRecoleccionTest extends TestCase
 
         $datos = [
             ['campo' => 'identificacion_ssn_itin', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => '123456789'],
+            // Fase 1 del plan de cierre de brecha GTS: activos_digitales y
+            // cuentas_extranjero son obligatorio:true desde ahora — sin
+            // estos dos, form_1040 nunca llega a "completo".
+            ['campo' => 'activos_digitales', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
+            ['campo' => 'cuentas_extranjero', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'info_conyuge', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'nombre_completo' => 'Jane Doe', 'fecha_nacimiento' => '1990-01-01', 'ssn' => '987654321',
             ]],
@@ -500,6 +505,11 @@ class EventoRecoleccionTest extends TestCase
 
         $datos = [
             ['campo' => 'identificacion_ssn_itin', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => '123456789'],
+            // Fase 1 del plan de cierre de brecha GTS: activos_digitales y
+            // cuentas_extranjero son obligatorio:true desde ahora — sin
+            // estos dos, form_1040 nunca llega a "completo".
+            ['campo' => 'activos_digitales', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
+            ['campo' => 'cuentas_extranjero', 'tipo_campo' => 'dato', 'tipo_dato' => 'string', 'contenido' => 'no'],
             ['campo' => 'info_conyuge', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
                 'nombre_completo' => 'Jane Doe', 'fecha_nacimiento' => '1990-01-01', 'ssn' => '987654321',
             ]],

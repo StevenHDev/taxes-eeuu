@@ -605,6 +605,14 @@ class EventoRecoleccionService
             return (bool) preg_match('/^\d{3}-?\d{2}-?\d{4}$/', $valor);
         }
 
+        // Compuertas sí/no de compliance (ver ActivosResolver::resolverCondicional,
+        // que compara cuentas_extranjero contra este mismo literal): solo "si"/"no"
+        // son valores válidos, para que la condición nunca dependa de variantes de
+        // texto ("Sí", "afirmativo", etc.) que el modelo pudiera escribir.
+        if (in_array($campo, ['activos_digitales', 'cuentas_extranjero'], true)) {
+            return in_array($valor, ['si', 'no'], true);
+        }
+
         return true;
     }
 

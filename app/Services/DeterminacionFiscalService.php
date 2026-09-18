@@ -212,7 +212,16 @@ class DeterminacionFiscalService
                 : $this->noDisponible('depende de estado_civil e ingresos');
 
             // --- Liquidación final (líneas 22-37) ---
-            $impuestosRetenidos = $this->leerNumero($cliente, $taxYear, 'form_1040', 'impuestos_retenidos');
+            // total_pagos = línea 26 del Form 1040: retenciones (W-2/1099) +
+            // pagos estimados (1040-ES) + pago hecho con la solicitud de
+            // extensión (4868) + sobrepago del año anterior aplicado a este
+            // año. Antes de la Fase 1 del plan de cierre de brecha GTS, solo
+            // se sumaban las retenciones — ver la limitación documentada en
+            // SettlementCalculator.
+            $totalPagos = $this->leerNumero($cliente, $taxYear, 'form_1040', 'impuestos_retenidos')
+                + $this->leerNumero($cliente, $taxYear, 'form_1040', 'pagos_estimados')
+                + $this->leerNumero($cliente, $taxYear, 'form_1040', 'pago_con_extension')
+                + $this->leerNumero($cliente, $taxYear, 'form_1040', 'reembolso_anio_anterior_aplicado');
             $liquidacion = ($impuestoIngreso['disponible'] && $creditos['disponible'] && $impuestoMedicareAdicional['disponible'] && $niit['disponible'])
                 ? $this->liquidacion->calcular(
                     $impuestoIngreso['impuesto'],
@@ -220,7 +229,7 @@ class DeterminacionFiscalService
                     $impuestoAutoempleo['impuesto_se'],
                     $impuestoMedicareAdicional['impuesto'],
                     $niit['impuesto'],
-                    $impuestosRetenidos,
+                    $totalPagos,
                 )
                 : $this->noDisponible('depende del impuesto sobre el ingreso, créditos, Additional Medicare Tax y NIIT');
 

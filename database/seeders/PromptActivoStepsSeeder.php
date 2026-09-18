@@ -45,6 +45,37 @@ class PromptActivoStepsSeeder extends Seeder
                 'nota' => 'se mantiene la lógica ya definida arriba (preguntar en lenguaje simple sobre seguro '
                     .'del Marketplace antes de nombrar el formulario).',
             ],
+            // Fase 1 del plan de cierre de brecha GTS (compliance crítico
+            // P1) — se agregan al final de la lista existente, sin
+            // reordenar los pasos 1-6 ya publicados.
+            [
+                'orden' => 7, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'activos_digitales',
+                'nota' => 'pregunta textual del IRS, obligatoria siempre (nunca modo="no_aplica"): "¿En algún '
+                    .'momento del año recibiste, vendiste, intercambiaste o de otra forma dispusiste de un '
+                    .'activo digital (criptomonedas, NFTs u otro activo digital)?". Guarda la respuesta como '
+                    .'"si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante.',
+            ],
+            [
+                'orden' => 8, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'cuentas_extranjero',
+                'nota' => 'compuerta obligatoria (nunca modo="no_aplica"), en lenguaje simple: "¿Tuviste en '
+                    .'algún momento del año cuentas bancarias, de inversión, u otros activos financieros fuera '
+                    .'de Estados Unidos?". Guarda la respuesta como "si" o "no" exactamente (tipo_dato string) '
+                    .'— nunca otra palabra ni variante. Si responde "si", a continuación se pide el detalle '
+                    .'(país, institución, valor máximo del año) — no lo pidas en este mismo turno.',
+            ],
+            [
+                'orden' => 9, 'tipo' => TipoPromptActivoStep::Condicional, 'campo' => 'cuentas_extranjero_detalle',
+                'condicion' => 'cuentas_extranjero fue respondido como "si"',
+                'nota_si_no_aplica' => 'Si respondió "no", no se pregunta.',
+            ],
+            [
+                'orden' => 10, 'tipo' => TipoPromptActivoStep::Simple, 'campo' => 'venta_residencia_principal',
+                'nota' => 'pregunta en lenguaje simple si vendió su residencia principal durante el año '
+                    .'(distinto de cualquier otra propiedad de alquiler/inversión, que se cubre en Schedule E); '
+                    .'si confirma que sí, pide fecha de venta, precio de venta y costo base original (para '
+                    .'evaluar la exclusión de $250,000/$500,000, que solo aplica a la residencia principal) — '
+                    .'nunca calcules tú la exclusión, solo recolecta los datos.',
+            ],
         ];
 
         foreach ($pasos as $paso) {

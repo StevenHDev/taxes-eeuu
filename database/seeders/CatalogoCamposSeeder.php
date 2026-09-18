@@ -95,6 +95,24 @@ class CatalogoCamposSeeder extends Seeder
                 'casado_al_31_dic', 'convivio_conyuge_ultimos_6_meses', 'costeo_mas_mitad_hogar',
                 'existe_persona_calificable', 'conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge',
             ], unicoPorCliente: true),
+            // Fase 1 del plan de cierre de brecha GTS (compliance crítico P1,
+            // ver el artifact "Matriz GTS 1040"): la pregunta de activos
+            // digitales del propio Form 1040 — se responde "si"/"no" siempre,
+            // nunca modo="no_aplica" (ver EventoRecoleccionService::validarString
+            // y ActivosResolver, que dependen de ese literal exacto).
+            $this->campo('activos_digitales', FieldKind::Dato, tipoDato: FieldDataType::String, unicoPorCliente: true),
+            // FBAR/FATCA: compuerta sí/no obligatoria + detalle condicional
+            // (solo si respondió "si") — ver PromptActivoStepsSeeder, paso
+            // Condicional de cuentas_extranjero_detalle.
+            $this->campo('cuentas_extranjero', FieldKind::Dato, tipoDato: FieldDataType::String, unicoPorCliente: true),
+            $this->campo('cuentas_extranjero_detalle', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], subcampos: [
+                'pais', 'institucion', 'valor_maximo_anual',
+            ], obligatorio: false, unicoPorCliente: true),
+            // Distinto de form_1099_s genérico: acá aplica la exclusión de
+            // $250k/$500k (ver nota del paso en PromptActivoStepsSeeder).
+            $this->campo('venta_residencia_principal', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], subcampos: [
+                'fecha_venta', 'precio_venta', 'base_costo',
+            ], obligatorio: false, unicoPorCliente: true),
         ];
     }
 
@@ -201,6 +219,18 @@ class CatalogoCamposSeeder extends Seeder
                 $this->campo('beneficios_2025', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
                     'propinas_reportadas', 'horas_extra_pagadas', 'interes_prestamo_auto', 'es_adulto_mayor',
                 ], obligatorio: false),
+                // Fase 1 del plan de cierre de brecha GTS: línea 26 del Form
+                // 1040 (pagos estimados + pago con extensión + reembolso de
+                // año anterior aplicado) — antes de esto, SettlementCalculator
+                // solo recibía impuestos_retenidos, subestimando total_pagos
+                // para cualquier cliente que hizo alguno de estos tres pagos.
+                // Ver DeterminacionFiscalService::calcularPara(). Campos de
+                // forma real (no transversales): `siguiente` los pregunta
+                // igual que cualquier otro campo de form_1040, sin necesidad
+                // de un paso en PromptActivoStepsSeeder.
+                $this->campo('pagos_estimados', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false),
+                $this->campo('pago_con_extension', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false),
+                $this->campo('reembolso_anio_anterior_aplicado', FieldKind::Dato, tipoDato: FieldDataType::Number, obligatorio: false),
             ],
             TaxForm::ScheduleC->value => [
                 $this->campo('estados_bancarios', FieldKind::Documento, formatos: ['pdf', 'xlsx', 'csv']),

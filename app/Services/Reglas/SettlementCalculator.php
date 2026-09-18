@@ -10,11 +10,15 @@ namespace App\Services\Reglas;
  * el total contra los pagos/retenciones para determinar reembolso o saldo a
  * pagar.
  *
- * Limitación documentada: `total_pagos` hoy solo suma `impuestos_retenidos`
- * (W-2/1099) — no hay campo en el catálogo todavía para pagos estimados
- * (Form 1040-ES) ni para créditos reembolsables (EIC, Additional CTC,
- * porción reembolsable del AOTC), así que el resultado subestima los pagos
- * de cualquier cliente que hizo pagos estimados o califica para esos créditos.
+ * `total_pagos` lo arma el llamador (ver DeterminacionFiscalService::calcularPara)
+ * sumando `impuestos_retenidos` + `pagos_estimados` + `pago_con_extension` +
+ * `reembolso_anio_anterior_aplicado` (línea 26 del Form 1040, desde la Fase 1
+ * del plan de cierre de brecha GTS).
+ *
+ * Limitación documentada: no hay campo en el catálogo todavía para créditos
+ * reembolsables (EIC, Additional CTC, porción reembolsable del AOTC), así que
+ * el resultado subestima los pagos de cualquier cliente que califica para
+ * esos créditos.
  */
 class SettlementCalculator
 {

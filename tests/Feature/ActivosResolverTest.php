@@ -149,16 +149,13 @@ class ActivosResolverTest extends TestCase
     }
 
     /**
-     * Los únicos campos `transversal` obligatorio:false hoy ya están
-     * asignados a los pasos Simple/Condicional/Bifurcacion/DocumentoConNota
-     * sembrados por PromptActivoStepsSeeder (ver esa clase) — promover
-     * campos reales (ej. los `documentos_extra` como form_1099_int) a un
-     * grupo es trabajo de la Fase 2 del plan, no de esta (Fase 0, solo
-     * arquitectura). Estos tests siembran dos campos `transversal`
-     * sintéticos, exclusivos de este archivo, para probar `Grupo` sin
-     * tocar el catálogo real ni el seeder de producción.
+     * Resuelve los 10 pasos ACTIVOS sembrados hoy por PromptActivoStepsSeeder
+     * (los 6 originales + los 4 de compliance de la Fase 1 — ver esa clase),
+     * dejando la conversación en "no queda ningún ACTIVO real pendiente".
+     * cuentas_extranjero_detalle se salta solo (cuentas_extranjero queda en
+     * "no"), así que no hace falta resolverlo acá aparte.
      */
-    private function marcarBaseComoResuelta(): void
+    private function marcarTodosLosActivosComoResueltos(): void
     {
         foreach (['identificacion_ssn_itin', 'estado_civil', 'info_dependientes', 'w2', 'form_1099_nec', 'form_1095_a'] as $campo) {
             CampoCliente::query()->create([
@@ -167,8 +164,33 @@ class ActivosResolverTest extends TestCase
                 'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
             ]);
         }
+
+        foreach (['activos_digitales', 'cuentas_extranjero'] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+                'valor_texto' => 'no', 'estado' => 'recibido', 'source' => 'agente_ia',
+            ]);
+        }
+
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'venta_residencia_principal',
+            'tax_year' => 2025, 'tipo_campo' => 'mixto', 'modo' => 'no_aplica',
+            'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+        ]);
     }
 
+    /**
+     * Los únicos campos `transversal` obligatorio:false hoy ya están
+     * asignados a los pasos Simple/Condicional/Bifurcacion/DocumentoConNota
+     * sembrados por PromptActivoStepsSeeder (ver esa clase) — promover
+     * campos reales (ej. los `documentos_extra` como form_1099_int) a un
+     * grupo es trabajo de la Fase 2 del plan, no de esta (Fase 0, solo
+     * arquitectura). Estos tests siembran dos campos `transversal`
+     * sintéticos, exclusivos de este archivo, en un `orden` alto (999) para
+     * no chocar con ningún paso real de producción, para probar `Grupo` sin
+     * tocar el catálogo real ni el seeder de producción.
+     */
     private function seedGrupoDePrueba(): void
     {
         foreach (['grupo_prueba_a', 'grupo_prueba_b'] as $clave) {
@@ -180,7 +202,7 @@ class ActivosResolverTest extends TestCase
         }
 
         PromptActivoStep::query()->create([
-            'orden' => 7,
+            'orden' => 999,
             'tipo' => TipoPromptActivoStep::Grupo,
             'etiqueta' => 'Grupo de prueba',
             'pregunta' => '¿Tuviste alguno de estos?',
@@ -190,7 +212,7 @@ class ActivosResolverTest extends TestCase
 
     public function test_el_grupo_se_devuelve_con_todos_los_miembros_pendientes(): void
     {
-        $this->marcarBaseComoResuelta();
+        $this->marcarTodosLosActivosComoResueltos();
         $this->seedGrupoDePrueba();
 
         $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
@@ -204,7 +226,7 @@ class ActivosResolverTest extends TestCase
 
     public function test_el_grupo_solo_devuelve_los_miembros_que_faltan_cuando_esta_parcialmente_resuelto(): void
     {
-        $this->marcarBaseComoResuelta();
+        $this->marcarTodosLosActivosComoResueltos();
         $this->seedGrupoDePrueba();
 
         CampoCliente::query()->create([
@@ -222,7 +244,7 @@ class ActivosResolverTest extends TestCase
 
     public function test_el_grupo_ya_no_se_devuelve_una_vez_que_todos_sus_miembros_estan_resueltos(): void
     {
-        $this->marcarBaseComoResuelta();
+        $this->marcarTodosLosActivosComoResueltos();
         $this->seedGrupoDePrueba();
 
         foreach (['grupo_prueba_a', 'grupo_prueba_b'] as $campo) {
@@ -240,6 +262,20 @@ class ActivosResolverTest extends TestCase
 
     public function test_devuelve_null_cuando_ya_no_queda_ningun_activo_pendiente(): void
     {
+        $this->marcarTodosLosActivosComoResueltos();
+
+        $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
+
+        $this->assertNull($siguiente);
+    }
+
+    /**
+     * Fase 1 del plan de cierre de brecha GTS (compliance crítico P1) —
+     * activos_digitales/cuentas_extranjero/venta_residencia_principal se
+     * agregaron al final de la lista (orden 7-10), después de form_1095_a.
+     */
+    public function test_despues_de_form_1095_a_el_siguiente_activo_es_activos_digitales(): void
+    {
         foreach (['identificacion_ssn_itin', 'estado_civil', 'info_dependientes', 'w2', 'form_1099_nec', 'form_1095_a'] as $campo) {
             CampoCliente::query()->create([
                 'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
@@ -250,6 +286,58 @@ class ActivosResolverTest extends TestCase
 
         $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
 
-        $this->assertNull($siguiente);
+        $this->assertSame('activos_digitales', $siguiente['campo']);
+    }
+
+    public function test_cuentas_extranjero_detalle_se_salta_si_el_cliente_respondio_que_no(): void
+    {
+        foreach (['identificacion_ssn_itin', 'estado_civil', 'info_dependientes', 'w2', 'form_1099_nec', 'form_1095_a'] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'no_aplica',
+                'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+            ]);
+        }
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'activos_digitales',
+            'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+            'valor_texto' => 'no', 'estado' => 'recibido', 'source' => 'agente_ia',
+        ]);
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'cuentas_extranjero',
+            'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+            'valor_texto' => 'no', 'estado' => 'recibido', 'source' => 'agente_ia',
+        ]);
+
+        $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
+
+        // Salta cuentas_extranjero_detalle (respondió "no") y pasa directo a
+        // venta_residencia_principal.
+        $this->assertSame('venta_residencia_principal', $siguiente['campo']);
+    }
+
+    public function test_cuentas_extranjero_detalle_se_pregunta_si_el_cliente_respondio_que_si(): void
+    {
+        foreach (['identificacion_ssn_itin', 'estado_civil', 'info_dependientes', 'w2', 'form_1099_nec', 'form_1095_a'] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'no_aplica',
+                'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+            ]);
+        }
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'activos_digitales',
+            'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+            'valor_texto' => 'no', 'estado' => 'recibido', 'source' => 'agente_ia',
+        ]);
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'cuentas_extranjero',
+            'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'texto',
+            'valor_texto' => 'si', 'estado' => 'recibido', 'source' => 'agente_ia',
+        ]);
+
+        $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
+
+        $this->assertSame('cuentas_extranjero_detalle', $siguiente['campo']);
     }
 }

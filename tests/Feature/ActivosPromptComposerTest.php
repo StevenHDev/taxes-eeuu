@@ -19,6 +19,9 @@ use Tests\TestCase;
  *   el agente marcó AMBOS como no_aplica sin pedir ninguno, pese a que el
  *   cliente ya había confirmado ser empleado (ver commit "fix: el agente
  *   no pedía w2 pese a confirmar ser empleado...").
+ *
+ * Pasos 7-10 agregados en la Fase 1 del plan de cierre de brecha GTS
+ * (compliance crítico P1) — ver PromptActivoStepsSeeder.
  */
 class ActivosPromptComposerTest extends TestCase
 {
@@ -43,6 +46,10 @@ class ActivosPromptComposerTest extends TestCase
             - Si responde que sí: pide w2. Al guardarlo, invoca también guardar_campo_cliente con modo="no_aplica" para form_1099_nec en el mismo turno (el cliente ya confirmó que es empleado, lo cual responde implícitamente por el 1099-NEC — esto sí cuenta como información entregada explícitamente, ver GROUNDING ESTRICTO).
             - Si responde que no: pide form_1099_nec. Al guardarlo (o si el cliente no tiene ninguno), guarda modo="no_aplica" para w2 en el mismo turno, por la misma razón.
         6. form_1095_a — se mantiene la lógica ya definida arriba (preguntar en lenguaje simple sobre seguro del Marketplace antes de nombrar el formulario).
+        7. activos_digitales — pregunta textual del IRS, obligatoria siempre (nunca modo="no_aplica"): "¿En algún momento del año recibiste, vendiste, intercambiaste o de otra forma dispusiste de un activo digital (criptomonedas, NFTs u otro activo digital)?". Guarda la respuesta como "si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante.
+        8. cuentas_extranjero — compuerta obligatoria (nunca modo="no_aplica"), en lenguaje simple: "¿Tuviste en algún momento del año cuentas bancarias, de inversión, u otros activos financieros fuera de Estados Unidos?". Guarda la respuesta como "si" o "no" exactamente (tipo_dato string) — nunca otra palabra ni variante. Si responde "si", a continuación se pide el detalle (país, institución, valor máximo del año) — no lo pidas en este mismo turno.
+        9. cuentas_extranjero_detalle — solo si cuentas_extranjero fue respondido como "si". Si respondió "no", no se pregunta.
+        10. venta_residencia_principal — pregunta en lenguaje simple si vendió su residencia principal durante el año (distinto de cualquier otra propiedad de alquiler/inversión, que se cubre en Schedule E); si confirma que sí, pide fecha de venta, precio de venta y costo base original (para evaluar la exclusión de $250,000/$500,000, que solo aplica a la residencia principal) — nunca calcules tú la exclusión, solo recolecta los datos.
         TXT;
 
         $this->assertSame($esperado, app(ActivosPromptComposer::class)->compilarLista());
@@ -53,9 +60,9 @@ class ActivosPromptComposerTest extends TestCase
      * bug real de "pendientes no refleja a tiempo un guardado ya hecho" —
      * el mismo patrón exacto que causó el bug de estado_civil en producción
      * (ver commit "fix: estado_civil/info_conyuge quedaban invalido...").
-     * Ahora los 6 pasos ACTIVOS tienen la misma protección.
+     * Ahora los 10 pasos ACTIVOS tienen la misma protección.
      */
-    public function test_compilar_salvaguardas_cubre_los_6_pasos_no_solo_empleo(): void
+    public function test_compilar_salvaguardas_cubre_todos_los_pasos_no_solo_empleo(): void
     {
         $texto = app(ActivosPromptComposer::class)->compilarSalvaguardas();
 
@@ -65,6 +72,9 @@ class ActivosPromptComposerTest extends TestCase
         $this->assertStringContainsString('info_dependientes', $texto);
         $this->assertStringContainsString('Empleo', $texto);
         $this->assertStringContainsString('form_1095_a', $texto);
+        $this->assertStringContainsString('activos_digitales', $texto);
+        $this->assertStringContainsString('cuentas_extranjero', $texto);
+        $this->assertStringContainsString('venta_residencia_principal', $texto);
         $this->assertStringContainsString('fuente de verdad', $texto);
     }
 }
