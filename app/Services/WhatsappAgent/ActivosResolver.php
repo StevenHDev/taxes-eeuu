@@ -43,6 +43,7 @@ class ActivosResolver
             $resultado = match ($paso->tipo) {
                 TipoPromptActivoStep::Bifurcacion => $this->resolverBifurcacion($paso, $pendientesPorCampo),
                 TipoPromptActivoStep::Condicional => $this->resolverCondicional($paso, $pendientesPorCampo, $taxYear, $clienteId),
+                TipoPromptActivoStep::Grupo => $this->resolverGrupo($paso, $pendientesPorCampo),
                 TipoPromptActivoStep::Simple, TipoPromptActivoStep::DocumentoConNota => $pendientesPorCampo[(string) $paso->campo] ?? null,
             };
 
@@ -75,6 +76,34 @@ class ActivosResolver
             'pregunta' => $paso->pregunta,
             'campo_si' => $campoSi,
             'campo_no' => $campoNo,
+        ];
+    }
+
+    /**
+     * Generaliza resolverBifurcacion() a N miembros: mientras quede al menos
+     * un miembro del grupo todavía pendiente (ni recibido ni no_aplica), se
+     * devuelve la pregunta compuesta con solo los miembros que faltan — no
+     * se vuelve a preguntar por los ya resueltos dentro del mismo grupo.
+     *
+     * @param  array<string, array<string, mixed>>  $pendientesPorCampo
+     * @return array<string, mixed>|null
+     */
+    private function resolverGrupo(PromptActivoStep $paso, array $pendientesPorCampo): ?array
+    {
+        $miembrosPendientes = collect($paso->miembros ?? [])
+            ->map(fn (string $campo) => $pendientesPorCampo[$campo] ?? null)
+            ->filter()
+            ->values();
+
+        if ($miembrosPendientes->isEmpty()) {
+            return null;
+        }
+
+        return [
+            'tipo' => 'grupo',
+            'etiqueta' => $paso->etiqueta,
+            'pregunta' => $paso->pregunta,
+            'miembros' => $miembrosPendientes->all(),
         ];
     }
 

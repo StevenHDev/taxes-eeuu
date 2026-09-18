@@ -48,6 +48,12 @@ class ActivosPromptComposer
                 "    - Si responde que sí: pide {$p->campo_si}. Al guardarlo, invoca también guardar_campo_cliente con modo=\"no_aplica\" para {$p->campo_no} en el mismo turno (el cliente ya confirmó que es empleado, lo cual responde implícitamente por el 1099-NEC — esto sí cuenta como información entregada explícitamente, ver GROUNDING ESTRICTO).",
                 "    - Si responde que no: pide {$p->campo_no}. Al guardarlo (o si el cliente no tiene ninguno), guarda modo=\"no_aplica\" para {$p->campo_si} en el mismo turno, por la misma razón.",
             ]),
+            TipoPromptActivoStep::Grupo => implode("\n", [
+                "{$p->orden}. {$p->etiqueta} — pregunta compuesta: \"{$p->pregunta}\" (esta pregunta no tiene un campo propio en `pendientes`; agrupa varios campos distintos en un solo turno: ".implode(', ', $p->miembros ?? []).'):',
+                '    - Todos los miembros de este grupo traen obligatorio:false en `pendientes` — el cliente puede confirmar ninguno, algunos o todos.',
+                '    - Pregunta la lista completa una sola vez, en un solo mensaje de WhatsApp. Por cada miembro que el cliente confirme que tiene, sigue las reglas normales de guardado de ese campo puntual (si es documento, pide el archivo; si es dato, pide el valor) — puede requerir más de un turno si el cliente confirma varios a la vez pero solo entrega uno por mensaje.',
+                '    - Por cada miembro que el cliente NO confirme (dice que no tiene ninguno de esos, o los que no menciona al responder), invoca guardar_campo_cliente con modo="no_aplica" para ese campo, en la misma tanda de turnos que resuelve el grupo — nunca vuelvas a preguntar por un miembro individualmente después de esta pregunta compuesta.',
+            ]),
         };
     }
 
@@ -73,6 +79,7 @@ class ActivosPromptComposer
     {
         return match ($p->tipo) {
             TipoPromptActivoStep::Bifurcacion => "- {$p->etiqueta}: si `pendientes` devuelve {$p->campo_si} o {$p->campo_no} pero el historial ya muestra que el cliente respondió \"{$p->pregunta}\" (sí o no), no vuelvas a preguntarlo ni a pedir el documento complementario ya resuelto por esa respuesta.",
+            TipoPromptActivoStep::Grupo => "- {$p->etiqueta}: si `pendientes` devuelve cualquiera de ".implode(', ', $p->miembros ?? []).' pero el historial ya muestra que el cliente respondió "'.$p->pregunta.'", no vuelvas a hacer esa pregunta compuesta — retoma solo los miembros que quedaron sin resolver de esa respuesta (guardando el dato/documento, o modo="no_aplica" si el cliente no lo tiene).',
             TipoPromptActivoStep::Simple, TipoPromptActivoStep::Condicional, TipoPromptActivoStep::DocumentoConNota => "- {$p->campo}: si `pendientes` lo devuelve pero el historial ya muestra la respuesta del cliente (o el documento ya subido), no lo vuelvas a preguntar ni a pedir.",
         };
     }

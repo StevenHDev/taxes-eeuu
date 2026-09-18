@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $campo_si
  * @property string|null $campo_no
  * @property string|null $etiqueta
+ * @property array<int, string>|null $miembros
  */
 #[Fillable([
     'orden',
@@ -34,6 +35,7 @@ use Illuminate\Database\Eloquent\Model;
     'campo_si',
     'campo_no',
     'etiqueta',
+    'miembros',
 ])]
 class PromptActivoStep extends Model
 {
@@ -46,6 +48,7 @@ class PromptActivoStep extends Model
     {
         return [
             'tipo' => TipoPromptActivoStep::class,
+            'miembros' => 'array',
         ];
     }
 }

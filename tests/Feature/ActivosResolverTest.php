@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Enums\FieldKind;
+use App\Enums\TipoPromptActivoStep;
 use App\Enums\UserRole;
+use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
+use App\Models\PromptActivoStep;
 use App\Models\User;
 use App\Services\WhatsappAgent\ActivosResolver;
 use App\Support\TaxFieldCatalog;
@@ -142,6 +146,96 @@ class ActivosResolverTest extends TestCase
         // Ya resuelta la bifurcación, el próximo ACTIVO es form_1095_a — nunca
         // vuelve a ofrecerse "¿eres empleado?" (ver GROUNDING ESTRICTO).
         $this->assertSame('form_1095_a', $siguiente['campo']);
+    }
+
+    /**
+     * Los únicos campos `transversal` obligatorio:false hoy ya están
+     * asignados a los pasos Simple/Condicional/Bifurcacion/DocumentoConNota
+     * sembrados por PromptActivoStepsSeeder (ver esa clase) — promover
+     * campos reales (ej. los `documentos_extra` como form_1099_int) a un
+     * grupo es trabajo de la Fase 2 del plan, no de esta (Fase 0, solo
+     * arquitectura). Estos tests siembran dos campos `transversal`
+     * sintéticos, exclusivos de este archivo, para probar `Grupo` sin
+     * tocar el catálogo real ni el seeder de producción.
+     */
+    private function marcarBaseComoResuelta(): void
+    {
+        foreach (['identificacion_ssn_itin', 'estado_civil', 'info_dependientes', 'w2', 'form_1099_nec', 'form_1095_a'] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'dato', 'modo' => 'no_aplica',
+                'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+            ]);
+        }
+    }
+
+    private function seedGrupoDePrueba(): void
+    {
+        foreach (['grupo_prueba_a', 'grupo_prueba_b'] as $clave) {
+            CampoCatalogo::query()->create([
+                'forma' => 'transversal', 'tax_year' => 2025, 'clave' => $clave,
+                'tipo_campo' => FieldKind::Documento, 'formatos_aceptados' => ['pdf'],
+                'obligatorio' => false, 'sensible' => false, 'unico_por_cliente' => true,
+            ]);
+        }
+
+        PromptActivoStep::query()->create([
+            'orden' => 7,
+            'tipo' => TipoPromptActivoStep::Grupo,
+            'etiqueta' => 'Grupo de prueba',
+            'pregunta' => '¿Tuviste alguno de estos?',
+            'miembros' => ['grupo_prueba_a', 'grupo_prueba_b'],
+        ]);
+    }
+
+    public function test_el_grupo_se_devuelve_con_todos_los_miembros_pendientes(): void
+    {
+        $this->marcarBaseComoResuelta();
+        $this->seedGrupoDePrueba();
+
+        $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
+
+        $this->assertSame('grupo', $siguiente['tipo']);
+        $this->assertSame('Grupo de prueba', $siguiente['etiqueta']);
+        $this->assertCount(2, $siguiente['miembros']);
+        $this->assertSame('grupo_prueba_a', $siguiente['miembros'][0]['campo']);
+        $this->assertSame('grupo_prueba_b', $siguiente['miembros'][1]['campo']);
+    }
+
+    public function test_el_grupo_solo_devuelve_los_miembros_que_faltan_cuando_esta_parcialmente_resuelto(): void
+    {
+        $this->marcarBaseComoResuelta();
+        $this->seedGrupoDePrueba();
+
+        CampoCliente::query()->create([
+            'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => 'grupo_prueba_a',
+            'tax_year' => 2025, 'tipo_campo' => 'documento', 'modo' => 'no_aplica',
+            'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+        ]);
+
+        $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
+
+        $this->assertSame('grupo', $siguiente['tipo']);
+        $this->assertCount(1, $siguiente['miembros']);
+        $this->assertSame('grupo_prueba_b', $siguiente['miembros'][0]['campo']);
+    }
+
+    public function test_el_grupo_ya_no_se_devuelve_una_vez_que_todos_sus_miembros_estan_resueltos(): void
+    {
+        $this->marcarBaseComoResuelta();
+        $this->seedGrupoDePrueba();
+
+        foreach (['grupo_prueba_a', 'grupo_prueba_b'] as $campo) {
+            CampoCliente::query()->create([
+                'user_id' => $this->cliente->id, 'forma' => 'transversal', 'campo' => $campo,
+                'tax_year' => 2025, 'tipo_campo' => 'documento', 'modo' => 'no_aplica',
+                'valor_texto' => null, 'estado' => 'no_aplica', 'source' => 'agente_ia',
+            ]);
+        }
+
+        $siguiente = $this->resolver->siguiente(2025, $this->cliente->id, $this->pendientes());
+
+        $this->assertNull($siguiente);
     }
 
     public function test_devuelve_null_cuando_ya_no_queda_ningun_activo_pendiente(): void

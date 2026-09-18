@@ -8,4 +8,5 @@ enum TipoPromptActivoStep: string
     case Condicional = 'condicional';
     case Bifurcacion = 'bifurcacion';
     case DocumentoConNota = 'documento_con_nota';
+    case Grupo = 'grupo';
 }
