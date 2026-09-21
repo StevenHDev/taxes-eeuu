@@ -13,6 +13,7 @@ use App\Services\Reglas\AgiCalculator;
 use App\Services\Reglas\CreditEligibilityCalculator;
 use App\Services\Reglas\DependentQualificationCalculator;
 use App\Services\Reglas\FilingStatusCalculator;
+use App\Services\Reglas\ForeignTaxCreditCalculator;
 use App\Services\Reglas\NiitCalculator;
 use App\Services\Reglas\QbiCalculator;
 use App\Services\Reglas\SelfEmploymentTaxCalculator;
@@ -22,7 +23,7 @@ use App\Services\Reglas\TaxableIncomeAndTaxCalculator;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Orquesta las once calculadoras del motor de reglas para un cliente y un año
+ * Orquesta las doce calculadoras del motor de reglas para un cliente y un año
  * fiscal, y persiste el resultado en `determinaciones_fiscales` — nunca en
  * `campos_cliente` (esa tabla es solo para lo que el cliente/agente entregó,
  * ver docs/plan-desarrollo-fases.md Decisión B).
@@ -31,7 +32,8 @@ use Illuminate\Support\Facades\DB;
  * real del Form 1040): dependientes → filing status → SE tax (necesario
  * ANTES del AGI, porque la mitad es deducible como ajuste) → AGI → deducción
  * aplicable (estándar vs itemizada) → QBI (necesita AGI y la deducción ya
- * resueltas) → impuesto sobre el ingreso → créditos no reembolsables →
+ * resueltas) → impuesto sobre el ingreso → créditos no reembolsables (CTC/
+ * ODC/cuidado de dependientes + Foreign Tax Credit simplificado, Fase 4) →
  * Additional Medicare Tax / NIIT (otros impuestos de Schedule 2 Parte II) →
  * liquidación final (reembolso o saldo a pagar).
  */
@@ -57,6 +59,7 @@ class DeterminacionFiscalService
         private readonly QbiCalculator $qbi,
         private readonly TaxableIncomeAndTaxCalculator $impuestoIngreso,
         private readonly SettlementCalculator $liquidacion,
+        private readonly ForeignTaxCreditCalculator $creditoExtranjero,
     ) {}
 
     /**
@@ -217,6 +220,14 @@ class DeterminacionFiscalService
                 ? $this->niit->calcular($taxYear, FilingStatus::from($filingStatus['estado']), $agi['agi'], $netoInversion)
                 : $this->noDisponible('depende de estado_civil e ingresos');
 
+            // --- Foreign Tax Credit (Fase 4 del plan de cierre de brecha
+            // GTS) — simplificado, ver ForeignTaxCreditCalculator: solo la
+            // elección de minimis sin Form 1116.
+            $impuestoExtranjeroPagado = $this->leerNumero($cliente, $taxYear, 'form_1040', 'impuesto_extranjero_pagado');
+            $creditoExtranjero = $filingStatus['disponible']
+                ? $this->creditoExtranjero->calcular($taxYear, FilingStatus::from($filingStatus['estado']), $impuestoExtranjeroPagado)
+                : $this->noDisponible('depende de estado_civil');
+
             // --- Liquidación final (líneas 22-37) ---
             // total_pagos = línea 26 del Form 1040: retenciones (W-2/1099) +
             // pagos estimados (1040-ES) + pago hecho con la solicitud de
@@ -228,10 +239,19 @@ class DeterminacionFiscalService
                 + $this->leerNumero($cliente, $taxYear, 'form_1040', 'pagos_estimados')
                 + $this->leerNumero($cliente, $taxYear, 'form_1040', 'pago_con_extension')
                 + $this->leerNumero($cliente, $taxYear, 'form_1040', 'reembolso_anio_anterior_aplicado');
-            $liquidacion = ($impuestoIngreso['disponible'] && $creditos['disponible'] && $impuestoMedicareAdicional['disponible'] && $niit['disponible'])
+            // creditos_no_reembolsables = CTC/ODC/cuidado de dependientes +
+            // el Foreign Tax Credit simplificado (Fase 4) — ambos reducen el
+            // impuesto sobre el ingreso ANTES de los "otros impuestos" de
+            // Schedule 2 Parte II, igual tratamiento que ya reciben CTC/ODC.
+            // La suma vive DENTRO de la rama disponible del ternario (no
+            // antes): $creditos/$creditoExtranjero pueden traer el shape de
+            // noDisponible() (sin 'total'/'credito') cuando falta
+            // estado_civil, y acceder a esas claves sin este chequeo
+            // truena con un ErrorException antes de llegar al ternario.
+            $liquidacion = ($impuestoIngreso['disponible'] && $creditos['disponible'] && $creditoExtranjero['disponible'] && $impuestoMedicareAdicional['disponible'] && $niit['disponible'])
                 ? $this->liquidacion->calcular(
                     $impuestoIngreso['impuesto'],
-                    $creditos['total'],
+                    $creditos['total'] + $creditoExtranjero['credito'],
                     $impuestoAutoempleo['impuesto_se'],
                     $impuestoMedicareAdicional['impuesto'],
                     $niit['impuesto'],
@@ -250,6 +270,7 @@ class DeterminacionFiscalService
                 TipoDeterminacion::ImpuestoAutoempleo->value => $impuestoAutoempleo,
                 TipoDeterminacion::ImpuestoMedicareAdicional->value => $impuestoMedicareAdicional,
                 TipoDeterminacion::Niit->value => $niit,
+                TipoDeterminacion::CreditoExtranjero->value => $creditoExtranjero,
                 TipoDeterminacion::Liquidacion->value => $liquidacion,
             ];
 

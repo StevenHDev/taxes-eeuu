@@ -90,7 +90,7 @@ class DeterminacionFiscalTest extends TestCase
         ]);
     }
 
-    public function test_calcular_determinaciones_crea_las_11_filas(): void
+    public function test_calcular_determinaciones_crea_las_12_filas(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
@@ -100,7 +100,9 @@ class DeterminacionFiscalTest extends TestCase
             ->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025])
             ->assertRedirect();
 
-        $this->assertSame(11, DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tax_year', 2025)->count());
+        // 12 desde la Fase 4 del plan de cierre de brecha GTS — se agregó
+        // 'credito_extranjero' (Foreign Tax Credit simplificado).
+        $this->assertSame(12, DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tax_year', 2025)->count());
 
         $filingStatus = DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tipo', 'filing_status')->first();
         $this->assertSame('hoh', $filingStatus->resultado['estado']);
@@ -303,7 +305,7 @@ class DeterminacionFiscalTest extends TestCase
         $this->actingAs($preparador)->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025]);
         $this->actingAs($preparador)->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025]);
 
-        $this->assertSame(11, DeterminacionFiscal::query()->where('user_id', $cliente->id)->count());
+        $this->assertSame(12, DeterminacionFiscal::query()->where('user_id', $cliente->id)->count());
     }
 
     public function test_dos_anos_fiscales_del_mismo_cliente_no_se_cruzan(): void
@@ -331,6 +333,32 @@ class DeterminacionFiscalTest extends TestCase
         $this->assertSame(90000.0, (float) $agi2026->resultado['agi']);
     }
 
+    /**
+     * Fase 4 del plan de cierre de brecha GTS: impuesto_extranjero_pagado se
+     * capturaba desde antes pero no alimentaba ningún crédito real — ahora
+     * reduce el saldo a pagar vía el Foreign Tax Credit simplificado (de
+     * minimis, sin Form 1116).
+     */
+    public function test_impuesto_extranjero_pagado_bajo_el_umbral_reduce_el_saldo_a_pagar(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+        $this->cargarDatosCompletos($cliente);
+        $this->cargarCampo($cliente, 'form_1040', 'impuesto_extranjero_pagado', 150);
+
+        $this->actingAs($preparador)
+            ->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025])
+            ->assertRedirect();
+
+        $creditoExtranjero = DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tipo', 'credito_extranjero')->first();
+        $this->assertTrue($creditoExtranjero->resultado['disponible']);
+        $this->assertEquals(150.0, $creditoExtranjero->resultado['credito']);
+        $this->assertFalse($creditoExtranjero->resultado['requiere_form_1116']);
+
+        $liquidacion = DeterminacionFiscal::query()->where('user_id', $cliente->id)->where('tipo', 'liquidacion')->first();
+        $this->assertTrue($liquidacion->resultado['disponible']);
+    }
+
     public function test_el_detalle_del_cliente_incluye_la_prop_determinaciones(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
@@ -342,6 +370,6 @@ class DeterminacionFiscalTest extends TestCase
         $this->actingAs($preparador)
             ->get(route('clientes.show', $cliente))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->has('determinaciones', 11));
+            ->assertInertia(fn (Assert $page) => $page->has('determinaciones', 12));
     }
 }

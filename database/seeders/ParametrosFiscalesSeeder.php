@@ -78,6 +78,21 @@ class ParametrosFiscalesSeeder extends Seeder
             ['credito_cuidado_dependientes', 'agi_umbral_porcentaje_minimo', 43000],
             ['credito_cuidado_dependientes', 'edad_limite_dependiente', 13],
 
+            // Foreign Tax Credit — elección "de minimis" sin Form 1116
+            // (IRC §904(j)): si el impuesto extranjero pagado no supera este
+            // umbral, el crédito es el monto pagado tal cual, sin aplicar la
+            // fórmula de límite por ingreso extranjero/ingreso total. Montos
+            // fijos por estatuto, no ajustados por inflación — mismos
+            // $300/$600 desde que existe la elección, no cambian por año
+            // fiscal, pero se siembran acá igual por consistencia con el
+            // resto de parámetros versionados. Por encima del umbral, Fase 4
+            // del plan de cierre de brecha GTS deja el crédito en 0 con
+            // motivo explícito — requiere Form 1116 completo (categoría de
+            // ingreso, límite por país, carryover), no modelado todavía —
+            // ver ForeignTaxCreditCalculator.
+            ['credito_ftc', 'umbral_de_minimis_soltero', 300],
+            ['credito_ftc', 'umbral_de_minimis_mfj', 600],
+
             // Tax Rate Tables 2025 (IRC §1(j), Rev. Proc. 2024-40 tablas 1-3 —
             // leídas directo del PDF oficial, no de un resumen). OBBBA no
             // modificó estos tramos ni sus montos (solo hizo permanentes las

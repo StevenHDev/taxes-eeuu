@@ -23,4 +23,8 @@ enum TipoDeterminacion: string
     case ImpuestoMedicareAdicional = 'impuesto_medicare_adicional';
     case Niit = 'niit';
     case Liquidacion = 'liquidacion';
+
+    // Fase 4 del plan de cierre de brecha GTS — Foreign Tax Credit
+    // simplificado (elección de minimis sin Form 1116).
+    case CreditoExtranjero = 'credito_extranjero';
 }
