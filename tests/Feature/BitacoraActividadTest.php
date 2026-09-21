@@ -94,7 +94,7 @@ class BitacoraActividadTest extends TestCase
 
     public function test_subir_un_documento_genera_un_evento_creado_sin_exponer_datos(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $agente = User::factory()->create(['role' => UserRole::Administrator]);
         Sanctum::actingAs($agente, [ApiAbility::EventosWrite->value]);
         $cliente = User::factory()->create(['role' => UserRole::Client]);

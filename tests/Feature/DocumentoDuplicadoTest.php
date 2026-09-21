@@ -29,7 +29,7 @@ class DocumentoDuplicadoTest extends TestCase
 
     public function test_mismo_archivo_subido_dos_veces_para_el_mismo_cliente_se_marca_como_duplicado(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 
@@ -57,7 +57,7 @@ class DocumentoDuplicadoTest extends TestCase
 
     public function test_archivos_distintos_no_se_marcan_como_duplicados(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 
@@ -74,7 +74,7 @@ class DocumentoDuplicadoTest extends TestCase
 
     public function test_un_preparador_no_ve_la_identidad_de_un_cliente_que_no_tiene_asignado_al_coincidir_el_hash(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $preparador1 = User::factory()->create(['role' => UserRole::Preparer]);
         $preparador2 = User::factory()->create(['role' => UserRole::Preparer]);
         $clienteA = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador1->id, 'name' => 'Cliente A']);
@@ -93,7 +93,7 @@ class DocumentoDuplicadoTest extends TestCase
 
     public function test_un_administrador_ve_el_detalle_completo_del_otro_cliente(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $preparador1 = User::factory()->create(['role' => UserRole::Preparer]);
         $preparador2 = User::factory()->create(['role' => UserRole::Preparer]);
         $admin = User::factory()->create(['role' => UserRole::Administrator]);

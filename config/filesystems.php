@@ -57,7 +57,14 @@ return [
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
-            'report' => false,
+            // true (no el default de Laravel): documentos de cliente viven acá
+            // desde que se encontró en producción que el disco 'local'
+            // anterior perdía archivos en cada reinicio del worker sin
+            // ningún error visible (ver Documento::DISK) — una falla de
+            // escritura/lectura acá debe quedar en el log, nunca en
+            // silencio, aunque siga sin tumbar el turno de conversación
+            // (throw queda en false a propósito).
+            'report' => true,
         ],
 
     ],

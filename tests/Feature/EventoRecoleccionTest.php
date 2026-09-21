@@ -331,7 +331,7 @@ class EventoRecoleccionTest extends TestCase
 
     public function test_la_forma_se_marca_completa_cuando_todos_los_campos_requeridos_estan_recibidos(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -412,7 +412,7 @@ class EventoRecoleccionTest extends TestCase
 
     public function test_archivo_con_formato_no_aceptado_se_marca_invalido(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -519,7 +519,7 @@ class EventoRecoleccionTest extends TestCase
 
     public function test_la_completitud_de_una_forma_es_independiente_por_ano_fiscal(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -713,7 +713,7 @@ class EventoRecoleccionTest extends TestCase
 
     public function test_no_aplica_puede_reemplazarse_despues_por_el_archivo_real(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -897,7 +897,7 @@ class EventoRecoleccionTest extends TestCase
      */
     public function test_la_respuesta_incluye_el_revela_del_documento_guardado(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -958,7 +958,7 @@ class EventoRecoleccionTest extends TestCase
      */
     public function test_revela_expone_tipo_campo_mixto_para_un_campo_destino_mixto(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -1023,7 +1023,7 @@ class EventoRecoleccionTest extends TestCase
      */
     public function test_revelados_guarda_el_campo_principal_y_los_revelados_en_una_sola_llamada(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -1074,7 +1074,7 @@ class EventoRecoleccionTest extends TestCase
 
     public function test_revelados_acumulable_suma_sobre_lo_ya_guardado(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -1126,7 +1126,7 @@ class EventoRecoleccionTest extends TestCase
      */
     public function test_acumular_como_texto_true_o_false_se_interpreta_correctamente(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -1183,7 +1183,7 @@ class EventoRecoleccionTest extends TestCase
 
     public function test_revelados_con_tipo_dato_que_no_coincide_con_catalogo_es_invalido(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -1209,7 +1209,7 @@ class EventoRecoleccionTest extends TestCase
 
     public function test_revelados_no_puede_apuntar_a_un_campo_tipo_documento(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -1259,7 +1259,7 @@ class EventoRecoleccionTest extends TestCase
      */
     public function test_revelados_como_string_json_en_multipart_se_decodifica_correctamente(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -1681,7 +1681,7 @@ class EventoRecoleccionTest extends TestCase
      */
     public function test_sin_acumular_el_segundo_archivo_reemplaza_y_borra_el_anterior(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -1705,7 +1705,7 @@ class EventoRecoleccionTest extends TestCase
 
     public function test_acumular_true_en_modo_archivo_agrega_un_documento_sin_borrar_el_anterior(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
@@ -1748,7 +1748,7 @@ class EventoRecoleccionTest extends TestCase
      */
     public function test_dos_w2_acumulan_salarios_e_impuestos_retenidos_via_revelados(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 

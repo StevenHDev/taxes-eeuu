@@ -4,6 +4,7 @@ namespace App\Http\Concerns;
 
 use App\Enums\FormState;
 use App\Enums\UserRole;
+use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -62,6 +63,6 @@ trait ManagesClientes
             ->get()
             ->pluck('documento')
             ->filter()
-            ->each(fn ($documento) => Storage::disk('local')->delete($documento->file_path));
+            ->each(fn ($documento) => Storage::disk(Documento::DISK)->delete($documento->file_path));
     }
 }

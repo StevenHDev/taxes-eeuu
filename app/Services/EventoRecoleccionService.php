@@ -427,7 +427,7 @@ class EventoRecoleccionService
             return;
         }
 
-        Storage::disk('local')->delete($documento->file_path);
+        Storage::disk(Documento::DISK)->delete($documento->file_path);
         $documento->delete();
     }
 
@@ -503,7 +503,7 @@ class EventoRecoleccionService
         $path = $file->storeAs(
             "documentos/{$cliente->id}",
             Str::uuid().'.'.$extension,
-            'local',
+            Documento::DISK,
         );
 
         throw_if($path === false, new \RuntimeException('Unable to store the uploaded file.'));

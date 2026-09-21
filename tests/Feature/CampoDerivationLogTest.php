@@ -41,7 +41,7 @@ class CampoDerivationLogTest extends TestCase
      */
     public function test_documento_con_todas_las_relaciones_cubiertas_no_deja_faltantes(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->seed(RelacionesDocumentoCampoSeeder::class);
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
@@ -80,7 +80,7 @@ class CampoDerivationLogTest extends TestCase
      */
     public function test_documento_con_relaciones_sin_cubrir_las_deja_registradas_como_faltantes(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->seed(RelacionesDocumentoCampoSeeder::class);
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
@@ -112,7 +112,7 @@ class CampoDerivationLogTest extends TestCase
 
     public function test_un_documento_sin_relaciones_declaradas_no_genera_log(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 

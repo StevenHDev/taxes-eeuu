@@ -22,7 +22,7 @@ class DocumentoController extends Controller
     public function show(Request $request, Documento $documento): StreamedResponse
     {
         /** @var FilesystemAdapter $disk */
-        $disk = Storage::disk('local');
+        $disk = Storage::disk(Documento::DISK);
 
         // El registro puede existir en BD aunque el archivo físico ya no esté
         // (ej. datos sembrados sin archivo real). Sin esta guarda, Flysystem

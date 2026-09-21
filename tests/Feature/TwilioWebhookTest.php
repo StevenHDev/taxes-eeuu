@@ -266,7 +266,7 @@ class TwilioWebhookTest extends TestCase
 
     public function test_un_mensaje_con_media_descarga_extrae_y_guarda_el_documento(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
 
         $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
         FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);

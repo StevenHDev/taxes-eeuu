@@ -255,7 +255,7 @@ class ClientePanelTest extends TestCase
 
     public function test_un_preparador_carga_un_documento_via_web(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 
@@ -273,12 +273,12 @@ class ClientePanelTest extends TestCase
         $documento = Documento::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first();
         $this->assertNotNull($documento);
         $this->assertSame('w2.pdf', $documento->file_original_name);
-        Storage::disk('local')->assertExists($documento->file_path);
+        Storage::disk('s3')->assertExists($documento->file_path);
     }
 
     public function test_rechaza_un_documento_de_mas_de_10mb(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 
@@ -297,7 +297,7 @@ class ClientePanelTest extends TestCase
 
     public function test_rechaza_un_formato_de_archivo_no_permitido(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 

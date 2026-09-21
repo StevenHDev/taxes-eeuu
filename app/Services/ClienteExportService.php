@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Documento;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -42,7 +43,7 @@ class ClienteExportService
             }
 
             $documento = $campoCliente->documento;
-            $contents = Storage::disk('local')->get($documento->file_path);
+            $contents = Storage::disk(Documento::DISK)->get($documento->file_path);
 
             if (is_string($contents)) {
                 $zip->addFromString(

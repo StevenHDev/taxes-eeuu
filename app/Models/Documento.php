@@ -40,6 +40,23 @@ use Illuminate\Support\Facades\URL;
 ])]
 class Documento extends Model
 {
+    /**
+     * Disco de Storage:: donde viven los archivos reales — S3 desde que se
+     * encontró en producción (2026-09-21, conversación real con
+     * 3213445027) que el disco 'local' anterior no sobrevive un reinicio
+     * del contenedor del worker: `storage/app` no tenía ningún volumen
+     * persistente montado (Mounts: [] en `docker inspect`), así que un
+     * reinicio a mitad de conversación borró los dos documentos que el
+     * cliente ya había subido — la fila en `documentos` quedó apuntando a
+     * una ruta que ya no existía en ningún lado, sin ningún error visible
+     * (el guardado en sí nunca falla: storeAs() escribe correctamente en el
+     * contenedor que procesa la subida, el problema es que ese contenedor
+     * es efímero). Todo lo que lee/escribe/borra un documento de cliente
+     * debe pasar por esta constante, nunca por un `Storage::disk('local')`
+     * suelto — evita que un punto se quede en el disco viejo por olvido.
+     */
+    public const DISK = 's3';
+
     protected $hidden = ['file_path'];
 
     /**
