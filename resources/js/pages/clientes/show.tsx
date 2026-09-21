@@ -2,6 +2,7 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Check,
+    ChevronRight,
     Circle,
     MinusCircle,
     Upload,
@@ -47,6 +48,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { WhatsappConversationDialog } from '@/components/whatsapp-conversation-dialog';
+import { humanizarClave } from '@/lib/humanizar-clave';
 import { dashboard } from '@/routes';
 import {
     index as clientesIndex,
@@ -136,6 +138,127 @@ function EstadoTag({ estado }: { estado: CampoCliente['estado'] }) {
 const TRANSVERSAL = 'transversal';
 const DOCUMENTOS_EXTRA = 'documentos_extra';
 
+// El catálogo transversal creció de 7 a 61 campos (plan de cierre de brecha
+// GTS) — todos en una sola tabla plana se sentían "llenos de información".
+// Se agrupan en las mismas categorías temáticas que ya usa el backend para
+// las preguntas de tipo Grupo (ver App\Enums\TipoPromptActivoStep::Grupo y
+// database/seeders/PromptActivoStepsSeeder.php), más algunas categorías
+// adicionales para los campos que no vienen agrupados ahí. Todo campo del
+// catálogo transversal cae en alguna — lo que no se reconoce cae en "otros",
+// que en la práctica no debería tener contenido.
+const CATEGORIA_TRANSVERSAL_POR_CAMPO: Record<string, string> = {
+    // Identidad y datos personales
+    identificacion_ssn_itin: 'identidad',
+    fecha_nacimiento_contribuyente: 'identidad',
+    direccion_contribuyente: 'identidad',
+    ocupacion: 'identidad',
+    ip_pin: 'identidad',
+    puede_ser_reclamado_como_dependiente: 'identidad',
+    vivio_trabajo_fuera_eeuu: 'identidad',
+    activos_digitales: 'identidad',
+
+    // Estado civil y familia
+    estado_civil: 'familia',
+    info_conyuge: 'familia',
+    info_dependientes: 'familia',
+    form_8332: 'familia',
+
+    // Empleo
+    w2: 'empleo',
+    form_1099_nec: 'empleo',
+    mas_w2: 'empleo',
+    salarios_empleado_domestico: 'empleo',
+
+    // Retiro y jubilación
+    form_1099_r: 'retiro',
+    ssa_1099: 'retiro',
+    retiro_rollover_o_conversion_roth: 'retiro',
+    retiro_distribucion_anticipada: 'retiro',
+    railroad_retirement: 'retiro',
+
+    // Inversiones y cuentas financieras
+    form_1099_int: 'inversiones',
+    form_1099_div: 'inversiones',
+    form_1099_b: 'inversiones',
+    form_1099_g: 'inversiones',
+    form_1098_e: 'inversiones',
+    form_1099_misc: 'inversiones',
+    form_1099_k: 'inversiones',
+    form_w2g: 'inversiones',
+    form_1099_c: 'inversiones',
+    form_1099_sa: 'inversiones',
+    form_5498_sa: 'inversiones',
+    intereses_exentos_impuestos: 'inversiones',
+    perdida_capital_arrastrada: 'inversiones',
+    compensacion_acciones: 'inversiones',
+    declaracion_anio_anterior: 'inversiones',
+
+    // Vivienda y propiedad
+    venta_residencia_principal: 'vivienda',
+    form_1098: 'vivienda',
+    mejoras_propiedad_vendida: 'vivienda',
+    venta_a_plazos: 'vivienda',
+    form_1099_s: 'vivienda',
+
+    // Schedule K-1
+    k1_recibido: 'k1',
+    k1_distribuciones_recibidas: 'k1',
+    k1_perdidas_pasivas_o_basis_pendiente: 'k1',
+
+    // Salud y seguro
+    form_1095_a: 'salud',
+
+    // Cumplimiento y situaciones internacionales/legales
+    cuentas_extranjero: 'compliance',
+    cuentas_extranjero_detalle: 'compliance',
+    regalos_herencia_extranjero: 'compliance',
+    foreign_trust: 'compliance',
+    cartas_irs: 'compliance',
+    declaracion_enmendada: 'compliance',
+    bankruptcy: 'compliance',
+
+    // Otros ingresos y ajustes poco frecuentes
+    foreclosure_abandono_propiedad: 'otrosIngresosAjustes',
+    premios_hobby: 'otrosIngresosAjustes',
+    ingresos_demanda_legal: 'otrosIngresosAjustes',
+    alimony_recibido: 'otrosIngresosAjustes',
+    contribuciones_ira_sep_simple: 'otrosIngresosAjustes',
+    seguro_medico_self_employed: 'otrosIngresosAjustes',
+    gastos_educador: 'otrosIngresosAjustes',
+    mejoras_eficiencia_energetica: 'otrosIngresosAjustes',
+    gastos_adopcion: 'otrosIngresosAjustes',
+};
+
+const ORDEN_CATEGORIAS_TRANSVERSAL = [
+    'identidad',
+    'familia',
+    'empleo',
+    'inversiones',
+    'retiro',
+    'vivienda',
+    'k1',
+    'salud',
+    'compliance',
+    'otrosIngresosAjustes',
+    'otros',
+];
+
+function categoriaDe(campo: string): string {
+    return CATEGORIA_TRANSVERSAL_POR_CAMPO[campo] ?? 'otros';
+}
+
+// Un campo "necesita atención" si todavía no tiene un valor válido cargado, o
+// si sí lo tiene pero con una advertencia — en ambos casos el preparador
+// necesita mirarlo. Decide qué subgrupos se abren por default: nada que
+// resolver se queda plegado, lo demás se muestra de entrada.
+function necesitaAtencion(campo: CampoCliente): boolean {
+    return (
+        campo.estado === 'pendiente' ||
+        campo.estado === 'invalido' ||
+        !!campo.advertencia
+    );
+}
+
 // El código es como los preparadores nombran el trabajo — «el 1040», «la
 // Schedule C» — así que encabeza la sección en vez de quedar sepultado en una
 // columna. Sale del valor del enum, que es el identificador estable.
@@ -180,35 +303,6 @@ function guessTipoDato(valor: unknown): string {
 }
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
-
-// Convierte una clave técnica (snake_case) en una etiqueta legible:
-// "nombre_completo" -> "Nombre completo", "ssn" -> "SSN", "w2" -> "W2".
-const ACRONIMOS = new Set([
-    'ssn',
-    'itin',
-    'rfc',
-    'ein',
-    'w2',
-    'id',
-    'irs',
-    'usa',
-]);
-
-function humanizarClave(clave: string): string {
-    return clave
-        .split(/[_\s]+/)
-        .filter(Boolean)
-        .map((palabra, i) => {
-            if (ACRONIMOS.has(palabra.toLowerCase())) {
-                return palabra.toUpperCase();
-            }
-
-            return i === 0
-                ? palabra.charAt(0).toUpperCase() + palabra.slice(1)
-                : palabra;
-        })
-        .join(' ');
-}
 
 // Renderiza cualquier valor recolectado de forma amigable para un usuario no
 // técnico: sin corchetes ni llaves. Strings/números tal cual, listas como
@@ -1644,6 +1738,194 @@ function ValorCampo({
     );
 }
 
+// Una fila de campo, extraída de FormaSection para poder reusarla tanto en
+// la tabla plana (formas que no son el catálogo transversal) como dentro de
+// cada CategoriaGroup (subgrupo plegable del catálogo transversal).
+function CampoRow({
+    clienteId,
+    taxYear,
+    campo,
+    formaLabel,
+}: {
+    clienteId: number;
+    taxYear: number;
+    campo: CampoCliente;
+    formaLabel: string;
+}) {
+    return (
+        <TableRow>
+            <TableCell
+                className={`border-l-[3px] align-top font-medium ${ESTADO_RIEL[campo.estado]}`}
+            >
+                {humanizarClave(campo.campo)}
+            </TableCell>
+            <TableCell className="max-w-sm align-top text-sm">
+                {campo.documento ? (
+                    <div className="flex flex-col items-start gap-1">
+                        <DocumentoViewerDialog documento={campo.documento} />
+                        <DuplicadoBadge duplicado={campo.documento.duplicado} />
+                    </div>
+                ) : (
+                    <ValorCampo
+                        clienteId={clienteId}
+                        taxYear={taxYear}
+                        campo={campo}
+                        formaLabel={formaLabel}
+                    />
+                )}
+            </TableCell>
+            <TableCell className="align-top">
+                <div className="flex items-center gap-1.5">
+                    <EstadoTag estado={campo.estado} />
+                    {campo.advertencia && (
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <AlertTriangle className="size-4 text-amber-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>{campo.advertencia}</TooltipContent>
+                        </Tooltip>
+                    )}
+                </div>
+            </TableCell>
+            <TableCell className="text-right align-top">
+                <HistorialDialog
+                    clienteId={clienteId}
+                    taxYear={taxYear}
+                    campo={campo}
+                />
+                {(campo.tipo_campo === 'documento' ||
+                    campo.tipo_campo === 'mixto') && (
+                    <SubirDocumentoDialog
+                        clienteId={clienteId}
+                        taxYear={taxYear}
+                        campo={campo}
+                    />
+                )}
+                {(campo.tipo_campo === 'dato' ||
+                    campo.tipo_campo === 'mixto') && (
+                    <EditCampoDialog
+                        clienteId={clienteId}
+                        taxYear={taxYear}
+                        campo={campo}
+                        formaLabel={formaLabel}
+                    />
+                )}
+                {!campo.obligatorio && campo.estado !== 'no_aplica' && (
+                    <MarcarNoAplicaButton
+                        clienteId={clienteId}
+                        taxYear={taxYear}
+                        campo={campo}
+                    />
+                )}
+                <EliminarCampoButton
+                    clienteId={clienteId}
+                    taxYear={taxYear}
+                    campo={campo}
+                />
+            </TableCell>
+        </TableRow>
+    );
+}
+
+// Un subgrupo temático plegable del catálogo transversal (ver
+// CATEGORIA_TRANSVERSAL_POR_CAMPO) — reemplaza la fila por fila plana que,
+// con 61 campos posibles, se sentía "llena de información" incluso cuando
+// casi todo ya estaba resuelto. Arranca plegado si nada en el grupo necesita
+// atención, y abierto si algo sí — así el preparador ve de entrada lo que
+// falta, sin tener que abrir los 10 grupos para encontrarlo.
+function CategoriaGroup({
+    clienteId,
+    taxYear,
+    categoria,
+    campos,
+    formaLabel,
+}: {
+    clienteId: number;
+    taxYear: number;
+    categoria: string;
+    campos: CampoCliente[];
+    formaLabel: string;
+}) {
+    const { t } = useTranslation();
+    const pendientes = campos.filter(necesitaAtencion).length;
+    const [abierto, setAbierto] = useState(pendientes > 0);
+    const recibidos = campos.filter((c) => c.estado === 'recibido').length;
+    const completo = pendientes === 0 && recibidos === campos.length;
+
+    return (
+        <div className="rounded-lg border">
+            <button
+                type="button"
+                onClick={() => setAbierto((v) => !v)}
+                aria-expanded={abierto}
+                className="flex w-full items-center justify-between gap-3 p-3 text-left"
+            >
+                <span className="flex min-w-0 items-center gap-2">
+                    <ChevronRight
+                        className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                            abierto ? 'rotate-90' : ''
+                        }`}
+                        aria-hidden
+                    />
+                    <span className="truncate text-sm font-medium text-foreground">
+                        {t(`clienteShow.categorias.${categoria}`)}
+                    </span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2">
+                    {pendientes > 0 && (
+                        <Badge variant="secondary" className="font-normal">
+                            {t('clienteShow.categoriaAtencion', {
+                                count: pendientes,
+                            })}
+                        </Badge>
+                    )}
+                    <span className="flex items-center gap-1 font-mono text-micro text-muted-foreground tabular-nums">
+                        {recibidos}/{campos.length}
+                        {completo && (
+                            <Check
+                                className="size-3 text-emerald-500"
+                                aria-hidden
+                            />
+                        )}
+                    </span>
+                </span>
+            </button>
+
+            {abierto && (
+                <Table className="border-t">
+                    <TableHeader className="bg-transparent [&_th]:text-muted-foreground [&_tr]:border-border">
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="font-mono text-micro uppercase">
+                                {t('clienteShow.table.field')}
+                            </TableHead>
+                            <TableHead className="font-mono text-micro uppercase">
+                                {t('clienteShow.table.value')}
+                            </TableHead>
+                            <TableHead className="font-mono text-micro uppercase">
+                                {t('clienteShow.table.status')}
+                            </TableHead>
+                            <TableHead className="text-right font-mono text-micro uppercase">
+                                {t('common.actions')}
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {campos.map((campo) => (
+                            <CampoRow
+                                key={`${campo.forma}-${campo.campo}`}
+                                clienteId={clienteId}
+                                taxYear={taxYear}
+                                campo={campo}
+                                formaLabel={formaLabel}
+                            />
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
+        </div>
+    );
+}
+
 // Una forma por sección: el preparador trabaja «el 1040», no una tabla plana
 // donde la forma es una columna más que hay que ir leyendo fila por fila.
 function FormaSection({
@@ -1672,6 +1954,34 @@ function FormaSection({
     const tituloId = useId();
     const recibidos = campos.filter((c) => c.estado === 'recibido').length;
     const total = campos.length + faltantes;
+
+    // El catálogo transversal (61 campos posibles) es el único lo bastante
+    // grande para sentirse "lleno de información" en una tabla plana — se
+    // agrupa en subcategorías temáticas plegables (ver
+    // CATEGORIA_TRANSVERSAL_POR_CAMPO). El resto de formas (1040, Schedule C,
+    // etc.) tienen catálogos acotados que ya se leen bien tal cual.
+    const porCategoria =
+        forma === TRANSVERSAL
+            ? (() => {
+                  const grupos = new Map<string, CampoCliente[]>();
+
+                  for (const campo of campos) {
+                      const categoria = categoriaDe(campo.campo);
+                      const lista = grupos.get(categoria);
+
+                      if (lista) {
+                          lista.push(campo);
+                      } else {
+                          grupos.set(categoria, [campo]);
+                      }
+                  }
+
+                  return ORDEN_CATEGORIAS_TRANSVERSAL.map((categoria) => ({
+                      categoria,
+                      campos: grupos.get(categoria) ?? [],
+                  })).filter((grupo) => grupo.campos.length > 0);
+              })()
+            : null;
 
     return (
         <section aria-labelledby={tituloId}>
@@ -1752,116 +2062,58 @@ function FormaSection({
                 </div>
             </header>
 
-            <Table>
-                {/*
-                 * El header de <TableHeader> de fábrica es un bloque navy
-                 * sólido — pensado para una tabla suelta, no para repetirse
-                 * una vez por forma. Acá se apaga a una fila utilitaria (borde
-                 * inferior, sin relleno): el navy queda para el riel de
-                 * estado, que es el único lugar donde este color debe hablar
-                 * dentro de la sección.
-                 */}
-                <TableHeader className="bg-transparent [&_th]:text-muted-foreground [&_tr]:border-border">
-                    <TableRow className="hover:bg-transparent">
-                        <TableHead className="font-mono text-micro uppercase">
-                            {t('clienteShow.table.field')}
-                        </TableHead>
-                        <TableHead className="font-mono text-micro uppercase">
-                            {t('clienteShow.table.value')}
-                        </TableHead>
-                        <TableHead className="font-mono text-micro uppercase">
-                            {t('clienteShow.table.status')}
-                        </TableHead>
-                        <TableHead className="text-right font-mono text-micro uppercase">
-                            {t('common.actions')}
-                        </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {campos.map((campo) => (
-                        <TableRow key={`${campo.forma}-${campo.campo}`}>
-                            <TableCell
-                                className={`border-l-[3px] align-top font-medium ${ESTADO_RIEL[campo.estado]}`}
-                            >
-                                {humanizarClave(campo.campo)}
-                            </TableCell>
-                            <TableCell className="max-w-sm align-top text-sm">
-                                {campo.documento ? (
-                                    <div className="flex flex-col items-start gap-1">
-                                        <DocumentoViewerDialog
-                                            documento={campo.documento}
-                                        />
-                                        <DuplicadoBadge
-                                            duplicado={
-                                                campo.documento.duplicado
-                                            }
-                                        />
-                                    </div>
-                                ) : (
-                                    <ValorCampo
-                                        clienteId={clienteId}
-                                        taxYear={taxYear}
-                                        campo={campo}
-                                        formaLabel={label}
-                                    />
-                                )}
-                            </TableCell>
-                            <TableCell className="align-top">
-                                <div className="flex items-center gap-1.5">
-                                    <EstadoTag estado={campo.estado} />
-                                    {campo.advertencia && (
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                                <AlertTriangle className="size-4 text-amber-500" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                {campo.advertencia}
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    )}
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-right align-top">
-                                <HistorialDialog
-                                    clienteId={clienteId}
-                                    taxYear={taxYear}
-                                    campo={campo}
-                                />
-                                {(campo.tipo_campo === 'documento' ||
-                                    campo.tipo_campo === 'mixto') && (
-                                    <SubirDocumentoDialog
-                                        clienteId={clienteId}
-                                        taxYear={taxYear}
-                                        campo={campo}
-                                    />
-                                )}
-                                {(campo.tipo_campo === 'dato' ||
-                                    campo.tipo_campo === 'mixto') && (
-                                    <EditCampoDialog
-                                        clienteId={clienteId}
-                                        taxYear={taxYear}
-                                        campo={campo}
-                                        formaLabel={label}
-                                    />
-                                )}
-                                {!campo.obligatorio &&
-                                    campo.estado !== 'no_aplica' && (
-                                        <MarcarNoAplicaButton
-                                            clienteId={clienteId}
-                                            taxYear={taxYear}
-                                            campo={campo}
-                                        />
-                                    )}
-                                <EliminarCampoButton
-                                    clienteId={clienteId}
-                                    taxYear={taxYear}
-                                    campo={campo}
-                                />
-                            </TableCell>
-                        </TableRow>
+            {porCategoria ? (
+                <div className="space-y-2">
+                    {porCategoria.map(({ categoria, campos: camposDeCategoria }) => (
+                        <CategoriaGroup
+                            key={categoria}
+                            clienteId={clienteId}
+                            taxYear={taxYear}
+                            categoria={categoria}
+                            campos={camposDeCategoria}
+                            formaLabel={label}
+                        />
                     ))}
-                </TableBody>
-            </Table>
+                </div>
+            ) : (
+                <Table>
+                    {/*
+                     * El header de <TableHeader> de fábrica es un bloque navy
+                     * sólido — pensado para una tabla suelta, no para repetirse
+                     * una vez por forma. Acá se apaga a una fila utilitaria (borde
+                     * inferior, sin relleno): el navy queda para el riel de
+                     * estado, que es el único lugar donde este color debe hablar
+                     * dentro de la sección.
+                     */}
+                    <TableHeader className="bg-transparent [&_th]:text-muted-foreground [&_tr]:border-border">
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="font-mono text-micro uppercase">
+                                {t('clienteShow.table.field')}
+                            </TableHead>
+                            <TableHead className="font-mono text-micro uppercase">
+                                {t('clienteShow.table.value')}
+                            </TableHead>
+                            <TableHead className="font-mono text-micro uppercase">
+                                {t('clienteShow.table.status')}
+                            </TableHead>
+                            <TableHead className="text-right font-mono text-micro uppercase">
+                                {t('common.actions')}
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {campos.map((campo) => (
+                            <CampoRow
+                                key={`${campo.forma}-${campo.campo}`}
+                                clienteId={clienteId}
+                                taxYear={taxYear}
+                                campo={campo}
+                                formaLabel={label}
+                            />
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
         </section>
     );
 }

@@ -434,6 +434,21 @@
         "section": {
             "received": "{{recibidos}}/{{total}} recibidos"
         },
+        "categorias": {
+            "identidad": "Identidad y datos personales",
+            "familia": "Estado civil y familia",
+            "empleo": "Empleo",
+            "inversiones": "Inversiones y cuentas financieras",
+            "retiro": "Retiro y jubilación",
+            "vivienda": "Vivienda y propiedad",
+            "k1": "Schedule K-1",
+            "salud": "Salud y seguro",
+            "compliance": "Cuentas en el extranjero y cumplimiento",
+            "otrosIngresosAjustes": "Otros ingresos y ajustes poco frecuentes",
+            "otros": "Otros"
+        },
+        "categoriaAtencion_one": "{{count}} pendiente",
+        "categoriaAtencion_other": "{{count}} pendientes",
         "riesgo": {
             "label": "Nivel de riesgo",
             "fuenteManual": "Fijado manualmente",
