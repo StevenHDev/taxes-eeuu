@@ -84,7 +84,7 @@ class AgenteConversacionalService
 
             if ($toolCalls === []) {
                 return [
-                    'texto' => (string) ($respuesta['content'] ?? ''),
+                    'texto' => self::sinRazonamientoFiltrado((string) ($respuesta['content'] ?? '')),
                     'prompt_version' => $promptVersion,
                     'cliente' => $cliente,
                 ];
@@ -152,10 +152,73 @@ class AgenteConversacionalService
         );
 
         return [
-            'texto' => (string) ($respuestaFinal['content'] ?? '¿Me puedes repetir eso último? Quiero asegurarme de entenderlo bien.'),
+            'texto' => self::sinRazonamientoFiltrado(
+                (string) ($respuestaFinal['content'] ?? '¿Me puedes repetir eso último? Quiero asegurarme de entenderlo bien.'),
+            ),
             'prompt_version' => $promptVersion,
             'cliente' => $cliente,
         ];
+    }
+
+    /**
+     * Red de seguridad contra una falla de tool-calling ya vista en
+     * producción (2026-09-21, conversación real con 3213445027): el modelo
+     * a veces escribe el razonamiento como un objeto JSON al principio del
+     * mensaje final — con el mismo shape que los argumentos de la tool
+     * `think` (ver ToolDefinitions::think(), `{"razonamiento": "..."}) — en
+     * vez de invocarla como tool call. El prompt ya instruye explícitamente
+     * que el razonamiento vive solo en `think` y nunca en el mensaje final
+     * (ver prompt_actuales/fases/recoleccion.md), pero esa instrucción sola
+     * no bastó para evitarlo: el razonamiento del agente NUNCA puede
+     * llegarle al cliente por WhatsApp, así que acá se corta en código como
+     * última línea de defensa, no solo se le pide al modelo que no lo haga.
+     */
+    private static function sinRazonamientoFiltrado(string $texto): string
+    {
+        $recortado = ltrim($texto);
+        $inicio = strlen($texto) - strlen($recortado);
+
+        if (! str_starts_with($recortado, '{')) {
+            return $texto;
+        }
+
+        foreach (self::posicionesDeCierre($texto, $inicio) as $fin) {
+            $bloque = substr($texto, $inicio, $fin - $inicio + 1);
+            $decodificado = json_decode($bloque, true);
+
+            if (
+                json_last_error() === JSON_ERROR_NONE
+                && is_array($decodificado)
+                && (\array_key_exists('razonamiento', $decodificado) || \array_key_exists('reasoning', $decodificado))
+            ) {
+                $resto = trim(substr($texto, $fin + 1));
+
+                return $resto !== '' ? $resto : $texto;
+            }
+        }
+
+        return $texto;
+    }
+
+    /**
+     * Todas las posiciones de '}' desde $desde en adelante — probar
+     * json_decode() en cada substring hasta ahí (en vez de contar llaves a
+     * mano) es lo que evita romperse con una llave dentro de un string del
+     * propio JSON (ej. el razonamiento mencionando "{" en su texto libre).
+     *
+     * @return list<int>
+     */
+    private static function posicionesDeCierre(string $texto, int $desde): array
+    {
+        $posiciones = [];
+
+        for ($i = $desde; $i < \strlen($texto); $i++) {
+            if ($texto[$i] === '}') {
+                $posiciones[] = $i;
+            }
+        }
+
+        return $posiciones;
     }
 
     /**
@@ -177,6 +240,21 @@ class AgenteConversacionalService
 
         $referencia = (string) ($argumentos['contenido'] ?? '');
         $adjunto = collect($adjuntos)->first(fn (AdjuntoWhatsapp $a) => $a->referencia === $referencia);
+
+        // Si no hubo match exacto pero este turno trajo un único adjunto, no
+        // existe ninguna otra opción a la que el modelo pudiera estar
+        // refiriéndose — usarlo igual evita depender de que reproduzca sin
+        // ningún error de un carácter una URL de media de Twilio larga
+        // dentro de los argumentos de la tool call. Encontrado en producción
+        // (2026-09-21, conversación real con 3213445027): un Form 1095-A que
+        // sí se subió y sí se extrajo bien no quedó guardado en el primer
+        // intento porque este match exacto falló — EventoValidator lo trató
+        // como "sin archivo" (error de validación recuperable, no un crash),
+        // y el cliente tuvo que preguntar explícitamente si se había
+        // guardado para que el agente se diera cuenta y pidiera reenviarlo.
+        if ($adjunto === null && count($adjuntos) === 1) {
+            $adjunto = $adjuntos[0];
+        }
 
         if ($adjunto === null) {
             return [null, null];

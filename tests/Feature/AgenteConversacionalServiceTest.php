@@ -338,4 +338,96 @@ class AgenteConversacionalServiceTest extends TestCase
 
         $this->assertDatabaseCount('documentos', 0);
     }
+
+    /**
+     * Regresión de un caso real (2026-09-21, conversación con 3213445027): el
+     * modelo no reprodujo la URL de media de Twilio carácter por carácter al
+     * armar los argumentos de la tool call, el match exacto en
+     * resolverArchivo() falló, y un Form 1095-A que sí se había subido y
+     * extraído bien no quedó guardado. Con un único adjunto en el turno no
+     * hay ambigüedad posible a la que recurrir — debe usarse igual.
+     */
+    public function test_guardar_campo_cliente_con_modo_archivo_usa_el_unico_adjunto_del_turno_aunque_la_referencia_no_coincida(): void
+    {
+        Storage::fake('s3');
+
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
+
+        $rutaPdf = $this->crearPdfConTexto('Form 1095-A de prueba con texto legible y suficiente longitud.');
+        $adjunto = new AdjuntoWhatsapp(
+            referencia: 'https://api.twilio.com/2010-04-01/Accounts/AC.../Messages/MM.../Media/ME123',
+            rutaLocal: $rutaPdf,
+            mimeType: 'application/pdf',
+            texto: 'Form 1095-A de prueba con texto legible y suficiente longitud.',
+            metodo: MetodoExtraccionDocumento::TextoPdf,
+        );
+
+        Http::fake([
+            'api.openai.com/*' => Http::sequence()
+                ->push($this->respuestaOpenAi([
+                    'role' => 'assistant',
+                    'content' => null,
+                    'tool_calls' => [
+                        ['id' => 'call_1', 'type' => 'function', 'function' => [
+                            'name' => 'guardar_campo_cliente',
+                            'arguments' => json_encode([
+                                'forma' => 'transversal',
+                                'campo' => 'form_1095_a',
+                                'tipo_campo' => 'documento',
+                                'modo' => 'archivo',
+                                // Referencia ligeramente distinta a la real —
+                                // simula al modelo reproduciendo la URL con un
+                                // error, como se vio en producción.
+                                'contenido' => 'https://api.twilio.com/2010-04-01/Accounts/AC.../Messages/MM.../Media/ME124',
+                            ]),
+                        ]],
+                    ],
+                ]))
+                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Recibí el formulario, gracias.'])),
+        ]);
+
+        $this->agente->responder($cliente, $this->historialCon('+15551234567', 'aquí está mi 1095-A'), $this->actor, [$adjunto]);
+
+        $documento = Documento::query()->where('user_id', $cliente->id)->where('campo', 'form_1095_a')->first();
+        $this->assertNotNull($documento);
+
+        unlink($rutaPdf);
+    }
+
+    /**
+     * Regresión de un caso real (2026-09-21, conversación con 3213445027): el
+     * mensaje final del agente llegó a incluirle al cliente el razonamiento
+     * interno como un bloque JSON — con el mismo shape que los argumentos de
+     * la tool `think` — en vez de invocarla como tool call. El razonamiento
+     * nunca puede llegarle al cliente, así que se filtra en código.
+     */
+    public function test_filtra_el_razonamiento_si_el_modelo_lo_escribe_como_json_en_el_mensaje_final(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response($this->respuestaOpenAi([
+                'role' => 'assistant',
+                'content' => '{"razonamiento":"Ahora tengo la entrada exacta para form_1095_a. Continúo con la solicitud del documento confirmado."}'
+                    ."\nPor favor, sube tu Form 1095-A en PDF, JPG, JPEG, PNG o HEIC.",
+            ])),
+        ]);
+
+        $resultado = $this->agente->responder(null, $this->historialCon('+15551234567', 'si'), $this->actor);
+
+        $this->assertSame('Por favor, sube tu Form 1095-A en PDF, JPG, JPEG, PNG o HEIC.', $resultado['texto']);
+    }
+
+    public function test_no_toca_un_mensaje_final_que_simplemente_empieza_con_una_llave_de_texto(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response($this->respuestaOpenAi([
+                'role' => 'assistant',
+                'content' => '{esto no es JSON, es solo texto que arranca con una llave} ¿me confirmas tu nombre?',
+            ])),
+        ]);
+
+        $resultado = $this->agente->responder(null, $this->historialCon('+15551234567', 'Hola'), $this->actor);
+
+        $this->assertSame('{esto no es JSON, es solo texto que arranca con una llave} ¿me confirmas tu nombre?', $resultado['texto']);
+    }
 }
