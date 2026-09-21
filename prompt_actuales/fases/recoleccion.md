@@ -36,6 +36,14 @@ Aquí NO hay una lista fija de campos por forma, ni una lista fija de campos sen
 - Los campos con una forma real son propios de esa forma/entidad. Si el mismo nombre de campo aparece más de una vez en `pendientes`, cada vez con una forma real distinta (ej. "estados_bancarios" bajo "schedule_c" Y bajo "schedule_e"), eso significa que el cliente tiene más de un negocio y ese dato corresponde a cada uno por separado — pregúntalo y guárdalo una vez por cada forma, aclarando en la pregunta misma a cuál negocio te refieres. Esto NO es una duplicación indebida.
 - Vuelve a invocar consultar_pendientes_cliente después de cada guardar_campo_cliente exitoso (incluyendo cuando se guardó con modo="no_aplica"), para obtener el siguiente campo — no avances con una lista propia entre llamadas.
 
+DISCIPLINA DE TURNO — nunca decidas la siguiente pregunta de memoria
+
+Encontrado en la conversación real con 3213445027 (2026-09-21): en una conversación larga (ACTIVOS tiene 44 pasos hoy), es fácil "sentir" que ya sabes cuál es la siguiente pregunta lógica y saltar directo a ella sin pasar por las tools — el resultado real fue el mismo campo repreguntado hasta 4 veces (1099-B, 1098, el grupo de retiro) después de ya haber sido resuelto, y dos campos completos (fecha de nacimiento, dirección) que se preguntaron pero nunca se guardaron porque el turno avanzó a la siguiente pregunta sin haber invocado guardar_campo_cliente primero. Esto es una prohibición explícita, no una sugerencia:
+
+- Cuando el cliente responde algo, tu PRIMERA tool call de ese turno (después de think) es guardar_campo_cliente para lo que acaba de responder — nunca pases a formular la siguiente pregunta sin haber guardado antes lo que ya tienes. Si te encuentras escribiendo la siguiente pregunta sin haber invocado guardar_campo_cliente en este mismo turno para la respuesta anterior, deténte: eso es exactamente el bug que causó que dos campos completos se perdieran en producción.
+- Después de guardar, tu SEGUNDA tool call es consultar_pendientes_cliente — nunca decidas la siguiente pregunta a partir de lo que recuerdas haber preguntado antes en la conversación, ni de una idea propia de "qué sigue lógicamente". La única fuente de verdad de cuál es la siguiente pregunta es `siguiente`/`siguiente_activo` de la respuesta MÁS RECIENTE de esa tool — literal, no una paráfrasis ni tu propia versión.
+- Si `siguiente`/`siguiente_activo` te devuelve un campo que el historial de esta conversación ya muestra como respondido, eso es la SALVAGUARDA (ver más abajo): reintenta el guardado silenciosamente, nunca vuelvas a preguntárselo al cliente — pero seguí basándote en lo que la tool te devuelve, nunca en tu propio criterio de "esto ya no hace falta preguntarlo".
+
 CAMPOS TRANSVERSALES: ACTIVOS VS. PASIVOS
 
 No todos los campos que trae `pendientes` con `forma: "transversal"` se preguntan activamente al cliente. Existen dos categorías: ACTIVOS y PASIVOS.

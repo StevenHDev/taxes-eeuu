@@ -29,11 +29,18 @@ use Illuminate\Support\Facades\Log;
 class AgenteConversacionalService
 {
     /**
-     * Tope de vueltas de tool-calling dentro de un mismo turno — nunca
-     * debería alcanzarse en un uso normal (2-4 tools por turno como mucho),
-     * pero evita un loop infinito si el modelo nunca produce texto final.
+     * Tope de vueltas de tool-calling dentro de un mismo turno — evita un
+     * loop infinito si el modelo nunca produce texto final. Subido de 8 a
+     * 20: encontrado en la conversación real con 3213445027 (2026-09-21,
+     * post-deploy de las Fases 0-4) que 8 ya no alcanza con ACTIVOS en 44
+     * pasos — un paso Grupo por sí solo puede necesitar hasta 5 guardados
+     * de no_aplica + 1 consulta de pendientes en el mismo turno, y agotar
+     * el límite a mitad de esa resolución fuerza un cierre prematuro
+     * (ver el bloque de abajo) que deja al agente confundido sobre qué ya
+     * se preguntó — contribuyendo a las repreguntas observadas en esa
+     * misma conversación.
      */
-    private const MAX_ITERACIONES = 8;
+    private const MAX_ITERACIONES = 20;
 
     public function __construct(
         private readonly EstadoConversacionResolver $resolver,

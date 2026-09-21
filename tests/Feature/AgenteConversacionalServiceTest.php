@@ -176,21 +176,25 @@ class AgenteConversacionalServiceTest extends TestCase
             ],
         ]);
 
-        Http::fake([
-            'api.openai.com/*' => Http::sequence()
-                ->push($siempreThink)->push($siempreThink)->push($siempreThink)->push($siempreThink)
-                ->push($siempreThink)->push($siempreThink)->push($siempreThink)->push($siempreThink)
-                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Perdona la demora, ¿en qué te ayudo?'])),
-        ]);
+        $secuencia = Http::sequence();
+        // 20 vueltas (MAX_ITERACIONES, subido de 8 a 20 el 2026-09-21 —
+        // ver AgenteConversacionalService: 8 ya no alcanza con ACTIVOS en
+        // 44 pasos) agotan el tope sin texto final.
+        for ($i = 0; $i < 20; $i++) {
+            $secuencia->push($siempreThink);
+        }
+        $secuencia->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Perdona la demora, ¿en qué te ayudo?']));
+
+        Http::fake(['api.openai.com/*' => $secuencia]);
 
         $resultado = $this->agente->responder(null, $this->historialCon('+15551234567', 'Hola'), $this->actor);
 
-        // Las 8 vueltas agotan MAX_ITERACIONES sin texto final; la 9na
+        // Las 20 vueltas agotan MAX_ITERACIONES sin texto final; la 21ra
         // llamada (sin tools) fuerza un cierre real en vez del mensaje fijo
         // "Dame un momento, ya te respondo." que antes dejaba el turno
         // colgado sin que nada volviera a responderle al cliente.
         $this->assertSame('Perdona la demora, ¿en qué te ayudo?', $resultado['texto']);
-        Http::assertSentCount(9);
+        Http::assertSentCount(21);
         Http::assertSent(fn ($request) => ! array_key_exists('tools', $request->data()));
     }
 
@@ -256,7 +260,7 @@ class AgenteConversacionalServiceTest extends TestCase
 
     public function test_guardar_campo_cliente_con_modo_archivo_correlaciona_el_adjunto_por_referencia(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
 
         $cliente = User::factory()->create(['role' => UserRole::Client]);
         FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
