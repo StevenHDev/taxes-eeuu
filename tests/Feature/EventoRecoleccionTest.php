@@ -221,6 +221,202 @@ class EventoRecoleccionTest extends TestCase
         $this->assertNotNull($campo, 'El evento inválido igual debe conservarse para trazabilidad.');
     }
 
+    /**
+     * Regresión de un caso real (2026-09-21, conversación con 3213445027): el
+     * agente guardó estado_civil completo, luego el cliente corrigió un solo
+     * subcampo en un mensaje aparte, y el reenvío (con solo ese subcampo)
+     * quedó `invalido` por faltarle el resto — el cliente tuvo que repetir
+     * toda la información. Ahora el reenvío se fusiona con lo ya guardado.
+     */
+    public function test_un_envio_parcial_de_un_campo_objeto_se_fusiona_con_lo_ya_guardado(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'estado_civil',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => [
+                'casado_al_31_dic' => false, 'convivio_conyuge_ultimos_6_meses' => false,
+                'costeo_mas_mitad_hogar' => false, 'existe_persona_calificable' => true,
+            ],
+        ])->assertCreated()->assertJsonPath('estado', 'recibido');
+
+        // Solo el subcampo que se está corrigiendo — así llega un reenvío
+        // real cuando el agente pide una aclaración puntual.
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'estado_civil',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => ['existe_persona_calificable' => false],
+        ])->assertCreated();
+
+        $response->assertJsonPath('estado', 'recibido');
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'estado_civil')->first();
+        $this->assertFalse($campo->valor['casado_al_31_dic']);
+        $this->assertFalse($campo->valor['existe_persona_calificable']);
+    }
+
+    /**
+     * Mismo caso que el anterior, pero para info_dependientes (lista de
+     * objetos, no un objeto simple) — el bug real en producción fue
+     * justamente sobre la info de un dependiente completada en varios
+     * mensajes.
+     */
+    public function test_un_envio_parcial_de_un_elemento_de_array_object_se_fusiona_cuando_el_largo_no_cambia(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'info_dependientes',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'array_object',
+            'contenido' => [[
+                'nombre_completo' => 'Karol Perez', 'fecha_nacimiento' => '2000-05-20', 'ssn' => '987654321',
+                'relacion' => 'hija', 'meses_en_hogar' => 6, 'estudiante_tiempo_completo' => true,
+                'discapacitado' => false, 'provee_mas_50_soporte_propio' => false,
+                'ingreso_bruto_anual' => 10000, 'custodia_compartida_sin_conflicto' => true,
+            ]],
+        ])->assertCreated()->assertJsonPath('estado', 'recibido');
+
+        // El agente pide solo la aclaración de meses_en_hogar — el reenvío
+        // trae nada más ese subcampo, para ese mismo (único) dependiente.
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'info_dependientes',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'array_object',
+            'contenido' => [['meses_en_hogar' => 12]],
+        ])->assertCreated();
+
+        $response->assertJsonPath('estado', 'recibido');
+
+        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'info_dependientes')->first();
+        // info_dependientes es sensible: `valor` enmascara — se compara
+        // contra `valor_texto` (ya desencriptado por el cast del modelo)
+        // para verificar el dato real, no la versión enmascarada.
+        $this->assertSame('Karol Perez', $campo->valor_texto[0]['nombre_completo']);
+        $this->assertSame(12, $campo->valor_texto[0]['meses_en_hogar']);
+    }
+
+    /**
+     * La fusión de array_object solo tiene sentido índice a índice cuando el
+     * largo no cambió — con un dependiente nuevo agregado (o quitado), no
+     * hay forma de saber a cuál correspondía cada corrección, así que se
+     * confía en el envío nuevo tal cual (y, si viene incompleto, queda
+     * inválido como antes — no es una regresión, es la falta de fusión
+     * funcionando como se espera en el caso ambiguo).
+     */
+    public function test_array_object_con_largo_distinto_no_se_fusiona(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $completo = [
+            'nombre_completo' => 'Karol Perez', 'fecha_nacimiento' => '2000-05-20', 'ssn' => '987654321',
+            'relacion' => 'hija', 'meses_en_hogar' => 12, 'estudiante_tiempo_completo' => true,
+            'discapacitado' => false, 'provee_mas_50_soporte_propio' => false,
+            'ingreso_bruto_anual' => 10000, 'custodia_compartida_sin_conflicto' => true,
+        ];
+
+        $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'info_dependientes',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'array_object',
+            'contenido' => [$completo],
+        ])->assertCreated()->assertJsonPath('estado', 'recibido');
+
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'info_dependientes',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'array_object',
+            // Un segundo dependiente incompleto — largo distinto (2 vs 1).
+            'contenido' => [$completo, ['nombre_completo' => 'Otro Hijo']],
+        ])->assertCreated();
+
+        $response->assertJsonPath('estado', 'invalido');
+    }
+
+    /**
+     * Regresión de un caso real (2026-09-21): "20 de mayo del 2000" y
+     * "20/05/2000" (DD/MM/YYYY, como escribe la mayoría de los clientes de
+     * este producto) fallaban Carbon::parse() y marcaban info_dependientes
+     * completo `invalido` aunque el dato estuviera bien.
+     */
+    public function test_fecha_nacimiento_acepta_formato_dd_mm_yyyy(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'info_dependientes',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'array_object',
+            'contenido' => [[
+                'nombre_completo' => 'Karol Perez', 'fecha_nacimiento' => '20/05/2000', 'ssn' => '987654321',
+                'relacion' => 'hija', 'meses_en_hogar' => 12, 'estudiante_tiempo_completo' => true,
+                'discapacitado' => false, 'provee_mas_50_soporte_propio' => false,
+                'ingreso_bruto_anual' => 10000, 'custodia_compartida_sin_conflicto' => true,
+            ]],
+        ])->assertCreated();
+
+        $response->assertJsonPath('estado', 'recibido');
+    }
+
+    public function test_fecha_nacimiento_sigue_rechazando_texto_que_no_es_una_fecha(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'info_dependientes',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'array_object',
+            'contenido' => [[
+                'nombre_completo' => 'Karol Perez', 'fecha_nacimiento' => 'no es una fecha', 'ssn' => '987654321',
+                'relacion' => 'hija', 'meses_en_hogar' => 12, 'estudiante_tiempo_completo' => true,
+                'discapacitado' => false, 'provee_mas_50_soporte_propio' => false,
+                'ingreso_bruto_anual' => 10000, 'custodia_compartida_sin_conflicto' => true,
+            ]],
+        ])->assertCreated();
+
+        $response->assertJsonPath('estado', 'invalido');
+    }
+
     public function test_un_campo_unico_por_cliente_no_se_duplica_entre_formas(): void
     {
         $this->actingAsAgente();

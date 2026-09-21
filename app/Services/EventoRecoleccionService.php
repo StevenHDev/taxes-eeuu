@@ -244,7 +244,9 @@ class EventoRecoleccionService
         } else {
             $valor = $subcampoAcumular !== null
                 ? $this->resolverSubcampo($contenido, $subcampoAcumular, $anterior?->valor_texto, $acumular, $field['subcampos'] ?? [])
-                : ($acumular ? $this->acumularValor($contenido, $tipoDato, $anterior?->valor_texto) : $contenido);
+                : ($acumular
+                    ? $this->acumularValor($contenido, $tipoDato, $anterior?->valor_texto)
+                    : $this->fusionarConValorAnterior($contenido, $tipoDato, $anterior?->valor_texto));
             $estado = $this->validarContenido($campo, $tipoDato, $field['subcampos'] ?? null, $valor);
             $advertencia = $this->detectarValorDuplicado($cliente, $taxYear, $campo, $tipoDato, $valor);
         }
@@ -628,6 +630,51 @@ class EventoRecoleccionService
     }
 
     /**
+     * Un campo tipo objeto (estado_civil, info_conyuge) o lista de objetos
+     * (info_dependientes) a veces se completa en más de un turno — el
+     * cliente da la mayoría de los datos, el agente pide una aclaración
+     * puntual (ej. "¿cuántos meses vivió contigo?"), y esa respuesta llega
+     * sola. Sin fusionar con lo ya guardado, ese envío parcial REEMPLAZA el
+     * objeto completo y objetoTieneSubcampos() lo marca `invalido` por
+     * faltarle claves que en realidad ya se habían guardado antes —
+     * encontrado en producción (2026-09-21, conversaciones reales con
+     * 3213445027): tanto estado_civil como la info de un dependiente
+     * quedaron así, obligando al cliente a repetir todo varias veces antes
+     * de que quedara guardado. El prompt ya instruye al agente a mandar
+     * siempre el objeto completo (ver FECHAS Y CAMPOS QUE SE ARMAN EN VARIOS
+     * MENSAJES en prompt_actuales/fases/recoleccion.md), pero esto es la red
+     * de seguridad para cuando no lo haga — y para el panel de preparador,
+     * que guarda objetos por su cuenta sin pasar por el modelo.
+     *
+     * Objeto simple: fusión superficial, lo nuevo gana sobre lo viejo.
+     * Lista de objetos: solo se fusiona índice a índice cuando ambas listas
+     * tienen el mismo largo — es la señal de que se sigue completando el/los
+     * mismos elementos, no agregando o quitando uno; con largos distintos se
+     * confía en el envío nuevo tal cual, para no adivinar a qué elemento
+     * corresponde cada corrección.
+     */
+    private function fusionarConValorAnterior(mixed $contenido, ?FieldDataType $tipoDato, mixed $anterior): mixed
+    {
+        if ($tipoDato === FieldDataType::Object && is_array($contenido) && is_array($anterior)) {
+            return [...$anterior, ...$contenido];
+        }
+
+        if (
+            $tipoDato === FieldDataType::ArrayObject
+            && is_array($contenido) && is_array($anterior)
+            && count($contenido) === count($anterior)
+        ) {
+            return array_map(
+                fn ($nuevo, $viejo) => is_array($nuevo) && is_array($viejo) ? [...$viejo, ...$nuevo] : $nuevo,
+                $contenido,
+                $anterior,
+            );
+        }
+
+        return $contenido;
+    }
+
+    /**
      * @param  array<int, string>|null  $subcampos
      */
     private function validarContenido(string $campo, ?FieldDataType $tipoDato, ?array $subcampos, mixed $valor): FieldState
@@ -734,15 +781,48 @@ class EventoRecoleccionService
             return false;
         }
 
-        if (array_key_exists('fecha_nacimiento', $valor) && filled($valor['fecha_nacimiento'])) {
-            try {
-                Carbon::parse($valor['fecha_nacimiento'])->startOfDay();
-            } catch (\Throwable) {
-                return false;
-            }
+        if (array_key_exists('fecha_nacimiento', $valor) && filled($valor['fecha_nacimiento']) && ! $this->fechaEsValida($valor['fecha_nacimiento'])) {
+            return false;
         }
 
         return true;
+    }
+
+    /**
+     * El prompt ya instruye al agente a normalizar toda fecha a YYYY-MM-DD
+     * antes de guardarla (ver FECHAS en prompt_actuales/fases/recoleccion.md),
+     * pero esto es la red de seguridad para cuando no lo haga, y para el
+     * panel de preparador (que no pasa por el modelo). Carbon::parse() por sí
+     * solo asume la convención de EE. UU. para fechas con "/": "20/05/2000"
+     * fallaba directo (interpretado como mes 20, inválido), y una fecha
+     * ambigua como "03/04/2000" se habría leído como 4 de marzo en vez de 3
+     * de abril — sin ningún error visible. Acá se prueba primero tal cual
+     * (cubre YYYY-MM-DD y la mayoría de formatos no ambiguos) y, si falla,
+     * DD/MM/YYYY y DD-MM-YYYY explícitos — la convención con la que la
+     * mayoría de los clientes de este producto (en español) realmente
+     * escribe una fecha.
+     */
+    private function fechaEsValida(mixed $valor): bool
+    {
+        $texto = (string) $valor;
+
+        try {
+            Carbon::parse($texto);
+
+            return true;
+        } catch (\Throwable) {
+            foreach (['d/m/Y', 'd-m-Y'] as $formato) {
+                try {
+                    Carbon::createFromFormat($formato, $texto);
+
+                    return true;
+                } catch (\Throwable) {
+                    continue;
+                }
+            }
+
+            return false;
+        }
     }
 
     /**
