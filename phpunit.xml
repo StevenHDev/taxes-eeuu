@@ -18,6 +18,16 @@
         </include>
     </source>
     <php>
+        <!--
+          AWS_BUCKET: no apunta a un bucket real (los tests usan Storage::fake
+          y nunca hacen una llamada de red) — solo existe para que
+          Documento::disco() resuelva a 's3' durante los tests, igual que en
+          producción una vez cargado el bucket real. Sin esto, disco() cae a
+          'local' en testing (donde AWS_BUCKET normalmente está vacío) y los
+          tests que hacen Storage::fake('s3') dejan de encontrar los archivos
+          que escriben.
+        -->
+        <env name="AWS_BUCKET" value="testing-fake-bucket"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>

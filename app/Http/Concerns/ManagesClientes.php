@@ -63,6 +63,6 @@ trait ManagesClientes
             ->get()
             ->pluck('documento')
             ->filter()
-            ->each(fn ($documento) => Storage::disk(Documento::DISK)->delete($documento->file_path));
+            ->each(fn ($documento) => Storage::disk(Documento::disco())->delete($documento->file_path));
     }
 }

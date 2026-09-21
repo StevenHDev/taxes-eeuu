@@ -41,21 +41,34 @@ use Illuminate\Support\Facades\URL;
 class Documento extends Model
 {
     /**
-     * Disco de Storage:: donde viven los archivos reales — S3 desde que se
-     * encontró en producción (2026-09-21, conversación real con
-     * 3213445027) que el disco 'local' anterior no sobrevive un reinicio
-     * del contenedor del worker: `storage/app` no tenía ningún volumen
-     * persistente montado (Mounts: [] en `docker inspect`), así que un
-     * reinicio a mitad de conversación borró los dos documentos que el
-     * cliente ya había subido — la fila en `documentos` quedó apuntando a
-     * una ruta que ya no existía en ningún lado, sin ningún error visible
-     * (el guardado en sí nunca falla: storeAs() escribe correctamente en el
-     * contenedor que procesa la subida, el problema es que ese contenedor
-     * es efímero). Todo lo que lee/escribe/borra un documento de cliente
-     * debe pasar por esta constante, nunca por un `Storage::disk('local')`
-     * suelto — evita que un punto se quede en el disco viejo por olvido.
+     * Disco de Storage:: donde viven los archivos reales. Se resuelve en
+     * tiempo de ejecución (no es una constante fija) porque en producción el
+     * bucket S3 todavía no está configurado (2026-09-21): mientras
+     * AWS_BUCKET no tenga valor se usa 'local' + un volumen Docker
+     * compartido entre los contenedores frontend y worker como solución
+     * puente, y apenas se cargue el bucket esto pasa a 's3' sin otro deploy
+     * — basta con poner las credenciales en Dokploy y reiniciar. Se llegó a
+     * esto porque el disco 'local' original tampoco sobrevivía un reinicio
+     * del contenedor del worker (`storage/app` sin volumen persistente
+     * montado, `Mounts: []` en `docker inspect`) — un reinicio a mitad de
+     * conversación con un cliente real (3213445027) borró dos documentos ya
+     * subidos, sin ningún error visible (storeAs() nunca falla ahí: escribe
+     * bien en el contenedor que procesa la subida, el problema es que ese
+     * contenedor es efímero). Todo lo que lee/escribe/borra un documento de
+     * cliente debe pasar por este método, nunca por un `Storage::disk('local')`
+     * o `Storage::disk('s3')` sueltos — evita que un punto se quede
+     * apuntando al disco equivocado por olvido.
+     *
+     * Nota para cuando se cargue el bucket: los documentos guardados
+     * mientras este método devolvía 'local' NO se migran solos a S3 — sus
+     * filas en `documentos` van a seguir apuntando a rutas que solo existen
+     * en el disco local. Si hace falta preservarlos, hay que copiarlos a S3
+     * a mano antes de (o al) cargar las credenciales.
      */
-    public const DISK = 's3';
+    public static function disco(): string
+    {
+        return filled(config('filesystems.disks.s3.bucket')) ? 's3' : 'local';
+    }
 
     protected $hidden = ['file_path'];
 
