@@ -187,4 +187,37 @@ class OpenAiClientTest extends TestCase
 
         Http::assertSent(fn ($request) => $request['reasoning_effort'] === 'none');
     }
+
+    public function test_manda_tool_choice_cuando_se_indica_y_hay_tools(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'ok']]]], 200)]);
+
+        (new OpenAiClient)->completarChat([], $this->unTool(), toolChoice: 'required');
+
+        Http::assertSent(fn ($request) => $request['tool_choice'] === 'required');
+    }
+
+    /**
+     * La API rechaza tool_choice sin tools en la misma llamada — nunca debe
+     * mandarse ninguno de los dos cuando $tools está vacío, aunque se pida
+     * explícitamente (ver AgenteConversacionalService, llamada de cierre
+     * forzado, que corre sin tools).
+     */
+    public function test_no_manda_tool_choice_si_no_hay_tools_aunque_se_pida(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'ok']]]], 200)]);
+
+        (new OpenAiClient)->completarChat([], [], toolChoice: 'required');
+
+        Http::assertSent(fn ($request) => ! array_key_exists('tool_choice', $request->data()));
+    }
+
+    public function test_no_manda_tool_choice_si_no_se_indica(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'ok']]]], 200)]);
+
+        (new OpenAiClient)->completarChat([], $this->unTool());
+
+        Http::assertSent(fn ($request) => ! array_key_exists('tool_choice', $request->data()));
+    }
 }

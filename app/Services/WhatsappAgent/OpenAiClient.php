@@ -25,9 +25,11 @@ class OpenAiClient
      *
      * @param  array<int, array<string, mixed>>  $mensajes  Historial en formato chat de OpenAI (role/content/tool_calls/tool_call_id).
      * @param  array<int, array<string, mixed>>  $tools  Definiciones de tools en formato function-calling de OpenAI.
+     * @param  ?string  $toolChoice  'required' obliga al modelo a invocar alguna tool en esta
+     *                               llamada — nunca se manda si $tools está vacío (la API lo rechaza).
      * @return array<string, mixed> choices[0].message
      */
-    public function completarChat(array $mensajes, array $tools, ?string $modelo = null): array
+    public function completarChat(array $mensajes, array $tools, ?string $modelo = null, ?string $toolChoice = null): array
     {
         $modeloResuelto = $modelo ?? (string) config('services.openai.model');
 
@@ -42,6 +44,7 @@ class OpenAiClient
                 'model' => $modeloResuelto,
                 'messages' => $mensajes,
                 'tools' => $tools,
+                'tool_choice' => $tools !== [] ? $toolChoice : null,
                 // Un modelo de razonamiento (o1/o3/o4, gpt-5.x) rechaza tool
                 // calling en /v1/chat/completions con 400 a menos que esto
                 // se mande explícitamente en "none" — encontrado en

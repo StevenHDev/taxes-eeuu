@@ -78,6 +78,21 @@ class AgenteConversacionalService
                     ...$mensajes,
                 ],
                 tools: ToolDefinitions::habilitadasParaFase($fase),
+                // Solo en la primera llamada del turno: sin esto, el modelo a
+                // veces respondía directo con texto sin invocar NINGUNA tool
+                // — ni siquiera think, mucho menos guardar_campo_cliente —
+                // como si contestara "de memoria" en vez de seguir el
+                // protocolo. Encontrado en producción (2026-09-21,
+                // conversación real con 3213445027): una racha de 9 minutos
+                // y más de diez respuestas del cliente ("no", "si", etc.) se
+                // perdieron así, una detrás de otra, sin ningún error — el
+                // agente simplemente iba preguntando lo siguiente sin
+                // guardar nada. 'required' obliga a invocar alguna tool en
+                // esta llamada puntual (verificado contra la API real);
+                // llamadas siguientes del mismo turno vuelven a 'auto' para
+                // que el modelo pueda cerrar con texto una vez ya guardó lo
+                // que correspondía.
+                toolChoice: $i === 0 ? 'required' : null,
             );
 
             $toolCalls = $respuesta['tool_calls'] ?? [];

@@ -430,4 +430,35 @@ class AgenteConversacionalServiceTest extends TestCase
 
         $this->assertSame('{esto no es JSON, es solo texto que arranca con una llave} ¿me confirmas tu nombre?', $resultado['texto']);
     }
+
+    /**
+     * Regresión de un caso real (2026-09-21, conversación con 3213445027):
+     * una racha de más de diez respuestas del cliente ("no", "si", etc.) se
+     * perdió, una detrás de otra, porque el modelo respondía directo con
+     * texto sin invocar NINGUNA tool en ese turno — ni siquiera think, mucho
+     * menos guardar_campo_cliente. La primera llamada de cada turno ahora
+     * fuerza tool_choice="required" para que eso no pueda volver a pasar; la
+     * segunda (si hace falta encadenar más de una tool) vuelve a "auto".
+     */
+    public function test_la_primera_llamada_del_turno_fuerza_tool_choice_required_y_las_siguientes_no(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::sequence()
+                ->push($this->respuestaOpenAi([
+                    'role' => 'assistant',
+                    'content' => null,
+                    'tool_calls' => [
+                        ['id' => 'call_1', 'type' => 'function', 'function' => ['name' => 'think', 'arguments' => '{"razonamiento":"x"}']],
+                    ],
+                ]))
+                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Listo.'])),
+        ]);
+
+        $this->agente->responder(null, $this->historialCon('+15551234567', 'Hola'), $this->actor);
+
+        $peticiones = Http::recorded();
+        $this->assertCount(2, $peticiones);
+        $this->assertSame('required', $peticiones[0][0]['tool_choice']);
+        $this->assertFalse(array_key_exists('tool_choice', $peticiones[1][0]->data()));
+    }
 }
