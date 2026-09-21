@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { humanizarClave } from '@/lib/humanizar-clave';
 
 type RelacionDeclarada = {
     forma: string;
@@ -60,10 +61,10 @@ export function DerivationLogsPanel({ logs }: { logs: DerivationLog[] }) {
                             }`}
                         >
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="font-mono font-medium">
-                                    {log.documento_campo}
+                                <span className="font-medium text-foreground">
+                                    {humanizarClave(log.documento_campo)}
                                     {log.documento_nombre && (
-                                        <span className="ml-2 font-sans text-xs text-muted-foreground">
+                                        <span className="ml-2 font-mono text-xs text-muted-foreground">
                                             {log.documento_nombre}
                                         </span>
                                     )}
@@ -79,18 +80,41 @@ export function DerivationLogsPanel({ logs }: { logs: DerivationLog[] }) {
                                 ) : (
                                     <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-500" />
                                 )}
-                                <div>
+                                <div className="min-w-0">
                                     <p>
                                         {faltan > 0
                                             ? t('clienteShow.derivationLogs.missing', { count: faltan })
                                             : t('clienteShow.derivationLogs.complete')}
                                     </p>
+                                    {/*
+                                     * `descripcion` ya viene del catálogo en
+                                     * lenguaje llano (ver RelacionDocumentoCampo
+                                     * ::descripcion) — antes acá se mostraba el
+                                     * path técnico crudo ("form_1040.gastos_
+                                     * cuidado_dependientes.monto_anual"), que no
+                                     * le decía nada a un preparador sobre QUÉ
+                                     * información faltó. El nombre humanizado
+                                     * del campo va como título de cada ítem, la
+                                     * descripción como explicación debajo.
+                                     */}
                                     {faltan > 0 && (
-                                        <ul className="mt-1 list-inside list-disc font-mono text-xs">
+                                        <ul className="mt-1.5 space-y-1.5">
                                             {log.relaciones_faltantes.map((r) => (
                                                 <li key={`${r.forma}-${r.campo}-${r.subcampo ?? ''}`}>
-                                                    {r.forma}.{r.campo}
-                                                    {r.subcampo ? `.${r.subcampo}` : ''}
+                                                    <p className="font-medium text-foreground">
+                                                        {humanizarClave(r.campo)}
+                                                        {r.subcampo && (
+                                                            <span className="text-muted-foreground">
+                                                                {' '}
+                                                                ({humanizarClave(r.subcampo)})
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                    {r.descripcion && (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {r.descripcion}
+                                                        </p>
+                                                    )}
                                                 </li>
                                             ))}
                                         </ul>
