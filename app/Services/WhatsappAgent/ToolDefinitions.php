@@ -48,6 +48,13 @@ class ToolDefinitions
                 self::consultarDocumentosExtra(),
                 self::guardarCampoCliente(),
                 self::consultarBaseConocimiento(),
+                // Solo tiene sentido invocarla en Cierre (ver prompt_actuales/
+                // fases/cierre.md, ATESTACIÓN DE CIERRE) — se ofrece igual en
+                // Recoleccion porque ambas fases comparten siempre el mismo
+                // conjunto de tools por diseño (ver comentario de esta
+                // función); recoleccion.md nunca la menciona ni instruye
+                // usarla, así que el modelo no tiene motivo para invocarla ahí.
+                self::registrarAtestacionCliente(),
                 self::think(),
             ],
         };
@@ -210,6 +217,29 @@ class ToolDefinitions
                         ],
                     ],
                     'required' => ['forma', 'campo', 'tipo_campo', 'modo'],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Fase 4 del plan de cierre de brecha GTS (atestación final de cierre).
+     *
+     * @return array<string, mixed>
+     */
+    private static function registrarAtestacionCliente(): array
+    {
+        return [
+            'type' => 'function',
+            'function' => [
+                'name' => 'registrar_atestacion_cliente',
+                'description' => 'Registra la confirmación explícita del cliente de que la información y los documentos entregados son completos y correctos. Invócala solo después de que el cliente haya respondido afirmativamente, sin ambigüedad, a la pregunta de atestación de la fase de cierre — nunca antes, nunca para una respuesta dudosa o negativa.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'respuesta_cliente' => ['type' => 'string', 'description' => 'El texto literal que el cliente escribió confirmando — nunca una frase que tú inventes o resumas, es el registro exacto de su respuesta.'],
+                    ],
+                    'required' => ['respuesta_cliente'],
                 ],
             ],
         ];

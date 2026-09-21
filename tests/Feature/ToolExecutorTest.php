@@ -212,4 +212,24 @@ class ToolExecutorTest extends TestCase
 
         $this->assertSame(['resultados' => []], $resultado);
     }
+
+    /**
+     * Fase 4 del plan de cierre de brecha GTS (atestación final de cierre).
+     */
+    public function test_registrar_atestacion_cliente_guarda_la_respuesta_literal_del_cliente(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_990', 'tax_year' => 2025, 'estado' => 'en_progreso']);
+
+        $resultado = $this->tools->ejecutar('registrar_atestacion_cliente', [
+            'respuesta_cliente' => 'Sí, confirmo que todo está completo',
+        ], $cliente, $this->actor);
+
+        $this->assertArrayHasKey('atestacion_id', $resultado);
+        $this->assertDatabaseHas('cliente_atestaciones', [
+            'user_id' => $cliente->id,
+            'tax_year' => 2025,
+            'respuesta_cliente' => 'Sí, confirmo que todo está completo',
+        ]);
+    }
 }

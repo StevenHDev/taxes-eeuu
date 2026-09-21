@@ -31,7 +31,7 @@ class ToolDefinitionsTest extends TestCase
         $this->assertEqualsCanonicalizing(['declarar_formas_cliente', 'think'], $nombres);
     }
 
-    public function test_recoleccion_expone_las_5_tools_de_recoleccion_mas_declarar_formas_y_think(): void
+    public function test_recoleccion_expone_las_tools_de_recoleccion_mas_declarar_formas_y_think(): void
     {
         $nombres = $this->nombres(ToolDefinitions::paraFase(FaseConversacion::Recoleccion));
 
@@ -41,6 +41,11 @@ class ToolDefinitionsTest extends TestCase
             'consultar_documentos_extra',
             'guardar_campo_cliente',
             'consultar_base_conocimiento',
+            // registrar_atestacion_cliente (Fase 4) se ofrece igual en
+            // Recoleccion porque ambas fases comparten siempre el mismo
+            // conjunto de tools por diseño — recoleccion.md nunca la
+            // menciona, así que el modelo no tiene motivo para invocarla ahí.
+            'registrar_atestacion_cliente',
             'think',
         ], $nombres);
     }

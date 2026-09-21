@@ -6,7 +6,9 @@ use App\Enums\FormState;
 use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Models\CampoCatalogo;
+use App\Models\ClienteAtestacion;
 use App\Models\FormaCliente;
+use App\Models\HistorialCambio;
 use App\Models\User;
 use App\Services\WhatsappAgent\ActivosResolver;
 use App\Support\TaxFieldCatalog;
@@ -100,7 +102,59 @@ class AgenteToolService
             // conversacional debe leerlo tal cual en vez de recalcular el
             // orden de ACTIVOS él mismo turno a turno.
             'siguiente_activo' => $this->activosResolver->siguiente($taxYear, $cliente->id, $pendientes),
+            // Fase 4 del plan de cierre de brecha GTS (atestación final de
+            // cierre) — ver atestacionVigente() y prompt_actuales/fases/cierre.md.
+            'atestacion_vigente' => $this->atestacionVigente($cliente, $taxYear),
         ];
+    }
+
+    /**
+     * true si el cliente ya confirmó, y esa confirmación sigue vigente — es
+     * decir, ningún dato/documento se guardó DESPUÉS de la atestación más
+     * reciente. Un cambio posterior (el cliente agregó algo nuevo tras
+     * cerrar) invalida la atestación anterior sin necesidad de una columna
+     * aparte para marcarlo: alcanza con comparar timestamps contra
+     * `historial_cambios`, que ya registra cada guardado (ver
+     * EventoRecoleccionService::aplicarCambio()).
+     */
+    private function atestacionVigente(User $cliente, int $taxYear): bool
+    {
+        $ultima = ClienteAtestacion::query()
+            ->where('user_id', $cliente->id)
+            ->where('tax_year', $taxYear)
+            ->latest('confirmado_en')
+            ->first();
+
+        if ($ultima === null) {
+            return false;
+        }
+
+        return ! HistorialCambio::query()
+            ->where('user_id', $cliente->id)
+            ->where('tax_year', $taxYear)
+            ->where('created_at', '>', $ultima->confirmado_en)
+            ->exists();
+    }
+
+    /**
+     * Registra la confirmación explícita del cliente — ver
+     * ClienteAtestacion y prompt_actuales/fases/cierre.md (ATESTACIÓN DE
+     * CIERRE) para cuándo se invoca. `$respuesta` es el texto literal que
+     * el cliente escribió, nunca una frase canónica inventada por el agente
+     * — es el registro legal de lo que el cliente realmente confirmó.
+     *
+     * @return array<string, mixed>
+     */
+    public function registrarAtestacion(User $cliente, int $taxYear, string $respuesta): array
+    {
+        $atestacion = ClienteAtestacion::query()->create([
+            'user_id' => $cliente->id,
+            'tax_year' => $taxYear,
+            'respuesta_cliente' => $respuesta,
+            'confirmado_en' => now(),
+        ]);
+
+        return ['atestacion_id' => $atestacion->id, 'confirmado_en' => $atestacion->confirmado_en->toISOString()];
     }
 
     /**

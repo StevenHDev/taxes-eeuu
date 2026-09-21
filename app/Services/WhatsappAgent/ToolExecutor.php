@@ -70,6 +70,7 @@ class ToolExecutor
             'consultar_documentos_extra' => $this->tools->documentosExtra($this->taxYearVigente($cliente)),
             'guardar_campo_cliente' => $this->guardarCampoCliente($cliente, $argumentos, $actor, $file, $metodoExtraccion),
             'consultar_base_conocimiento' => ['resultados' => $this->baseConocimiento->buscar((string) ($argumentos['consulta'] ?? ''))],
+            'registrar_atestacion_cliente' => $this->tools->registrarAtestacion($cliente, $this->taxYearVigente($cliente), (string) ($argumentos['respuesta_cliente'] ?? '')),
             default => ['error' => "Tool desconocida: {$nombreTool}"],
         };
     }
