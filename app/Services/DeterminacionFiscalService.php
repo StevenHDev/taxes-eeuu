@@ -151,9 +151,15 @@ class DeterminacionFiscalService
                 : $this->noDisponible('depende de estado_civil, ingresos e info_dependientes');
 
             // --- Deducción aplicable (estándar vs itemizada) ---
-            $deduccionItemizada = $this->leerNumero($cliente, $taxYear, 'form_1040', 'deducciones');
+            // Desglosado por categoría desde la Fase 4 (ver CatalogoCamposSeeder)
+            // — is_array(), no leerNumero(): un valor guardado ANTES del
+            // cambio de shape (Number suelto) sigue teniendo valor no-null
+            // pero ya no calza con lo que espera StandardDeductionCalculator,
+            // mismo criterio ya aplicado arriba a 'ingresos'. StandardDeductionCalculator
+            // trata null como "sin deducciones itemizadas" (0), nunca truena.
+            $deducciones = $this->leerValor($cliente, $taxYear, 'form_1040', 'deducciones');
             $deduccionAplicable = ($filingStatus['disponible'])
-                ? $this->deduccionAplicable->calcular($taxYear, FilingStatus::from($filingStatus['estado']), $deduccionItemizada)
+                ? $this->deduccionAplicable->calcular($taxYear, FilingStatus::from($filingStatus['estado']), is_array($deducciones) ? $deducciones : null)
                 : $this->noDisponible('depende de estado_civil');
 
             // --- QBI (Form 8995 simplificado) — necesita AGI y la deducción ya

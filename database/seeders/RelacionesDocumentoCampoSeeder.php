@@ -172,11 +172,15 @@ class RelacionesDocumentoCampoSeeder extends Seeder
                 'acumulable' => true,
             ],
 
-            // 1098 (hipoteca) — promovido a ACTIVO en la Fase 2.
+            // 1098 (hipoteca) — promovido a ACTIVO en la Fase 2. subcampo_destino
+            // actualizado en la Fase 4: deducciones pasó de Number suelto a
+            // objeto por categoría (ver CatalogoCamposSeeder). acumulable:
+            // true porque un cliente puede tener más de una hipoteca/1098.
             [
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1098',
-                'campo_destino_forma' => $f1040, 'campo_destino' => 'deducciones', 'subcampo_destino' => null,
+                'campo_destino_forma' => $f1040, 'campo_destino' => 'deducciones', 'subcampo_destino' => 'intereses_hipotecarios',
                 'descripcion' => 'Casilla 1 (Mortgage interest received) del 1098 es interés hipotecario deducible si el cliente itemiza (Schedule A).',
+                'acumulable' => true,
             ],
 
             // 1098-E (interés préstamo estudiantil) — promovido a ACTIVO en la

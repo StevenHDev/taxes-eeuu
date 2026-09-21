@@ -363,7 +363,14 @@ class EventoRecoleccionTest extends TestCase
                 'existe_persona_calificable' => false, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
             ]],
             ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => $this->ingresosPayload()],
-            ['campo' => 'deducciones', 'tipo_campo' => 'mixto', 'tipo_dato' => 'number', 'contenido' => 1000],
+            // Fase 4 del plan de cierre de brecha GTS: deducciones pasó de
+            // Number suelto a objeto por categoría — todos los subcampos
+            // deben venir presentes, aunque sea en 0 (mismo patrón que
+            // info_dependientes/estado_civil).
+            ['campo' => 'deducciones', 'tipo_campo' => 'mixto', 'tipo_dato' => 'object', 'contenido' => [
+                'intereses_hipotecarios' => 1000, 'impuestos_propiedad' => 0, 'donaciones_efectivo' => 0,
+                'donaciones_bienes' => 0, 'gastos_medicos' => 0, 'intereses_inversion' => 0, 'perdidas_desastre' => 0,
+            ]],
             ['campo' => 'impuestos_retenidos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 0],
             ['campo' => 'salarios_medicare', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 52000],
             ['campo' => 'info_bancaria', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
@@ -544,7 +551,14 @@ class EventoRecoleccionTest extends TestCase
                 'existe_persona_calificable' => false, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
             ]],
             ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => $this->ingresosPayload()],
-            ['campo' => 'deducciones', 'tipo_campo' => 'mixto', 'tipo_dato' => 'number', 'contenido' => 1000],
+            // Fase 4 del plan de cierre de brecha GTS: deducciones pasó de
+            // Number suelto a objeto por categoría — todos los subcampos
+            // deben venir presentes, aunque sea en 0 (mismo patrón que
+            // info_dependientes/estado_civil).
+            ['campo' => 'deducciones', 'tipo_campo' => 'mixto', 'tipo_dato' => 'object', 'contenido' => [
+                'intereses_hipotecarios' => 1000, 'impuestos_propiedad' => 0, 'donaciones_efectivo' => 0,
+                'donaciones_bienes' => 0, 'gastos_medicos' => 0, 'intereses_inversion' => 0, 'perdidas_desastre' => 0,
+            ]],
             ['campo' => 'impuestos_retenidos', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 0],
             ['campo' => 'salarios_medicare', 'tipo_campo' => 'dato', 'tipo_dato' => 'number', 'contenido' => 52000],
             ['campo' => 'info_bancaria', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
@@ -1532,23 +1546,26 @@ class EventoRecoleccionTest extends TestCase
             'contenido' => 3291.79,
         ])->assertCreated();
 
+        // pagos_estimados (Dato, Number, distinto de 'deducciones', que
+        // desde la Fase 4 es un objeto por categoría — ver
+        // CatalogoCamposSeeder) como segundo campo numérico simple.
         $this->postJson('/api/eventos', [
             'cliente_id' => $cliente->id,
             'forma' => 'form_1040',
             'tax_year' => 2025,
-            'campo' => 'deducciones',
-            'tipo_campo' => 'mixto',
+            'campo' => 'pagos_estimados',
+            'tipo_campo' => 'dato',
             'modo' => 'texto',
             'tipo_dato' => 'number',
             'contenido' => 3291.79,
         ])->assertCreated();
 
         $retenido = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
-        $deducciones = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'deducciones')->first();
+        $pagosEstimados = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'pagos_estimados')->first();
 
         $this->assertNull($retenido->advertencia);
-        $this->assertNotNull($deducciones->advertencia);
-        $this->assertStringContainsString('impuestos_retenidos', $deducciones->advertencia);
+        $this->assertNotNull($pagosEstimados->advertencia);
+        $this->assertStringContainsString('impuestos_retenidos', $pagosEstimados->advertencia);
     }
 
     public function test_dos_campos_numericos_con_valores_distintos_no_generan_advertencia(): void
@@ -1571,15 +1588,15 @@ class EventoRecoleccionTest extends TestCase
             'cliente_id' => $cliente->id,
             'forma' => 'form_1040',
             'tax_year' => 2025,
-            'campo' => 'deducciones',
-            'tipo_campo' => 'mixto',
+            'campo' => 'pagos_estimados',
+            'tipo_campo' => 'dato',
             'modo' => 'texto',
             'tipo_dato' => 'number',
             'contenido' => 1500,
         ])->assertCreated();
 
-        $deducciones = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'deducciones')->first();
-        $this->assertNull($deducciones->advertencia);
+        $pagosEstimados = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'pagos_estimados')->first();
+        $this->assertNull($pagosEstimados->advertencia);
     }
 
     public function test_dos_campos_numericos_en_cero_no_generan_advertencia(): void
@@ -1602,15 +1619,15 @@ class EventoRecoleccionTest extends TestCase
             'cliente_id' => $cliente->id,
             'forma' => 'form_1040',
             'tax_year' => 2025,
-            'campo' => 'deducciones',
-            'tipo_campo' => 'mixto',
+            'campo' => 'pagos_estimados',
+            'tipo_campo' => 'dato',
             'modo' => 'texto',
             'tipo_dato' => 'number',
             'contenido' => 0,
         ])->assertCreated();
 
-        $deducciones = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'deducciones')->first();
-        $this->assertNull($deducciones->advertencia);
+        $pagosEstimados = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'pagos_estimados')->first();
+        $this->assertNull($pagosEstimados->advertencia);
     }
 
     public function test_corregir_el_valor_duplicado_limpia_la_advertencia(): void
@@ -1633,8 +1650,8 @@ class EventoRecoleccionTest extends TestCase
             'cliente_id' => $cliente->id,
             'forma' => 'form_1040',
             'tax_year' => 2025,
-            'campo' => 'deducciones',
-            'tipo_campo' => 'mixto',
+            'campo' => 'pagos_estimados',
+            'tipo_campo' => 'dato',
             'modo' => 'texto',
             'tipo_dato' => 'number',
             'contenido' => 3291.79,
@@ -1644,15 +1661,15 @@ class EventoRecoleccionTest extends TestCase
             'cliente_id' => $cliente->id,
             'forma' => 'form_1040',
             'tax_year' => 2025,
-            'campo' => 'deducciones',
-            'tipo_campo' => 'mixto',
+            'campo' => 'pagos_estimados',
+            'tipo_campo' => 'dato',
             'modo' => 'texto',
             'tipo_dato' => 'number',
             'contenido' => 4200,
         ])->assertCreated();
 
-        $deducciones = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'deducciones')->first();
-        $this->assertNull($deducciones->advertencia);
+        $pagosEstimados = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'pagos_estimados')->first();
+        $this->assertNull($pagosEstimados->advertencia);
     }
 
     /**

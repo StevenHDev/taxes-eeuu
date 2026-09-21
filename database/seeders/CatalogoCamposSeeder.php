@@ -304,7 +304,29 @@ class CatalogoCamposSeeder extends Seeder
                     'salarios', 'intereses_dividendos', 'ganancias_capital',
                     'ingresos_jubilacion', 'otros_ingresos', 'ajustes_ingreso', 'seguridad_social',
                 ]),
-                $this->campo('deducciones', FieldKind::Mixto, tipoDato: FieldDataType::Number, formatos: ['pdf', 'jpg', 'jpeg']),
+                // Fase 4 del plan de cierre de brecha GTS: desglosado por
+                // categoría (Schedule A) — antes un único Number suelto, sin
+                // forma de saber si al cliente le conviene itemizar sin
+                // desglosar por qué. Hechos crudos, mismo patrón que
+                // estado_civil/ingresos — StandardDeductionCalculator::calcular()
+                // es quien suma los subcampos, no se guarda ya sumado acá.
+                // Limitación documentada (igual que la de edad/ciego ya
+                // anotada en el calculador): no aplica el piso de 7.5% del
+                // AGI sobre gastos_medicos, ni los límites de donaciones ni
+                // el requisito de zona de desastre declarada para
+                // perdidas_desastre — capturamos el hecho crudo, no la regla
+                // completa del IRC. La fila ya sembrada en producción con el
+                // shape viejo (Number) se actualiza aparte — ver migración
+                // 2026_09_21_100000_fase4_desglosa_deducciones.php; datos de
+                // clientes ya cargados bajo el shape viejo no se migran (no
+                // hay forma de saber a qué categoría pertenecían) — el mismo
+                // patrón ya usado para 'ingresos' en su momento: el
+                // calculador detecta el shape viejo (no es array) y reporta
+                // "no disponible, vuelve a cargarlo" en vez de asumir.
+                $this->campo('deducciones', FieldKind::Mixto, tipoDato: FieldDataType::Object, formatos: ['pdf', 'jpg', 'jpeg'], subcampos: [
+                    'intereses_hipotecarios', 'impuestos_propiedad', 'donaciones_efectivo', 'donaciones_bienes',
+                    'gastos_medicos', 'intereses_inversion', 'perdidas_desastre',
+                ]),
                 $this->campo('impuestos_retenidos', FieldKind::Dato, tipoDato: FieldDataType::Number),
                 // Box 5 del W-2 (Medicare wages) — necesario para
                 // AdditionalMedicareTaxCalculator (Form 8959). Antes de este
