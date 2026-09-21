@@ -113,6 +113,32 @@ class AgenteConversacionalService
                     telefono: $telefono,
                 );
 
+                // Sin esto, un turno donde el modelo debía llamar a
+                // guardar_campo_cliente pero no lo hizo (o lo hizo con datos
+                // contradictorios — ej. modo="no_aplica" en el mismo turno
+                // en que el cliente acababa de confirmar lo contrario) no
+                // deja ningún rastro: ToolExecutor nunca lanza para un error
+                // de validación recuperable, así que el job siempre queda
+                // "DONE" en el log del worker, sin pista de qué pasó
+                // realmente. Encontrado en producción (2026-09-21,
+                // conversación real con 3213445027): un Form 1095-A y una
+                // respuesta a cuentas_extranjero se dieron por resueltos en
+                // el texto sin quedar guardados, y no hubo forma de
+                // confirmarlo sin desencriptar la base de datos a mano. Nunca
+                // se loguea `contenido` (puede traer SSN, fecha de
+                // nacimiento, etc.) — solo metadatos de qué se intentó
+                // guardar y con qué resultado.
+                Log::info('AgenteConversacionalService: tool call ejecutado.', [
+                    'cliente_id' => $cliente?->id,
+                    'tool' => $nombre,
+                    'forma' => $argumentos['forma'] ?? null,
+                    'campo' => $argumentos['campo'] ?? null,
+                    'modo' => $argumentos['modo'] ?? null,
+                    'tuvo_archivo' => $archivo !== null,
+                    'resultado_error' => $resultado['error'] ?? null,
+                    'resultado_estado' => $resultado['estado'] ?? null,
+                ]);
+
                 // crear_cliente_taxes puede correr a mitad de este mismo turno
                 // (fase VerificacionCuenta) — el resto del loop, y el propio
                 // job que llamó a responder(), necesitan enterarse del nuevo
