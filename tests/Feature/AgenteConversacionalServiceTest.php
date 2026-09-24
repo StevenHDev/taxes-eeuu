@@ -10,12 +10,14 @@ use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
+use App\Notifications\BienvenidaClientePortal;
 use App\Services\WhatsappAgent\AgenteConversacionalService;
 use App\Support\AgenteWhatsappUser;
 use Database\Seeders\AgentePromptsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -104,6 +106,8 @@ class AgenteConversacionalServiceTest extends TestCase
 
     public function test_crear_cliente_taxes_actualiza_el_cliente_devuelto(): void
     {
+        Notification::fake();
+
         Http::fake([
             'api.openai.com/*' => Http::sequence()
                 ->push($this->respuestaOpenAi([
@@ -122,16 +126,19 @@ class AgenteConversacionalServiceTest extends TestCase
                 ])),
         ]);
 
-        $resultado = $this->agente->responder(null, $this->historialCon('+15551234567', 'Jane Doe, jane@example.com'), $this->actor);
+        $resultado = $this->agente->responder(null, $this->historialCon('+15551234567', 'Jane Doe, jane@example.com'), $this->actor, [], '+15551234567');
 
         $this->assertNotNull($resultado['cliente']);
         $this->assertSame('Jane Doe', $resultado['cliente']->name);
         $this->assertSame(UserRole::Client, $resultado['cliente']->role);
-        // El teléfono se deriva del historial, no de un argumento del modelo
-        // — así la cuenta recién creada queda vinculada por teléfono desde ya
-        // (ver ToolExecutor::crearClienteTaxes), sin depender de que alguien
-        // lo escriba a mano después en /usuarios.
+        // El teléfono se pasa explícito (ver ProcesarMensajeWhatsappJob) — así
+        // la cuenta recién creada queda vinculada por teléfono desde ya (ver
+        // ToolExecutor::crearClienteTaxes), sin depender de que alguien lo
+        // escriba a mano después en /usuarios.
         $this->assertSame('+15551234567', $resultado['cliente']->phone);
+        // La cuenta se crea con una contraseña aleatoria que nadie conoce —
+        // sin este aviso, el cliente nunca podría entrar al portal seguro.
+        Notification::assertSentTo($resultado['cliente'], BienvenidaClientePortal::class);
     }
 
     public function test_recalcula_la_fase_entre_tool_calls_dentro_del_mismo_turno(): void

@@ -13,9 +13,11 @@ use App\Models\HistorialCambio;
 use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
+use App\Notifications\BienvenidaClientePortal;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -357,6 +359,8 @@ class ClientePanelTest extends TestCase
 
     public function test_un_preparador_puede_crear_un_cliente_y_queda_asignado_a_si_mismo(): void
     {
+        Notification::fake();
+
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
 
         $this->actingAs($preparador)->post(route('clientes.store'), [
@@ -367,6 +371,10 @@ class ClientePanelTest extends TestCase
         $cliente = User::query()->where('email', 'cliente-nuevo@example.com')->firstOrFail();
         $this->assertSame(UserRole::Client, $cliente->role);
         $this->assertSame($preparador->id, $cliente->preparer_id);
+
+        // La cuenta se crea con una contraseña aleatoria que nadie conoce —
+        // sin este aviso, este cliente nunca podría entrar al portal seguro.
+        Notification::assertSentTo($cliente, BienvenidaClientePortal::class);
     }
 
     public function test_un_cliente_no_puede_crear_otro_cliente(): void

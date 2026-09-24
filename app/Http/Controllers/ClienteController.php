@@ -18,6 +18,7 @@ use App\Models\NivelRiesgoManual;
 use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
+use App\Notifications\BienvenidaClientePortal;
 use App\Services\ClienteExportService;
 use App\Services\DocumentoDuplicadoService;
 use App\Services\RiesgoCasoService;
@@ -29,6 +30,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -102,6 +104,10 @@ class ClienteController extends Controller
             'role' => UserRole::Client,
             'preparer_id' => $actor->role === UserRole::Preparer ? $actor->id : $request->validated('preparer_id'),
         ]);
+
+        // Misma contraseña aleatoria e inutilizable que AgenteToolService::crearCliente()
+        // — sin este aviso, este cliente tampoco podría entrar al portal seguro.
+        $cliente->notify(new BienvenidaClientePortal(Password::createToken($cliente)));
 
         return to_route('clientes.show', $cliente);
     }

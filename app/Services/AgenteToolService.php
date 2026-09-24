@@ -10,9 +10,11 @@ use App\Models\ClienteAtestacion;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\User;
+use App\Notifications\BienvenidaClientePortal;
 use App\Services\WhatsappAgent\ActivosResolver;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 /**
@@ -36,7 +38,7 @@ class AgenteToolService
      */
     public function crearCliente(array $datos, User $actor): User
     {
-        return User::query()->create([
+        $cliente = User::query()->create([
             'name' => $datos['name'],
             'email' => $datos['email'],
             'phone' => $datos['phone'] ?? null,
@@ -44,6 +46,13 @@ class AgenteToolService
             'role' => UserRole::Client,
             'preparer_id' => $actor->role === UserRole::Preparer ? $actor->id : ($datos['preparer_id'] ?? null),
         ]);
+
+        // La contraseña de arriba es aleatoria y nadie la conoce — sin este
+        // aviso, el cliente nunca podría entrar al portal seguro (ver
+        // App\Notifications\BienvenidaClientePortal).
+        $cliente->notify(new BienvenidaClientePortal(Password::createToken($cliente)));
+
+        return $cliente;
     }
 
     /**
