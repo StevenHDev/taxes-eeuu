@@ -13,6 +13,7 @@ use App\Services\EventoRecoleccionService;
 use App\Support\EventoValidator;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * Despacha un tool call del agente conversacional a los servicios internos
@@ -81,9 +82,24 @@ class ToolExecutor
      */
     private function crearClienteTaxes(array $argumentos, User $actor, ?string $telefono): array
     {
+        $email = (string) ($argumentos['email'] ?? '');
+
+        // Encontrado en producción (2026-09-24, conversación con
+        // +573213445027): un correo con un carácter de control colado (ej.
+        // un artefacto de copiar/pegar) se guardaba tal cual, sin que nada lo
+        // notara hasta que BienvenidaClientePortal fallaba en la cola —
+        // dejando al cliente con una cuenta creada pero sin ninguna forma de
+        // ponerle contraseña, porque a propósito nunca se manda por otro
+        // canal (ver App\Notifications\BienvenidaClientePortal). Se valida
+        // ACÁ, antes de crear nada, para que sea recuperable dentro de la
+        // misma conversación en vez de un fallo silencioso en segundo plano.
+        if (Validator::make(['email' => $email], ['email' => ['required', 'email']])->fails()) {
+            return ['error' => 'El correo no es válido — pídele al cliente que lo confirme o corrija antes de volver a intentar.'];
+        }
+
         $cliente = $this->tools->crearCliente([
             'name' => $argumentos['nombre'] ?? null,
-            'email' => $argumentos['email'] ?? null,
+            'email' => $email,
             'phone' => $telefono,
         ], $actor);
 

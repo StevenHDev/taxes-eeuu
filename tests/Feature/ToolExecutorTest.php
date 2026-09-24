@@ -64,6 +64,24 @@ class ToolExecutorTest extends TestCase
         $this->assertSame(UserRole::Client, $cliente->role);
     }
 
+    /**
+     * Regresión de un caso real (2026-09-24, conversación con
+     * +573213445027): un correo con un carácter de control colado se
+     * guardaba tal cual y solo se notaba cuando BienvenidaClientePortal
+     * fallaba en la cola — dejando al cliente con una cuenta creada pero sin
+     * ninguna forma de ponerle contraseña.
+     */
+    public function test_crear_cliente_taxes_con_correo_invalido_devuelve_error_y_no_crea_el_cliente(): void
+    {
+        $resultado = $this->tools->ejecutar('crear_cliente_taxes', [
+            'nombre' => 'Jane Doe',
+            'email' => "jane\x10@example.com",
+        ], null, $this->actor);
+
+        $this->assertArrayHasKey('error', $resultado);
+        $this->assertSame(0, User::query()->where('role', UserRole::Client)->count());
+    }
+
     public function test_crear_cliente_taxes_vincula_el_telefono_de_la_conversacion(): void
     {
         $resultado = $this->tools->ejecutar('crear_cliente_taxes', [
