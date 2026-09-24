@@ -107,4 +107,34 @@ class FilingStatusCalculatorTest extends TestCase
 
         $this->assertSame(FilingStatus::Single->value, $resultado['estado']);
     }
+
+    /**
+     * Regresión (2026-09-24): el formulario del portal (CampoValorInput)
+     * nunca produce un boolean real para estos subcampos, solo texto — un
+     * cliente que contestó "no" no debe quedar tratado como casado.
+     * `(bool) "no"` en PHP da TRUE, que es justo el bug que esto cubre.
+     */
+    public function test_casado_al_31_dic_como_texto_no_se_trata_como_afirmativo(): void
+    {
+        $resultado = (new FilingStatusCalculator)->calcular(
+            2025,
+            $this->estadoCivil(['casado_al_31_dic' => 'no']),
+            existeQualifyingChild: false,
+            existeAlgunDependienteCalificado: false,
+        );
+
+        $this->assertSame(FilingStatus::Single->value, $resultado['estado']);
+    }
+
+    public function test_casado_al_31_dic_como_texto_si_se_trata_como_afirmativo(): void
+    {
+        $resultado = (new FilingStatusCalculator)->calcular(
+            2025,
+            $this->estadoCivil(['casado_al_31_dic' => 'si']),
+            existeQualifyingChild: false,
+            existeAlgunDependienteCalificado: false,
+        );
+
+        $this->assertSame(FilingStatus::MarriedFilingJointly->value, $resultado['estado']);
+    }
 }

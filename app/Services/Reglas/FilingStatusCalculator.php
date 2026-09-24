@@ -3,6 +3,7 @@
 namespace App\Services\Reglas;
 
 use App\Enums\FilingStatus;
+use App\Support\RespuestaSiNo;
 
 /**
  * Determina el filing status a partir de los HECHOS en `estado_civil` (nunca
@@ -18,13 +19,13 @@ class FilingStatusCalculator
      */
     public function calcular(int $taxYear, array $estadoCivil, bool $existeQualifyingChild, bool $existeAlgunDependienteCalificado): array
     {
-        if ($estadoCivil['casado_al_31_dic'] ?? false) {
+        if (RespuestaSiNo::esAfirmativo($estadoCivil['casado_al_31_dic'] ?? false)) {
             return $this->resultado(FilingStatus::MarriedFilingJointly);
         }
 
-        $conyugeFallecio = (bool) ($estadoCivil['conyuge_fallecio_en_anio'] ?? false);
+        $conyugeFallecio = RespuestaSiNo::esAfirmativo($estadoCivil['conyuge_fallecio_en_anio'] ?? false);
         $anioFallecimiento = $estadoCivil['anio_fallecimiento_conyuge'] ?? null;
-        $costeoMasMitadHogar = (bool) ($estadoCivil['costeo_mas_mitad_hogar'] ?? false);
+        $costeoMasMitadHogar = RespuestaSiNo::esAfirmativo($estadoCivil['costeo_mas_mitad_hogar'] ?? false);
 
         if ($conyugeFallecio && is_numeric($anioFallecimiento)) {
             $delta = $taxYear - (int) $anioFallecimiento;

@@ -135,4 +135,28 @@ class DependentQualificationCalculatorTest extends TestCase
         $this->assertSame('ninguna', $resultado['dependientes'][0]['calificacion']);
         $this->assertSame(0, $resultado['conteo_ctc'] + $resultado['conteo_odc']);
     }
+
+    /**
+     * Regresión (2026-09-24): igual que en FilingStatusCalculatorTest, estos
+     * subcampos pueden llegar como texto "si"/"no" (nunca un boolean real
+     * desde el formulario del portal) — un "no" no debe tratarse como
+     * afirmativo por `(bool) "no"` siendo TRUE en PHP.
+     */
+    public function test_provee_mas_50_soporte_propio_como_texto_no_se_trata_como_afirmativo(): void
+    {
+        $resultado = (new DependentQualificationCalculator)->calcular(2025, [
+            $this->dependiente(['provee_mas_50_soporte_propio' => 'no']),
+        ]);
+
+        $this->assertSame('qualifying_child', $resultado['dependientes'][0]['calificacion']);
+    }
+
+    public function test_provee_mas_50_soporte_propio_como_texto_si_se_trata_como_afirmativo(): void
+    {
+        $resultado = (new DependentQualificationCalculator)->calcular(2025, [
+            $this->dependiente(['provee_mas_50_soporte_propio' => 'si']),
+        ]);
+
+        $this->assertSame('ninguna', $resultado['dependientes'][0]['calificacion']);
+    }
 }

@@ -17,6 +17,7 @@ use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\User;
+use App\Support\RespuestaSiNo;
 use App\Support\TaxFieldCatalog;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -804,6 +805,17 @@ class EventoRecoleccionService
     private function objetoTieneSubcampos(string $campo, array $valor, ?array $subcampos): bool
     {
         $opcionales = self::SUBCAMPOS_OPCIONALES[$campo] ?? [];
+
+        // estado_civil: convivio_conyuge_ultimos_6_meses/costeo_mas_mitad_hogar/
+        // existe_persona_calificable solo tienen sentido preguntarlos si el
+        // cliente SÍ está casado — un soltero no debe quedar bloqueado por
+        // faltarle esos 3 (encontrado en producción 2026-09-24: el formulario
+        // del portal marcaba inválido a un cliente soltero por esto, ya que
+        // CampoValorInput los muestra igual pero el cliente no tiene motivo
+        // para llenarlos).
+        if ($campo === 'estado_civil' && ! RespuestaSiNo::esAfirmativo($valor['casado_al_31_dic'] ?? false)) {
+            $opcionales = [...$opcionales, 'convivio_conyuge_ultimos_6_meses', 'costeo_mas_mitad_hogar', 'existe_persona_calificable'];
+        }
 
         foreach ($subcampos ?? [] as $subcampo) {
             if (in_array($subcampo, $opcionales, true)) {

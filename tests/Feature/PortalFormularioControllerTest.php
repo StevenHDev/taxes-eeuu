@@ -153,6 +153,41 @@ class PortalFormularioControllerTest extends TestCase
                 ));
     }
 
+    /**
+     * Regresión (2026-09-24): el formulario del portal (CampoValorInput)
+     * nunca produce un boolean real, solo texto — "si" debe detectarse igual
+     * de bien que `true`.
+     */
+    public function test_info_conyuge_aparece_pendiente_cuando_estado_civil_dice_casado_como_texto(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => self::TAX_YEAR, 'estado' => 'en_progreso']);
+
+        CampoCliente::query()->create([
+            'user_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => self::TAX_YEAR,
+            'campo' => 'estado_civil',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'valor_texto' => ['casado_al_31_dic' => 'si'],
+            'estado' => 'recibido',
+            'source' => 'cliente',
+        ]);
+
+        $this->actingAs($cliente)
+            ->get(route('portal.formulario'))
+            ->assertInertia(fn ($page) => $page
+                ->component('portal/formulario')
+                ->has('pendientes', fn ($pendientes) => $pendientes
+                    ->where(0, fn ($campo) => true)
+                    ->etc())
+                ->where(
+                    'pendientes',
+                    fn ($pendientes) => collect($pendientes)->firstWhere('campo', 'info_conyuge') !== null,
+                ));
+    }
+
     public function test_un_cliente_puede_guardar_un_campo_de_texto_directo(): void
     {
         $cliente = User::factory()->create(['role' => UserRole::Client]);

@@ -22,6 +22,7 @@ use App\Services\DocumentoExtraccion\RevelacionExtractorService;
 use App\Services\EventoRecoleccionService;
 use App\Services\WhatsappAgent\EstadoConversacionResolver;
 use App\Support\EventoValidator;
+use App\Support\RespuestaSiNo;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -341,7 +342,7 @@ class PortalFormularioController extends Controller
 
         // Cónyuge: solo si está casado al 31 de diciembre de ese año.
         $estadoCivil = $camposCliente->get('estado_civil')?->valor;
-        $casado = is_array($estadoCivil) && ($estadoCivil['casado_al_31_dic'] ?? false) === true;
+        $casado = is_array($estadoCivil) && RespuestaSiNo::esAfirmativo($estadoCivil['casado_al_31_dic'] ?? false);
 
         if (! $casado) {
             $ocultos[] = 'info_conyuge';

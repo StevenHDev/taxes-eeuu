@@ -3,6 +3,7 @@
 namespace App\Services\Reglas;
 
 use App\Support\ParametrosFiscales;
+use App\Support\RespuestaSiNo;
 use Carbon\Carbon;
 
 /**
@@ -42,14 +43,15 @@ class DependentQualificationCalculator
 
         foreach ($dependientes as $dependiente) {
             $edad = $this->edadAlFinDeAnio($dependiente['fecha_nacimiento'] ?? null, $finDeAnio);
-            $discapacitado = (bool) ($dependiente['discapacitado'] ?? false);
-            $proveePropioSoporte = (bool) ($dependiente['provee_mas_50_soporte_propio'] ?? false);
+            $discapacitado = RespuestaSiNo::esAfirmativo($dependiente['discapacitado'] ?? false);
+            $proveePropioSoporte = RespuestaSiNo::esAfirmativo($dependiente['provee_mas_50_soporte_propio'] ?? false);
+            $estudianteTiempoCompleto = RespuestaSiNo::esAfirmativo($dependiente['estudiante_tiempo_completo'] ?? false);
 
             $esQualifyingChild = ! $proveePropioSoporte
                 && $this->relacionEsDeHijo((string) ($dependiente['relacion'] ?? ''))
                 && (int) ($dependiente['meses_en_hogar'] ?? 0) >= 6
                 && $edad !== null
-                && ($edad < 19 || ($edad < 24 && ($dependiente['estudiante_tiempo_completo'] ?? false)) || $discapacitado);
+                && ($edad < 19 || ($edad < 24 && $estudianteTiempoCompleto) || $discapacitado);
 
             $esQualifyingRelative = ! $esQualifyingChild
                 && ! $proveePropioSoporte

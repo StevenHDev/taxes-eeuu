@@ -1589,6 +1589,59 @@ class EventoRecoleccionTest extends TestCase
     }
 
     /**
+     * Bug real reportado en producción (2026-09-24, formulario del portal):
+     * un cliente soltero solo respondió casado_al_31_dic (el formulario del
+     * portal no obliga a llenar cada casilla, a diferencia del agente de
+     * WhatsApp que sí pregunta las 4) — convivio_conyuge_ultimos_6_meses,
+     * costeo_mas_mitad_hogar y existe_persona_calificable son preguntas de
+     * determinación de filing status que solo tienen sentido si el cliente
+     * está casado, así que tampoco deben ser obligatorias para un soltero.
+     */
+    public function test_estado_civil_con_solo_casado_al_31_dic_es_valido_para_un_soltero(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'estado_civil',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => ['casado_al_31_dic' => 'no'],
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('estado', 'recibido');
+    }
+
+    /**
+     * Control: un cliente CASADO sigue exigiendo esos 3 subcampos — el fix
+     * de arriba es condicional a casado_al_31_dic, no una relajación general.
+     */
+    public function test_estado_civil_casado_sin_los_3_subcampos_de_hoh_sigue_invalido(): void
+    {
+        $this->actingAsAgente();
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $response = $this->postJson('/api/eventos', [
+            'cliente_id' => $cliente->id,
+            'forma' => 'transversal',
+            'tax_year' => 2025,
+            'campo' => 'estado_civil',
+            'tipo_campo' => 'dato',
+            'modo' => 'texto',
+            'tipo_dato' => 'object',
+            'contenido' => ['casado_al_31_dic' => 'si'],
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('estado', 'invalido');
+    }
+
+    /**
      * Mismo bug que el test anterior, para info_conyuge: el prompt instruye
      * explícitamente omitir fecha_nacimiento del JSON guardado (limitación
      * temporal documentada), pero el objeto igual exigía esa clave.
