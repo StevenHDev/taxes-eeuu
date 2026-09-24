@@ -6,12 +6,13 @@ import {
     FileDown,
     MinusCircle,
 } from 'lucide-react';
-import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeterminacionFiscalPanel } from '@/components/determinacion-fiscal-panel';
+import { FieldValue } from '@/components/field-value';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { humanizarClave } from '@/lib/humanizar-clave';
 import { dashboard } from '@/routes';
 import type { CampoCliente, ClienteForma, Determinacion } from '@/types';
 
@@ -55,132 +56,6 @@ function EstadoTag({ estado }: { estado: CampoCliente['estado'] }) {
             {t(`clienteShow.fieldState.${estado}`)}
         </span>
     );
-}
-
-const ACRONIMOS = new Set([
-    'ssn',
-    'itin',
-    'ein',
-    'agi',
-    'ctc',
-    'odc',
-    'ira',
-    'hsa',
-]);
-
-function humanizarClave(clave: string): string {
-    return clave
-        .split('_')
-        .map((palabra) =>
-            ACRONIMOS.has(palabra)
-                ? palabra.toUpperCase()
-                : palabra.charAt(0).toUpperCase() + palabra.slice(1),
-        )
-        .join(' ');
-}
-
-// Versión de solo lectura del renderer de valores de clientes/show.tsx — sin
-// los diálogos de edición/historial/revelado que esa página sí necesita.
-function FieldValue({ value }: { value: unknown }) {
-    const { t } = useTranslation();
-
-    if (
-        value === null ||
-        value === undefined ||
-        (typeof value === 'string' && value.trim() === '')
-    ) {
-        return (
-            <span className="text-muted-foreground">{t('common.none')}</span>
-        );
-    }
-
-    if (typeof value === 'boolean') {
-        return <span>{value ? t('common.yes') : t('common.no')}</span>;
-    }
-
-    if (typeof value === 'number' || typeof value === 'string') {
-        const esDato = typeof value === 'number' || /\d/.test(value);
-
-        return (
-            <span
-                className={`wrap-break-word whitespace-pre-wrap ${esDato ? 'font-mono tabular-nums' : ''}`}
-            >
-                {String(value)}
-            </span>
-        );
-    }
-
-    if (Array.isArray(value)) {
-        if (value.length === 0) {
-            return (
-                <span className="text-muted-foreground">
-                    {t('clienteShow.value.emptyList')}
-                </span>
-            );
-        }
-
-        const soloPrimitivos = value.every(
-            (v) => v === null || typeof v !== 'object',
-        );
-
-        if (soloPrimitivos) {
-            return (
-                <div className="flex flex-wrap gap-1">
-                    {value.map((v, i) => (
-                        <Badge
-                            key={i}
-                            variant="secondary"
-                            className="font-normal"
-                        >
-                            {String(v)}
-                        </Badge>
-                    ))}
-                </div>
-            );
-        }
-
-        return (
-            <div className="space-y-2">
-                {value.map((v, i) => (
-                    <div key={i} className="rounded-md border bg-muted/30 p-2">
-                        <div className="mb-1 text-xs font-medium text-muted-foreground">
-                            {t('clienteShow.value.record', { n: i + 1 })}
-                        </div>
-                        <FieldValue value={v} />
-                    </div>
-                ))}
-            </div>
-        );
-    }
-
-    if (typeof value === 'object') {
-        const entries = Object.entries(value as Record<string, unknown>);
-
-        if (entries.length === 0) {
-            return (
-                <span className="text-muted-foreground">
-                    {t('clienteShow.value.emptyList')}
-                </span>
-            );
-        }
-
-        return (
-            <dl className="grid gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,auto)_1fr]">
-                {entries.map(([k, v]) => (
-                    <Fragment key={k}>
-                        <dt className="text-xs font-medium text-muted-foreground sm:text-right">
-                            {humanizarClave(k)}
-                        </dt>
-                        <dd className="text-sm">
-                            <FieldValue value={v} />
-                        </dd>
-                    </Fragment>
-                ))}
-            </dl>
-        );
-    }
-
-    return <span>{String(value)}</span>;
 }
 
 function CampoRow({ campo }: { campo: CampoCliente }) {

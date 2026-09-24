@@ -163,7 +163,8 @@
             "source": {
                 "aiAgent": "AI Agent",
                 "preparer": "Preparer",
-                "admin": "Admin"
+                "admin": "Admin",
+                "client": "Client"
             }
         },
         "stats": {
@@ -218,6 +219,28 @@
         "pageTitle": "My information",
         "subtitle": "Everything you shared with your advisor, organized by form.",
         "empty": "There's no information loaded for this tax year yet."
+    },
+    "portalChat": {
+        "pageTitle": "Chat with your advisor",
+        "subtitle": "Get your questions answered and attach your documents securely.",
+        "empty": "No messages yet. Write your first question below.",
+        "placeholder": "Type your message...",
+        "attach": "Attach a file",
+        "send": "Send",
+        "sending": "Sending...",
+        "you": "You",
+        "advisor": "Advisor"
+    },
+    "portalFormulario": {
+        "pageTitle": "Complete your information",
+        "subtitlePendientes_one": "You have {{count}} required field left.",
+        "subtitlePendientes_other": "You have {{count}} required fields left.",
+        "subtitleCompleto": "You've completed everything required — you can review or correct any field anytime.",
+        "dudasTitle": "Questions? Ask your advisor",
+        "guardando": "Saving...",
+        "noAplica": "Not applicable",
+        "invalido": "This value wasn't valid, please fix it.",
+        "opcionalesTitle": "Other situations (optional)"
     },
     "clientesIndex": {
         "head": {
@@ -355,7 +378,8 @@
             "source": {
                 "agente_ia": "AI agent",
                 "preparador": "Preparer",
-                "administrador": "Administrator"
+                "administrador": "Administrator",
+                "cliente": "Client"
             }
         },
         "reveal": {

@@ -187,6 +187,44 @@ class EventoRecoleccionService
     }
 
     /**
+     * El cliente completando su propio formulario en el portal seguro (ver
+     * PortalFormularioController) — a diferencia de corregirManualmente()
+     * (alguien del equipo editando en nombre del cliente) y de procesar()
+     * (el agente conversacional, con `revelados`/`acumular`): acá siempre es
+     * el propio cliente, siempre reemplaza el valor tal cual lo escribe (sin
+     * acumular), y el `actor` es siempre ese mismo cliente.
+     *
+     * @return array{cliente: User, campo_cliente: CampoCliente, forma_cliente: ?FormaCliente}
+     */
+    public function registrarDesdePortal(
+        User $cliente,
+        int $taxYear,
+        string $forma,
+        string $campo,
+        string $tipoCampo,
+        FieldMode $modo,
+        ?FieldDataType $tipoDato,
+        mixed $contenido,
+        ?UploadedFile $file,
+        ?string $nombreOriginal,
+    ): array {
+        return DB::transaction(fn () => $this->aplicarCambio(
+            cliente: $cliente,
+            taxYear: $taxYear,
+            forma: $forma,
+            campo: $campo,
+            tipoCampo: $tipoCampo,
+            modo: $modo,
+            tipoDato: $tipoDato,
+            contenido: $contenido,
+            file: $file,
+            nombreOriginal: $nombreOriginal,
+            actor: $cliente,
+            source: EventSource::Cliente,
+        ));
+    }
+
+    /**
      * @return array{cliente: User, campo_cliente: CampoCliente, forma_cliente: ?FormaCliente}
      */
     private function aplicarCambio(

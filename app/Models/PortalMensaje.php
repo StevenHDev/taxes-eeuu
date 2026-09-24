@@ -9,23 +9,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Un mensaje de la conversación de WhatsApp con un cliente (o un teléfono
- * todavía sin cuenta) — reemplaza la lectura vía Supabase de
- * SupabaseWhatsappConversationService.
+ * Un mensaje del chat del portal seguro del cliente — ver
+ * App\Http\Controllers\PortalChatController y App\Contracts\MensajeConversacion
+ * (misma AgenteConversacionalService que WhatsappMensaje, canal distinto).
  *
  * @property int $id
- * @property string $telefono
- * @property int|null $cliente_id
+ * @property int $cliente_id
  * @property RolMensajeWhatsapp $rol
  * @property string $contenido
- * @property string|null $mensaje_externo_id
- * @property string|null $proveedor
  * @property int|null $prompt_version
  */
-#[Fillable(['telefono', 'cliente_id', 'rol', 'contenido', 'mensaje_externo_id', 'proveedor', 'prompt_version'])]
-class WhatsappMensaje extends Model implements MensajeConversacion
+#[Fillable(['cliente_id', 'rol', 'contenido', 'prompt_version'])]
+class PortalMensaje extends Model implements MensajeConversacion
 {
-    protected $table = 'whatsapp_mensajes';
+    protected $table = 'portal_mensajes';
 
     /**
      * @return array<string, string>

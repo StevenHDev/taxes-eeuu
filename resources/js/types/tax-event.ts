@@ -98,12 +98,41 @@ export type CampoCliente = {
     formatos_aceptados: string[] | null;
     obligatorio: boolean;
     updated_at: string;
+    // Posición estable del campo en el catálogo, y grupo de baja frecuencia
+    // al que pertenece si aplica — solo las envía PortalFormularioController
+    // (ver portal/formulario.tsx); el resto de consumidores de este tipo
+    // (mi-informacion.tsx, clientes/show.tsx) no las necesitan.
+    orden?: number;
+    grupo?: string | null;
+};
+
+/**
+ * Un campo del catálogo que el cliente todavía no respondió — shape de
+ * TaxFieldCatalog::pendientesPara() (ver PortalFormularioController). A
+ * diferencia de CampoCliente, no tiene estado/valor/documento porque
+ * justamente todavía no existe ninguna fila para él.
+ */
+export type CampoPendiente = {
+    forma: string;
+    campo: string;
+    tipo_campo: 'documento' | 'dato' | 'mixto';
+    tipo_dato:
+        'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
+    subcampos: string[] | null;
+    formatos_aceptados: string[] | null;
+    obligatorio: boolean;
+    sensible: boolean;
+    orden?: number;
+    // Etiqueta del grupo de baja frecuencia al que pertenece (ej. "Créditos
+    // menos comunes"), o null si no pertenece a ninguno — ver
+    // PromptActivoStep tipo=grupo, mismo agrupamiento que ya usa WhatsApp.
+    grupo?: string | null;
 };
 
 export type HistorialCambio = {
     valor_anterior: unknown;
     valor_nuevo: unknown;
-    source: 'agente_ia' | 'preparador' | 'administrador';
+    source: 'agente_ia' | 'preparador' | 'administrador' | 'cliente';
     modificado_por: string | null;
     created_at: string;
 };
@@ -364,7 +393,7 @@ export type DashboardResumen = {
         campo: string;
         forma_label: string;
         cliente_nombre: string;
-        source: 'agente_ia' | 'preparador' | 'administrador';
+        source: 'agente_ia' | 'preparador' | 'administrador' | 'cliente';
         created_at: string | null;
     }[];
     ultimos_clientes: { id: number; name: string }[];

@@ -2,14 +2,14 @@
 
 namespace App\Services\WhatsappAgent;
 
+use App\Contracts\MensajeConversacion;
 use App\DataTransferObjects\AdjuntoWhatsapp;
+use App\Enums\FaseConversacion;
 use App\Enums\MetodoExtraccionDocumento;
 use App\Enums\RolMensajeWhatsapp;
 use App\Models\User;
-use App\Models\WhatsappMensaje;
 use App\Support\AgentePromptVigente;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -49,8 +49,8 @@ class AgenteConversacionalService
     ) {}
 
     /**
-     * @param  Collection<int, WhatsappMensaje>  $historial  orden cronológico ascendente;
-     *                                                       ya incluye el mensaje entrante de este turno
+     * @param  iterable<int, MensajeConversacion>  $historial  orden cronológico ascendente;
+     *                                                         ya incluye el mensaje entrante de este turno
      * @param  array<int, AdjuntoWhatsapp>  $adjuntos  ya descargados/extraídos por
      *                                                 AdjuntosWhatsappService para el mensaje de este
      *                                                 turno — el texto ya quedó anotado en el propio
@@ -58,19 +58,32 @@ class AgenteConversacionalService
      *                                                 solo sirve para resolver el archivo real si el
      *                                                 modelo invoca guardar_campo_cliente sobre uno de
      *                                                 ellos (ver resolverArchivo()).
+     * @param  ?string  $telefono  de la conversación de WhatsApp, si el canal es ese — null
+     *                             para otros canales (ej. portal web). Se pasa explícito en vez
+     *                             de derivarse del historial, para que este método no dependa de
+     *                             WhatsappMensaje (ver App\Contracts\MensajeConversacion).
+     * @param  bool  $canalPortal  true cuando este turno viene del chat del portal web (ver
+     *                             PortalChatController), nunca de WhatsApp. Mientras el cliente
+     *                             ya tenga forma(s) declarada(s) (fase Recoleccion/Cierre según
+     *                             los datos), este chat NO es quien recolecta — el formulario del
+     *                             portal sí — así que se fuerza FaseConversacion::PortalDudas en
+     *                             vez de la fase real, para exponer un prompt/tools de solo-dudas
+     *                             (sin guardar_campo_cliente). Antes de que existan formas
+     *                             declaradas (VerificacionCuenta/DeterminacionFormas) el chat sigue
+     *                             siendo quien resuelve eso — ahí no se fuerza nada.
      * @return array{texto: string, prompt_version: ?int, cliente: ?User}
      */
-    public function responder(?User $cliente, Collection $historial, User $actor, array $adjuntos = []): array
+    public function responder(?User $cliente, iterable $historial, User $actor, array $adjuntos = [], ?string $telefono = null, bool $canalPortal = false): array
     {
         $mensajes = $this->mensajesDesdeHistorial($historial);
         $promptVersion = AgentePromptVigente::version();
-        // Todas las filas de $historial son de esta misma conversación (ver
-        // ProcesarMensajeWhatsappJob, que las trae con where('telefono', ...))
-        // — se deriva de ahí en vez de agregar un parámetro nuevo al método.
-        $telefono = $historial->last()?->telefono;
 
         for ($i = 0; $i < self::MAX_ITERACIONES; $i++) {
             $fase = $this->resolver->resolver($cliente);
+
+            if ($canalPortal && in_array($fase, [FaseConversacion::Recoleccion, FaseConversacion::Cierre], true)) {
+                $fase = FaseConversacion::PortalDudas;
+            }
 
             $respuesta = $this->openAi->completarChat(
                 mensajes: [
@@ -319,20 +332,26 @@ class AgenteConversacionalService
     }
 
     /**
-     * @param  Collection<int, WhatsappMensaje>  $historial
+     * @param  iterable<int, MensajeConversacion>  $historial
      * @return array<int, array<string, mixed>>
      */
-    private function mensajesDesdeHistorial(Collection $historial): array
+    private function mensajesDesdeHistorial(iterable $historial): array
     {
-        return $historial->map(fn (WhatsappMensaje $m) => match ($m->rol) {
-            RolMensajeWhatsapp::Cliente => ['role' => 'user', 'content' => $m->contenido],
-            RolMensajeWhatsapp::Agente => ['role' => 'assistant', 'content' => $m->contenido],
-            // El modelo ve que esto se le dijo al cliente, pero con su propio
-            // rol marcado — nunca debe asumir que él mismo lo dijo ni que
-            // implica que algún dato quedó guardado solo por haberse
-            // mencionado (ver ESCALAMIENTO A HUMANO en el plan).
-            RolMensajeWhatsapp::Preparador => ['role' => 'assistant', 'content' => "[Mensaje enviado por un preparador humano] {$m->contenido}"],
-            RolMensajeWhatsapp::Sistema => ['role' => 'assistant', 'content' => "[Nota automática del sistema] {$m->contenido}"],
-        })->values()->all();
+        $mensajes = [];
+
+        foreach ($historial as $m) {
+            $mensajes[] = match ($m->rolConversacion()) {
+                RolMensajeWhatsapp::Cliente => ['role' => 'user', 'content' => $m->contenidoConversacion()],
+                RolMensajeWhatsapp::Agente => ['role' => 'assistant', 'content' => $m->contenidoConversacion()],
+                // El modelo ve que esto se le dijo al cliente, pero con su propio
+                // rol marcado — nunca debe asumir que él mismo lo dijo ni que
+                // implica que algún dato quedó guardado solo por haberse
+                // mencionado (ver ESCALAMIENTO A HUMANO en el plan).
+                RolMensajeWhatsapp::Preparador => ['role' => 'assistant', 'content' => "[Mensaje enviado por un preparador humano] {$m->contenidoConversacion()}"],
+                RolMensajeWhatsapp::Sistema => ['role' => 'assistant', 'content' => "[Nota automática del sistema] {$m->contenidoConversacion()}"],
+            };
+        }
+
+        return $mensajes;
     }
 }

@@ -1516,6 +1516,7 @@ const SOURCE_VARIANT: Record<
     agente_ia: 'default',
     preparador: 'secondary',
     administrador: 'outline',
+    cliente: 'default',
 };
 
 function HistorialDialog({
@@ -2064,16 +2065,18 @@ function FormaSection({
 
             {porCategoria ? (
                 <div className="space-y-2">
-                    {porCategoria.map(({ categoria, campos: camposDeCategoria }) => (
-                        <CategoriaGroup
-                            key={categoria}
-                            clienteId={clienteId}
-                            taxYear={taxYear}
-                            categoria={categoria}
-                            campos={camposDeCategoria}
-                            formaLabel={label}
-                        />
-                    ))}
+                    {porCategoria.map(
+                        ({ categoria, campos: camposDeCategoria }) => (
+                            <CategoriaGroup
+                                key={categoria}
+                                clienteId={clienteId}
+                                taxYear={taxYear}
+                                categoria={categoria}
+                                campos={camposDeCategoria}
+                                formaLabel={label}
+                            />
+                        ),
+                    )}
                 </div>
             ) : (
                 <Table>

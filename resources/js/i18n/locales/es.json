@@ -163,7 +163,8 @@
             "source": {
                 "aiAgent": "Agente IA",
                 "preparer": "Preparador",
-                "admin": "Admin"
+                "admin": "Admin",
+                "client": "Cliente"
             }
         },
         "stats": {
@@ -218,6 +219,28 @@
         "pageTitle": "Mi información",
         "subtitle": "Todo lo que compartiste con tu asesor, organizado por formulario.",
         "empty": "Todavía no hay información cargada para este año fiscal."
+    },
+    "portalChat": {
+        "pageTitle": "Chat con tu asesor",
+        "subtitle": "Resuelve tus dudas y adjunta tus documentos de forma segura.",
+        "empty": "Todavía no hay mensajes. Escribe tu primera pregunta abajo.",
+        "placeholder": "Escribe tu mensaje...",
+        "attach": "Adjuntar archivo",
+        "send": "Enviar",
+        "sending": "Enviando...",
+        "you": "Tú",
+        "advisor": "Asesor"
+    },
+    "portalFormulario": {
+        "pageTitle": "Completa tu información",
+        "subtitlePendientes_one": "Te queda {{count}} campo obligatorio por completar.",
+        "subtitlePendientes_other": "Te quedan {{count}} campos obligatorios por completar.",
+        "subtitleCompleto": "Ya completaste todo lo obligatorio — puedes revisar o corregir cualquier campo cuando quieras.",
+        "dudasTitle": "¿Dudas? Pregúntale a tu asesor",
+        "guardando": "Guardando...",
+        "noAplica": "No aplica",
+        "invalido": "Este dato no quedó válido, corrígelo.",
+        "opcionalesTitle": "Otras situaciones (opcional)"
     },
     "clientesIndex": {
         "head": {
@@ -355,7 +378,8 @@
             "source": {
                 "agente_ia": "Agente IA",
                 "preparador": "Preparador",
-                "administrador": "Administrador"
+                "administrador": "Administrador",
+                "cliente": "Cliente"
             }
         },
         "reveal": {

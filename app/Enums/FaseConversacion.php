@@ -22,6 +22,11 @@ enum FaseConversacion: string
     case DeterminacionFormas = 'determinacion_formas';
     case Recoleccion = 'recoleccion';
     case Cierre = 'cierre';
+    // Solo se usa por el canal del portal web (ver AgenteConversacionalService::responder(),
+    // parámetro $canalPortal): mismo agente, pero con el formulario del portal — no este
+    // chat — a cargo de recolectar. Nunca la deriva EstadoConversacionResolver, que solo
+    // conoce Recoleccion/Cierre para ese mismo estado de datos.
+    case PortalDudas = 'portal_dudas';
 
     public function label(): string
     {
@@ -30,6 +35,7 @@ enum FaseConversacion: string
             self::DeterminacionFormas => 'Año fiscal y determinación de forma(s)',
             self::Recoleccion => 'Recolección de datos',
             self::Cierre => 'Cierre',
+            self::PortalDudas => 'Portal — dudas (formulario a cargo de recolectar)',
         };
     }
 }

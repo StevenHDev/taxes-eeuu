@@ -31,6 +31,13 @@ export type FaseTools = {
     tools: AgenteTool[];
 };
 
+export type PortalMensaje = {
+    id: number;
+    rol: RolMensajeAgente;
+    contenido: string;
+    created_at: string;
+};
+
 export type BaseConocimientoDocumento = {
     id: number;
     nombre_original: string;

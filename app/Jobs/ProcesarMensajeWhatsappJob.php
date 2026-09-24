@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\DataTransferObjects\AdjuntoWhatsapp;
 use App\DataTransferObjects\MensajeEntranteWhatsapp;
 use App\Enums\EstadoControlConversacion;
 use App\Enums\RolMensajeWhatsapp;
@@ -14,6 +13,7 @@ use App\Services\Whatsapp\WhatsappChannel;
 use App\Services\WhatsappAgent\AdjuntosWhatsappService;
 use App\Services\WhatsappAgent\AgenteConversacionalService;
 use App\Support\AgenteWhatsappUser;
+use App\Support\ContenidoMensajeConAdjuntos;
 use App\Support\TelefonoWhatsapp;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -93,7 +93,7 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
                 'telefono' => $telefono,
                 'cliente_id' => $control->cliente_id,
                 'rol' => RolMensajeWhatsapp::Cliente,
-                'contenido' => $this->construirContenido($this->mensaje->texto, $adjuntos),
+                'contenido' => ContenidoMensajeConAdjuntos::construir($this->mensaje->texto, $adjuntos),
                 'mensaje_externo_id' => $this->mensaje->mensajeId,
                 'proveedor' => $this->mensaje->proveedor,
             ]);
@@ -105,7 +105,7 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
             $cliente = $control->cliente_id ? User::query()->whereKey($control->cliente_id)->first() : null;
             $historial = WhatsappMensaje::query()->where('telefono', $telefono)->orderBy('id')->get();
 
-            $resultado = $agente->responder($cliente, $historial, AgenteWhatsappUser::resolver(), $adjuntos);
+            $resultado = $agente->responder($cliente, $historial, AgenteWhatsappUser::resolver(), $adjuntos, $telefono);
 
             // crear_cliente_taxes puede haber corrido a mitad del turno — deja
             // el vínculo de la conversación con el cliente recién creado, en
@@ -135,25 +135,5 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
         } finally {
             $lock->release();
         }
-    }
-
-    /**
-     * Formato exacto que espera el prompt (prompt_actuales/fases/
-     * recoleccion.md, RECEPCIÓN DE DOCUMENTOS) — el modelo nunca "ve" un
-     * archivo, solo este texto plano por cada adjunto ya resuelto.
-     *
-     * @param  array<int, AdjuntoWhatsapp>  $adjuntos
-     */
-    private function construirContenido(string $texto, array $adjuntos): string
-    {
-        if ($adjuntos === []) {
-            return $texto;
-        }
-
-        $bloques = collect($adjuntos)
-            ->map(fn (AdjuntoWhatsapp $a) => "archivo_url: {$a->referencia}\ntexto_extraido: {$a->texto}")
-            ->implode("\n\n");
-
-        return $texto === '' ? $bloques : "{$texto}\n\n{$bloques}";
     }
 }

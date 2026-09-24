@@ -57,6 +57,15 @@ class ToolDefinitions
                 self::registrarAtestacionCliente(),
                 self::think(),
             ],
+            // Nunca guardar_campo_cliente ni declarar_formas_cliente acá — a
+            // propósito: en esta fase el formulario del portal es quien
+            // recolecta y guarda, este chat solo responde dudas (ver
+            // prompt_actuales/fases/portal_dudas.md).
+            FaseConversacion::PortalDudas => [
+                self::consultarPendientesCliente(),
+                self::consultarBaseConocimiento(),
+                self::think(),
+            ],
         };
     }
 

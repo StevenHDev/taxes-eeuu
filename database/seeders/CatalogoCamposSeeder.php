@@ -90,8 +90,12 @@ class CatalogoCamposSeeder extends Seeder
                 'relacion', 'meses_en_hogar', 'estudiante_tiempo_completo', 'discapacitado',
                 'provee_mas_50_soporte_propio', 'ingreso_bruto_anual', 'custodia_compartida_sin_conflicto',
             ], sensible: true, unicoPorCliente: true),
-            $this->campo('w2', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], unicoPorCliente: true),
-            $this->campo('form_1099_nec', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], unicoPorCliente: true),
+            // obligatorio:false a propósito (2026-09-24): no todo cliente tiene
+            // empleo W-2 o ingresos 1099-NEC — antes, al ser obligatorios, un
+            // cliente sin ninguno de los dos quedaba trabado para siempre
+            // (EventoValidator rechaza modo="no_aplica" en un campo obligatorio).
+            $this->campo('w2', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
+            $this->campo('form_1099_nec', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             $this->campo('form_1095_a', FieldKind::Documento, formatos: ['pdf', 'jpg', 'jpeg', 'png', 'heic'], obligatorio: false, unicoPorCliente: true),
             // Hechos crudos (no la conclusión) para que el motor de reglas calcule
             // el filing status — ver App\Services\Reglas\FilingStatusCalculator.

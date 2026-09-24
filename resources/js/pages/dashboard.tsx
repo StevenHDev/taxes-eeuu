@@ -10,6 +10,7 @@ import {
     Inbox,
     Loader,
     ShieldCheck,
+    User,
     UserCog,
     Users,
 } from 'lucide-react';
@@ -45,6 +46,13 @@ const SOURCE: Record<
     administrador: {
         labelKey: 'dashboard.activity.source.admin',
         icon: ShieldCheck,
+    },
+    // El cliente completando su propio formulario en el portal seguro (ver
+    // EventSource::Cliente) — a diferencia de agente_ia (el mismo cliente,
+    // pero vía WhatsApp/chat).
+    cliente: {
+        labelKey: 'dashboard.activity.source.client',
+        icon: User,
     },
 };
 
