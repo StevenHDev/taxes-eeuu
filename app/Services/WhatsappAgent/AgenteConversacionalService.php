@@ -71,6 +71,14 @@ class AgenteConversacionalService
      *                             (sin guardar_campo_cliente). Antes de que existan formas
      *                             declaradas (VerificacionCuenta/DeterminacionFormas) el chat sigue
      *                             siendo quien resuelve eso — ahí no se fuerza nada.
+     *
+     *                             El canal de WhatsApp (canalPortal=false) recibe el downgrade
+     *                             simétrico opuesto: fase Recoleccion se fuerza a HandoffPortal —
+     *                             el formulario del portal es quien recolecta ahora, este canal solo
+     *                             entrega el link (una vez, ver notaLinkPortal()) y responde dudas.
+     *                             Cierre NUNCA se fuerza a HandoffPortal, ni acá ni en canalPortal:
+     *                             la atestación final sigue ocurriendo por WhatsApp (ver cierre.md,
+     *                             pendiente Fase 6 del plan del portal seguro).
      * @return array{texto: string, prompt_version: ?int, cliente: ?User}
      */
     public function responder(?User $cliente, iterable $historial, User $actor, array $adjuntos = [], ?string $telefono = null, bool $canalPortal = false): array
@@ -83,12 +91,23 @@ class AgenteConversacionalService
 
             if ($canalPortal && in_array($fase, [FaseConversacion::Recoleccion, FaseConversacion::Cierre], true)) {
                 $fase = FaseConversacion::PortalDudas;
+            } elseif (! $canalPortal && $fase === FaseConversacion::Recoleccion) {
+                $fase = FaseConversacion::HandoffPortal;
+            }
+
+            $mensajesDeEsteTurno = $mensajes;
+
+            if ($fase === FaseConversacion::HandoffPortal) {
+                // Nota efímera, nunca persistida: solo para esta llamada puntual a
+                // la API, no se agrega a $mensajes (que sigue acumulando el resto
+                // del turno) — ver notaLinkPortal().
+                $mensajesDeEsteTurno[] = ['role' => 'system', 'content' => $this->notaLinkPortal($mensajes)];
             }
 
             $respuesta = $this->openAi->completarChat(
                 mensajes: [
                     ['role' => 'system', 'content' => (string) AgentePromptVigente::paraFase($fase)],
-                    ...$mensajes,
+                    ...$mensajesDeEsteTurno,
                 ],
                 tools: ToolDefinitions::habilitadasParaFase($fase),
                 // Solo en la primera llamada del turno: sin esto, el modelo a
@@ -353,5 +372,45 @@ class AgenteConversacionalService
         }
 
         return $mensajes;
+    }
+
+    /**
+     * Decide, de forma determinística (nunca a criterio del modelo), si el
+     * link del portal ya se compartió antes en esta conversación — buscando
+     * el link literal entre los mensajes que el agente ya le envió al
+     * cliente. Encontrado el patrón útil en sinRazonamientoFiltrado(): una
+     * regla de negocio verificable en código es más confiable que una
+     * instrucción de prompt que dependa de que el modelo "recuerde" haberlo
+     * mandado antes.
+     *
+     * @param  array<int, array<string, mixed>>  $mensajes  ya construidos por mensajesDesdeHistorial(),
+     *                                                      antes de agregar la nota de este método
+     */
+    private function notaLinkPortal(array $mensajes): string
+    {
+        $link = self::linkPortal();
+
+        $yaCompartido = collect($mensajes)->contains(
+            fn (array $m) => ($m['role'] ?? null) === 'assistant'
+                && str_contains((string) ($m['content'] ?? ''), $link),
+        );
+
+        return $yaCompartido
+            ? 'Ya le compartiste el link del portal antes en esta conversación — no lo repitas de nuevo salvo que el cliente lo pida explícitamente.'
+            : "Todavía no le has compartido el link del portal seguro en esta conversación. Inclúyelo tal cual en tu respuesta de este turno, junto con una explicación breve y cálida de qué es y qué debe hacer ahí: {$link}";
+    }
+
+    /**
+     * Punto de entrada único del portal seguro (ver routes/portal.php) —
+     * PortalFormularioController::index() ya redirige a portal.chat si el
+     * cliente todavía no tiene ninguna forma declarada, así que este mismo
+     * link sirve sin importar en qué punto del formulario esté. No requiere
+     * sesión iniciada: si el cliente no está logueado, el middleware `auth`
+     * lo manda a /login y, tras autenticarse, Laravel lo devuelve acá solo
+     * (redirect()->intended()) — nunca hace falta armar un link firmado.
+     */
+    private static function linkPortal(): string
+    {
+        return url('/portal');
     }
 }

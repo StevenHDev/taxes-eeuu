@@ -66,6 +66,18 @@ class ToolDefinitions
                 self::consultarBaseConocimiento(),
                 self::think(),
             ],
+            // Nunca guardar_campo_cliente acá — a propósito, mismo motivo que
+            // PortalDudas (el formulario del portal es quien guarda). SÍ
+            // incluye declarar_formas_cliente: portal_dudas.md le dice al
+            // cliente que un cambio de situación se avisa por WhatsApp, no
+            // por el chat del portal — este canal sigue siendo quien
+            // resuelve eso (ver prompt_actuales/fases/handoff_portal.md).
+            FaseConversacion::HandoffPortal => [
+                self::declararFormasCliente(),
+                self::consultarPendientesCliente(),
+                self::consultarBaseConocimiento(),
+                self::think(),
+            ],
         };
     }
 
