@@ -7,7 +7,6 @@ import {
     History,
     LayoutGrid,
     ListChecks,
-    MessageCircle,
     UserCog,
     Users,
     Workflow,
@@ -29,7 +28,7 @@ import { index as bitacoraIndex } from '@/routes/bitacora';
 import { index as catalogoIndex } from '@/routes/catalogo';
 import { index as clientesIndex } from '@/routes/clientes';
 import { index as metaAgenteIndex } from '@/routes/meta-agente';
-import { chat as portalChat, formulario as portalFormulario } from '@/routes/portal';
+import { formulario as portalFormulario } from '@/routes/portal';
 import { show as procesoShow } from '@/routes/proceso';
 import { index as usuariosIndex } from '@/routes/usuarios';
 import type { NavItem } from '@/types';
@@ -53,11 +52,11 @@ export function AppSidebar() {
         },
         ...(esCliente
             ? [
-                  {
-                      title: t('nav.portalChat'),
-                      href: portalChat(),
-                      icon: MessageCircle,
-                  },
+                  // El chat del portal (portal.chat) sigue existiendo y
+                  // PortalFormularioController redirige ahí mientras el
+                  // cliente no tenga forma declarada — a propósito ya no
+                  // tiene entrada en el sidebar (pedido explícito): solo
+                  // Panel y Formulario.
                   {
                       title: t('nav.portalFormulario'),
                       href: portalFormulario(),
