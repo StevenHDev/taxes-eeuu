@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -16,6 +17,8 @@ class ApiDocumentationController extends Controller
      */
     public function index(): Response
     {
+        $this->authorizeAcceso();
+
         $markdown = File::get(base_path('docs/api.md'));
 
         $html = Str::markdown($markdown, [
@@ -37,6 +40,8 @@ class ApiDocumentationController extends Controller
      */
     public function openapi(): HttpResponse
     {
+        $this->authorizeAcceso();
+
         return response(File::get(base_path('docs/openapi.yaml')))
             ->header('Content-Type', 'application/yaml');
     }
@@ -112,5 +117,16 @@ class ApiDocumentationController extends Controller
         $texto = (string) preg_replace('/[^\p{L}\p{N}\s-]/u', '', $texto);
 
         return (string) preg_replace('/\s+/u', '-', trim($texto));
+    }
+
+    /**
+     * Sin Policy propia (no hay un modelo Eloquent detrás de esta página):
+     * mismo criterio que oculta "API docs" en el sidebar para un cliente
+     * (ver AppSidebar) — es documentación interna de integración, no algo
+     * que un cliente deba poder consultar.
+     */
+    private function authorizeAcceso(): void
+    {
+        abort_if(request()->user()->role === UserRole::Client, 403);
     }
 }

@@ -92,7 +92,7 @@ class PortalFormularioController extends Controller
             ->get()
             ->keyBy('campo');
 
-        $ocultosPorDependencia = $this->ocultosPorDependencia($camposCliente);
+        $ocultosPorDependencia = $this->ocultosPorDependencia($camposCliente, $formas);
 
         return Inertia::render('portal/formulario', [
             'taxYear' => $taxYear,
@@ -329,16 +329,34 @@ class PortalFormularioController extends Controller
      * las únicas donde tanto el campo dependiente como el campo del que
      * depende existen hoy en el catálogo — el resto (negocio, bienes raíces)
      * ya se resuelve solo porque esos campos solo aparecen bajo una forma
-     * que el cliente debió declarar primero (Schedule C/E).
+     * que el cliente debió declarar primero (Schedule C/E). w2/1099-NEC/
+     * seguro_medico_self_employed son la excepción: son transversales (se
+     * preguntan sin importar la forma, ver TaxFieldCatalog::pendientesPara()),
+     * así que no se resuelven solos — de ahí que dependan de $formas acá.
      *
      * @param  Collection<string, CampoCliente>  $camposCliente  keyBy('campo')
+     * @param  array<int, TaxForm>  $formas  formas ya declaradas por el cliente para este año fiscal
      * @return array<int, string>
      */
-    private function ocultosPorDependencia(Collection $camposCliente): array
+    private function ocultosPorDependencia(Collection $camposCliente, array $formas): array
     {
         $recibido = fn (string $campo): bool => $camposCliente->get($campo)?->estado === FieldState::Recibido;
+        $declaro = fn (TaxForm $forma): bool => in_array($forma, $formas, true);
 
         $ocultos = [];
+
+        // w2 es de empleado (form_1040); 1099-NEC y el seguro médico propio
+        // son de trabajo independiente (schedule_c) — un cliente con ambas
+        // formas declaradas (empleado Y independiente, ver PASO C del árbol
+        // de determinación) sigue viendo los tres, sin ambigüedad.
+        if (! $declaro(TaxForm::Form1040)) {
+            $ocultos[] = 'w2';
+        }
+
+        if (! $declaro(TaxForm::ScheduleC)) {
+            $ocultos[] = 'form_1099_nec';
+            $ocultos[] = 'seguro_medico_self_employed';
+        }
 
         // Cónyuge: solo si está casado al 31 de diciembre de ese año.
         $estadoCivil = $camposCliente->get('estado_civil')?->valor;

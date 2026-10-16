@@ -64,7 +64,11 @@ class PortalFormularioControllerTest extends TestCase
     public function test_w2_y_1099_nec_no_son_obligatorios(): void
     {
         $cliente = User::factory()->create(['role' => UserRole::Client]);
+        // Ambas formas declaradas — de lo contrario ocultosPorDependencia()
+        // (ver test_w2_oculto_si_no_declaro_form_1040) filtraría una de las
+        // dos antes de llegar a esta aserción.
         FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => self::TAX_YEAR, 'estado' => 'en_progreso']);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'schedule_c', 'tax_year' => self::TAX_YEAR, 'estado' => 'en_progreso']);
 
         $this->actingAs($cliente)
             ->get(route('portal.formulario'))
@@ -80,6 +84,72 @@ class PortalFormularioControllerTest extends TestCase
                     fn ($pendientes) => collect($pendientes)
                         ->firstWhere('campo', 'w2')['obligatorio'] === false
                         && collect($pendientes)->firstWhere('campo', 'form_1099_nec')['obligatorio'] === false,
+                ));
+    }
+
+    /**
+     * w2/1099-NEC son transversales (se preguntan sin importar la forma) —
+     * a diferencia de un campo propio de schedule_c/schedule_e, que nunca
+     * aparece si esa forma no se declaró, estos dos necesitan su propia
+     * regla (ver PortalFormularioController::ocultosPorDependencia()).
+     */
+    public function test_w2_oculto_si_no_declaro_form_1040(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'schedule_c', 'tax_year' => self::TAX_YEAR, 'estado' => 'en_progreso']);
+
+        $this->actingAs($cliente)
+            ->get(route('portal.formulario'))
+            ->assertInertia(fn ($page) => $page
+                ->component('portal/formulario')
+                ->has('pendientes', fn ($pendientes) => $pendientes
+                    ->where(0, fn ($campo) => true)
+                    ->etc())
+                ->where(
+                    'pendientes',
+                    fn ($pendientes) => collect($pendientes)->firstWhere('campo', 'w2') === null
+                        && collect($pendientes)->firstWhere('campo', 'form_1099_nec') !== null
+                        && collect($pendientes)->firstWhere('campo', 'seguro_medico_self_employed') !== null,
+                ));
+    }
+
+    public function test_form_1099_nec_oculto_si_no_declaro_schedule_c(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => self::TAX_YEAR, 'estado' => 'en_progreso']);
+
+        $this->actingAs($cliente)
+            ->get(route('portal.formulario'))
+            ->assertInertia(fn ($page) => $page
+                ->component('portal/formulario')
+                ->has('pendientes', fn ($pendientes) => $pendientes
+                    ->where(0, fn ($campo) => true)
+                    ->etc())
+                ->where(
+                    'pendientes',
+                    fn ($pendientes) => collect($pendientes)->firstWhere('campo', 'form_1099_nec') === null
+                        && collect($pendientes)->firstWhere('campo', 'seguro_medico_self_employed') === null
+                        && collect($pendientes)->firstWhere('campo', 'w2') !== null,
+                ));
+    }
+
+    public function test_w2_y_1099_nec_ambos_visibles_si_declaro_las_dos_formas(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => self::TAX_YEAR, 'estado' => 'en_progreso']);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'schedule_c', 'tax_year' => self::TAX_YEAR, 'estado' => 'en_progreso']);
+
+        $this->actingAs($cliente)
+            ->get(route('portal.formulario'))
+            ->assertInertia(fn ($page) => $page
+                ->component('portal/formulario')
+                ->has('pendientes', fn ($pendientes) => $pendientes
+                    ->where(0, fn ($campo) => true)
+                    ->etc())
+                ->where(
+                    'pendientes',
+                    fn ($pendientes) => collect($pendientes)->firstWhere('campo', 'w2') !== null
+                        && collect($pendientes)->firstWhere('campo', 'form_1099_nec') !== null,
                 ));
     }
 

@@ -3,9 +3,11 @@ import {
     Bot,
     ClipboardCheck,
     Code2,
+    FileText,
     History,
     LayoutGrid,
     ListChecks,
+    MessageCircle,
     UserCog,
     Users,
     Workflow,
@@ -27,6 +29,7 @@ import { index as bitacoraIndex } from '@/routes/bitacora';
 import { index as catalogoIndex } from '@/routes/catalogo';
 import { index as clientesIndex } from '@/routes/clientes';
 import { index as metaAgenteIndex } from '@/routes/meta-agente';
+import { chat as portalChat, formulario as portalFormulario } from '@/routes/portal';
 import { show as procesoShow } from '@/routes/proceso';
 import { index as usuariosIndex } from '@/routes/usuarios';
 import type { NavItem } from '@/types';
@@ -39,6 +42,7 @@ export function AppSidebar() {
     const { t } = useTranslation();
     const { auth } = usePage<PageProps>().props;
     const esAdministrador = auth.user.role === 'administrator';
+    const esCliente = auth.user.role === 'client';
     const tieneAccesoAlPanel = auth.user.role !== 'client';
 
     const mainNavItems: NavItem[] = [
@@ -47,6 +51,20 @@ export function AppSidebar() {
             href: dashboard(),
             icon: LayoutGrid,
         },
+        ...(esCliente
+            ? [
+                  {
+                      title: t('nav.portalChat'),
+                      href: portalChat(),
+                      icon: MessageCircle,
+                  },
+                  {
+                      title: t('nav.portalFormulario'),
+                      href: portalFormulario(),
+                      icon: FileText,
+                  },
+              ]
+            : []),
         ...(tieneAccesoAlPanel
             ? [
                   {
@@ -90,11 +108,15 @@ export function AppSidebar() {
                   },
               ]
             : []),
-        {
-            title: t('nav.apiDocs'),
-            href: apiDocsIndex(),
-            icon: Code2,
-        },
+        ...(esCliente
+            ? []
+            : [
+                  {
+                      title: t('nav.apiDocs'),
+                      href: apiDocsIndex(),
+                      icon: Code2,
+                  },
+              ]),
     ];
 
     return (

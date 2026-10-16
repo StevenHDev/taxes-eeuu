@@ -12,7 +12,7 @@ import { FieldValue } from '@/components/field-value';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { humanizarClave } from '@/lib/humanizar-clave';
+import { campoLabel, formaCatalogoLabel } from '@/lib/catalogo-labels';
 import { dashboard } from '@/routes';
 import type { CampoCliente, ClienteForma, Determinacion } from '@/types';
 
@@ -65,7 +65,7 @@ function CampoRow({ campo }: { campo: CampoCliente }) {
         <div className={`border-l-2 py-3 pl-3 ${ESTADO_RIEL[campo.estado]}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-sm font-medium text-foreground">
-                    {humanizarClave(campo.campo)}
+                    {campoLabel(t, campo.campo)}
                 </span>
                 <EstadoTag estado={campo.estado} />
             </div>
@@ -143,7 +143,11 @@ export default function MiInformacion({
             return t('clienteShow.documentosExtraLabel');
         }
 
-        return formas.find((f) => f.forma === forma)?.forma_label ?? forma;
+        return formaCatalogoLabel(
+            t,
+            forma,
+            formas.find((f) => f.forma === forma)?.forma_label ?? forma,
+        );
     };
 
     const declaradas = [

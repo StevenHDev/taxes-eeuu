@@ -14,7 +14,12 @@ import { FieldValue } from '@/components/field-value';
 import { PortalChatPanel } from '@/components/portal-chat-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { humanizarClave } from '@/lib/humanizar-clave';
+import {
+    campoLabel,
+    formaCatalogoLabel,
+    grupoCatalogoLabel,
+    subcampoLabel,
+} from '@/lib/catalogo-labels';
 import { store as guardarCampo } from '@/routes/portal/formulario/campos';
 import type { PortalMensaje } from '@/types/agente';
 import type { CampoCliente, CampoPendiente } from '@/types/tax-event';
@@ -46,6 +51,33 @@ const ESTADO_ICONO: Record<Estado, typeof Circle> = {
     invalido: AlertTriangle,
     no_aplica: MinusCircle,
 };
+
+/**
+ * Pregunta de sí/no que antecede a cada documento opcional — mismo formato
+ * que ya usa el cuestionario real de GTS (☐ Sí ☐ No ☐ N/A | Documento: X) y
+ * el mismo fraseo ya aprobado que usa el agente de WhatsApp para pedir estos
+ * documentos uno por uno (ver database/seeders/PromptActivoStepsSeeder.php).
+ * Sin esto, un campo opcional mostraba de entrada un selector de archivo
+ * completo — con ~17 documentos "pasivos" mostrados a la vez en el
+ * formulario (ver App\Http\Controllers\PortalFormularioController), eso es
+ * la causa real de "demasiada información" que reportó el dueño del
+ * producto: la mayoría de esos documentos no aplican a un cliente dado, y
+ * antes no había forma de descartarlos sin ver primero el selector de
+ * archivo. Ahora ese selector solo aparece después de confirmar "Sí" —
+ * "No" marca no_aplica directo, igual que ya hacía el botón existente.
+ *
+ * Traducciones en portalFormulario.preguntaDocumento.<campo> (es.json/
+ * en.json) — un campo sin traducción específica cae en tieneEsteDocumento,
+ * la pregunta genérica, vía el `defaultValue` de i18next.
+ */
+function preguntaConfirmacionDocumento(
+    t: (key: string, options?: Record<string, unknown>) => string,
+    campo: string,
+): string {
+    return t(`portalFormulario.preguntaDocumento.${campo}`, {
+        defaultValue: t('portalFormulario.tieneEsteDocumento'),
+    });
+}
 
 function EstadoTag({ estado }: { estado: Estado }) {
     const { t } = useTranslation();
@@ -157,7 +189,11 @@ export default function PortalFormulario({
             return t('clienteShow.documentosExtraLabel');
         }
 
-        return formas.find((f) => f.forma === forma)?.label ?? forma;
+        return formaCatalogoLabel(
+            t,
+            forma,
+            formas.find((f) => f.forma === forma)?.label ?? forma,
+        );
     };
 
     const secciones = [
@@ -259,7 +295,10 @@ export default function PortalFormulario({
                                                         className="rounded-lg border"
                                                     >
                                                         <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-foreground">
-                                                            {etiqueta}{' '}
+                                                            {grupoCatalogoLabel(
+                                                                t,
+                                                                etiqueta,
+                                                            )}{' '}
                                                             <span className="font-normal text-muted-foreground">
                                                                 (
                                                                 {
@@ -326,7 +365,7 @@ function CampoFormField({
             <div className={`border-l-2 py-3 pl-3 ${ESTADO_RIEL[fila.estado]}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-sm font-medium text-foreground">
-                        {humanizarClave(fila.campo)}
+                        {campoLabel(t, fila.campo)}
                     </span>
                     <EstadoTag estado={fila.estado} />
                 </div>
@@ -430,6 +469,12 @@ function CampoInputForm({
     const esDocumento = fila.tipoCampo === 'documento';
     const esMixto = fila.tipoCampo === 'mixto';
 
+    // Un documento opcional pregunta primero "¿tienes esto?" antes de
+    // mostrar el selector de archivo — ver PREGUNTA_CONFIRMACION_DOCUMENTO.
+    // Obligatorios y campos no-documento van directo al input, como antes.
+    const necesitaConfirmacion = esDocumento && !fila.obligatorio;
+    const [confirmado, setConfirmado] = useState(!necesitaConfirmacion);
+
     const form = useForm<CampoFormData>({
         forma: fila.forma,
         tax_year: taxYear,
@@ -474,7 +519,7 @@ function CampoInputForm({
         <div className="rounded-lg border p-3">
             <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">
-                    {humanizarClave(fila.campo)}
+                    {campoLabel(t, fila.campo)}
                     {fila.obligatorio && (
                         <span className="ml-1 text-destructive">*</span>
                     )}
@@ -486,59 +531,91 @@ function CampoInputForm({
                 )}
             </div>
 
-            <div className="space-y-2">
-                {(esDocumento || esMixto) && (
-                    <input
-                        type="file"
-                        accept={
-                            fila.formatosAceptados
-                                ? fila.formatosAceptados
-                                      .map((f) => `.${f}`)
-                                      .join(',')
-                                : undefined
-                        }
-                        onChange={(e) => {
-                            const archivo = e.target.files?.[0] ?? null;
-                            form.setData('archivo', archivo);
-                            form.setData('modo', archivo ? 'archivo' : 'texto');
-                        }}
-                        className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border file:bg-background file:px-3 file:py-1.5 file:text-sm"
-                    />
-                )}
-
-                {!esDocumento && <CampoValorInput fila={fila} form={form} />}
-
-                <div className="flex items-center gap-2">
-                    <Button
-                        type="button"
-                        size="sm"
-                        onClick={enviar}
-                        disabled={form.processing}
-                    >
-                        {form.processing
-                            ? t('portalFormulario.guardando')
-                            : t('common.save')}
-                    </Button>
-
-                    {!fila.obligatorio && (
+            {necesitaConfirmacion && !confirmado && (
+                <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                        {preguntaConfirmacionDocumento(t, fila.campo)}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => setConfirmado(true)}
+                        >
+                            {t('common.yes')}
+                        </Button>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={marcarNoAplica}
+                        >
+                            {t('common.no')}
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {confirmado && (
+                <div className="space-y-2">
+                    {(esDocumento || esMixto) && (
+                        <input
+                            type="file"
+                            accept={
+                                fila.formatosAceptados
+                                    ? fila.formatosAceptados
+                                          .map((f) => `.${f}`)
+                                          .join(',')
+                                    : undefined
+                            }
+                            onChange={(e) => {
+                                const archivo = e.target.files?.[0] ?? null;
+                                form.setData('archivo', archivo);
+                                form.setData(
+                                    'modo',
+                                    archivo ? 'archivo' : 'texto',
+                                );
+                            }}
+                            className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border file:bg-background file:px-3 file:py-1.5 file:text-sm"
+                        />
+                    )}
+
+                    {!esDocumento && (
+                        <CampoValorInput fila={fila} form={form} />
+                    )}
+
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={enviar}
                             disabled={form.processing}
                         >
-                            {t('portalFormulario.noAplica')}
+                            {form.processing
+                                ? t('portalFormulario.guardando')
+                                : t('common.save')}
                         </Button>
-                    )}
-                </div>
 
-                {Object.values(form.errors).map((error, i) => (
-                    <p key={i} className="text-sm text-destructive">
-                        {error}
-                    </p>
-                ))}
-            </div>
+                        {!fila.obligatorio && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={marcarNoAplica}
+                                disabled={form.processing}
+                            >
+                                {t('portalFormulario.noAplica')}
+                            </Button>
+                        )}
+                    </div>
+
+                    {Object.values(form.errors).map((error, i) => (
+                        <p key={i} className="text-sm text-destructive">
+                            {error}
+                        </p>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
@@ -574,7 +651,7 @@ function CampoValorInput({
                 {(fila.subcampos ?? []).map((subcampo) => (
                     <div key={subcampo}>
                         <label className="mb-1 block text-xs text-muted-foreground">
-                            {humanizarClave(subcampo)}
+                            {subcampoLabel(t, subcampo)}
                         </label>
                         <Input
                             value={valor[subcampo] ?? ''}
@@ -665,7 +742,7 @@ function CampoValorInput({
                             {(fila.subcampos ?? []).map((subcampo) => (
                                 <div key={subcampo}>
                                     <label className="mb-1 block text-xs text-muted-foreground">
-                                        {humanizarClave(subcampo)}
+                                        {subcampoLabel(t, subcampo)}
                                     </label>
                                     <Input
                                         value={item[subcampo] ?? ''}

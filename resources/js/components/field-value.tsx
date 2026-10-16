@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import { humanizarClave } from '@/lib/humanizar-clave';
+import { subcampoLabel } from '@/lib/catalogo-labels';
 
 /**
  * Renderiza cualquier valor guardado en CampoCliente.valor (string, number,
@@ -98,7 +98,7 @@ export function FieldValue({ value }: { value: unknown }) {
                 {entries.map(([k, v]) => (
                     <Fragment key={k}>
                         <dt className="text-xs font-medium text-muted-foreground sm:text-right">
-                            {humanizarClave(k)}
+                            {subcampoLabel(t, k)}
                         </dt>
                         <dd className="text-sm">
                             <FieldValue value={v} />
