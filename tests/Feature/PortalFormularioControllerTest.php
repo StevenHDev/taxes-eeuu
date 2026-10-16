@@ -9,6 +9,7 @@ use App\Models\CampoCliente;
 use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\User;
+use App\Support\TaxFieldCatalog;
 use Database\Seeders\PromptActivoStepsSeeder;
 use Database\Seeders\RelacionesDocumentoCampoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -391,6 +392,16 @@ class PortalFormularioControllerTest extends TestCase
         $rutaPdf = $this->crearPdfConTexto('Box 2 Federal income tax withheld: 1500.00');
         $archivo = new UploadedFile($rutaPdf, 'w2.pdf', 'application/pdf', test: true);
 
+        // RevelacionExtractorService identifica cada hallazgo por `id`
+        // (posición en TaxFieldCatalog::revelaPara(), no por el nombre del
+        // campo — ver su docblock) desde el fix del bug de producción donde
+        // varias relaciones hacia el mismo campo-destino colapsaban entre
+        // sí (ej. las 3 columnas del 1095-A). Se busca el id real en vez de
+        // hardcodear una posición para no depender del orden de
+        // RelacionesDocumentoCampoSeeder.
+        $idImpuestosRetenidos = collect(TaxFieldCatalog::revelaPara(self::TAX_YEAR, 'w2'))
+            ->search(fn (array $r) => $r['campo'] === 'impuestos_retenidos');
+
         Http::fake([
             'api.openai.com/*' => Http::response($this->respuestaOpenAi([
                 'role' => 'assistant',
@@ -401,7 +412,7 @@ class PortalFormularioControllerTest extends TestCase
                         'name' => 'registrar_revelados',
                         'arguments' => json_encode([
                             'revelados' => [
-                                ['campo' => 'impuestos_retenidos', 'contenido' => '1500'],
+                                ['id' => (string) $idImpuestosRetenidos, 'contenido' => '1500'],
                             ],
                         ]),
                     ],
