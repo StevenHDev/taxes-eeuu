@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DocumentoViewerDialog } from '@/components/documento-viewer-dialog';
 import { FieldValue } from '@/components/field-value';
 import { PortalChatPanel } from '@/components/portal-chat-panel';
 import { Button } from '@/components/ui/button';
@@ -373,13 +374,18 @@ function CampoFormField({
                 {fila.estado === 'recibido' && (
                     <div className="mt-1.5 flex items-center justify-between gap-2 text-sm">
                         {fila.documento ? (
-                            <a
-                                href={fila.documento.download_url}
-                                className="inline-flex items-center gap-1.5 text-primary hover:underline"
-                            >
-                                <FileDown className="size-3.5" />
-                                {fila.documento.file_original_name}
-                            </a>
+                            <DocumentoViewerDialog
+                                documento={fila.documento}
+                                trigger={
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center gap-1.5 truncate text-primary hover:underline"
+                                    >
+                                        <FileDown className="size-3.5 shrink-0" />
+                                        {fila.documento.file_original_name}
+                                    </button>
+                                }
+                            />
                         ) : (
                             <FieldValue value={fila.valorActual} />
                         )}

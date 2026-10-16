@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { DeterminacionFiscalPanel } from '@/components/determinacion-fiscal-panel';
+import { DocumentoViewerDialog } from '@/components/documento-viewer-dialog';
 import { FieldValue } from '@/components/field-value';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,13 +74,18 @@ function CampoRow({ campo }: { campo: CampoCliente }) {
             {campo.estado === 'recibido' && (
                 <div className="mt-1.5 text-sm">
                     {campo.documento ? (
-                        <a
-                            href={campo.documento.download_url}
-                            className="inline-flex items-center gap-1.5 text-primary hover:underline"
-                        >
-                            <FileDown className="size-3.5" />
-                            {campo.documento.file_original_name}
-                        </a>
+                        <DocumentoViewerDialog
+                            documento={campo.documento}
+                            trigger={
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1.5 truncate text-primary hover:underline"
+                                >
+                                    <FileDown className="size-3.5 shrink-0" />
+                                    {campo.documento.file_original_name}
+                                </button>
+                            }
+                        />
                     ) : (
                         <FieldValue value={campo.valor} />
                     )}
