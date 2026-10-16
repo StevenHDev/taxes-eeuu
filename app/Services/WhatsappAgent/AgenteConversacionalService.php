@@ -397,7 +397,7 @@ class AgenteConversacionalService
 
         return $yaCompartido
             ? 'Ya le compartiste el link del portal antes en esta conversación — no lo repitas de nuevo salvo que el cliente lo pida explícitamente.'
-            : "Todavía no le has compartido el link del portal seguro en esta conversación. Inclúyelo tal cual en tu respuesta de este turno, junto con una explicación breve y cálida de qué es y qué debe hacer ahí: {$link}";
+            : "Todavía no le has compartido el link del portal seguro en esta conversación. Inclúyelo tal cual en tu respuesta de este turno, junto con una explicación breve y cálida de qué es y qué debe hacer ahí. Menciona también que le llegó (o le va a llegar en breve) un correo aparte para definir la contraseña de su cuenta — sin ese paso, este link solo lo va a mandar a una pantalla de inicio de sesión sin contraseña que usar: {$link}";
     }
 
     /**
