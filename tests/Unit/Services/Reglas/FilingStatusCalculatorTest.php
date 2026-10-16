@@ -12,9 +12,7 @@ class FilingStatusCalculatorTest extends TestCase
     {
         return array_merge([
             'casado_al_31_dic' => false,
-            'convivio_conyuge_ultimos_6_meses' => false,
             'costeo_mas_mitad_hogar' => false,
-            'existe_persona_calificable' => false,
             'conyuge_fallecio_en_anio' => false,
             'anio_fallecimiento_conyuge' => null,
         ], $overrides);

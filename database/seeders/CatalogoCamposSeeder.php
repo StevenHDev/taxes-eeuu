@@ -85,11 +85,18 @@ class CatalogoCamposSeeder extends Seeder
         return [
             $this->campo('identificacion_ssn_itin', FieldKind::Dato, tipoDato: FieldDataType::String, sensible: true, unicoPorCliente: true),
             $this->campo('info_conyuge', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: ['nombre_completo', 'fecha_nacimiento', 'ssn'], sensible: true, unicoPorCliente: true),
+            // obligatorio:false a propósito (2026-09-25, observación #1 de
+            // observacionesFormulario.md): al ser array_object, un cliente sin
+            // dependientes no tenía forma de guardarlo — el botón "No aplica"
+            // solo se muestra en campos no obligatorios, y un array vacío no
+            // sobrevive la serialización multipart del formulario del portal
+            // (quedaba rechazado con "The contenido field must be present").
+            // Mismo bug que w2/form_1099_nec más abajo.
             $this->campo('info_dependientes', FieldKind::Dato, tipoDato: FieldDataType::ArrayObject, subcampos: [
                 'nombre_completo', 'fecha_nacimiento', 'ssn',
                 'relacion', 'meses_en_hogar', 'estudiante_tiempo_completo', 'discapacitado',
                 'provee_mas_50_soporte_propio', 'ingreso_bruto_anual', 'custodia_compartida_sin_conflicto',
-            ], sensible: true, unicoPorCliente: true),
+            ], obligatorio: false, sensible: true, unicoPorCliente: true),
             // obligatorio:false a propósito (2026-09-24): no todo cliente tiene
             // empleo W-2 o ingresos 1099-NEC — antes, al ser obligatorios, un
             // cliente sin ninguno de los dos quedaba trabado para siempre
@@ -107,9 +114,18 @@ class CatalogoCamposSeeder extends Seeder
             // ya cubrían el caso de viudez. En instalaciones ya provisionadas
             // (producción), esta fila ya existe — ver migración
             // 2026_09_18_200000_fase3a_agrega_cambio_estado_civil_en_anio.php.
+            // convivio_conyuge_ultimos_6_meses/existe_persona_calificable se
+            // quitaron (2026-09-25, observaciones #2 y #3 de
+            // observacionesFormulario.md): ninguno de los dos se lee en
+            // ningún cálculo — FilingStatusCalculator nunca los consulta, y
+            // DependentQualificationCalculator calcula "existe un dependiente
+            // calificado" de forma independiente a partir de
+            // info_dependientes a propósito, para no confiar en el flag
+            // auto-reportado. Ver migración
+            // 2026_09_25_090100_estado_civil_quita_subcampos_muertos.php.
             $this->campo('estado_civil', FieldKind::Dato, tipoDato: FieldDataType::Object, subcampos: [
-                'casado_al_31_dic', 'convivio_conyuge_ultimos_6_meses', 'costeo_mas_mitad_hogar',
-                'existe_persona_calificable', 'conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge',
+                'casado_al_31_dic', 'costeo_mas_mitad_hogar',
+                'conyuge_fallecio_en_anio', 'anio_fallecimiento_conyuge',
                 'se_caso_en_anio', 'se_divorcio_o_separo_en_anio',
             ], unicoPorCliente: true),
             // Fase 1 del plan de cierre de brecha GTS (compliance crítico P1,

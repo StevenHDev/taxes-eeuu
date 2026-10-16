@@ -67,8 +67,8 @@ class ClientesDemoSeeder extends Seeder
             'custodia_compartida_sin_conflicto' => false,
         ]]);
         $this->dato($eventos, $cliente, $preparador, 'transversal', 'estado_civil', FieldDataType::Object, [
-            'casado_al_31_dic' => true, 'convivio_conyuge_ultimos_6_meses' => true, 'costeo_mas_mitad_hogar' => true,
-            'existe_persona_calificable' => true, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
+            'casado_al_31_dic' => true, 'costeo_mas_mitad_hogar' => true,
+            'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
         ]);
         $this->documento($eventos, $cliente, $preparador, 'transversal', 'w2', 'w2-ana.pdf', 'w2-ana-contenido-unico');
         $this->documento($eventos, $cliente, $preparador, 'transversal', 'form_1099_nec', '1099-ana.pdf', '1099-ana-contenido-unico');
@@ -106,8 +106,8 @@ class ClientesDemoSeeder extends Seeder
 
         $this->dato($eventos, $cliente, $preparador, 'transversal', 'identificacion_ssn_itin', FieldDataType::String, '900-45-6789');
         $this->dato($eventos, $cliente, $preparador, 'transversal', 'estado_civil', FieldDataType::Object, [
-            'casado_al_31_dic' => false, 'convivio_conyuge_ultimos_6_meses' => false, 'costeo_mas_mitad_hogar' => true,
-            'existe_persona_calificable' => false, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
+            'casado_al_31_dic' => false, 'costeo_mas_mitad_hogar' => true,
+            'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
         ]);
         // info_conyuge, info_dependientes, w2 y form_1099_nec quedan sin cargar
         // a propósito — es el caso "en progreso".
@@ -142,8 +142,8 @@ class ClientesDemoSeeder extends Seeder
         // SSN mal formado (regla real de validación: 9 dígitos) → estado inválido.
         $this->dato($eventos, $cliente, $preparador, 'transversal', 'identificacion_ssn_itin', FieldDataType::String, 'no-es-un-ssn');
         $this->dato($eventos, $cliente, $preparador, 'transversal', 'estado_civil', FieldDataType::Object, [
-            'casado_al_31_dic' => false, 'convivio_conyuge_ultimos_6_meses' => false, 'costeo_mas_mitad_hogar' => true,
-            'existe_persona_calificable' => false, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
+            'casado_al_31_dic' => false, 'costeo_mas_mitad_hogar' => true,
+            'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
         ]);
         // Mismo contenido que el w2 de Ana Completo — duplicado cruzado entre clientes.
         $this->documento($eventos, $cliente, $preparador, 'transversal', 'w2', 'w2-beatriz.pdf', 'w2-ana-contenido-unico');

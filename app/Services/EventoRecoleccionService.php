@@ -806,15 +806,20 @@ class EventoRecoleccionService
     {
         $opcionales = self::SUBCAMPOS_OPCIONALES[$campo] ?? [];
 
-        // estado_civil: convivio_conyuge_ultimos_6_meses/costeo_mas_mitad_hogar/
-        // existe_persona_calificable solo tienen sentido preguntarlos si el
-        // cliente SÍ está casado — un soltero no debe quedar bloqueado por
-        // faltarle esos 3 (encontrado en producción 2026-09-24: el formulario
-        // del portal marcaba inválido a un cliente soltero por esto, ya que
-        // CampoValorInput los muestra igual pero el cliente no tiene motivo
-        // para llenarlos).
-        if ($campo === 'estado_civil' && ! RespuestaSiNo::esAfirmativo($valor['casado_al_31_dic'] ?? false)) {
-            $opcionales = [...$opcionales, 'convivio_conyuge_ultimos_6_meses', 'costeo_mas_mitad_hogar', 'existe_persona_calificable'];
+        // estado_civil.costeo_mas_mitad_hogar: SOLO le importa a
+        // FilingStatusCalculator cuando el cliente NO está casado (es la
+        // pregunta de Head of Household / Qualifying Surviving Spouse — ver
+        // FilingStatusCalculator::calcular(), nunca se lee en la rama MFJ).
+        // Corregido 2026-09-25 (observación #2 de observacionesFormulario.md):
+        // la versión anterior de este chequeo hacía exactamente lo
+        // contrario — volvía este subcampo opcional para un cliente SOLTERO,
+        // que es justo el caso en el que sí se necesita, permitiendo que el
+        // formulario del portal guardara "Recibido" sin la info necesaria
+        // para calcular Head of Household, y el cálculo caía siempre en
+        // "Single" en silencio. Para un cliente casado sigue siendo
+        // opcional, porque el cálculo nunca lo consulta en ese caso.
+        if ($campo === 'estado_civil' && RespuestaSiNo::esAfirmativo($valor['casado_al_31_dic'] ?? false)) {
+            $opcionales = [...$opcionales, 'costeo_mas_mitad_hogar'];
         }
 
         foreach ($subcampos ?? [] as $subcampo) {

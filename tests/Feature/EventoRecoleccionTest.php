@@ -242,8 +242,7 @@ class EventoRecoleccionTest extends TestCase
             'modo' => 'texto',
             'tipo_dato' => 'object',
             'contenido' => [
-                'casado_al_31_dic' => false, 'convivio_conyuge_ultimos_6_meses' => false,
-                'costeo_mas_mitad_hogar' => false, 'existe_persona_calificable' => true,
+                'casado_al_31_dic' => false, 'costeo_mas_mitad_hogar' => false,
             ],
         ])->assertCreated()->assertJsonPath('estado', 'recibido');
 
@@ -257,14 +256,14 @@ class EventoRecoleccionTest extends TestCase
             'tipo_campo' => 'dato',
             'modo' => 'texto',
             'tipo_dato' => 'object',
-            'contenido' => ['existe_persona_calificable' => false],
+            'contenido' => ['costeo_mas_mitad_hogar' => true],
         ])->assertCreated();
 
         $response->assertJsonPath('estado', 'recibido');
 
         $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'estado_civil')->first();
         $this->assertFalse($campo->valor['casado_al_31_dic']);
-        $this->assertFalse($campo->valor['existe_persona_calificable']);
+        $this->assertTrue($campo->valor['costeo_mas_mitad_hogar']);
     }
 
     /**
@@ -555,8 +554,8 @@ class EventoRecoleccionTest extends TestCase
             ]],
             ['campo' => 'info_dependientes', 'tipo_campo' => 'dato', 'tipo_dato' => 'array_object', 'contenido' => []],
             ['campo' => 'estado_civil', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
-                'casado_al_31_dic' => false, 'convivio_conyuge_ultimos_6_meses' => false, 'costeo_mas_mitad_hogar' => false,
-                'existe_persona_calificable' => false, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
+                'casado_al_31_dic' => false, 'costeo_mas_mitad_hogar' => false,
+                'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
             ]],
             ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => $this->ingresosPayload()],
             // Fase 4 del plan de cierre de brecha GTS: deducciones pasó de
@@ -743,8 +742,8 @@ class EventoRecoleccionTest extends TestCase
             ]],
             ['campo' => 'info_dependientes', 'tipo_campo' => 'dato', 'tipo_dato' => 'array_object', 'contenido' => []],
             ['campo' => 'estado_civil', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => [
-                'casado_al_31_dic' => false, 'convivio_conyuge_ultimos_6_meses' => false, 'costeo_mas_mitad_hogar' => false,
-                'existe_persona_calificable' => false, 'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
+                'casado_al_31_dic' => false, 'costeo_mas_mitad_hogar' => false,
+                'conyuge_fallecio_en_anio' => false, 'anio_fallecimiento_conyuge' => null,
             ]],
             ['campo' => 'ingresos', 'tipo_campo' => 'dato', 'tipo_dato' => 'object', 'contenido' => $this->ingresosPayload()],
             // Fase 4 del plan de cierre de brecha GTS: deducciones pasó de
@@ -1555,7 +1554,7 @@ class EventoRecoleccionTest extends TestCase
     }
 
     /**
-     * Bug real reportado en producción: un cliente soltero respondía las 4
+     * Bug real reportado en producción: un cliente soltero respondía las
      * preguntas de estado_civil que sí aplican, pero el agente nunca
      * pregunta (ni el prompt instruye rellenar con un valor neutro) los 2
      * subcampos de viudez — el objeto quedaba Invalido por faltarle esas 2
@@ -1578,9 +1577,7 @@ class EventoRecoleccionTest extends TestCase
             'tipo_dato' => 'object',
             'contenido' => [
                 'casado_al_31_dic' => false,
-                'convivio_conyuge_ultimos_6_meses' => false,
                 'costeo_mas_mitad_hogar' => true,
-                'existe_persona_calificable' => true,
             ],
         ]);
 
@@ -1589,15 +1586,18 @@ class EventoRecoleccionTest extends TestCase
     }
 
     /**
-     * Bug real reportado en producción (2026-09-24, formulario del portal):
-     * un cliente soltero solo respondió casado_al_31_dic (el formulario del
-     * portal no obliga a llenar cada casilla, a diferencia del agente de
-     * WhatsApp que sí pregunta las 4) — convivio_conyuge_ultimos_6_meses,
-     * costeo_mas_mitad_hogar y existe_persona_calificable son preguntas de
-     * determinación de filing status que solo tienen sentido si el cliente
-     * está casado, así que tampoco deben ser obligatorias para un soltero.
+     * Corregido 2026-09-25 (observación #2 de observacionesFormulario.md):
+     * costeo_mas_mitad_hogar es la pregunta de Head of Household /
+     * Qualifying Surviving Spouse — FilingStatusCalculator SOLO la lee
+     * cuando el cliente NO está casado (nunca en la rama MFJ). La versión
+     * anterior de este test (y del código que cubría) hacía lo contrario:
+     * volvía este subcampo opcional justo para el soltero que sí lo
+     * necesita, dejando que el formulario del portal guardara "Recibido"
+     * sin la info necesaria — el cálculo caía siempre en "Single" en
+     * silencio, sin que nadie lo notara. Ahora, para un soltero, falta este
+     * subcampo SÍ debe quedar Invalido.
      */
-    public function test_estado_civil_con_solo_casado_al_31_dic_es_valido_para_un_soltero(): void
+    public function test_estado_civil_de_un_soltero_sin_costeo_mas_mitad_hogar_es_invalido(): void
     {
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
@@ -1614,14 +1614,16 @@ class EventoRecoleccionTest extends TestCase
         ]);
 
         $response->assertCreated();
-        $response->assertJsonPath('estado', 'recibido');
+        $response->assertJsonPath('estado', 'invalido');
     }
 
     /**
-     * Control: un cliente CASADO sigue exigiendo esos 3 subcampos — el fix
-     * de arriba es condicional a casado_al_31_dic, no una relajación general.
+     * Control: un cliente CASADO no necesita costeo_mas_mitad_hogar — el
+     * cálculo de filing status nunca lo consulta en la rama MFJ (ver
+     * FilingStatusCalculator::calcular()), así que exigirlo solo bloquearía
+     * al cliente sin ningún beneficio para el cálculo real.
      */
-    public function test_estado_civil_casado_sin_los_3_subcampos_de_hoh_sigue_invalido(): void
+    public function test_estado_civil_de_un_casado_con_solo_casado_al_31_dic_es_valido(): void
     {
         $this->actingAsAgente();
         $cliente = User::factory()->create(['role' => UserRole::Client]);
@@ -1638,7 +1640,7 @@ class EventoRecoleccionTest extends TestCase
         ]);
 
         $response->assertCreated();
-        $response->assertJsonPath('estado', 'invalido');
+        $response->assertJsonPath('estado', 'recibido');
     }
 
     /**
@@ -1714,9 +1716,7 @@ class EventoRecoleccionTest extends TestCase
             'modo' => 'texto',
             'valor_texto' => [
                 'casado_al_31_dic' => false,
-                'convivio_conyuge_ultimos_6_meses' => false,
                 'costeo_mas_mitad_hogar' => true,
-                'existe_persona_calificable' => true,
             ],
             'estado' => 'invalido',
             'source' => 'agente_ia',
@@ -1743,9 +1743,7 @@ class EventoRecoleccionTest extends TestCase
 
         $contenido = [
             'casado_al_31_dic' => false,
-            'convivio_conyuge_ultimos_6_meses' => false,
             'costeo_mas_mitad_hogar' => true,
-            'existe_persona_calificable' => true,
             'conyuge_fallecio_en_anio' => false,
             'anio_fallecimiento_conyuge' => null,
         ];
