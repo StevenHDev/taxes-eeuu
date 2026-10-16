@@ -125,7 +125,11 @@ export function AppSidebar() {
                 <Link
                     href={dashboard()}
                     prefetch
-                    className="flex w-full items-center justify-center rounded-md px-1 py-1 group-data-[collapsible=icon]:px-0"
+                    // bg-white a propósito: el logo (logo.png/logo-mark.png) es azul
+                    // marino sobre fondo transparente — ahora que el sidebar es azul
+                    // (ver resources/css/app.css --sidebar), sin esta tarjeta blanca
+                    // quedaría casi invisible.
+                    className="flex w-full items-center justify-center rounded-md bg-white px-1 py-1 group-data-[collapsible=icon]:px-0"
                 >
                     <AppLogo />
                 </Link>

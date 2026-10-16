@@ -172,14 +172,22 @@
      * Para volver atrás alcanza con esta línea.
      */
     --radius: 0.5rem;
-    --sidebar: #ffffff;
-    --sidebar-foreground: #194569;
-    --sidebar-primary: #194569;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #dbeef0;
-    --sidebar-accent-foreground: #194569;
-    --sidebar-border: #c9d8e3;
-    --sidebar-ring: #194569;
+    /*
+     * Pedido explícito (ver conversación): el resto de la app es
+     * mayormente blanca, así que el sidebar pasa a ser el contraste —
+     * fondo azul de marca con texto blanco, en vez de fondo blanco con
+     * texto azul. El acento (hover/activo) es un azul más oscuro que el
+     * fondo para que siga siendo legible, mismo criterio que ya usa el
+     * modo oscuro de abajo.
+     */
+    --sidebar: #194569;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: #ffffff;
+    --sidebar-primary-foreground: #194569;
+    --sidebar-accent: color-mix(in oklch, #194569 70%, black);
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: color-mix(in oklch, #194569 40%, black);
+    --sidebar-ring: #dbeef0;
 }
 
 .dark {
