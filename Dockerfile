@@ -5,7 +5,7 @@
 # `php artisan wayfinder:generate` (plugin @laravel/vite-plugin-wayfinder),
 # así que necesita PHP y la app booteable durante la compilación del frontend.
 # ---------------------------------------------------------------------------
-FROM php:8.4-cli AS build
+FROM php:8.4.27-cli AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip libzip-dev libpq-dev libpng-dev libonig-dev ca-certificates curl gnupg \
@@ -45,7 +45,7 @@ RUN pnpm run build
 # ---------------------------------------------------------------------------
 # Stage 2: runtime — PHP-FPM + Nginx + Supervisord en un solo contenedor.
 # ---------------------------------------------------------------------------
-FROM php:8.4-fpm AS runtime
+FROM php:8.4.27-fpm AS runtime
 
 # poppler-utils (pdftoppm): rasteriza un PDF escaneado antes de mandarlo a
 # visión — ver App\Services\DocumentoExtraccion\DocumentoVisionExtractorService
