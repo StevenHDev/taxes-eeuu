@@ -8,7 +8,7 @@
 > - 🗑️ **Qué se elimina**: no se usa o no se necesita
 > - ➕ **Qué se agrega**: lo que falta
 >
-> Base: el código de `main` al 26 oct. (último cambio funcional: 16 oct.) y `docs/analisis-plataforma-vs-proceso-negocio.md`.
+> Base: el código de `main` al 26 oct. (último cambio funcional: 16 oct.) y `docs/mejora-plataforma/analisis-plataforma-vs-proceso-negocio.md`.
 
 | # | Punto del checklist | Estado |
 | --- | --- | --- |
