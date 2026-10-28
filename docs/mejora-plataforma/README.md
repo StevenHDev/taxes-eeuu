@@ -8,6 +8,9 @@ Aquí van los análisis, los ejemplos y las observaciones para mejorar la plataf
 | [`que-tiene-gts-hoy.md`](que-tiene-gts-hoy.md) | Validación de la plataforma actual: qué está mal, qué se elimina y qué se agrega (tarea Wipli 2) | 26 oct. 2026 |
 | [`revision-documento-analisis-diseno.md`](revision-documento-analisis-diseno.md) | Revisión del documento de análisis y diseño de Juan Pablo, con las observaciones de Steven y los puntos legales L1–L20 (tarea Wipli 3) | 27 oct. 2026 |
 | [`ejemplo-recoleccion-empleado-con-dependiente.md`](ejemplo-recoleccion-empleado-con-dependiente.md) | Ejemplo según el IRS: preguntas, anexos y líneas del 1040 para una empleada con un hijo | 27 oct. 2026 |
+| [`documento-madre.md`](documento-madre.md) | **Documento madre**: referencia única para hacer cambios en la plataforma (en construcción) | 28 oct. 2026 |
+| [`tareas-desarrollo.md`](tareas-desarrollo.md) | Tareas de desarrollo por fase con su checklist (iguales en Wiplitask) | 28 oct. 2026 |
+| [`fases/`](fases/) | Plan técnico de cada fase ("cómo programarlo") | 28 oct. 2026 |
 | [`modelo-para-firmas-contables-independientes.pdf`](modelo-para-firmas-contables-independientes.pdf) | Documento de análisis y diseño de Juan Pablo (copia local; no trae la sección 12) | 19 oct. 2026 |
 
 **Principio:** el IRS es la fuente de verdad sobre qué se pide, y el 1040 es el formulario "front". Los schedules y los documentos (W-2, 1099…) sirven para llenarlo.
