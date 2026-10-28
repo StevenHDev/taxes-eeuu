@@ -121,4 +121,19 @@ class ClienteFormasApiTest extends TestCase
 
         $this->assertDatabaseMissing('formas_cliente', ['user_id' => $cliente->id]);
     }
+
+    public function test_declarar_solo_un_schedule_agrega_el_1040_una_sola_vez(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        Sanctum::actingAs($admin, [ApiAbility::ClientesWrite->value]);
+
+        $this->postJson("/api/clientes/{$cliente->id}/formas", ['tax_year' => 2025, 'formas' => ['schedule_e']])->assertOk();
+        $this->postJson("/api/clientes/{$cliente->id}/formas", ['tax_year' => 2025, 'formas' => ['form_1040', 'schedule_e']])->assertOk();
+
+        $this->assertEqualsCanonicalizing(
+            ['form_1040', 'schedule_e'],
+            FormaCliente::query()->where('user_id', $cliente->id)->pluck('forma')->all(),
+        );
+    }
 }

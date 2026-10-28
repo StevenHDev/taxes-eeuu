@@ -60,11 +60,16 @@ class AgenteToolService
      * que ya esté completa si el agente vuelve a declarar formas más adelante
      * en la conversación (ej. el cliente menciona una situación adicional).
      *
+     * El 1040 se declara siempre: los Schedules C, E y F nunca se presentan
+     * solos, van adjuntos al 1040 (IRS), y el 1040 es el formulario "front".
+     *
      * @param  array<int, string>  $formas
      * @return array<string, mixed>
      */
     public function declararFormas(User $cliente, int $taxYear, array $formas): array
     {
+        $formas = array_values(array_unique([TaxForm::Form1040->value, ...$formas]));
+
         foreach ($formas as $forma) {
             FormaCliente::query()->firstOrCreate(
                 ['user_id' => $cliente->id, 'forma' => $forma, 'tax_year' => $taxYear],

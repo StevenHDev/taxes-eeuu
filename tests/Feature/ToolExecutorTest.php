@@ -103,6 +103,8 @@ class ToolExecutorTest extends TestCase
         ], $cliente, $this->actor);
 
         $this->assertDatabaseHas('formas_cliente', ['user_id' => $cliente->id, 'forma' => 'schedule_c', 'tax_year' => 2025]);
+        // Un schedule nunca va solo: el 1040 se declara siempre.
+        $this->assertDatabaseHas('formas_cliente', ['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025]);
         $this->assertSame(2025, $resultado['tax_year']);
         $this->assertFalse($resultado['completo']);
     }
