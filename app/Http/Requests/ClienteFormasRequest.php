@@ -44,7 +44,7 @@ class ClienteFormasRequest extends FormRequest
         return [
             'tax_year' => ['required', 'integer', 'digits:4'],
             'formas' => ['required', 'array', 'min:1'],
-            'formas.*' => ['required', 'distinct', Rule::in(array_map(fn (TaxForm $f) => $f->value, TaxForm::cases()))],
+            'formas.*' => ['required', 'distinct', Rule::in(TaxForm::valoresEnAlcance())],
         ];
     }
 

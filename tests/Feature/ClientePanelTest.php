@@ -560,4 +560,20 @@ class ClientePanelTest extends TestCase
                 ->where('derivationLogs.0.documento_nombre', 'w2.pdf')
                 ->has('derivationLogs.0.relaciones_faltantes', 1));
     }
+
+    public function test_el_listado_solo_ofrece_formas_en_alcance_pero_muestra_las_viejas_del_cliente(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1065', 'tax_year' => 2025, 'estado' => 'en_progreso']);
+
+        $this->actingAs($admin)
+            ->get(route('clientes.index', ['tax_year' => 2025]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('formas', fn ($formas) => collect($formas)->pluck('value')->all() === ['form_1040', 'schedule_c', 'schedule_e', 'schedule_f'])
+                ->where('clientes.0.formas.0.forma', 'form_1065'));
+
+        $this->actingAs($admin)->get(route('clientes.show', ['cliente' => $cliente, 'tax_year' => 2025]))->assertOk();
+    }
 }

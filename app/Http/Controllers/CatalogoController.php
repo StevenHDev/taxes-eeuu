@@ -53,7 +53,7 @@ class CatalogoController extends Controller
             'formas' => [
                 ['value' => CampoCatalogo::TRANSVERSAL, 'label' => 'Transversales (todas las formas)'],
                 ['value' => CampoCatalogo::DOCUMENTOS_EXTRA, 'label' => 'Documentos extra (siempre se piden)'],
-                ...array_map(fn (TaxForm $f) => ['value' => $f->value, 'label' => $f->label()], TaxForm::cases()),
+                ...array_map(fn (TaxForm $f) => ['value' => $f->value, 'label' => $f->label()], TaxForm::enAlcance()),
             ],
             'campos' => $campos,
             'taxYearActual' => $taxYear,

@@ -105,4 +105,20 @@ class ClienteFormasApiTest extends TestCase
             'formas' => ['form_1040'],
         ])->assertForbidden();
     }
+
+    public function test_una_forma_fuera_de_alcance_devuelve_422(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        Sanctum::actingAs($admin, [ApiAbility::ClientesWrite->value]);
+
+        $this->postJson("/api/clientes/{$cliente->id}/formas", [
+            'tax_year' => 2025,
+            'formas' => ['form_1040_nr'],
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['formas.0']);
+
+        $this->assertDatabaseMissing('formas_cliente', ['user_id' => $cliente->id]);
+    }
 }

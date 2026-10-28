@@ -11,6 +11,7 @@ use App\Models\RelacionDocumentoCampo;
 use App\Models\User;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class CatalogoPanelTest extends TestCase
@@ -199,5 +200,16 @@ class CatalogoPanelTest extends TestCase
             'obligatorio' => true,
             'sensible' => false,
         ])->assertForbidden();
+    }
+
+    public function test_el_catalogo_solo_ofrece_formas_en_alcance(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+
+        $this->actingAs($admin)
+            ->get(route('catalogo.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('formas', fn ($formas) => collect($formas)->pluck('value')->all() === ['transversal', 'documentos_extra', 'form_1040', 'schedule_c', 'schedule_e', 'schedule_f']));
     }
 }

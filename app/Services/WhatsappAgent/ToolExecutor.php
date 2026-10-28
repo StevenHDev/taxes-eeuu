@@ -4,6 +4,7 @@ namespace App\Services\WhatsappAgent;
 
 use App\DataTransferObjects\EventoRecoleccionData;
 use App\Enums\MetodoExtraccionDocumento;
+use App\Enums\TaxForm;
 use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\User;
@@ -114,6 +115,12 @@ class ToolExecutor
     {
         $taxYear = (int) ($argumentos['tax_year'] ?? 0);
         $formas = (array) ($argumentos['formas_aplicables'] ?? []);
+
+        $fueraDeAlcance = array_diff($formas, TaxForm::valoresEnAlcance());
+
+        if ($fueraDeAlcance !== []) {
+            return ['error' => 'Forma(s) fuera de alcance: '.implode(', ', $fueraDeAlcance).'. GlobalTax solo atiende declaraciones de persona natural (form_1040 y sus schedules C, E y F). Declara solo las formas en alcance y explícale al cliente con amabilidad que esa otra situación no la atendemos por este canal.'];
+        }
 
         return $this->tools->declararFormas($cliente, $taxYear, $formas);
     }

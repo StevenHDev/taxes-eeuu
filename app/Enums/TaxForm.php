@@ -15,6 +15,27 @@ enum TaxForm: string
     case Form990 = 'form_990';
     case Form1040Nr = 'form_1040_nr';
 
+    /**
+     * Formas que la plataforma ofrece hoy: solo persona natural (documento
+     * madre, E10). Schedule F sigue hasta que GTS responda P3. Las demás
+     * quedan en el enum para no romper datos ya guardados, pero no se
+     * ofrecen ni se aceptan en declaraciones nuevas.
+     *
+     * @return array<int, self>
+     */
+    public static function enAlcance(): array
+    {
+        return [self::Form1040, self::ScheduleC, self::ScheduleE, self::ScheduleF];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function valoresEnAlcance(): array
+    {
+        return array_map(fn (self $forma) => $forma->value, self::enAlcance());
+    }
+
     public function label(): string
     {
         return match ($this) {

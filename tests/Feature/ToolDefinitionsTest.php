@@ -78,4 +78,15 @@ class ToolDefinitionsTest extends TestCase
             }
         }
     }
+
+    public function test_declarar_formas_cliente_solo_ofrece_formas_de_persona_natural(): void
+    {
+        $declarar = collect(ToolDefinitions::paraFase(FaseConversacion::DeterminacionFormas))
+            ->firstWhere('function.name', 'declarar_formas_cliente');
+
+        $this->assertSame(
+            ['form_1040', 'schedule_c', 'schedule_e', 'schedule_f'],
+            $declarar['function']['parameters']['properties']['formas_aplicables']['items']['enum'],
+        );
+    }
 }

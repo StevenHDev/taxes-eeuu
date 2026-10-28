@@ -157,7 +157,7 @@ class ToolDefinitions
                         'tax_year' => ['type' => 'integer', 'description' => 'Año fiscal ya confirmado explícitamente con el cliente (nunca asumido).'],
                         'formas_aplicables' => [
                             'type' => 'array',
-                            'items' => ['type' => 'string', 'enum' => array_map(fn (TaxForm $f) => $f->value, TaxForm::cases())],
+                            'items' => ['type' => 'string', 'enum' => TaxForm::valoresEnAlcance()],
                             'description' => 'Una o más formas del IRS aplicables, según el árbol de determinación.',
                         ],
                     ],

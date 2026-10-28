@@ -83,7 +83,7 @@ class ClienteController extends Controller
             'clientes' => $clientes,
             'formas' => array_map(
                 fn (TaxForm $f) => ['value' => $f->value, 'label' => $f->label()],
-                TaxForm::cases(),
+                TaxForm::enAlcance(),
             ),
             'taxYearActual' => $taxYear,
         ]);
@@ -156,7 +156,13 @@ class ClienteController extends Controller
         // Por cada forma real, sus campos propios + transversales-por-forma que el
         // cliente aún no tiene cargados — excluyendo los únicos por cliente, que se
         // agregan una sola vez aparte (no por forma).
-        $disponiblePorForma = collect(TaxForm::cases())
+        // Formas en alcance más las que el cliente ya tenga declaradas (un
+        // cliente viejo con una forma fuera de alcance sigue pudiendo editarse).
+        $formasOfrecidas = collect(TaxForm::enAlcance())
+            ->concat($cliente->formasCliente->map(fn (FormaCliente $f) => TaxForm::tryFrom($f->forma))->filter())
+            ->unique(fn (TaxForm $forma) => $forma->value);
+
+        $disponiblePorForma = $formasOfrecidas
             ->flatMap(fn (TaxForm $forma) => collect(TaxFieldCatalog::fieldsFor($taxYear, $forma))
                 ->reject(fn (array $campo) => TaxFieldCatalog::isUnicoPorCliente($taxYear, $campo['campo'])
                     || $camposCargados->contains("{$forma->value}:{$campo['campo']}"))

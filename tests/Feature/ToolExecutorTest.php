@@ -99,10 +99,10 @@ class ToolExecutorTest extends TestCase
 
         $resultado = $this->tools->ejecutar('declarar_formas_cliente', [
             'tax_year' => 2025,
-            'formas_aplicables' => ['form_990'],
+            'formas_aplicables' => ['schedule_c'],
         ], $cliente, $this->actor);
 
-        $this->assertDatabaseHas('formas_cliente', ['user_id' => $cliente->id, 'forma' => 'form_990', 'tax_year' => 2025]);
+        $this->assertDatabaseHas('formas_cliente', ['user_id' => $cliente->id, 'forma' => 'schedule_c', 'tax_year' => 2025]);
         $this->assertSame(2025, $resultado['tax_year']);
         $this->assertFalse($resultado['completo']);
     }
@@ -249,5 +249,19 @@ class ToolExecutorTest extends TestCase
             'tax_year' => 2025,
             'respuesta_cliente' => 'Sí, confirmo que todo está completo',
         ]);
+    }
+
+    public function test_declarar_formas_cliente_rechaza_formas_fuera_de_alcance_sin_crear_nada(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $resultado = $this->tools->ejecutar('declarar_formas_cliente', [
+            'tax_year' => 2025,
+            'formas_aplicables' => ['form_1040', 'form_1065'],
+        ], $cliente, $this->actor);
+
+        $this->assertArrayHasKey('error', $resultado);
+        $this->assertStringContainsString('form_1065', $resultado['error']);
+        $this->assertDatabaseMissing('formas_cliente', ['user_id' => $cliente->id]);
     }
 }

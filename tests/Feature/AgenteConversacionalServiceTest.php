@@ -156,14 +156,14 @@ class AgenteConversacionalServiceTest extends TestCase
                     'tool_calls' => [
                         ['id' => 'call_1', 'type' => 'function', 'function' => [
                             'name' => 'declarar_formas_cliente',
-                            'arguments' => json_encode(['tax_year' => 2025, 'formas_aplicables' => ['form_990']]),
+                            'arguments' => json_encode(['tax_year' => 2025, 'formas_aplicables' => ['form_1040']]),
                         ]],
                     ],
                 ]))
                 ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Ya casi, ¿me confirmas tu SSN o ITIN?'])),
         ]);
 
-        $this->agente->responder($cliente, $this->historialCon('+15551234567', 'Soy una organización sin fines de lucro'), $this->actor);
+        $this->agente->responder($cliente, $this->historialCon('+15551234567', 'Soy empleado'), $this->actor);
 
         Http::assertSentCount(2);
 
