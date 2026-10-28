@@ -21,7 +21,7 @@
 | F0.3 | No borrar clientes ni documentos (conservar 3 años) | Alta | ⏳ | — |
 | F0.4 | Respaldo externo de base de datos y archivos | Alta | ⏳ | Destino del respaldo |
 | F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | ✅ | — |
-| F0.6 | Ocultar formas de empresas y 1040-NR | Media | 🔄 | — |
+| F0.6 | Ocultar formas de empresas y 1040-NR | Media | ✅ | — |
 | F1 | Catálogo fiscal del año | Alta | ⏳ | F0 |
 | F2 | Entrevista por WhatsApp y por el portal | Media | ⏳ | F1, L1, L3 |
 | F3 | Checklist de documentos | Media | ⏳ | F2 |
@@ -82,11 +82,12 @@ Wiplitask: `cmvskoepo006n1420ykum2tii` · ✅ (28 oct., commits `4b28169` y `20f
 - [x] Suite de Pest completa y `npm run build` sin errores
 
 ### F0.6 — Ocultar formas de empresas y 1040-NR
-Wiplitask: `cmvskoext006s1420xrxrb3hw` · 🔄
+Wiplitask: `cmvskoext006s1420xrxrb3hw` · ✅ (28 oct., commits `33cb991` y `367b5ef`, verificado en producción)
 - [x] `TaxForm::enAlcance()` (1040, Schedule C, E y F hasta respuesta de P3)
 - [x] Usarlo en ToolDefinitions, ClienteFormasRequest, CatalogoController y filtros de clientes (también en el ToolExecutor y en los campos que se pueden agregar en la ficha del cliente)
-- [ ] Actualizar y publicar el prompt `determinacion_formas`. Archivo actualizado; falta publicarlo en Agente → Prompts después del deploy
+- [x] Actualizar y publicar el prompt `determinacion_formas` (versión 2 publicada en producción el 28 oct.; la v1 queda guardada)
 - [x] Pruebas Pest (opciones en alcance; clientes viejos se siguen viendo)
+- [x] El 1040 se declara siempre junto a cualquier schedule (`AgenteToolService::declararFormas`)
 
 ---
 
@@ -110,6 +111,8 @@ Wiplitask: `cmvskovqv0072142046gi5vuk` · ⏳
 - [ ] Agente de WhatsApp reescrito sobre el catálogo (requiere L3)
 - [ ] Confirmación del cliente en el portal; reemplazar E5 y E6
 - [ ] Prueba: María empieza por WhatsApp y termina en el portal sin repetir
+- [ ] Ingresos en selección múltiple en un solo paso (hoy el árbol pregunta la fuente principal y luego "¿algo más?" una por una)
+- [ ] Socio de LLC o S-corp: la empresa no se atiende, pero su K-1 personal sí (1040 + Schedule E). Hoy el prompt le dice "no lo atendemos" (visto al cerrar F0.6)
 
 ### F3 — Checklist de documentos
 Wiplitask: `cmvskovx900771420nj5xy1du` · ⏳
