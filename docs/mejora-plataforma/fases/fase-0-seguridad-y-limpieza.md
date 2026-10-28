@@ -116,7 +116,7 @@ El IRS exige conservar 3 años (§6107 y Form 8867, L12).
 
 | Ítem | Qué se borra | Ajustes |
 | --- | --- | --- |
-| E1 | **Sin migrar el historial de n8n (decisión de Steven, 28 oct.).** `SupabaseWhatsappConversationService`; config `services.supabase`; variables `SUPABASE_*`, `VITE_SUPABASE_*`, `WHATSAPP_SUPABASE_TABLE_PATTERN` | `ClienteController` deja de inyectarlo y la conversación se arma solo con `WhatsappMensaje`; actualizar `WhatsappConversacionTest`. Quitar las credenciales también en producción |
+| E1 | **Sin migrar el historial de n8n (decisión de Steven, 28 oct.).** `SupabaseWhatsappConversationService`; config `services.supabase`; variables `SUPABASE_*`, `VITE_SUPABASE_*`, `WHATSAPP_SUPABASE_TABLE_PATTERN` | `ClienteController` deja de inyectarlo y la conversación se arma solo con `WhatsappMensaje`; actualizar `WhatsappConversacionTest`. Las variables del `.env` de producción no se tocan (decisión de Steven) |
 | ~~E2~~ | ~~`ClientIntakeSession`~~ | **Pospuesto (28 oct.):** la usa `/api/eventos` (E3) para no duplicar clientes por `external_ref`. Se quita junto con E3 |
 | E4 | `app/Services/Whatsapp/Meta/*`, config `services.meta` y `services.whatsapp.provider`, variables `META_*` y `WHATSAPP_PROVIDER` | `WhatsappChannel` se enlaza directo a Twilio; se quita `manejarHandshake` y el GET del webhook (solo lo usaba Meta); borrar `MetaChannelTest` y `MetaWebhookTest`; ajustar comentarios |
 | E7 | `prompt_actuales/promptBase.md`, `prompt_actuales/especialista_recoleccion.md`, `docs/prompt.md` | — |
@@ -146,7 +146,7 @@ El IRS exige conservar 3 años (§6107 y Form 8867, L12).
 3. Correr migraciones (`deleted_at`, `cifrado`, eliminación de `client_intake_sessions`).
 4. Correr `php artisan documentos:cifrar-existentes`.
 5. Publicar el prompt actualizado (0.6).
-6. Quitar del `.env` de producción `VITE_SUPABASE_*`, `WHATSAPP_SUPABASE_TABLE_PATTERN` y `META_*`.
+6. ~~Quitar del `.env` de producción las variables de Supabase y Meta~~. Decisión de Steven (28 oct.): no se tocan; el código ya no las lee.
 7. Configurar y **probar la restauración** del respaldo (0.4).
 
 ## Listo cuando

@@ -20,8 +20,8 @@
 | F0.2 | Cifrar los archivos de los documentos | Alta | ⏳ | — |
 | F0.3 | No borrar clientes ni documentos (conservar 3 años) | Alta | ⏳ | — |
 | F0.4 | Respaldo externo de base de datos y archivos | Alta | ⏳ | Destino del respaldo |
-| F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | 👀 | — |
-| F0.6 | Ocultar formas de empresas y 1040-NR | Media | ⏳ | — |
+| F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | ✅ | — |
+| F0.6 | Ocultar formas de empresas y 1040-NR | Media | 🔄 | — |
 | F1 | Catálogo fiscal del año | Alta | ⏳ | F0 |
 | F2 | Entrevista por WhatsApp y por el portal | Media | ⏳ | F1, L1, L3 |
 | F3 | Checklist de documentos | Media | ⏳ | F2 |
@@ -73,8 +73,8 @@ Wiplitask: `cmvskoeiu006i1420ig6gyty7` · ⏳
 - [ ] Prueba de restauración en un ambiente aparte
 
 ### F0.5 — Eliminar código muerto
-Wiplitask: `cmvskoepo006n1420ykum2tii` · 👀
-- [ ] E1: quitar Supabase (servicio, config, variables y credenciales en producción). Código quitado (28 oct., decisión de Steven: sin migrar el historial de n8n); falta borrar `SUPABASE_*` del `.env` de producción después del despliegue
+Wiplitask: `cmvskoepo006n1420ykum2tii` · ✅ (28 oct., commits `4b28169` y `20f7ef0`, verificado en producción)
+- [x] E1: quitar Supabase (servicio, config y variables). Sin migrar el historial de n8n; las variables del `.env` de producción no se tocan (decisiones de Steven, 28 oct.)
 - [ ] ~~E2: quitar ClientIntakeSession (modelo, tabla y uso)~~ ⏸ Se quita junto con E3 (decisión de Steven, 28 oct.): la usa `/api/eventos` para no duplicar clientes
 - [x] E4: quitar el proveedor Meta de WhatsApp (código, config, pruebas y webhook)
 - [x] E7 y E8: prompts viejos y página de bienvenida
@@ -82,11 +82,11 @@ Wiplitask: `cmvskoepo006n1420ykum2tii` · 👀
 - [x] Suite de Pest completa y `npm run build` sin errores
 
 ### F0.6 — Ocultar formas de empresas y 1040-NR
-Wiplitask: `cmvskoext006s1420xrxrb3hw` · ⏳
-- [ ] `TaxForm::enAlcance()` (1040, Schedule C, E y F hasta respuesta de P3)
-- [ ] Usarlo en ToolDefinitions, ClienteFormasRequest, CatalogoController y filtros de clientes
-- [ ] Actualizar y publicar el prompt `determinacion_formas`
-- [ ] Pruebas Pest (opciones en alcance; clientes viejos se siguen viendo)
+Wiplitask: `cmvskoext006s1420xrxrb3hw` · 🔄
+- [x] `TaxForm::enAlcance()` (1040, Schedule C, E y F hasta respuesta de P3)
+- [x] Usarlo en ToolDefinitions, ClienteFormasRequest, CatalogoController y filtros de clientes (también en el ToolExecutor y en los campos que se pueden agregar en la ficha del cliente)
+- [ ] Actualizar y publicar el prompt `determinacion_formas`. Archivo actualizado; falta publicarlo en Agente → Prompts después del deploy
+- [x] Pruebas Pest (opciones en alcance; clientes viejos se siguen viendo)
 
 ---
 
