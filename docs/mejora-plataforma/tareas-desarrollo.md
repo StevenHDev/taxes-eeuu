@@ -20,7 +20,7 @@
 | F0.2 | Cifrar los archivos de los documentos | Alta | ⏳ | — |
 | F0.3 | No borrar clientes ni documentos (conservar 3 años) | Alta | ⏳ | — |
 | F0.4 | Respaldo externo de base de datos y archivos | Alta | ⏳ | Destino del respaldo |
-| F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | ⏳ | — |
+| F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | 👀 | — |
 | F0.6 | Ocultar formas de empresas y 1040-NR | Media | ⏳ | — |
 | F1 | Catálogo fiscal del año | Alta | ⏳ | F0 |
 | F2 | Entrevista por WhatsApp y por el portal | Media | ⏳ | F1, L1, L3 |
@@ -36,7 +36,7 @@ Orden sugerido dentro de la fase 0: F0.5 → F0.6 → F0.3 → F0.2 → F0.1 →
 
 ## Fase 0 — Seguridad y limpieza
 
-Plan técnico: [`fases/fase-0-seguridad-y-limpieza.md`](fases/fase-0-seguridad-y-limpieza.md) · 👀 En revisión
+Plan técnico: [`fases/fase-0-seguridad-y-limpieza.md`](fases/fase-0-seguridad-y-limpieza.md) · ✅ Aprobado (28 oct.)
 
 ### F0.1 — MFA obligatorio para preparadores y administradores
 Wiplitask: `cmvskodtw00631420q3excvau` · ⏳
@@ -73,13 +73,13 @@ Wiplitask: `cmvskoeiu006i1420ig6gyty7` · ⏳
 - [ ] Prueba de restauración en un ambiente aparte
 
 ### F0.5 — Eliminar código muerto
-Wiplitask: `cmvskoepo006n1420ykum2tii` · ⏳
-- [ ] E1: quitar Supabase (servicio, config, variables y credenciales en producción)
-- [ ] E2: quitar ClientIntakeSession (modelo, tabla y uso)
-- [ ] E4: quitar el proveedor Meta de WhatsApp (código, config, pruebas y webhook)
-- [ ] E7 y E8: prompts viejos y página de bienvenida
-- [ ] E15: `laravel/chisel` a require-dev o quitarla
-- [ ] Suite de Pest completa y `npm run build` sin errores
+Wiplitask: `cmvskoepo006n1420ykum2tii` · 👀
+- [ ] E1: quitar Supabase (servicio, config, variables y credenciales en producción). Código quitado (28 oct., decisión de Steven: sin migrar el historial de n8n); falta borrar `SUPABASE_*` del `.env` de producción después del despliegue
+- [ ] ~~E2: quitar ClientIntakeSession (modelo, tabla y uso)~~ ⏸ Se quita junto con E3 (decisión de Steven, 28 oct.): la usa `/api/eventos` para no duplicar clientes
+- [x] E4: quitar el proveedor Meta de WhatsApp (código, config, pruebas y webhook)
+- [x] E7 y E8: prompts viejos y página de bienvenida
+- [x] E15: `laravel/chisel` a require-dev o quitarla (se quitó)
+- [x] Suite de Pest completa y `npm run build` sin errores
 
 ### F0.6 — Ocultar formas de empresas y 1040-NR
 Wiplitask: `cmvskoext006s1420xrxrb3hw` · ⏳
@@ -150,5 +150,5 @@ Wiplitask: `cmvskowpm007r1420cq7e3zse` · ⏳
 - [ ] Transcripciones del IRS con Form 8821
 - [ ] Precarga del año anterior para clientes que vuelven
 - [ ] Meta-agente sobre el chat del portal y base de conocimiento con fuentes del IRS
-- [ ] Decidir E3 (API externa), E9 (Proceso) y E11 (Schedule F)
+- [ ] Decidir E3 (API externa, con E2 `ClientIntakeSession`), E9 (Proceso) y E11 (Schedule F)
 - [ ] Varias firmas (cuando el proceso esté validado con GTS)

@@ -1,6 +1,6 @@
 # Fase 0 — Seguridad y limpieza: plan técnico
 
-28 oct. 2026 · **En revisión** (pendiente de aprobación de Steven) · Documento madre: [secciones 8 y 9](../documento-madre.md)
+28 oct. 2026 · **Aprobado** por Steven (28 oct.) · Documento madre: [secciones 8 y 9](../documento-madre.md)
 
 > **Objetivo:** que producción cumpla los mínimos de seguridad de la sección 8.5 (prioridad 1) y que no quede código muerto de n8n ni de Meta. **No cambia el proceso ni las pantallas del cliente.**
 >
@@ -116,9 +116,9 @@ El IRS exige conservar 3 años (§6107 y Form 8867, L12).
 
 | Ítem | Qué se borra | Ajustes |
 | --- | --- | --- |
-| E1 | `SupabaseWhatsappConversationService`; config `services.supabase`; variables `SUPABASE_*`, `VITE_SUPABASE_*`, `WHATSAPP_SUPABASE_TABLE_PATTERN` | `ClienteController` deja de inyectarlo y la conversación se arma solo con `WhatsappMensaje`; actualizar `WhatsappConversacionTest`. Quitar las credenciales también en producción |
-| E2 | `ClientIntakeSession` (modelo y tabla, con migración que la elimina) | Quitar su uso en `EventoRecoleccionService`; actualizar `EventoRecoleccionTest` |
-| E4 | `app/Services/Whatsapp/Meta/*`, config `services.meta`, la opción `meta` del proveedor en `AppServiceProvider` | Borrar `MetaChannelTest` y `MetaWebhookTest`; quitar la ruta del webhook de Meta; ajustar comentarios en `TelefonoWhatsapp` y `User` |
+| E1 | **Sin migrar el historial de n8n (decisión de Steven, 28 oct.).** `SupabaseWhatsappConversationService`; config `services.supabase`; variables `SUPABASE_*`, `VITE_SUPABASE_*`, `WHATSAPP_SUPABASE_TABLE_PATTERN` | `ClienteController` deja de inyectarlo y la conversación se arma solo con `WhatsappMensaje`; actualizar `WhatsappConversacionTest`. Quitar las credenciales también en producción |
+| ~~E2~~ | ~~`ClientIntakeSession`~~ | **Pospuesto (28 oct.):** la usa `/api/eventos` (E3) para no duplicar clientes por `external_ref`. Se quita junto con E3 |
+| E4 | `app/Services/Whatsapp/Meta/*`, config `services.meta` y `services.whatsapp.provider`, variables `META_*` y `WHATSAPP_PROVIDER` | `WhatsappChannel` se enlaza directo a Twilio; se quita `manejarHandshake` y el GET del webhook (solo lo usaba Meta); borrar `MetaChannelTest` y `MetaWebhookTest`; ajustar comentarios |
 | E7 | `prompt_actuales/promptBase.md`, `prompt_actuales/especialista_recoleccion.md`, `docs/prompt.md` | — |
 | E8 | `resources/js/pages/welcome.tsx` y sus textos en `es.json`/`en.json` | — |
 | E15 | `laravel/chisel` | Pasarla a `require-dev` (la usan los marcadores de `resources/js/types/auth.ts`) o quitar los marcadores y la dependencia |
@@ -146,7 +146,7 @@ El IRS exige conservar 3 años (§6107 y Form 8867, L12).
 3. Correr migraciones (`deleted_at`, `cifrado`, eliminación de `client_intake_sessions`).
 4. Correr `php artisan documentos:cifrar-existentes`.
 5. Publicar el prompt actualizado (0.6).
-6. Quitar las credenciales de Supabase y Meta del `.env` de producción.
+6. Quitar del `.env` de producción `VITE_SUPABASE_*`, `WHATSAPP_SUPABASE_TABLE_PATTERN` y `META_*`.
 7. Configurar y **probar la restauración** del respaldo (0.4).
 
 ## Listo cuando
@@ -160,7 +160,7 @@ El IRS exige conservar 3 años (§6107 y Form 8867, L12).
 
 ## Fuera de esta fase
 
-- E3 (API del agente externo): espera a confirmar que nadie usa un token (T-a).
+- E3 (API del agente externo) y E2 (`ClientIntakeSession`, que la usa): esperan a confirmar que nadie usa un token (T-a).
 - E9 (panel "Proceso"): espera la decisión T-g.
 - E11 (Schedule F): espera P3.
 - MFA para clientes: espera L9.
