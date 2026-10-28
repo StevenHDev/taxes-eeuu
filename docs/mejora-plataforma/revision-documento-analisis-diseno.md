@@ -339,7 +339,7 @@ El flujo que se espera es **entender → preguntar → pedir → llenar → 1040
 | Dentro: 1040 de residentes (PN-1; PN-2 y PN-3 de bajo volumen) | ✅ Coincide con el alcance de Steven. ❓ Para GTS el PN-2 (Schedule C) **no** es de bajo volumen: entra completo |
 | Dentro: 1120-S y 1120 + F-1120; QuickBooks; F3 | ❌ Fuera por decisión de Steven (solo persona natural) |
 | Fuera: 1040-NR y multiestado | ✅ Coincide con lo propuesto en la tarea 2 (quitar el 1040-NR), pendiente de que GTS confirme |
-| **Roles:** dueño, preparador (solo sus clientes), **asistente** (sin SSN completo, sin exportar), cliente, **soporte del proveedor** (sin acceso salvo autorización temporal registrada) | 🟡 Hay 3 roles (cliente, preparador, administrador). ➕ No hay **asignación de clientes a un preparador**: todos ven a todos. ➕ El rol de soporte "sin acceso salvo autorización" es justo lo que pide §7216 para el equipo de desarrollo (bloque 4). ❓ ¿GTS tiene asistentes? |
+| **Roles:** dueño, preparador (solo sus clientes), **asistente** (sin SSN completo, sin exportar), cliente, **soporte del proveedor** (sin acceso salvo autorización temporal registrada) | 🟡 Hay 3 roles (cliente, preparador, administrador). ✅ ~~No hay asignación de clientes a un preparador~~ **Corrección (28 oct.):** sí existe. Cada cliente tiene un `preparer_id` y el preparador solo ve a sus clientes; el administrador los asigna en Usuarios. ➕ El rol de soporte "sin acceso salvo autorización" es justo lo que pide §7216 para el equipo de desarrollo (bloque 4). ❓ ¿GTS tiene asistentes? |
 
 **11.3 Las 22 historias de usuario frente a la plataforma**
 
