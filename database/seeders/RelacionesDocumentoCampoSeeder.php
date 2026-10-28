@@ -12,7 +12,7 @@ use Illuminate\Database\Seeder;
  * Relaciones confirmadas "documento fuente → campo que ya resuelve", derivadas
  * de la matriz de trazabilidad GTS Form 1040 2025 (pestañas W2_Trace y
  * Source_Forms). Sustituye la sección estática "RELACIONES CONOCIDAS ENTRE
- * DOCUMENTOS Y CAMPOS" que antes vivía como texto fijo en docs/prompt.md —
+ * DOCUMENTOS Y CAMPOS" que antes vivía como texto fijo en el prompt de n8n —
  * el agente externo ahora la lee vía la clave `revela` de
  * TaxFieldCatalog::pendientesPara(), nunca la memoriza.
  *
@@ -107,7 +107,7 @@ class RelacionesDocumentoCampoSeeder extends Seeder
             ],
 
             // 1099-NEC — ver matriz pestaña Source_Forms + relación ya confirmada
-            // en docs/prompt.md antes de esta migración.
+            // en el prompt de n8n antes de esta migración.
             [
                 'documento_forma' => $transversal, 'documento_campo' => 'form_1099_nec',
                 'campo_destino_forma' => $schedC, 'campo_destino' => 'ingresos_negocio', 'subcampo_destino' => null,

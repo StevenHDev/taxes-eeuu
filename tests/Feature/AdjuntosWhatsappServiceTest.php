@@ -8,7 +8,6 @@ use App\Services\Whatsapp\WhatsappChannel;
 use App\Services\WhatsappAgent\AdjuntosWhatsappService;
 use Illuminate\Http\Request;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 use Throwable;
 
@@ -62,11 +61,6 @@ class AdjuntosWhatsappServiceTest extends TestCase
         return new class($porReferencia) implements WhatsappChannel
         {
             public function __construct(private array $porReferencia) {}
-
-            public function manejarHandshake(Request $request): ?Response
-            {
-                return null;
-            }
 
             public function validarFirma(Request $request): bool
             {

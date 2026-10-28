@@ -35,7 +35,7 @@ class EventoRequest extends FormRequest
      * Cuando el evento llega como multipart/form-data (necesario para adjuntar
      * `file`), el cliente HTTP del agente serializa como string JSON tanto
      * `revelados` como `contenido` cuando su tipo_dato es object/array_string/
-     * array_object (ver docs/prompt.md, punto 8 y 10 de guardar_campo_cliente:
+     * array_object (ver guardar_campo_cliente en prompt_actuales/fases/recoleccion.md:
      * "contenido siempre como string, incluso para una estructura compleja") —
      * en vez de exploded fields. Se decodifican aquí, antes de que corran las
      * reglas de 'array', para aceptar ambas formas de envío (string JSON o
@@ -108,7 +108,7 @@ class EventoRequest extends FormRequest
             // `acumular: true` para que el backend SUME el nuevo valor al ya
             // guardado en vez de sobrescribirlo — ver EventoRecoleccionService::procesar().
             // No 'boolean' nativo: en esta API todos los parámetros viajan como
-            // string (ver punto 8 de guardar_campo_cliente en docs/prompt.md), y
+            // string (ver guardar_campo_cliente en prompt_actuales/fases/recoleccion.md), y
             // la regla 'boolean' de Laravel rechaza el texto "true"/"false" —
             // solo acepta true/false/0/1/"0"/"1".
             'acumular' => ['sometimes', $this->boolLikeRule()],

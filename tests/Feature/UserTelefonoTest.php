@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * User::phone se normaliza al mismo formato que Twilio/Meta usan para
+ * User::phone se normaliza al mismo formato que Twilio usa para
  * WhatsappMensaje.telefono (+dígitos, sin separadores) — ver el mutador en
  * el modelo y ClienteController::conversacionWhatsapp, que compara ambos
  * por igualdad exacta de string.

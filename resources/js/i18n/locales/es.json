@@ -132,17 +132,6 @@
             "logout": "Cerrar sesión"
         }
     },
-    "welcome": {
-        "headTitle": "Bienvenido",
-        "logIn": "Iniciar sesión",
-        "getStarted": "Comencemos",
-        "ecosystemLine1": "Laravel tiene un ecosistema increíblemente rico.",
-        "ecosystemLine2": "Te sugerimos empezar con lo siguiente.",
-        "readThe": "Lee la",
-        "watchTutorials": "Mira tutoriales en video en",
-        "laracasts": "Laracasts",
-        "deployNow": "Desplegar ahora"
-    },
     "dashboard": {
         "pageTitle": "Dashboard",
         "welcome": {

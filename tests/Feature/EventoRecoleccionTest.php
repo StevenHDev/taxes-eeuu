@@ -1312,7 +1312,7 @@ class EventoRecoleccionTest extends TestCase
     /**
      * Encontrado al reproducir el caso real vía curl/multipart (como lo
      * envía n8n): esta API siempre envía los parámetros como texto (ver
-     * `docs/prompt.md`, punto 8 de guardar_campo_cliente), así que `acumular`
+     * guardar_campo_cliente en `prompt_actuales/fases/recoleccion.md`), así que `acumular`
      * llega como el STRING "true"/"false", nunca un boolean nativo. La regla
      * `boolean` de Laravel rechaza esos strings con 422, y un cast `(bool)`
      * directo sobre el string "false" da `true` en PHP (cualquier string no

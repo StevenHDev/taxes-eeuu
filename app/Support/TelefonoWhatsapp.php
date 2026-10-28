@@ -7,7 +7,7 @@ namespace App\Support;
  * ("+dígitos", siempre con "+", sin espacios/guiones/paréntesis ni el
  * prefijo "whatsapp:" de Twilio) — fuente única de verdad para los puntos
  * que antes tenían cada uno su propia normalización ad-hoc (User::phone(),
- * TwilioChannel::normalizarEntrante(), MetaChannel::normalizarEntrante()).
+ * TwilioChannel::normalizarEntrante()).
  *
  * Bug real en producción: TwilioChannel solo quitaba el prefijo
  * "whatsapp:" y confiaba en que Twilio siempre mandara el "+" en `From` —

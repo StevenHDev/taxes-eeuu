@@ -8,7 +8,6 @@ use App\Services\Whatsapp\TwilioWhatsappClient;
 use App\Services\Whatsapp\WhatsappChannel;
 use App\Support\TelefonoWhatsapp;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Twilio\Security\RequestValidator;
 
 /**
@@ -23,14 +22,6 @@ class TwilioChannel implements WhatsappChannel
         private readonly TwilioWhatsappClient $cliente,
         private readonly TwilioMediaDownloader $media,
     ) {}
-
-    /**
-     * Twilio no tiene handshake de verificación de webhook.
-     */
-    public function manejarHandshake(Request $request): ?Response
-    {
-        return null;
-    }
 
     /**
      * Solo quien conoce el auth token de la cuenta puede producir una firma

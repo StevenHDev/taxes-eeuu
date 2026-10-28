@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * subcampo 'salarios').
  *
  * Antes esta lógica vivía como texto fijo en el prompt del agente externo
- * (sección "RELACIONES CONOCIDAS ENTRE DOCUMENTOS Y CAMPOS" de docs/prompt.md),
+ * de n8n (sección "RELACIONES CONOCIDAS ENTRE DOCUMENTOS Y CAMPOS"),
  * memorizada por el LLM y desincronizada del catálogo real cada vez que
  * cambiaba. Ahora es una tabla más del catálogo: el agente la consulta vía
  * la clave `revela` que expone `TaxFieldCatalog::pendientesPara()`, igual que

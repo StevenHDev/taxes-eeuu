@@ -10,8 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Un mensaje de la conversación de WhatsApp con un cliente (o un teléfono
- * todavía sin cuenta) — reemplaza la lectura vía Supabase de
- * SupabaseWhatsappConversationService.
+ * todavía sin cuenta).
  *
  * @property int $id
  * @property string $telefono

@@ -16,9 +16,8 @@ Route::get('/user', function (Request $request) {
 // del proveedor de WhatsApp vigente (ver WhatsappChannel::validarFirma(),
 // resuelta dentro del propio controlador) — un token Sanctum no tiene
 // sentido para un webhook que no es un usuario de la plataforma quien lo
-// gestiona. GET también se acepta: es el handshake de verificación que Meta
-// exige al configurar el webhook (Twilio no lo usa).
-Route::match(['get', 'post'], 'whatsapp/webhook', WhatsappWebhookController::class)
+// gestiona.
+Route::post('whatsapp/webhook', WhatsappWebhookController::class)
     ->name('api.whatsapp.webhook');
 
 Route::middleware(['auth:sanctum'])->group(function () {

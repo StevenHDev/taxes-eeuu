@@ -24,10 +24,9 @@ use Illuminate\Support\Facades\Cache;
  * resuelve/crea el estado de control de la conversación, guarda el mensaje,
  * invoca al agente conversacional (si la conversación no está en modo
  * `humano` — ver ESCALAMIENTO A HUMANO en docs/implementar_agente_n8n.md), y
- * envía + persiste la respuesta. Agnóstico de proveedor: no sabe si el
- * mensaje llegó por Twilio o Meta — eso ya lo resolvió `WhatsappChannel` al
- * construir `MensajeEntranteWhatsapp`, y el mismo canal (según
- * `config('services.whatsapp.provider')`) se usa para responder.
+ * envía + persiste la respuesta. Agnóstico de proveedor: el payload crudo ya
+ * lo normalizó `WhatsappChannel` al construir `MensajeEntranteWhatsapp`, y el
+ * mismo canal se usa para responder.
  *
  * Límite conocido, aceptado por ahora: si el job falla DESPUÉS de guardar el
  * mensaje entrante pero ANTES de terminar de enviar la respuesta (ej. el

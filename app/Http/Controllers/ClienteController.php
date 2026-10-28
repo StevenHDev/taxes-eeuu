@@ -22,10 +22,8 @@ use App\Notifications\BienvenidaClientePortal;
 use App\Services\ClienteExportService;
 use App\Services\DocumentoDuplicadoService;
 use App\Services\RiesgoCasoService;
-use App\Services\SupabaseWhatsappConversationService;
 use App\Services\Whatsapp\WhatsappChannel;
 use App\Support\TaxFieldCatalog;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,7 +43,6 @@ class ClienteController extends Controller
         private readonly ClienteExportService $export,
         private readonly DocumentoDuplicadoService $duplicados,
         private readonly RiesgoCasoService $riesgo,
-        private readonly SupabaseWhatsappConversationService $whatsapp,
         private readonly WhatsappChannel $canal,
     ) {}
 
@@ -365,13 +362,9 @@ class ClienteController extends Controller
     }
 
     /**
-     * Historial completo de la conversación: el de Supabase (n8n, hoy de solo
-     * lectura) más lo que ya exista localmente en `whatsapp_mensajes` (el
-     * nuevo agente, y cualquier mensaje enviado manualmente por un
-     * preparador) — mezclados y ordenados por instante real, no por el
-     * string crudo de `created_at` (Supabase devuelve formatos mixtos, ver
-     * SupabaseWhatsappConversationService). Ver ESCALAMIENTO A HUMANO en
-     * docs/implementar_agente_n8n.md.
+     * Historial de la conversación guardado en `whatsapp_mensajes` (el agente
+     * y cualquier mensaje enviado manualmente por un preparador). Ver
+     * ESCALAMIENTO A HUMANO en docs/implementar_agente_n8n.md.
      */
     public function conversacionWhatsapp(User $cliente): JsonResponse
     {
@@ -381,13 +374,8 @@ class ClienteController extends Controller
             return response()->json(['mensajes' => [], 'control' => null]);
         }
 
-        $mensajes = collect($this->whatsapp->paraTelefono($cliente->phone))
-            ->concat($this->mensajesLocales($cliente->phone))
-            ->sortBy(fn (array $m) => $m['created_at'] ? Carbon::parse($m['created_at'])->timestamp : 0)
-            ->values();
-
         return response()->json([
-            'mensajes' => $mensajes,
+            'mensajes' => $this->mensajesLocales($cliente->phone),
             'control' => $this->controlEnvelope($cliente->phone),
         ]);
     }
@@ -443,7 +431,7 @@ class ClienteController extends Controller
             'rol' => RolMensajeWhatsapp::Preparador,
             'contenido' => $mensaje,
             'mensaje_externo_id' => $idExterno,
-            'proveedor' => config('services.whatsapp.provider'),
+            'proveedor' => 'twilio',
         ]);
 
         return response()->json([

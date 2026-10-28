@@ -35,7 +35,7 @@ class EventoRecoleccionService
      * `revelados` (opcional): campos que el mismo documento ya reveló, para
      * guardarlos en la MISMA invocación en vez de que el agente tenga que
      * decidir invocar la tool de nuevo por cada uno — ver EventoRecoleccionData
-     * y RELACIONES DOCUMENTO→CAMPO en docs/prompt.md. Cada item es siempre
+     * y RELACIONES DOCUMENTO→CAMPO en prompt_actuales/fases/recoleccion.md. Cada item es siempre
      * modo="texto" implícito y usa el mismo `$cliente` ya resuelto, dentro de
      * la misma transacción que el campo principal.
      *
@@ -641,7 +641,7 @@ class EventoRecoleccionService
      *
      * `contenido` puede llegar como el objeto completo (convención histórica de
      * `acumular` a nivel raíz, ver tests) o como solo el aporte de este subcampo
-     * (convención de `revelados`, ver docs/prompt.md punto 10) — ambas formas son
+     * (convención de `revelados`, ver prompt_actuales/fases/recoleccion.md) — ambas formas son
      * válidas, cualquier otra clave que sí traiga se respeta igual.
      *
      * Los subcampos declarados en el catálogo que todavía no tengan ningún valor

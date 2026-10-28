@@ -30,8 +30,8 @@ class EventoValidator
      * arman `$datos` (EventoRequest::prepareForValidation() para el agente
      * externo por HTTP, ToolExecutor::guardarCampoCliente() para el agente
      * de WhatsApp) reciben el mismo shape de "contenido siempre como string,
-     * incluso para una estructura compleja" (ver docs/prompt.md, punto 8 y
-     * 10 de guardar_campo_cliente) y ambos deben decodificarlo igual antes
+     * incluso para una estructura compleja" (ver guardar_campo_cliente en
+     * prompt_actuales/fases/recoleccion.md) y ambos deben decodificarlo igual antes
      * de validar/persistir — bug real en producción: ToolExecutor no lo
      * hacía, así que un campo tipo objeto/arreglo del agente de WhatsApp
      * quedaba guardado como el string JSON crudo, no como array real, y

@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 use Twilio\AuthStrategy\AuthStrategy;
 use Twilio\Http\Client as TwilioHttpClient;
@@ -130,26 +129,24 @@ class WhatsappHandoffTest extends TestCase
         $this->assertSame($cliente->id, $mensaje->cliente_id);
     }
 
-    public function test_la_conversacion_mezcla_supabase_y_local_ordenada_por_instante_real(): void
+    public function test_la_conversacion_devuelve_los_mensajes_en_orden_con_el_estado_de_control(): void
     {
-        Http::fake([
-            '*/rest/v1/globaltax_registro_whatsapp*' => Http::response([
-                [
-                    'session_id' => '+15551234567',
-                    'created_at' => '2026-08-26T21:00:00.000000',
-                    'message' => ['type' => 'human', 'content' => 'mensaje viejo de supabase'],
-                ],
-            ], 200),
-        ]);
-
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id, 'phone' => '+15551234567']);
 
         WhatsappMensaje::query()->create([
             'telefono' => '+15551234567',
             'cliente_id' => $cliente->id,
+            'rol' => RolMensajeWhatsapp::Cliente,
+            'contenido' => 'mensaje del cliente',
+            'mensaje_externo_id' => 'SM'.str_repeat('b', 32),
+        ]);
+
+        WhatsappMensaje::query()->create([
+            'telefono' => '+15551234567',
+            'cliente_id' => $cliente->id,
             'rol' => RolMensajeWhatsapp::Agente,
-            'contenido' => 'mensaje nuevo local',
+            'contenido' => 'respuesta del agente',
             'mensaje_externo_id' => 'SM'.str_repeat('a', 32),
             'created_at' => now(),
         ]);
@@ -160,7 +157,7 @@ class WhatsappHandoffTest extends TestCase
 
         $contenidos = collect($response->json('mensajes'))->pluck('content')->all();
 
-        $this->assertSame(['mensaje viejo de supabase', 'mensaje nuevo local'], $contenidos);
+        $this->assertSame(['mensaje del cliente', 'respuesta del agente'], $contenidos);
         $this->assertSame('agente', $response->json('control.estado'));
     }
 

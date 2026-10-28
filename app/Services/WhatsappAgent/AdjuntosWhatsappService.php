@@ -10,7 +10,7 @@ use Throwable;
 
 /**
  * Resuelve las referencias de media de un mensaje entrante (agnóstico de
- * proveedor — Twilio o Meta, según el WhatsappChannel vigente) a texto
+ * proveedor — ver WhatsappChannel) a texto
  * legible por el modelo: descarga cada una y la pasa por
  * DocumentoExtraccionService. Punto de integración que cierra Fase 4 (ver
  * docs/implementar_agente_n8n.md, "Punto de integración pendiente").

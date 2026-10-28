@@ -12,7 +12,7 @@ use Laravel\Sanctum\PersonalAccessToken;
 /**
  * Declara las formas aplicables de un cliente (POST /api/clientes/{cliente}/formas)
  * — lo invoca el agente conversacional externo apenas resuelve, en lenguaje
- * natural, el árbol de determinación de forma(s) (docs/prompt.md, PASO A-D).
+ * natural, el árbol de determinación de forma(s) (prompt_actuales/fases/determinacion_formas.md, PASO A-D).
  * `tax_year` nunca tiene default de config aquí: es una acción mutante del
  * agente, igual que `guardar_campo_cliente`/`marcarRevisado`.
  */

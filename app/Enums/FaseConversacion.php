@@ -9,7 +9,7 @@ namespace App\Enums;
  * distinto de tools y su propio bloque de prompt en `agente_prompts`.
  *
  * No hay una fase separada para "confirmar año fiscal": en el prompt actual
- * (prompt_actuales/promptBase.md, PASO 0.5 y PASO A-D) esos dos pasos ocurren
+ * (prompt_actuales/fases/determinacion_formas.md, PASO A-D) esos dos pasos ocurren
  * seguidos, sin ninguna tool de por medio entre ellos — no hay ningún dato en
  * la base que distinga "año fiscal ya confirmado, forma todavía no" de "nada
  * confirmado todavía". El modelo re-deriva el año fiscal ya confirmado del

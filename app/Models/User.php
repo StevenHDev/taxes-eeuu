@@ -65,10 +65,9 @@ class User extends Authenticatable implements PasskeyUser
     /**
      * Normaliza a "+dígitos" (siempre con "+", sin espacios/guiones/paréntesis)
      * cualquier valor que se le asigne a `phone` — mismo formato en el que
-     * Twilio/Meta entregan `WhatsappMensaje.telefono` (ver
+     * Twilio entrega `WhatsappMensaje.telefono` (ver
      * App\Support\TelefonoWhatsapp, fuente única de esta normalización,
-     * compartida con TwilioChannel::normalizarEntrante/MetaChannel::
-     * normalizarEntrante). Sin esto, un teléfono tecleado a mano en /usuarios
+     * compartida con TwilioChannel::normalizarEntrante). Sin esto, un teléfono tecleado a mano en /usuarios
      * con un formato distinto (sin "+", con guiones, etc.) no calza con el
      * `where('telefono', ...)` exacto de ClienteController::conversacionWhatsapp,
      * y esa conversación se ve vacía pese a existir en whatsapp_mensajes.
