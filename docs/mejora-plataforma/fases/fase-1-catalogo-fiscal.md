@@ -67,13 +67,15 @@ Orden sugerido de commits: 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6. Primero 
 
 ## 1.2 Parámetros del año sobre `parametros_fiscales`
 
-**Hoy:** `parametros_fiscales` (`ParametroFiscal`: `tax_year`, `categoria`, `clave`, `valor` json) tiene **54 valores de 2025** sembrados por `ParametrosFiscalesSeeder`. Los leen 9 calculadoras de `app/Services/Reglas` vía `App\Support\ParametrosFiscales::valor()` y `valorRequerido()`. No hay 2026, ni fuente, ni estado de validación, y no se ven en ninguna pantalla (7.7).
+**Hoy:** `parametros_fiscales` (`ParametroFiscal`: `tax_year`, `categoria`, `clave`, `valor` json) tiene **31 valores de 2025** sembrados por `ParametrosFiscalesSeeder`. Los leen 9 calculadoras de `app/Services/Reglas` vía `App\Support\ParametrosFiscales::valor()` y `valorRequerido()`. No hay 2026, ni fuente, ni estado de validación, y no se ven en ninguna pantalla (7.7).
 
 **Enfoque** (reglas `eloquent-casts`, `arch-service-classes`):
 - **Se amplía la tabla existente, no se crea otra**, para no tocar las calculadoras. Columnas nuevas: `grupo` (deducción estándar, deducciones detalladas, ajustes, Schedule 1-A, créditos, topes y umbrales, tablas: los de 7.7), `nombre_es`, `condicion_es`, `formulario_linea`, `tipo` (`monto` / `porcentaje` / `tabla` / `fecha`), `orden`, más el trait `TieneFuenteIrs` de 1.1.
 - `valor` pasa a **nullable**: un parámetro "pendiente" (sin cifra del IRS todavía) se ve en la pantalla y `valorRequerido()` sigue fallando con un mensaje claro si una calculadora lo pide. Nunca se inventa una cifra.
 - `categoria` y `clave` **no cambian**: `ParametrosFiscales::valor()` sigue igual y las calculadoras no se tocan. El historial de 1.1 cubre también este modelo.
-- Los 54 valores actuales quedan **"sin validar"**: el seeder dice que salieron de búsqueda web y que un CPA debe validarlos. La validación de cada uno es trabajo de la fase 6, que puede empezar en paralelo.
+- Los 31 valores actuales quedan **"sin validar"**: el seeder dice que salieron de búsqueda web y que un CPA debe validarlos. La validación de cada uno es trabajo de la fase 6, que puede empezar en paralelo.
+
+**Cómo quedó (29 oct.):** producción tiene 31 parámetros de 2025, no 54 como decía este plan. Sus metadatos (grupo, tipo, nombre, formulario y línea, condición) viven en `database/data/catalogo-fiscal/2025/parametros-metadatos.php`, que usa el seeder; la migración `2026_10_29_150000` tiene su propia copia fija para llenar producción. Se agregó el tipo `numero` (la edad límite del crédito por cuidado). `valorRequerido()` distingue "falta sembrar" de "pendiente".
 
 **Pruebas:**
 - Las calculadoras de `app/Services/Reglas` dan lo mismo antes y después de la migración (la suite actual de reglas pasa sin cambios).
@@ -193,7 +195,7 @@ Orden sugerido de commits: 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6. Primero 
 | Qué | Cómo | Se puede repetir |
 | --- | --- | --- |
 | Tablas nuevas de 1.1 | Migraciones que solo crean tablas | — |
-| Columnas nuevas de `parametros_fiscales` (1.2) | Migración que agrega columnas nullable y pasa `valor` a nullable; una migración de datos pone `grupo`, `nombre_es` y `tipo` a los 54 valores actuales | Sí (`whereNull`) |
+| Columnas nuevas de `parametros_fiscales` (1.2) | Migración que agrega columnas nullable y pasa `valor` a nullable; una migración de datos pone `grupo`, `nombre_es` y `tipo` a los 31 valores actuales | Sí (`whereNull`) |
 | Contenido 2025 y 2026 (1.3) | Comandos `catalogo-fiscal:cargar` y `copiar`, corridos a mano después del deploy | Sí (idempotente) |
 | `campos_cliente` (1.6) | Solo reporte en F1; la migración real va con la fase 2 | Sí (no escribe) |
 
