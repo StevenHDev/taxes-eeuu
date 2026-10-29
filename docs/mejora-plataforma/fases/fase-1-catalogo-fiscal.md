@@ -147,6 +147,12 @@ Orden sugerido de commits: 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6. Primero 
 | **Estados de la interfaz** | **Vacío:** "Este año no tiene preguntas cargadas" (administrador: botón para agregar; preparador: "Pídele a un administrador que lo cargue"). **Sin resultados del filtro:** mensaje + "Limpiar filtros". **Error:** `alert-error` arriba si falla la carga diferida o un guardado. **Éxito:** toast con `use-flash-toast` al guardar |
 | **Estados de interacción** | Hover, foco y activo de los componentes `ui`. Botones `disabled` cuando no aplican (por ejemplo "Marcar validado" si ya lo está). Mientras se guarda: botón deshabilitado con `ui/spinner` y texto "Guardando…" (estado `processing` del formulario de Inertia), sin poder enviar dos veces |
 
+**Cómo quedó (29 oct.):**
+- Rutas `catalogo-fiscal/{anio}/{pestaña}` con un controlador por pestaña (`App\Http\Controllers\CatalogoFiscal\*`) y el trait `ArmaPaginaCatalogo` (permiso, año, años, `puedeEditar` y la tabla como prop diferida con `rescue`). `CatalogoFiscalPolicy` registrada sobre `CatalogoAnio`.
+- Se reutiliza el `DataTable` de Clientes y Usuarios (búsqueda, filtros por facetas, orden, columnas, paginación) para que el catálogo se vea igual que el resto. El detalle de cada pieza abre en un panel lateral (`ui/sheet`).
+- Los documentos se ordenan por grupo como el inventario 4.0-A (identidad primero). La cabecera usa su propio `h1`.
+- Probado en el navegador: las 5 pestañas, el detalle de A7 y del 1040, el cambio de año (2026 con montos "Pendiente") y el skeleton. Falta mirar el ancho de celular en el navegador (la ventana no se dejó achicar).
+
 **Pruebas:** `tests/Feature/CatalogoFiscal/PantallaTest.php`
 - Preparador y administrador ven las 5 pestañas; el cliente recibe 403.
 - `puedeEditar` es falso para el preparador y verdadero para el administrador.
