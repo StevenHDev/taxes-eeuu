@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Documento;
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use ZipArchive;
 
@@ -15,6 +13,8 @@ use ZipArchive;
  */
 class ClienteExportService
 {
+    public function __construct(private readonly DocumentoAlmacen $almacen) {}
+
     public function exportarZip(User $cliente, int $taxYear): string
     {
         $cliente->load(['camposCliente' => fn ($query) => $query->where('tax_year', $taxYear)->with('documento')]);
@@ -43,7 +43,7 @@ class ClienteExportService
             }
 
             $documento = $campoCliente->documento;
-            $contents = Storage::disk(Documento::disco())->get($documento->file_path);
+            $contents = $this->almacen->leer($documento);
 
             if (is_string($contents)) {
                 $zip->addFromString(

@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Archivar, restaurar y eliminar definitivamente usuarios (F0.3 del
@@ -17,6 +16,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class UsuarioRetencionService
 {
+    public function __construct(private readonly DocumentoAlmacen $almacen) {}
+
     public function archivar(User $usuario): void
     {
         $usuario->delete();
@@ -54,6 +55,6 @@ class UsuarioRetencionService
         Documento::withTrashed()
             ->where('user_id', $usuario->id)
             ->pluck('file_path')
-            ->each(fn (string $ruta) => Storage::disk(Documento::disco())->delete($ruta));
+            ->each(fn (string $ruta) => $this->almacen->borrar($ruta));
     }
 }

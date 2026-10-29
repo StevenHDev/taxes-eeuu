@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FieldState;
 use App\Enums\MetodoExtraccionDocumento;
+use App\Services\DocumentoAlmacen;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,6 @@ use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\URL;
  * @property int $file_size
  * @property string $formato
  * @property string|null $hash_contenido
+ * @property bool $cifrado
  * @property MetodoExtraccionDocumento|null $metodo_extraccion
  * @property FieldState $estado_validacion
  * @property Carbon|null $deleted_at
@@ -41,6 +42,7 @@ use Illuminate\Support\Facades\URL;
     'file_size',
     'formato',
     'hash_contenido',
+    'cifrado',
     'metodo_extraccion',
     'estado_validacion',
 ])]
@@ -65,9 +67,10 @@ class Documento extends Model
      * subidos, sin ningún error visible (storeAs() nunca falla ahí: escribe
      * bien en el contenedor que procesa la subida, el problema es que ese
      * contenedor es efímero). Todo lo que lee/escribe/borra un documento de
-     * cliente debe pasar por este método, nunca por un `Storage::disk('local')`
-     * o `Storage::disk('s3')` sueltos — evita que un punto se quede
-     * apuntando al disco equivocado por olvido.
+     * cliente pasa por `DocumentoAlmacen` (que usa este método y además
+     * cifra), nunca por un `Storage::disk('local')` o `Storage::disk('s3')`
+     * sueltos — evita que un punto se quede apuntando al disco equivocado o
+     * lea el archivo sin descifrar.
      *
      * Nota para cuando se cargue el bucket: los documentos guardados
      * mientras este método devolvía 'local' NO se migran solos a S3 — sus
@@ -91,6 +94,7 @@ class Documento extends Model
             'estado_validacion' => FieldState::class,
             'metodo_extraccion' => MetodoExtraccionDocumento::class,
             'file_size' => 'integer',
+            'cifrado' => 'boolean',
         ];
     }
 
@@ -107,7 +111,7 @@ class Documento extends Model
 
     protected function pruning(): void
     {
-        Storage::disk(self::disco())->delete($this->file_path);
+        app(DocumentoAlmacen::class)->borrar($this->file_path);
     }
 
     /**

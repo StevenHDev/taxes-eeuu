@@ -27,6 +27,8 @@ use Illuminate\Support\Str;
 
 class EventoRecoleccionService
 {
+    public function __construct(private readonly DocumentoAlmacen $almacen) {}
+
     /**
      * Procesa un evento de recolección de un solo campo emitido por el agente
      * conversacional (sección 3-4 de la especificación).
@@ -531,21 +533,16 @@ class EventoRecoleccionService
         $formatoValido = ! $formatosAceptados || \in_array($extension, $formatosAceptados, true);
         $estado = $legible && $formatoValido ? FieldState::Recibido : FieldState::Invalido;
 
-        // Se calcula sobre el archivo temporal de subida, antes de moverlo con
-        // storeAs() — permite detectar el mismo documento reutilizado entre
+        // Se calcula sobre el archivo temporal de subida, antes de cifrarlo y
+        // guardarlo — permite detectar el mismo documento reutilizado entre
         // clientes distintos (ver DocumentoDuplicadoService). Nunca truena si
         // getRealPath() falla: un hash ausente solo desactiva la detección
         // de duplicados para ese documento puntual, no la subida en sí.
         $realPath = $file->getRealPath();
         $hash = $realPath !== false ? hash_file('sha256', $realPath) : null;
 
-        $path = $file->storeAs(
-            "documentos/{$cliente->id}",
-            Str::uuid().'.'.$extension,
-            Documento::disco(),
-        );
-
-        throw_if($path === false, new \RuntimeException('Unable to store the uploaded file.'));
+        // Se guarda cifrado (F0.2); el hash de arriba es del archivo original.
+        $path = $this->almacen->guardar($file, "documentos/{$cliente->id}", Str::uuid().'.'.$extension);
 
         $size = $file->getSize();
 
@@ -560,6 +557,7 @@ class EventoRecoleccionService
             'file_size' => $size === false ? 0 : $size,
             'formato' => $extension,
             'hash_contenido' => $hash === false ? null : $hash,
+            'cifrado' => true,
             'estado_validacion' => $estado,
         ]);
 
