@@ -18,7 +18,7 @@
 | --- | --- | --- | --- | --- |
 | F0.1 | MFA obligatorio para preparadores y administradores | Alta | ⏳ | — |
 | F0.2 | Cifrar los archivos de los documentos | Alta | ⏳ | — |
-| F0.3 | No borrar clientes ni documentos (conservar 3 años) | Alta | ⏳ | — |
+| F0.3 | No borrar clientes ni documentos (conservar 3 años) | Alta | 👀 | — |
 | F0.4 | Respaldo externo de base de datos y archivos | Alta | ⏳ | Destino del respaldo |
 | F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | ✅ | — |
 | F0.6 | Ocultar formas de empresas y 1040-NR | Media | ✅ | — |
@@ -56,13 +56,14 @@ Wiplitask: `cmvskoe2a00681420ct1nuysi` · ⏳
 - [ ] Correr el comando en producción y verificar
 
 ### F0.3 — No borrar clientes ni documentos (conservar 3 años)
-Wiplitask: `cmvskoe88006d1420v8bj0e8g` · ⏳
-- [ ] SoftDeletes en User y Documento (migración `deleted_at`)
-- [ ] "Eliminar cliente" archiva sin borrar archivos ni mensajes
-- [ ] Reemplazar un documento archiva el anterior
-- [ ] El cliente no puede borrar su cuenta; acción Restaurar en Usuarios
-- [ ] Prunable preparado a 3 años (sin programar hasta L12)
-- [ ] Pruebas Pest y revisión de dashboard y conteos
+Wiplitask: `cmvskoe88006d1420v8bj0e8g` · 👀
+- [x] SoftDeletes en User y Documento (migración `deleted_at`)
+- [x] "Eliminar cliente" archiva sin borrar archivos ni mensajes
+- [x] Reemplazar un documento archiva el anterior
+- [x] El cliente no puede borrar su cuenta; acción Restaurar en Usuarios
+- [x] Usuarios de prueba: marca `es_prueba` (solo admin, en bitácora) y "Eliminar definitivamente" con opción de borrar la conversación
+- [x] Prunable preparado a 3 años (sin programar hasta L12)
+- [x] Pruebas Pest y revisión de dashboard y conteos
 
 ### F0.4 — Respaldo externo de base de datos y archivos
 Wiplitask: `cmvskoeiu006i1420ig6gyty7` · ⏳

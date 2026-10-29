@@ -88,9 +88,18 @@ El IRS exige conservar 3 años (§6107 y Form 8867, L12).
 - Preparar la limpieza automática con `Prunable` (regla `eloquent-pruning`) para borrar definitivamente lo archivado hace más de **3 años**, pero **sin programarla todavía**: el plazo exacto lo confirma L12.
 - Correo único: un cliente archivado sigue ocupando su correo. Si vuelve, se **restaura** en lugar de crear otro (acción "Restaurar" en Usuarios).
 
+**Usuarios de prueba (decisión de Steven, 28 oct.):** para probar el proceso sin dejar registro, existe una excepción controlada.
+- Columna `users.es_prueba` (booleano, falso por defecto). Solo el **administrador** la pone o la quita, desde Usuarios o desde la ficha del cliente. Se puede marcar a usuarios creados a mano o por el agente de WhatsApp. Cada cambio queda en la bitácora.
+- Un usuario de prueba muestra la acción **"Eliminar definitivamente"** (`forceDelete`), que hace lo de hoy: borra datos, documentos y archivos, con la casilla para borrar también su conversación de WhatsApp. Queda en la bitácora quién lo borró y cuándo.
+- Un usuario que **no** es de prueba solo se puede **archivar**. Para borrarlo del todo, primero hay que marcarlo como prueba (queda registrado).
+- El agente nunca marca usuarios de prueba; tampoco el cliente desde su perfil.
+- Los usuarios de prueba se ven con una etiqueta "Prueba" en las listas, para no confundirlos con clientes reales.
+
 **Pruebas:**
 - Eliminar un cliente lo archiva: no aparece en la lista, sus documentos y archivos siguen existiendo, no puede iniciar sesión.
 - Restaurar lo devuelve.
+- Solo el administrador marca o desmarca un usuario de prueba, y queda en la bitácora.
+- Un usuario de prueba se elimina definitivamente (con o sin su conversación); uno que no es de prueba no se puede eliminar definitivamente.
 - Un cliente no puede borrar su cuenta.
 - Reemplazar un documento conserva el anterior archivado.
 
