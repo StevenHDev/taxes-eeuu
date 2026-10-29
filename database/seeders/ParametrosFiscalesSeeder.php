@@ -20,10 +20,24 @@ class ParametrosFiscalesSeeder extends Seeder
 
     public function run(): void
     {
+        $metadatos = require database_path('data/catalogo-fiscal/2025/parametros-metadatos.php');
+        // Mismo orden que el archivo de metadatos (y que la migración 2026_10_29_150000).
+        $posiciones = array_flip(array_keys($metadatos));
+
         foreach ($this->valores() as [$categoria, $clave, $valor]) {
+            [$grupo, $tipo, $nombre, $formularioLinea, $condicion] = $metadatos["{$categoria}.{$clave}"] ?? [null, null, null, null, null];
+
             ParametroFiscal::query()->firstOrCreate(
                 ['tax_year' => self::TAX_YEAR, 'categoria' => $categoria, 'clave' => $clave],
-                ['valor' => $valor],
+                [
+                    'valor' => $valor,
+                    'grupo' => $grupo,
+                    'tipo' => $tipo,
+                    'nombre_es' => $nombre,
+                    'formulario_linea' => $formularioLinea,
+                    'condicion_es' => $condicion,
+                    'orden' => ($posiciones["{$categoria}.{$clave}"] ?? count($posiciones)) + 1,
+                ],
             );
         }
 

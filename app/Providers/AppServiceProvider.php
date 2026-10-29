@@ -21,6 +21,7 @@ use App\Models\DeterminacionFiscal;
 use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\NivelRiesgoManual;
+use App\Models\ParametroFiscal;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Observers\AuditoriaObserver;
@@ -100,7 +101,7 @@ class AppServiceProvider extends ServiceProvider
             $pieza::observe(AuditoriaObserver::class);
         }
 
-        foreach ([CatalogoPregunta::class, CatalogoDocumento::class, CatalogoCasilla::class, CatalogoFormulario::class, CatalogoLinea::class, CatalogoActivacion::class, CatalogoRegla::class] as $pieza) {
+        foreach ([CatalogoPregunta::class, CatalogoDocumento::class, CatalogoCasilla::class, CatalogoFormulario::class, CatalogoLinea::class, CatalogoActivacion::class, CatalogoRegla::class, ParametroFiscal::class] as $pieza) {
             $pieza::observe(CatalogoCambioObserver::class);
         }
 

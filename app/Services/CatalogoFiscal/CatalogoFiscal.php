@@ -6,6 +6,7 @@ use App\Models\CatalogoFiscal\CatalogoDocumento;
 use App\Models\CatalogoFiscal\CatalogoFormulario;
 use App\Models\CatalogoFiscal\CatalogoPregunta;
 use App\Models\CatalogoFiscal\CatalogoRegla;
+use App\Models\ParametroFiscal;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -69,6 +70,16 @@ class CatalogoFiscal
     }
 
     /**
+     * Parámetros del año (F1.2), incluidos los pendientes (`valor` nulo).
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function parametros(int $taxYear): Collection
+    {
+        return collect($this->anio($taxYear)['parametros']);
+    }
+
+    /**
      * Lo que abren las respuestas de una pregunta (sus activaciones activas).
      *
      * @return Collection<int, array<string, mixed>>
@@ -79,7 +90,7 @@ class CatalogoFiscal
     }
 
     /**
-     * @return array{preguntas: list<array<string, mixed>>, documentos: list<array<string, mixed>>, formularios: list<array<string, mixed>>, reglas: list<array<string, mixed>>}
+     * @return array{preguntas: list<array<string, mixed>>, documentos: list<array<string, mixed>>, formularios: list<array<string, mixed>>, reglas: list<array<string, mixed>>, parametros: list<array<string, mixed>>}
      */
     private function anio(int $taxYear): array
     {
@@ -99,6 +110,9 @@ class CatalogoFiscal
                 ->get()->toArray(),
             'reglas' => CatalogoRegla::query()->delAnio($taxYear)->activos()
                 ->orderBy('orden')
+                ->get()->toArray(),
+            'parametros' => ParametroFiscal::query()->where('tax_year', $taxYear)
+                ->orderBy('grupo')->orderBy('orden')
                 ->get()->toArray(),
         ]);
     }

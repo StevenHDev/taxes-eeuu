@@ -40,13 +40,19 @@ class ParametrosFiscales
      */
     public static function valorRequerido(int $taxYear, string $categoria, string $clave): mixed
     {
-        $valor = self::valor($taxYear, $categoria, $clave);
+        $fila = self::todos()->first(fn (array $p) => $p['tax_year'] === $taxYear
+            && $p['categoria'] === $categoria && $p['clave'] === $clave);
 
-        throw_if($valor === null, new \RuntimeException(
+        throw_if($fila === null, new \RuntimeException(
             "Falta sembrar el parámetro fiscal [{$categoria}.{$clave}] para tax_year={$taxYear}.",
         ));
 
-        return $valor;
+        // F1.2: un parámetro puede existir "pendiente", sin cifra del IRS todavía.
+        throw_if($fila['valor'] === null, new \RuntimeException(
+            "El parámetro fiscal [{$categoria}.{$clave}] de tax_year={$taxYear} está pendiente: todavía no tiene la cifra del IRS (ver Catálogo fiscal del año → Parámetros).",
+        ));
+
+        return $fila['valor'];
     }
 
     public static function invalidate(): void
