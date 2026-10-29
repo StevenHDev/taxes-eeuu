@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $codigo
  * @property string $grupo
- * @property string $nombre_oficial
+ * @property string|null $nombre_oficial
  * @property string $nombre_sencillo_es
  * @property string|null $nombre_sencillo_en
  * @property string|null $emisor_es

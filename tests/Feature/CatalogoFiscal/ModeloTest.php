@@ -167,13 +167,17 @@ class ModeloTest extends TestCase
         $this->assertTrue($lector->activadosPor(2025, 'NO-EXISTE')->isEmpty());
     }
 
-    public function test_las_piezas_principales_van_a_la_bitacora_general(): void
+    public function test_lo_que_hace_una_persona_va_a_la_bitacora_general_y_la_carga_no(): void
     {
         $this->pregunta('A1');
+        $this->assertDatabaseMissing('bitacora_actividad', ['auditable_type' => CatalogoPregunta::class]);
+
+        $this->actingAs(User::factory()->create(['role' => UserRole::Administrator]));
+        $this->pregunta('A2');
 
         $this->assertDatabaseHas('bitacora_actividad', [
             'auditable_type' => CatalogoPregunta::class,
-            'etiqueta' => 'A1 (2025)',
+            'etiqueta' => 'A2 (2025)',
         ]);
     }
 }

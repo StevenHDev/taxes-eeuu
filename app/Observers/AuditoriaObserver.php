@@ -73,6 +73,14 @@ class AuditoriaObserver
         try {
             $actor = Auth::user();
 
+            // La carga del catálogo fiscal desde archivos (catalogo-fiscal:cargar
+            // y copiar, sin usuario) crea cientos de piezas: no van a la
+            // bitácora general, su rastro queda en `catalogo_cambios`. Lo que
+            // cambia una persona desde la pantalla sí se registra.
+            if ($actor === null && str_starts_with($model::class, 'App\\Models\\CatalogoFiscal\\')) {
+                return;
+            }
+
             BitacoraActividad::query()->create([
                 'actor_id' => $actor?->id,
                 'actor_nombre' => $actor?->name,

@@ -30,10 +30,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $por_persona
  * @property bool $sensible
  * @property array<string, mixed>|null $condicion
+ * @property string|null $efecto_es
  */
 #[Fillable([
     'tax_year', 'codigo', 'bloque', 'pantalla', 'orden', 'texto_es', 'texto_en', 'ayuda_es', 'ayuda_en',
-    'tipo_respuesta', 'opciones', 'nivel', 'por_persona', 'sensible', 'condicion',
+    'tipo_respuesta', 'opciones', 'nivel', 'por_persona', 'sensible', 'condicion', 'efecto_es',
     'fuente_texto', 'fuente_url', 'activo',
 ])]
 class CatalogoPregunta extends Model
