@@ -106,6 +106,14 @@ Orden sugerido de commits: 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6. Primero 
 - **Caso María** (4.8): desde las activaciones cargadas, D1 lleva al W-2, C2 + C9 al Schedule 8812 y al EIC, E6 al Form 2441 y al recibo del proveedor, y el W-2 casilla 1 llega a la línea 1a del 1040. No evalúa respuestas (eso es la fase 2), solo que el grafo esté conectado.
 - 2026: la casilla del 1099-NEC es "1a", el parámetro del pariente es 5.300 y un monto que no está en el documento madre queda en pendiente.
 
+**Cómo quedó (29 oct.):**
+- Contenido de 2025 en `database/data/catalogo-fiscal/2025/` (formato en el README de esa carpeta): 75 preguntas (A15, B6, C14 por persona, D17, E9, F9, G5) en las 8 pantallas de entrada de la sección 3, 41 documentos con 19 casillas (W-2, 1099-NEC, 1099-K, 1095-A), 26 formularios (7 con ficha completa, 3 conectores, 16 pendientes) con 63 líneas, 106 activaciones y 13 reglas. Más 1 parámetro nuevo: la fecha de nacimiento para "mayor de 65".
+- 2026 (`2026/ajustes.php`): pariente calificado USD 5.300, mayor de 65 = nació antes del 2 ene. 1962, 1099-NEC casilla 1 → 1a (y la línea 1 del Schedule C que la lee), y el texto de C13. Todo lo demás de 2026 queda pendiente.
+- Se agregó el tipo de ficha `conector` (Schedules 1, 2 y 3) y la columna `efecto_es` (lo que dice "Activa / descarta"). `nombre_oficial` de un documento es opcional (una identificación o un recibo no son formularios del IRS); `nombre_sencillo_es` es obligatorio.
+- El importador rechaza claves desconocidas en los archivos (los modelos las descartarían en silencio). La carga sin usuario no va a la bitácora general (serían cientos de filas); su rastro queda en `catalogo_cambios`.
+- `CatalogoFiscalSeeder` (en `DatabaseSeeder`) carga 2025, copia a 2026 y aplica los ajustes, para `migrate:fresh --seed` en local.
+- Decisiones tomadas al transcribir, para revisar en la pantalla: Schedule D y Form 8949 van juntos (`sch-d`); B5 es de entrada para todos (como en el ejemplo de María); C12–C14 se muestran según el parentesco (C3), y las demás pruebas (meses en C4, otro padre) las resuelve la fase 2; las preguntas "Sí / No + número o fecha" quedan como Sí / No; sensibles (solo portal): A3, A12, B4, C9, C10, G3 y G4; los documentos que el documento madre no describe quedan sin emisor, fecha ni "si no te llega".
+
 **Riesgo:** es mucho contenido escrito a mano. Se mitiga con el comando de verificación, con la prueba de María y con la revisión de Steven en la propia pantalla (pestañas con filtro "sin validar").
 
 ---

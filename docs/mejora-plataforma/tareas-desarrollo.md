@@ -107,7 +107,7 @@ Wiplitask: `cmvskovkw006x1420a9v9fxo5` · 🔄
 - [x] Plan técnico de la fase 1 escrito y aprobado
 - [x] 1.1 Modelo de datos por año (preguntas, documentos y casillas, formularios y líneas, activaciones, reglas, historial de cambios)
 - [x] 1.2 Parámetros del año sobre `parametros_fiscales` (fuente, grupo, valor pendiente)
-- [ ] 1.3 Cargar 2025 y 2026 desde el documento madre (comandos `cargar`, `copiar`, `verificar`; caso María)
+- [x] 1.3 Cargar 2025 y 2026 desde el documento madre (comandos `cargar`, `copiar`, `verificar`; caso María)
 - [ ] 1.4 Menú "Catálogo fiscal del año" con 5 pestañas (ver: preparador y administrador)
 - [ ] 1.5 Edición por el administrador (sin borrar, historial, "marcar como validado contra el IRS")
 - [ ] 1.6 Mapa de equivalencias de `campos_cliente` y reporte; el menú viejo queda como "Campos del formulario actual" (solo administrador)
