@@ -17,8 +17,8 @@
 | Tarea | Título | Prioridad | Estado | Depende de |
 | --- | --- | --- | --- | --- |
 | F0.1 | MFA obligatorio para preparadores y administradores | Alta | ⏳ | — |
-| F0.2 | Cifrar los archivos de los documentos | Alta | ⏳ | — |
-| F0.3 | No borrar clientes ni documentos (conservar 3 años) | Alta | 👀 | — |
+| F0.2 | Cifrar los archivos de los documentos | Alta | 👀 | — |
+| F0.3 | No borrar clientes ni documentos (conservar 3 años) | Alta | ✅ | — |
 | F0.4 | Respaldo externo de base de datos y archivos | Alta | ⏳ | Destino del respaldo |
 | F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | ✅ | — |
 | F0.6 | Ocultar formas de empresas y 1040-NR | Media | ✅ | — |
@@ -47,16 +47,16 @@ Wiplitask: `cmvskodtw00631420q3excvau` · ⏳
 - [ ] Avisar al equipo de GTS antes de desplegar
 
 ### F0.2 — Cifrar los archivos de los documentos
-Wiplitask: `cmvskoe2a00681420ct1nuysi` · ⏳
-- [ ] Servicio DocumentoAlmacen (guardar, leer, responder) con cifrado
-- [ ] Migración: columna `documentos.cifrado`
-- [ ] Usar el servicio en EventoRecoleccionService, DocumentoController y ClienteExportService
-- [ ] Comando `documentos:cifrar-existentes`
-- [ ] Pruebas Pest (cifrado en disco, ver original, documento viejo, duplicados, ZIP)
-- [ ] Correr el comando en producción y verificar
+Wiplitask: `cmvskoe2a00681420ct1nuysi` · 👀
+- [x] Servicio DocumentoAlmacen (guardar, leer, responder, borrar) con cifrado
+- [x] Migración: columna `documentos.cifrado`
+- [x] Usar el servicio en EventoRecoleccionService, DocumentoController y ClienteExportService (también en el borrado definitivo de F0.3 y en la limpieza a 3 años)
+- [x] Comando `documentos:cifrar-existentes` (con `--dry-run`; se puede correr dos veces)
+- [x] Pruebas Pest (cifrado en disco, ver original, documento viejo, duplicados, ZIP) y prueba local con un PDF real
+- [ ] Correr el comando en producción y verificar (después del deploy, con autorización de Steven)
 
 ### F0.3 — No borrar clientes ni documentos (conservar 3 años)
-Wiplitask: `cmvskoe88006d1420v8bj0e8g` · 👀
+Wiplitask: `cmvskoe88006d1420v8bj0e8g` · ✅ (29 oct., commits `5c32805` y `02459b3`, probado en local y verificado en producción)
 - [x] SoftDeletes en User y Documento (migración `deleted_at`)
 - [x] "Eliminar cliente" archiva sin borrar archivos ni mensajes
 - [x] Reemplazar un documento archiva el anterior

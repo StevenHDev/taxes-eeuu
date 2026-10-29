@@ -66,6 +66,13 @@ Orden sugerido de commits: 0.5 → 0.6 → 0.3 → 0.2 → 0.1 → 0.4. Primero 
 - La detección de duplicados sigue funcionando.
 - Exportación ZIP con el contenido original.
 
+**Cómo quedó (29 oct.):**
+- `DocumentoAlmacen` cifra el contenido binario directo con `Crypt::encryptString` (no hace falta pasarlo antes a base64: `Crypt` ya codifica el resultado). Además de guardar, leer y responder, tiene `borrar`, que usan el borrado definitivo de usuarios de prueba (F0.3) y la limpieza a 3 años.
+- La respuesta del documento agrega `X-Content-Type-Options: nosniff` y el nombre original en `Content-Disposition` (con acentos).
+- El comando tiene `--dry-run`, escribe primero a un temporal y luego lo mueve, y si una fila quedó en `cifrado = false` con el archivo ya cifrado (corte a mitad), no lo vuelve a cifrar. Los documentos sin archivo en disco se listan y quedan como están.
+- Probado en local: 7 documentos existentes cifrados, con el mismo SHA-256 al descifrarlos; un PDF real subido después se guarda cifrado, se ve en el navegador y sale igual en el ZIP.
+- **Frontend y worker deben tener la misma `APP_KEY`**: el worker guarda lo que llega por WhatsApp y el frontend lo muestra. Se verifica después del deploy.
+
 **Límite conocido:** el cifrado con `Crypt` carga el archivo en memoria (máximo 20 MB por archivo hoy), así que es aceptable. Si más adelante se suben archivos más grandes, se cambia a cifrado por partes.
 
 ---
