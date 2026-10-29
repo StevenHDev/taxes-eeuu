@@ -103,6 +103,8 @@ class AuditoriaObserver
             $model instanceof FormaCliente => "{$model->forma} (cliente #{$model->user_id})",
             $model instanceof DeterminacionFiscal => "{$model->tipo->value} (cliente #{$model->user_id})",
             $model instanceof NivelRiesgoManual => "cliente #{$model->user_id}",
+            // Piezas del catálogo fiscal por año (F1): "A1 (2025)", "w2 (2025)".
+            str_starts_with($model::class, 'App\\Models\\CatalogoFiscal\\') => "{$model->getAttribute('codigo')} ({$model->getAttribute('tax_year')})",
             default => class_basename($model),
         };
     }

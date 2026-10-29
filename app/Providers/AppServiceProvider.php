@@ -10,6 +10,13 @@ use App\Models\BaseConocimientoDocumento;
 use App\Models\BitacoraActividad;
 use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
+use App\Models\CatalogoFiscal\CatalogoActivacion;
+use App\Models\CatalogoFiscal\CatalogoCasilla;
+use App\Models\CatalogoFiscal\CatalogoDocumento;
+use App\Models\CatalogoFiscal\CatalogoFormulario;
+use App\Models\CatalogoFiscal\CatalogoLinea;
+use App\Models\CatalogoFiscal\CatalogoPregunta;
+use App\Models\CatalogoFiscal\CatalogoRegla;
 use App\Models\DeterminacionFiscal;
 use App\Models\Documento;
 use App\Models\FormaCliente;
@@ -17,6 +24,7 @@ use App\Models\NivelRiesgoManual;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Observers\AuditoriaObserver;
+use App\Observers\CatalogoCambioObserver;
 use App\Observers\WhatsappMensajeObserver;
 use App\Policies\AgentePromptPolicy;
 use App\Policies\AgenteToolPolicy;
@@ -84,6 +92,17 @@ class AppServiceProvider extends ServiceProvider
         FormaCliente::observe(AuditoriaObserver::class);
         DeterminacionFiscal::observe(AuditoriaObserver::class);
         NivelRiesgoManual::observe(AuditoriaObserver::class);
+
+        // Catálogo fiscal por año (F1): las piezas principales también van a
+        // la bitácora general, y todas guardan su historial con el valor
+        // anterior y el nuevo (ver CatalogoCambioObserver).
+        foreach ([CatalogoPregunta::class, CatalogoDocumento::class, CatalogoFormulario::class, CatalogoRegla::class] as $pieza) {
+            $pieza::observe(AuditoriaObserver::class);
+        }
+
+        foreach ([CatalogoPregunta::class, CatalogoDocumento::class, CatalogoCasilla::class, CatalogoFormulario::class, CatalogoLinea::class, CatalogoActivacion::class, CatalogoRegla::class] as $pieza) {
+            $pieza::observe(CatalogoCambioObserver::class);
+        }
 
         // Realtime: cada WhatsappMensaje guardado se transmite por Reverb en
         // el canal privado de su teléfono (ver WhatsappMensajeRecibido).
