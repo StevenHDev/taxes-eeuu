@@ -16,13 +16,13 @@
 
 | Tarea | Título | Prioridad | Estado | Depende de |
 | --- | --- | --- | --- | --- |
-| F0.1 | MFA obligatorio para preparadores y administradores | Alta | 🔄 | — |
+| F0.1 | MFA obligatorio para preparadores y administradores | Alta | ✅ | — |
 | F0.2 | Cifrar los archivos de los documentos | Alta | ✅ | — |
 | F0.3 | No borrar clientes ni documentos (conservar 3 años) | Alta | ✅ | — |
-| F0.4 | Respaldo externo de base de datos y archivos | Alta | ⏳ | Destino del respaldo |
+| F0.4 | Respaldo externo de base de datos y archivos | Alta | ⛔ | Destino del respaldo |
 | F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | ✅ | — |
 | F0.6 | Ocultar formas de empresas y 1040-NR | Media | ✅ | — |
-| F1 | Catálogo fiscal del año | Alta | ⏳ | F0 |
+| F1 | Catálogo fiscal del año | Alta | 🔄 | F0 |
 | F2 | Entrevista por WhatsApp y por el portal | Media | ⏳ | F1, L1, L3 |
 | F3 | Checklist de documentos | Media | ⏳ | F2 |
 | F4 | Lectura y validación de documentos | Media | ⏳ | F1, F3 |
@@ -39,12 +39,13 @@ Orden sugerido dentro de la fase 0: F0.5 → F0.6 → F0.3 → F0.2 → F0.1 →
 Plan técnico: [`fases/fase-0-seguridad-y-limpieza.md`](fases/fase-0-seguridad-y-limpieza.md) · ✅ Aprobado (28 oct.)
 
 ### F0.1 — MFA obligatorio para preparadores y administradores
-Wiplitask: `cmvskodtw00631420q3excvau` · 🔄
+Wiplitask: `cmvskodtw00631420q3excvau` · ✅ (29 oct., commits `c8a9290` y `fe173b1`, verificado en producción)
 - [x] Middleware EnsureStaffHasMfa (2FA confirmado o passkey) registrado en el grupo web
 - [x] Configuración `security.mfa_roles` (preparer, administrator)
 - [x] Aviso en la pantalla de Seguridad
 - [x] Pruebas Pest (preparador sin MFA, con 2FA, con passkey, cliente, rutas libres)
-- [ ] Avisar al equipo de GTS antes de desplegar
+- [x] Traducir al español las secciones de 2FA y passkeys (estaban en inglés)
+- [ ] Avisar al equipo de GTS (Steven). En producción hay 2 administradores, ninguno con 2FA todavía: al entrar irán a Seguridad
 
 ### F0.2 — Cifrar los archivos de los documentos
 Wiplitask: `cmvskoe2a00681420ct1nuysi` · ✅ (29 oct., commits `522c958` y `3199899`, comando corrido en producción)
@@ -66,7 +67,10 @@ Wiplitask: `cmvskoe88006d1420v8bj0e8g` · ✅ (29 oct., commits `5c32805` y `024
 - [x] Pruebas Pest y revisión de dashboard y conteos
 
 ### F0.4 — Respaldo externo de base de datos y archivos
-Wiplitask: `cmvskoeiu006i1420ig6gyty7` · ⏳
+Wiplitask: `cmvskoeiu006i1420ig6gyty7` · ⛔ Bloqueada: falta definir el destino del respaldo (decisión de Steven, 29 oct.: se hace después)
+
+> Mientras tanto: guardar ya una copia de la `APP_KEY` de producción en un gestor de contraseñas del equipo (sin ella los documentos cifrados no se pueden abrir). Fecha límite: antes de que entren clientes reales en volumen o antes de la temporada de impuestos, lo que llegue primero.
+
 - [ ] Decidir destino del respaldo (proveedor y región en EE. UU.) y quién tiene acceso
 - [ ] Respaldo diario de PostgreSQL en Dokploy
 - [ ] Respaldo diario del volumen de documentos
@@ -97,12 +101,16 @@ Wiplitask: `cmvskoext006s1420xrxrb3hw` · ✅ (28 oct., commits `33cb991` y `367
 Su checklist se detalla al escribir el plan técnico de cada fase.
 
 ### F1 — Catálogo fiscal del año
-Wiplitask: `cmvskovkw006x1420a9v9fxo5` · ⏳
-- [ ] Plan técnico de la fase 1 escrito y aprobado
-- [ ] Modelo por año: preguntas, documentos y casillas, formularios y líneas, parámetros, reglas
-- [ ] Menú "Catálogo fiscal del año" con 5 pestañas (ver: preparador; editar: administrador)
-- [ ] Cargar 2025 y 2026 desde el documento madre (secciones 3, 4, 6 y 7.7)
-- [ ] Migrar datos de `campos_cliente` y eliminar pseudoformas (E12)
+Plan técnico: [`fases/fase-1-catalogo-fiscal.md`](fases/fase-1-catalogo-fiscal.md) · ✅ Aprobado (29 oct.)
+
+Wiplitask: `cmvskovkw006x1420a9v9fxo5` · 🔄
+- [x] Plan técnico de la fase 1 escrito y aprobado
+- [x] 1.1 Modelo de datos por año (preguntas, documentos y casillas, formularios y líneas, activaciones, reglas, historial de cambios)
+- [ ] 1.2 Parámetros del año sobre `parametros_fiscales` (fuente, grupo, valor pendiente)
+- [ ] 1.3 Cargar 2025 y 2026 desde el documento madre (comandos `cargar`, `copiar`, `verificar`; caso María)
+- [ ] 1.4 Menú "Catálogo fiscal del año" con 5 pestañas (ver: preparador y administrador)
+- [ ] 1.5 Edición por el administrador (sin borrar, historial, "marcar como validado contra el IRS")
+- [ ] 1.6 Mapa de equivalencias de `campos_cliente` y reporte; el menú viejo queda como "Campos del formulario actual" (solo administrador)
 
 ### F2 — Entrevista por WhatsApp y por el portal
 Wiplitask: `cmvskovqv0072142046gi5vuk` · ⏳
@@ -112,6 +120,8 @@ Wiplitask: `cmvskovqv0072142046gi5vuk` · ⏳
 - [ ] Agente de WhatsApp reescrito sobre el catálogo (requiere L3)
 - [ ] Confirmación del cliente en el portal; reemplazar E5 y E6
 - [ ] Prueba: María empieza por WhatsApp y termina en el portal sin repetir
+- [ ] Migrar `campos_cliente` a las respuestas nuevas con el mapa de F1.6 y eliminar las pseudoformas `transversal` y `documentos_extra` (E12), la tool `consultar_documentos_extra` y el menú "Campos del formulario actual" (decisión de Steven, 29 oct.)
+- [ ] Permitir que los preparadores también marquen piezas del catálogo como validadas contra el IRS (decisión de Steven, 29 oct.)
 - [ ] Ingresos en selección múltiple en un solo paso (hoy el árbol pregunta la fuente principal y luego "¿algo más?" una por una)
 - [ ] Socio de LLC o S-corp: la empresa no se atiende, pero su K-1 personal sí (1040 + Schedule E). Hoy el prompt le dice "no lo atendemos" (visto al cerrar F0.6)
 
@@ -156,3 +166,16 @@ Wiplitask: `cmvskowpm007r1420cq7e3zse` · ⏳
 - [ ] Meta-agente sobre el chat del portal y base de conocimiento con fuentes del IRS
 - [ ] Decidir E3 (API externa, con E2 `ClientIntakeSession`), E9 (Proceso) y E11 (Schedule F)
 - [ ] Varias firmas (cuando el proceso esté validado con GTS)
+
+---
+
+## Pendientes técnicos sueltos
+
+Wiplitask: `cmvtv0tag015u1420rmbglh9g` · ⏳
+
+Cosas vistas al desarrollar que no son de una fase. Se resuelven cuando haya un hueco o al tocar ese código.
+
+- [ ] `composer audit` reporta 24 avisos de seguridad en dependencias: revisar y actualizar (visto en F0.5, 28 oct.)
+- [ ] Tabla compartida (`data-table-pagination.tsx`): al pasar a la página 2 el paginador sigue diciendo "Página 1 de N" (visto en F0.3, 29 oct.)
+- [ ] Usuarios: después de restaurar un usuario, la tabla vuelve a la página 1 (visto en F0.3)
+- [ ] Passkeys: el nombre que se propone por defecto dice "Chrome on Mac"; pasarlo a "Chrome en Mac" (visto en F0.1)
