@@ -40,6 +40,9 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+                // F0.1: aviso de Ajustes → Seguridad cuando el personal
+                // todavía no tiene 2FA ni passkey (ver EnsureStaffHasMfa).
+                'debeConfigurarMfa' => fn () => (bool) $request->user()?->debeConfigurarMfa(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

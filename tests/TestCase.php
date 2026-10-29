@@ -21,6 +21,11 @@ abstract class TestCase extends BaseTestCase
         // proceso, así que también hay que vaciarla para no arrastrar datos de otro test.
         Cache::flush();
 
+        // La mayoría de las pruebas usan personal creado por la factory, sin
+        // 2FA ni passkey. El MFA obligatorio (F0.1) se prueba aparte, en
+        // EnsureStaffHasMfaTest, que vuelve a activarlo.
+        config(['security.mfa_roles' => []]);
+
         if (Schema::hasTable('catalogo_campos')) {
             $this->seed(CatalogoCamposSeeder::class);
         }

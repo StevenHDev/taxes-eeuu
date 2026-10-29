@@ -923,7 +923,63 @@
             "newPasswordLabel": "New password",
             "newPasswordPlaceholder": "New password",
             "confirmPasswordLabel": "Confirm password",
-            "confirmPasswordPlaceholder": "Confirm password"
+            "confirmPasswordPlaceholder": "Confirm password",
+            "mfaRequired": {
+                "title": "Turn on two-factor authentication to continue",
+                "description": "To use the dashboard, staff must have two-factor authentication (with an authenticator app) or a passkey enabled. Set it up below on this page; until then, the other sections are unavailable."
+            },
+            "twoFactor": {
+                "title": "Two-factor authentication",
+                "description": "Manage your two-factor authentication settings",
+                "enabledDescription": "You will be prompted for a secure, random pin during login, which you can retrieve from the TOTP-supported application on your phone.",
+                "disabledDescription": "When you enable two-factor authentication, you will be prompted for a secure pin during login. This pin can be retrieved from a TOTP-supported application on your phone.",
+                "disable": "Disable 2FA",
+                "enable": "Enable 2FA",
+                "continueSetup": "Continue setup",
+                "setup": {
+                    "title": "Enable two-factor authentication",
+                    "description": "To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app",
+                    "enabledTitle": "Two-factor authentication enabled",
+                    "enabledDescription": "Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.",
+                    "verifyTitle": "Verify authentication code",
+                    "verifyDescription": "Enter the 6-digit code from your authenticator app",
+                    "continue": "Continue",
+                    "manualEntry": "or, enter the code manually"
+                },
+                "recoveryCodes": {
+                    "title": "2FA recovery codes",
+                    "description": "Recovery codes let you regain access if you lose your 2FA device. Store them in a secure password manager.",
+                    "view": "View recovery codes",
+                    "hide": "Hide recovery codes",
+                    "regenerate": "Regenerate codes",
+                    "listLabel": "Recovery codes",
+                    "loadingLabel": "Loading recovery codes",
+                    "warningStart": "Each recovery code can be used once to access your account and will be removed after use. If you need more, click",
+                    "warningEnd": "above."
+                }
+            },
+            "passkeys": {
+                "title": "Passkeys",
+                "description": "Manage your passkeys for passwordless sign-in",
+                "emptyTitle": "No passkeys yet",
+                "emptyDescription": "Add a passkey to sign in without a password",
+                "added": "Added {{time}}",
+                "lastUsed": "Last used {{time}}",
+                "removeLabel": "Remove",
+                "removeTitle": "Remove passkey",
+                "removeDescription": "Are you sure you want to remove the \"{{name}}\" passkey? You will no longer be able to use it to sign in.",
+                "removing": "Removing...",
+                "notSupported": "Passkeys are not supported in this browser.",
+                "add": "Add passkey",
+                "nameLabel": "Passkey name",
+                "namePlaceholder": "e.g., MacBook Pro, iPhone",
+                "nameHelp": "A name helps you identify this passkey later.",
+                "register": "Register passkey",
+                "registering": "Registering...",
+                "verifyLabel": "Sign in with a passkey",
+                "verifyLoadingLabel": "Authenticating...",
+                "verifySeparator": "Or continue with email"
+            }
         },
         "apiTokens": {
             "pageTitle": "API Tokens",

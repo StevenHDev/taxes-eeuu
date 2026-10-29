@@ -149,4 +149,17 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasMany(DeterminacionFiscal::class);
     }
+
+    /**
+     * F0.1: su rol exige MFA (`security.mfa_roles`) y todavía no tiene ni la
+     * verificación en dos pasos confirmada ni una passkey.
+     */
+    public function debeConfigurarMfa(): bool
+    {
+        if (! \in_array($this->role?->value, config('security.mfa_roles', []), true)) {
+            return false;
+        }
+
+        return ! $this->hasEnabledTwoFactorAuthentication() && ! $this->passkeys()->exists();
+    }
 }

@@ -14,6 +14,8 @@ export type User = {
 
 export type Auth = {
     user: User;
+    // F0.1: el personal sin 2FA ni passkey (ver EnsureStaffHasMfa).
+    debeConfigurarMfa?: boolean;
 };
 
 export type Passkey = {

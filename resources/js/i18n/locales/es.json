@@ -923,7 +923,63 @@
             "newPasswordLabel": "Nueva contraseña",
             "newPasswordPlaceholder": "Nueva contraseña",
             "confirmPasswordLabel": "Confirmar contraseña",
-            "confirmPasswordPlaceholder": "Confirmar contraseña"
+            "confirmPasswordPlaceholder": "Confirmar contraseña",
+            "mfaRequired": {
+                "title": "Activa la verificación en dos pasos para continuar",
+                "description": "Para usar el panel, el personal debe tener activada la verificación en dos pasos (con una app autenticadora) o una passkey. Configúrala más abajo en esta página; mientras tanto, las demás secciones no están disponibles."
+            },
+            "twoFactor": {
+                "title": "Verificación en dos pasos",
+                "description": "Administra la configuración de tu verificación en dos pasos",
+                "enabledDescription": "Al iniciar sesión se te pedirá un código seguro y aleatorio, que puedes obtener en la app autenticadora (compatible con TOTP) de tu teléfono.",
+                "disabledDescription": "Cuando actives la verificación en dos pasos, se te pedirá un código seguro al iniciar sesión. Puedes obtener este código en una app autenticadora (compatible con TOTP) de tu teléfono.",
+                "disable": "Desactivar verificación en dos pasos",
+                "enable": "Activar verificación en dos pasos",
+                "continueSetup": "Continuar configuración",
+                "setup": {
+                    "title": "Activar la verificación en dos pasos",
+                    "description": "Para terminar de activar la verificación en dos pasos, escanea el código QR o ingresa la clave de configuración en tu app autenticadora",
+                    "enabledTitle": "Verificación en dos pasos activada",
+                    "enabledDescription": "La verificación en dos pasos ya está activada. Escanea el código QR o ingresa la clave de configuración en tu app autenticadora.",
+                    "verifyTitle": "Verifica el código de autenticación",
+                    "verifyDescription": "Ingresa el código de 6 dígitos de tu app autenticadora",
+                    "continue": "Continuar",
+                    "manualEntry": "o ingresa el código manualmente"
+                },
+                "recoveryCodes": {
+                    "title": "Códigos de recuperación",
+                    "description": "Los códigos de recuperación te permiten recuperar el acceso si pierdes el dispositivo de tu verificación en dos pasos. Guárdalos en un administrador de contraseñas seguro.",
+                    "view": "Ver códigos de recuperación",
+                    "hide": "Ocultar códigos de recuperación",
+                    "regenerate": "Regenerar códigos",
+                    "listLabel": "Códigos de recuperación",
+                    "loadingLabel": "Cargando códigos de recuperación",
+                    "warningStart": "Cada código de recuperación se puede usar una sola vez para acceder a tu cuenta y se elimina después de usarlo. Si necesitas más, haz clic en",
+                    "warningEnd": "arriba."
+                }
+            },
+            "passkeys": {
+                "title": "Passkeys",
+                "description": "Administra tus passkeys para iniciar sesión sin contraseña",
+                "emptyTitle": "Aún no tienes passkeys",
+                "emptyDescription": "Agrega una passkey para iniciar sesión sin contraseña",
+                "added": "Agregada {{time}}",
+                "lastUsed": "Último uso {{time}}",
+                "removeLabel": "Eliminar",
+                "removeTitle": "Eliminar passkey",
+                "removeDescription": "¿Seguro que quieres eliminar la passkey \"{{name}}\"? Ya no podrás usarla para iniciar sesión.",
+                "removing": "Eliminando...",
+                "notSupported": "Este navegador no es compatible con passkeys.",
+                "add": "Agregar passkey",
+                "nameLabel": "Nombre de la passkey",
+                "namePlaceholder": "p. ej., MacBook Pro, iPhone",
+                "nameHelp": "Un nombre te ayuda a identificar esta passkey más adelante.",
+                "register": "Registrar passkey",
+                "registering": "Registrando...",
+                "verifyLabel": "Iniciar sesión con una passkey",
+                "verifyLoadingLabel": "Autenticando...",
+                "verifySeparator": "O continúa con tu correo electrónico"
+            }
         },
         "apiTokens": {
             "pageTitle": "Tokens de API",

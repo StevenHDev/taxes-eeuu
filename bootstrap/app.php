@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureStaffHasMfa;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -28,6 +29,10 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            // F0.1: el personal sin 2FA ni passkey solo puede ir a Seguridad.
+            // Va después de HandleInertiaRequests para que un redirect en
+            // PUT/PATCH/DELETE de Inertia salga como 303.
+            EnsureStaffHasMfa::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
