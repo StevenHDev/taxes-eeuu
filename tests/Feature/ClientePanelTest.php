@@ -11,7 +11,6 @@ use App\Models\Documento;
 use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\User;
-use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
 use App\Notifications\BienvenidaClientePortal;
 use App\Support\TaxFieldCatalog;
@@ -397,49 +396,51 @@ class ClientePanelTest extends TestCase
 
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
         $this->actingAs($admin)->delete(route('clientes.destroy', $cliente))->assertRedirect();
-        $this->assertDatabaseMissing('users', ['id' => $cliente->id]);
+        $this->assertSoftDeleted('users', ['id' => $cliente->id]);
     }
 
     /**
-     * Bug real encontrado en producción: al eliminar un cliente de prueba,
-     * su historial de WhatsApp queda huérfano bajo el mismo teléfono — un
-     * cliente nuevo que reciba ese número después hereda esos mensajes como
-     * si fueran suyos (el agente llegó a mencionarle a un cliente nuevo el
-     * nombre de un dependiente del cliente ya borrado). Por default NO se
-     * borra (es la fuente de verdad para un cliente real, incluso ya
-     * eliminado) — `eliminar_conversacion_whatsapp` es la opción explícita
-     * para números de prueba.
+     * F0.3: archivar a un cliente real conserva sus datos, documentos,
+     * archivos y conversación (el IRS exige 3 años). Ya no aparece en la
+     * lista ni puede iniciar sesión.
      */
-    public function test_eliminar_cliente_sin_la_opcion_conserva_su_conversacion_de_whatsapp(): void
+    public function test_archivar_un_cliente_conserva_sus_datos_documentos_y_conversacion(): void
     {
+        Storage::fake(Documento::disco());
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
-
-        WhatsappControl::query()->create(['telefono' => '+15551234567', 'estado' => 'agente', 'cliente_id' => $cliente->id]);
-        WhatsappMensaje::query()->create(['telefono' => '+15551234567', 'rol' => 'cliente', 'contenido' => 'hola', 'cliente_id' => $cliente->id]);
-
-        $this->actingAs($admin)->delete(route('clientes.destroy', $cliente))->assertRedirect();
-
-        $this->assertDatabaseMissing('users', ['id' => $cliente->id]);
-        $this->assertDatabaseHas('whatsapp_control', ['telefono' => '+15551234567']);
-        $this->assertDatabaseHas('whatsapp_mensajes', ['telefono' => '+15551234567']);
-    }
-
-    public function test_eliminar_cliente_con_la_opcion_tambien_borra_su_conversacion_de_whatsapp(): void
-    {
-        $admin = User::factory()->create(['role' => UserRole::Administrator]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
-
-        WhatsappControl::query()->create(['telefono' => '+15551234567', 'estado' => 'agente', 'cliente_id' => $cliente->id]);
+        $campo = $this->crearCampo($cliente);
+        $documento = Documento::query()->create([
+            'user_id' => $cliente->id, 'forma' => 'transversal', 'tax_year' => 2025, 'campo' => 'w2',
+            'file_path' => 'documentos/w2.pdf', 'file_original_name' => 'w2.pdf', 'file_mime_type' => 'application/pdf',
+            'file_size' => 10, 'formato' => 'pdf', 'estado_validacion' => 'recibido',
+        ]);
+        Storage::disk(Documento::disco())->put('documentos/w2.pdf', 'contenido');
         WhatsappMensaje::query()->create(['telefono' => '+15551234567', 'rol' => 'cliente', 'contenido' => 'hola', 'cliente_id' => $cliente->id]);
 
         $this->actingAs($admin)
             ->delete(route('clientes.destroy', $cliente), ['eliminar_conversacion_whatsapp' => true])
-            ->assertRedirect();
+            ->assertRedirect(route('clientes.index'));
 
-        $this->assertDatabaseMissing('users', ['id' => $cliente->id]);
-        $this->assertDatabaseMissing('whatsapp_control', ['telefono' => '+15551234567']);
-        $this->assertDatabaseMissing('whatsapp_mensajes', ['telefono' => '+15551234567']);
+        $this->assertSoftDeleted('users', ['id' => $cliente->id]);
+        $this->assertDatabaseHas('campos_cliente', ['id' => $campo->id]);
+        $this->assertNotSoftDeleted('documentos', ['id' => $documento->id]);
+        Storage::disk(Documento::disco())->assertExists('documentos/w2.pdf');
+        $this->assertDatabaseHas('whatsapp_mensajes', ['telefono' => '+15551234567']);
+
+        $this->actingAs($admin)
+            ->get(route('clientes.index'))
+            ->assertInertia(fn (Assert $page) => $page->has('clientes', 0));
+    }
+
+    public function test_un_cliente_archivado_no_puede_iniciar_sesion(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        $cliente->delete();
+
+        $this->post(route('login.store'), ['email' => $cliente->email, 'password' => 'password']);
+
+        $this->assertGuest();
     }
 
     public function test_agregar_un_campo_que_nunca_envio_el_agente(): void

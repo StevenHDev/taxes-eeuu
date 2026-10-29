@@ -70,6 +70,11 @@ function useColumns(): ColumnDef<Cliente>[] {
                         >
                             {c.name}
                         </Link>
+                        {c.es_prueba ? (
+                            <Badge variant="outline" className="ml-2">
+                                {t('cuentaUsuario.badgePrueba')}
+                            </Badge>
+                        ) : null}
                         <div className="text-xs text-muted-foreground">
                             {c.email}
                             {c.phone ? ` · ${c.phone}` : ''}

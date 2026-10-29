@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -61,9 +62,9 @@ class ProfileUpdateTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
-    public function test_user_can_delete_their_account()
+    public function test_staff_can_delete_their_account_which_archives_it()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => UserRole::Preparer]);
 
         $response = $this
             ->actingAs($user)
@@ -76,7 +77,18 @@ class ProfileUpdateTest extends TestCase
             ->assertRedirect(route('home'));
 
         $this->assertGuest();
-        $this->assertNull($user->fresh());
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+    }
+
+    public function test_a_client_cannot_delete_their_account()
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->actingAs($cliente)
+            ->delete(route('profile.destroy'), ['password' => 'password'])
+            ->assertForbidden();
+
+        $this->assertNotSoftDeleted('users', ['id' => $cliente->id]);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account()

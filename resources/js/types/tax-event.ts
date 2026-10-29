@@ -44,6 +44,7 @@ export type Cliente = {
     name: string;
     email: string;
     phone: string | null;
+    es_prueba: boolean;
     estado_general: EstadoGeneral;
     formas: ClienteFormaResumen[];
     nivel_riesgo: NivelRiesgo;
@@ -352,10 +353,18 @@ export type Usuario = {
     phone: string | null;
     role: 'client' | 'preparer' | 'administrator';
     preparer?: { id: number; name: string } | null;
+    es_prueba: boolean;
+    archivado: boolean;
 };
 
 export type AccionAuditoria =
-    'creado' | 'actualizado' | 'eliminado' | 'inicio_sesion' | 'cierre_sesion';
+    | 'creado'
+    | 'actualizado'
+    | 'eliminado'
+    | 'archivado'
+    | 'restaurado'
+    | 'inicio_sesion'
+    | 'cierre_sesion';
 
 export type BitacoraEvento = {
     id: number;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
@@ -49,6 +50,10 @@ class ProfileController extends Controller
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
         $user = $request->user();
+
+        // Un cliente no puede borrar su cuenta: el IRS exige conservar sus
+        // datos 3 años (F0.3). Para el personal, borrar la cuenta la archiva.
+        abort_if($user->role === UserRole::Client, 403);
 
         Auth::logout();
 

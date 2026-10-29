@@ -32,7 +32,7 @@ class AuditoriaObserver
 
     public function updated(Model $model): void
     {
-        $cambios = array_values(array_diff(array_keys($model->getChanges()), ['updated_at']));
+        $cambios = array_values(array_diff(array_keys($model->getChanges()), ['updated_at', 'deleted_at']));
 
         // Eloquent ya evita disparar el evento 'updated' cuando ningún atributo
         // cambió de verdad — esto es una red de seguridad adicional, no el
@@ -44,9 +44,20 @@ class AuditoriaObserver
         $this->registrar($model, AccionAuditoria::Actualizado, $cambios);
     }
 
+    /**
+     * En los modelos con SoftDeletes (User, Documento) un delete() normal
+     * archiva; solo forceDelete() elimina de verdad.
+     */
     public function deleted(Model $model): void
     {
-        $this->registrar($model, AccionAuditoria::Eliminado);
+        $archivado = method_exists($model, 'isForceDeleting') && ! $model->isForceDeleting();
+
+        $this->registrar($model, $archivado ? AccionAuditoria::Archivado : AccionAuditoria::Eliminado);
+    }
+
+    public function restored(Model $model): void
+    {
+        $this->registrar($model, AccionAuditoria::Restaurado);
     }
 
     /**

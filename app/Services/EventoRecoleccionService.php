@@ -23,7 +23,6 @@ use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class EventoRecoleccionService
@@ -296,7 +295,7 @@ class EventoRecoleccionService
         // (Fase 3b): ahí el anterior sigue vigente, referenciado dentro de
         // `valor_texto` (ver acumularDocumento()).
         if ($anterior?->documento_id && $anterior->documento_id !== $documento?->id && ! $acumulaDocumento) {
-            $this->borrarDocumento($anterior->documento);
+            $this->archivarDocumento($anterior->documento);
         }
 
         /** @var CampoCliente $campoCliente */
@@ -416,7 +415,7 @@ class EventoRecoleccionService
             ]);
 
             if ($campoCliente->documento_id) {
-                $this->borrarDocumento($campoCliente->documento);
+                $this->archivarDocumento($campoCliente->documento);
             }
 
             $campoCliente->delete();
@@ -462,14 +461,13 @@ class EventoRecoleccionService
         return $lista;
     }
 
-    private function borrarDocumento(?Documento $documento): void
+    /**
+     * Archiva (SoftDeletes) y conserva el archivo: el IRS exige guardar los
+     * documentos 3 años, también los reemplazados (F0.3).
+     */
+    private function archivarDocumento(?Documento $documento): void
     {
-        if (! $documento) {
-            return;
-        }
-
-        Storage::disk(Documento::disco())->delete($documento->file_path);
-        $documento->delete();
+        $documento?->delete();
     }
 
     private function resolverCliente(EventoRecoleccionData $data): User

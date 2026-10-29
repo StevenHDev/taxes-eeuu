@@ -22,6 +22,7 @@ use App\Notifications\BienvenidaClientePortal;
 use App\Services\ClienteExportService;
 use App\Services\DocumentoDuplicadoService;
 use App\Services\RiesgoCasoService;
+use App\Services\UsuarioRetencionService;
 use App\Services\Whatsapp\WhatsappChannel;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Http\JsonResponse;
@@ -44,6 +45,7 @@ class ClienteController extends Controller
         private readonly DocumentoDuplicadoService $duplicados,
         private readonly RiesgoCasoService $riesgo,
         private readonly WhatsappChannel $canal,
+        private readonly UsuarioRetencionService $retencion,
     ) {}
 
     public function index(Request $request): Response
@@ -66,6 +68,7 @@ class ClienteController extends Controller
                     'name' => $cliente->name,
                     'email' => $cliente->email,
                     'phone' => $cliente->phone,
+                    'es_prueba' => $cliente->es_prueba,
                     'estado_general' => $this->estadoGeneralDe($cliente),
                     'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
                         'forma' => $f->forma,
@@ -119,17 +122,16 @@ class ClienteController extends Controller
      * real encontrado en producción — el agente llegó a mencionarle a un
      * cliente nuevo el nombre de un dependiente del cliente ya borrado).
      */
-    public function destroy(Request $request, User $cliente): RedirectResponse
+    /**
+     * Archiva al cliente: deja de verse y no puede entrar, pero sus datos,
+     * documentos y conversación se conservan (F0.3). Un usuario de prueba se
+     * elimina definitivamente desde UsuarioController::forceDestroy().
+     */
+    public function destroy(User $cliente): RedirectResponse
     {
         $this->authorize('delete', $cliente);
 
-        if ($request->boolean('eliminar_conversacion_whatsapp') && $cliente->phone) {
-            WhatsappMensaje::query()->where('telefono', $cliente->phone)->delete();
-            WhatsappControl::query()->where('telefono', $cliente->phone)->delete();
-        }
-
-        $this->eliminarArchivosDe($cliente);
-        $cliente->delete();
+        $this->retencion->archivar($cliente);
 
         return to_route('clientes.index');
     }
@@ -202,6 +204,7 @@ class ClienteController extends Controller
                 'name' => $cliente->name,
                 'email' => $cliente->email,
                 'phone' => $cliente->phone,
+                'es_prueba' => $cliente->es_prueba,
             ],
             'taxYearActual' => $taxYear,
             'nivelRiesgo' => $this->riesgo->nivelEfectivo($cliente, $taxYear),

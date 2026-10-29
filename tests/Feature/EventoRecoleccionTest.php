@@ -1926,7 +1926,7 @@ class EventoRecoleccionTest extends TestCase
      * como regresión guardada antes de tocar aplicarCambio() para el caso
      * acumular=true de abajo.
      */
-    public function test_sin_acumular_el_segundo_archivo_reemplaza_y_borra_el_anterior(): void
+    public function test_sin_acumular_el_segundo_archivo_reemplaza_y_archiva_el_anterior(): void
     {
         Storage::fake('s3');
         $this->actingAsAgente();
@@ -1946,7 +1946,9 @@ class EventoRecoleccionTest extends TestCase
             'file' => UploadedFile::fake()->create('w2_corregido.pdf', 10),
         ])->assertCreated();
 
-        $this->assertDatabaseMissing('documentos', ['id' => $primerDocumentoId]);
+        // F0.3: el anterior se archiva (se conserva 3 años), no se borra.
+        $this->assertSoftDeleted('documentos', ['id' => $primerDocumentoId]);
+        Storage::disk('s3')->assertExists(Documento::withTrashed()->find($primerDocumentoId)->file_path);
         $this->assertSame(1, Documento::query()->where('user_id', $cliente->id)->count());
     }
 

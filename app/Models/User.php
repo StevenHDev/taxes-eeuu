@@ -4,15 +4,19 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use App\Services\UsuarioRetencionService;
 use App\Support\TelefonoWhatsapp;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -30,12 +34,14 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $password
  * @property UserRole $role
  * @property int|null $preparer_id
+ * @property bool $es_prueba
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
  * @property-read Collection<int, FormaCliente> $formasCliente
  * @property-read Collection<int, CampoCliente> $camposCliente
  * @property-read Collection<int, DeterminacionFiscal> $determinacionesFiscales
@@ -45,7 +51,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, Notifiable, PasskeyAuthenticatable, Prunable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -59,7 +65,26 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'role' => UserRole::class,
+            'es_prueba' => 'boolean',
         ];
+    }
+
+    /**
+     * Clientes archivados hace más de 3 años (§6107, Form 8867). Preparado
+     * pero sin programar en el scheduler hasta que se confirme el plazo (L12).
+     *
+     * @return Builder<static>
+     */
+    public function prunable(): Builder
+    {
+        return static::onlyTrashed()
+            ->where('role', UserRole::Client)
+            ->where('deleted_at', '<=', now()->subYears(3));
+    }
+
+    protected function pruning(): void
+    {
+        app(UsuarioRetencionService::class)->borrarArchivosDe($this);
     }
 
     /**

@@ -3,27 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
-use App\Http\Concerns\ManagesClientes;
 use App\Http\Requests\UsuarioRequest;
 use App\Models\User;
+use App\Services\UsuarioRetencionService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class UsuarioController extends Controller
 {
-    use ManagesClientes;
+    public function __construct(
+        private readonly UsuarioRetencionService $retencion,
+    ) {}
 
     public function index(): Response
     {
         $this->authorize('create', User::class);
 
         return Inertia::render('usuarios/index', [
-            'usuarios' => User::query()
+            // Incluye los archivados, para poder restaurarlos.
+            'usuarios' => User::withTrashed()
                 ->with('preparer:id,name')
                 ->orderBy('name')
-                ->get(['id', 'name', 'email', 'phone', 'role', 'preparer_id'])
+                ->get(['id', 'name', 'email', 'phone', 'role', 'preparer_id', 'es_prueba', 'deleted_at'])
                 ->map(fn (User $u) => [
                     'id' => $u->id,
                     'name' => $u->name,
@@ -31,6 +35,8 @@ class UsuarioController extends Controller
                     'phone' => $u->phone,
                     'role' => $u->role,
                     'preparer' => $u->preparer?->only(['id', 'name']),
+                    'es_prueba' => $u->es_prueba,
+                    'archivado' => $u->trashed(),
                 ]),
             'preparadores' => User::query()
                 ->where('role', UserRole::Preparer)
@@ -58,13 +64,53 @@ class UsuarioController extends Controller
         return back();
     }
 
+    /**
+     * Archiva: el usuario deja de verse y no puede entrar, pero sus datos se
+     * conservan (F0.3).
+     */
     public function destroy(User $usuario): RedirectResponse
     {
         $this->authorize('delete', $usuario);
 
-        $this->eliminarArchivosDe($usuario);
-        $usuario->delete();
+        $this->retencion->archivar($usuario);
 
         return back();
+    }
+
+    public function restore(User $usuario): RedirectResponse
+    {
+        $this->authorize('restore', $usuario);
+
+        $this->retencion->restaurar($usuario);
+
+        return back();
+    }
+
+    /**
+     * Marca o desmarca un usuario de prueba. Queda en la bitácora por el
+     * AuditoriaObserver (campo `es_prueba`).
+     */
+    public function marcarPrueba(Request $request, User $usuario): RedirectResponse
+    {
+        $this->authorize('marcarPrueba', $usuario);
+
+        $validado = $request->validate(['es_prueba' => ['required', 'boolean']]);
+
+        $usuario->forceFill(['es_prueba' => $validado['es_prueba']])->save();
+
+        return back();
+    }
+
+    /**
+     * Solo para usuarios de prueba: borra todo, con la opción de borrar
+     * también su conversación de WhatsApp.
+     */
+    public function forceDestroy(Request $request, User $usuario): RedirectResponse
+    {
+        $this->authorize('forceDelete', $usuario);
+
+        $this->retencion->eliminarDefinitivamente($usuario, $request->boolean('eliminar_conversacion_whatsapp'));
+
+        return to_route($usuario->role === UserRole::Client ? 'clientes.index' : 'usuarios.index');
     }
 }

@@ -587,7 +587,7 @@
         },
         "deleteField": {
             "title": "¿Eliminar «{{campo}}»?",
-            "description": "Se borra el valor cargado (y el archivo, si tenía). Queda registrado en el historial."
+            "description": "Se quita el valor cargado; si tenía un archivo, se archiva (se conserva 3 años). Queda registrado en el historial."
         },
         "history": {
             "trigger": "Historial",
@@ -627,13 +627,6 @@
             },
             "manualPlaceholder": "Escribe un mensaje para enviar como preparador…",
             "send": "Enviar"
-        },
-        "deleteClient": {
-            "trigger": "Eliminar cliente",
-            "title": "¿Eliminar a {{name}}?",
-            "description": "Se borran todos sus campos, documentos e historial. Esta acción no se puede deshacer.",
-            "alsoDeleteConversation": "También eliminar su conversación de WhatsApp (mensajes y estado de control). Úsalo solo para números de prueba — si el teléfono es de un cliente real, no lo marques: sin esto, el historial queda disponible para revisión aunque se borre la cuenta.",
-            "confirm": "Eliminar definitivamente"
         },
         "formState": {
             "complete": "Completo",
@@ -727,10 +720,7 @@
         },
         "actions": {
             "new": "Nuevo usuario",
-            "editTitle": "Editar {{name}}",
-            "deleteTitle": "¿Eliminar a {{name}}?",
-            "deleteDescription": "Si es un cliente, se borran todos sus datos cargados. Esta acción no se puede deshacer.",
-            "deleteConfirm": "Eliminar definitivamente"
+            "editTitle": "Editar {{name}}"
         }
     },
     "bitacora": {
@@ -744,7 +734,9 @@
             "actualizado": "Actualizado",
             "eliminado": "Eliminado",
             "inicioSesion": "Inicio de sesión",
-            "cierreSesion": "Cierre de sesión"
+            "cierreSesion": "Cierre de sesión",
+            "archivado": "Archivado",
+            "restaurado": "Restaurado"
         },
         "columns": {
             "date": "Fecha",
@@ -1009,6 +1001,26 @@
             "sinHallazgos": "Sin hallazgos — la conversación no mostró ninguna divergencia detectable.",
             "hallazgos_one": "{{count}} hallazgo",
             "hallazgos_other": "{{count}} hallazgos"
+        }
+    },
+    "cuentaUsuario": {
+        "badgePrueba": "Prueba",
+        "marcarPrueba": "Marcar como prueba",
+        "quitarPrueba": "Quitar marca de prueba",
+        "restaurar": "Restaurar",
+        "archivado": "Archivado",
+        "archivar": {
+            "trigger": "Archivar",
+            "title": "¿Archivar a {{name}}?",
+            "description": "Deja de aparecer en las listas y no podrá iniciar sesión, pero sus datos, documentos y conversación se conservan (el IRS exige guardarlos 3 años). Se puede restaurar desde Usuarios.",
+            "confirm": "Archivar"
+        },
+        "eliminarDefinitivo": {
+            "trigger": "Eliminar definitivamente",
+            "title": "¿Eliminar definitivamente a {{name}}?",
+            "description": "Es un usuario de prueba: se borran todos sus datos, documentos y archivos. Esta acción no se puede deshacer.",
+            "alsoDeleteConversation": "También eliminar su conversación de WhatsApp (mensajes y estado de control).",
+            "confirm": "Eliminar definitivamente"
         }
     }
 }

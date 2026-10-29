@@ -135,7 +135,9 @@ export default function Profile({
                 </Form>
             </div>
 
-            <DeleteUser />
+            {/* Un cliente no puede borrar su cuenta: el IRS exige conservar sus
+                datos 3 años (F0.3). */}
+            {auth.user.role !== 'client' ? <DeleteUser /> : null}
         </>
     );
 }

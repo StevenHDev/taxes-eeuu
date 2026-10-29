@@ -266,4 +266,18 @@ class ToolExecutorTest extends TestCase
         $this->assertStringContainsString('form_1065', $resultado['error']);
         $this->assertDatabaseMissing('formas_cliente', ['user_id' => $cliente->id]);
     }
+
+    public function test_crear_cliente_taxes_no_duplica_el_correo_de_un_cliente_archivado(): void
+    {
+        $archivado = User::factory()->create(['role' => UserRole::Client, 'email' => 'ana@example.com']);
+        $archivado->delete();
+
+        $resultado = $this->tools->ejecutar('crear_cliente_taxes', [
+            'nombre' => 'Ana',
+            'email' => 'ana@example.com',
+        ], null, $this->actor, telefono: '+15551234567');
+
+        $this->assertArrayHasKey('error', $resultado);
+        $this->assertSame(1, User::withTrashed()->where('email', 'ana@example.com')->count());
+    }
 }

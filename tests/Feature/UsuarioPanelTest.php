@@ -4,8 +4,13 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\CampoCliente;
+use App\Models\Documento;
 use App\Models\User;
+use App\Models\WhatsappControl;
+use App\Models\WhatsappMensaje;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class UsuarioPanelTest extends TestCase
@@ -87,7 +92,7 @@ class UsuarioPanelTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $admin->id]);
     }
 
-    public function test_un_administrador_puede_eliminar_un_cliente_y_sus_datos_en_cascada(): void
+    public function test_un_administrador_archiva_un_cliente_y_conserva_sus_datos(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
         $cliente = User::factory()->create(['role' => UserRole::Client]);
@@ -105,7 +110,80 @@ class UsuarioPanelTest extends TestCase
 
         $this->actingAs($admin)->delete(route('usuarios.destroy', $cliente))->assertRedirect();
 
+        $this->assertSoftDeleted('users', ['id' => $cliente->id]);
+        $this->assertDatabaseHas('campos_cliente', ['user_id' => $cliente->id]);
+
+        $this->actingAs($admin)->patch(route('usuarios.restore', $cliente->id))->assertRedirect();
+        $this->assertNotSoftDeleted('users', ['id' => $cliente->id]);
+    }
+
+    public function test_un_usuario_que_no_es_de_prueba_no_se_puede_eliminar_definitivamente(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->actingAs($admin)->delete(route('usuarios.force-destroy', $cliente))->assertForbidden();
+
+        $this->assertNotSoftDeleted('users', ['id' => $cliente->id]);
+    }
+
+    public function test_un_usuario_de_prueba_se_elimina_definitivamente_con_archivos_y_conversacion(): void
+    {
+        Storage::fake(Documento::disco());
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
+        $documento = Documento::query()->create([
+            'user_id' => $cliente->id, 'forma' => 'transversal', 'tax_year' => 2025, 'campo' => 'w2',
+            'file_path' => 'documentos/w2.pdf', 'file_original_name' => 'w2.pdf', 'file_mime_type' => 'application/pdf',
+            'file_size' => 10, 'formato' => 'pdf', 'estado_validacion' => 'recibido',
+        ]);
+        Storage::disk(Documento::disco())->put('documentos/w2.pdf', 'contenido');
+        $documento->delete(); // un documento ya archivado también se borra
+        WhatsappMensaje::query()->create(['telefono' => '+15551234567', 'rol' => 'cliente', 'contenido' => 'hola', 'cliente_id' => $cliente->id]);
+        WhatsappControl::query()->create(['telefono' => '+15551234567', 'estado' => 'agente', 'cliente_id' => $cliente->id]);
+
+        $this->actingAs($admin)->patch(route('usuarios.prueba', $cliente), ['es_prueba' => true])->assertRedirect();
+        $this->actingAs($admin)
+            ->delete(route('usuarios.force-destroy', $cliente), ['eliminar_conversacion_whatsapp' => true])
+            ->assertRedirect(route('clientes.index'));
+
         $this->assertDatabaseMissing('users', ['id' => $cliente->id]);
-        $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id]);
+        $this->assertDatabaseMissing('documentos', ['id' => $documento->id]);
+        Storage::disk(Documento::disco())->assertMissing('documentos/w2.pdf');
+        $this->assertDatabaseMissing('whatsapp_mensajes', ['telefono' => '+15551234567']);
+        $this->assertDatabaseMissing('whatsapp_control', ['telefono' => '+15551234567']);
+    }
+
+    public function test_eliminar_definitivamente_sin_la_opcion_conserva_la_conversacion(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567', 'es_prueba' => true]);
+        WhatsappMensaje::query()->create(['telefono' => '+15551234567', 'rol' => 'cliente', 'contenido' => 'hola', 'cliente_id' => $cliente->id]);
+
+        $this->actingAs($admin)->delete(route('usuarios.force-destroy', $cliente))->assertRedirect();
+
+        $this->assertDatabaseMissing('users', ['id' => $cliente->id]);
+        $this->assertDatabaseHas('whatsapp_mensajes', ['telefono' => '+15551234567']);
+    }
+
+    public function test_solo_un_administrador_marca_usuarios_de_prueba(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
+
+        $this->actingAs($preparador)->patch(route('usuarios.prueba', $cliente), ['es_prueba' => true])->assertForbidden();
+        $this->assertFalse($cliente->fresh()->es_prueba);
+    }
+
+    public function test_el_listado_de_usuarios_incluye_los_archivados(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true]);
+        $cliente->delete();
+
+        $this->actingAs($admin)
+            ->get(route('usuarios.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('usuarios', fn ($usuarios) => collect($usuarios)->contains(fn ($u) => $u['id'] === $cliente->id && $u['archivado'] && $u['es_prueba'])));
     }
 }

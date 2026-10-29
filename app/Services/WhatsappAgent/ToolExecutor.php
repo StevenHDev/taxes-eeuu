@@ -98,6 +98,12 @@ class ToolExecutor
             return ['error' => 'El correo no es válido — pídele al cliente que lo confirme o corrija antes de volver a intentar.'];
         }
 
+        // Incluye los archivados (F0.3): su correo sigue ocupado y crear otra
+        // cuenta con él fallaría en la base.
+        if (User::withTrashed()->where('email', $email)->exists()) {
+            return ['error' => 'Ya existe una cuenta con ese correo. No crees otra: dile al cliente que el equipo de GlobalTax revisará su cuenta para darle acceso.'];
+        }
+
         $cliente = $this->tools->crearCliente([
             'name' => $argumentos['nombre'] ?? null,
             'email' => $email,

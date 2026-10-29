@@ -52,7 +52,28 @@ class ClientePolicy
         return $actor->role === UserRole::Administrator;
     }
 
+    /**
+     * "Eliminar" archiva (SoftDeletes): los datos se conservan 3 años.
+     */
     public function delete(User $actor, User $target): bool
+    {
+        return $actor->role === UserRole::Administrator && $actor->id !== $target->id;
+    }
+
+    public function restore(User $actor, User $target): bool
+    {
+        return $actor->role === UserRole::Administrator;
+    }
+
+    /**
+     * Solo los usuarios de prueba se eliminan definitivamente (F0.3).
+     */
+    public function forceDelete(User $actor, User $target): bool
+    {
+        return $actor->role === UserRole::Administrator && $actor->id !== $target->id && $target->es_prueba;
+    }
+
+    public function marcarPrueba(User $actor, User $target): bool
     {
         return $actor->role === UserRole::Administrator && $actor->id !== $target->id;
     }

@@ -14,7 +14,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        User::query()
+        // Sin global scopes: el SoftDeletes que agregó F0.3 filtra por
+        // `deleted_at`, columna que todavía no existe en este punto.
+        User::withoutGlobalScopes()
             ->whereNotNull('phone')
             ->get(['id', 'phone'])
             ->each(function (User $usuario) {

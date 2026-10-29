@@ -77,19 +77,41 @@ class BitacoraActividadTest extends TestCase
         $this->assertStringNotContainsString('3000000000', json_encode($evento->toArray()));
     }
 
-    public function test_eliminar_un_usuario_genera_un_evento_eliminado(): void
+    public function test_archivar_restaurar_y_eliminar_definitivamente_quedan_en_la_bitacora(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true]);
         $clienteId = $cliente->id;
 
         $this->actingAs($admin)->delete(route('usuarios.destroy', $cliente))->assertRedirect();
+        $this->actingAs($admin)->patch(route('usuarios.restore', $clienteId))->assertRedirect();
+        $this->actingAs($admin)->delete(route('usuarios.force-destroy', $clienteId))->assertRedirect();
 
-        $this->assertDatabaseHas('bitacora_actividad', [
-            'accion' => AccionAuditoria::Eliminado->value,
-            'auditable_type' => User::class,
-            'auditable_id' => $clienteId,
-        ]);
+        foreach ([AccionAuditoria::Archivado, AccionAuditoria::Restaurado, AccionAuditoria::Eliminado] as $accion) {
+            $this->assertDatabaseHas('bitacora_actividad', [
+                'accion' => $accion->value,
+                'auditable_type' => User::class,
+                'auditable_id' => $clienteId,
+                'actor_id' => $admin->id,
+            ]);
+        }
+    }
+
+    public function test_marcar_un_usuario_de_prueba_queda_en_la_bitacora(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Administrator]);
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->actingAs($admin)->patch(route('usuarios.prueba', $cliente), ['es_prueba' => true])->assertRedirect();
+
+        $evento = BitacoraActividad::query()
+            ->where('auditable_type', User::class)
+            ->where('auditable_id', $cliente->id)
+            ->where('accion', AccionAuditoria::Actualizado->value)
+            ->sole();
+
+        $this->assertSame(['es_prueba'], $evento->campos_afectados);
+        $this->assertSame($admin->id, $evento->actor_id);
     }
 
     public function test_subir_un_documento_genera_un_evento_creado_sin_exponer_datos(): void

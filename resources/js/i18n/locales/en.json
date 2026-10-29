@@ -587,7 +587,7 @@
         },
         "deleteField": {
             "title": "Delete «{{campo}}»?",
-            "description": "The loaded value (and the file, if any) is deleted. It is recorded in the history."
+            "description": "The stored value is removed; if it had a file, the file is archived (kept for 3 years). It is recorded in the history."
         },
         "history": {
             "trigger": "History",
@@ -627,13 +627,6 @@
             },
             "manualPlaceholder": "Write a message to send as the preparer…",
             "send": "Send"
-        },
-        "deleteClient": {
-            "trigger": "Delete client",
-            "title": "Delete {{name}}?",
-            "description": "All of their fields, documents, and history will be deleted. This action cannot be undone.",
-            "alsoDeleteConversation": "Also delete their WhatsApp conversation (messages and control state). Use this only for test numbers — if the phone belongs to a real client, leave it unchecked: without this, the history stays available for review even after the account is deleted.",
-            "confirm": "Delete permanently"
         },
         "formState": {
             "complete": "Complete",
@@ -727,10 +720,7 @@
         },
         "actions": {
             "new": "New user",
-            "editTitle": "Edit {{name}}",
-            "deleteTitle": "Delete {{name}}?",
-            "deleteDescription": "If this is a client, all of their uploaded data will be deleted. This action cannot be undone.",
-            "deleteConfirm": "Delete permanently"
+            "editTitle": "Edit {{name}}"
         }
     },
     "bitacora": {
@@ -744,7 +734,9 @@
             "actualizado": "Updated",
             "eliminado": "Deleted",
             "inicioSesion": "Login",
-            "cierreSesion": "Logout"
+            "cierreSesion": "Logout",
+            "archivado": "Archived",
+            "restaurado": "Restored"
         },
         "columns": {
             "date": "Date",
@@ -1009,6 +1001,26 @@
             "sinHallazgos": "No findings — the conversation showed no detectable divergence.",
             "hallazgos_one": "{{count}} finding",
             "hallazgos_other": "{{count}} findings"
+        }
+    },
+    "cuentaUsuario": {
+        "badgePrueba": "Test",
+        "marcarPrueba": "Mark as test",
+        "quitarPrueba": "Unmark as test",
+        "restaurar": "Restore",
+        "archivado": "Archived",
+        "archivar": {
+            "trigger": "Archive",
+            "title": "Archive {{name}}?",
+            "description": "They will no longer appear in lists and cannot sign in, but their data, documents and conversation are kept (the IRS requires keeping them for 3 years). They can be restored from Users.",
+            "confirm": "Archive"
+        },
+        "eliminarDefinitivo": {
+            "trigger": "Delete permanently",
+            "title": "Permanently delete {{name}}?",
+            "description": "This is a test user: all their data, documents and files will be deleted. This action cannot be undone.",
+            "alsoDeleteConversation": "Also delete their WhatsApp conversation (messages and control state).",
+            "confirm": "Delete permanently"
         }
     }
 }

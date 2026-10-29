@@ -5,8 +5,13 @@ namespace App\Models;
 use App\Enums\FieldState;
 use App\Enums\MetodoExtraccionDocumento;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -23,6 +28,7 @@ use Illuminate\Support\Facades\URL;
  * @property string|null $hash_contenido
  * @property MetodoExtraccionDocumento|null $metodo_extraccion
  * @property FieldState $estado_validacion
+ * @property Carbon|null $deleted_at
  */
 #[Fillable([
     'user_id',
@@ -40,6 +46,10 @@ use Illuminate\Support\Facades\URL;
 ])]
 class Documento extends Model
 {
+    // Reemplazar o quitar un documento lo archiva, nunca lo borra: el IRS
+    // exige conservarlo 3 años (F0.3 del documento madre).
+    use Prunable, SoftDeletes;
+
     /**
      * Disco de Storage:: donde viven los archivos reales. Se resuelve en
      * tiempo de ejecución (no es una constante fija) porque en producción el
@@ -82,6 +92,22 @@ class Documento extends Model
             'metodo_extraccion' => MetodoExtraccionDocumento::class,
             'file_size' => 'integer',
         ];
+    }
+
+    /**
+     * Documentos archivados hace más de 3 años. Preparado pero sin programar
+     * en el scheduler hasta que se confirme el plazo (L12).
+     *
+     * @return Builder<static>
+     */
+    public function prunable(): Builder
+    {
+        return static::onlyTrashed()->where('deleted_at', '<=', now()->subYears(3));
+    }
+
+    protected function pruning(): void
+    {
+        Storage::disk(self::disco())->delete($this->file_path);
     }
 
     /**

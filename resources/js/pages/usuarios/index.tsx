@@ -1,8 +1,14 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import UsuarioController from '@/actions/App/Http/Controllers/UsuarioController';
+import {
+    ArchivarUsuarioDialog,
+    EliminarDefinitivoDialog,
+    MarcarPruebaButton,
+    RestaurarUsuarioButton,
+} from '@/components/cuenta-usuario-acciones';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +17,6 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogTitle,
     DialogTrigger,
@@ -20,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
 import { index as usuariosIndex } from '@/routes/usuarios';
-import type { Usuario } from '@/types';
+import type { Auth, Usuario } from '@/types';
 
 function useRoleLabel(): Record<Usuario['role'], string> {
     const { t } = useTranslation();
@@ -202,6 +207,20 @@ function UsuarioRowActions({
 }) {
     const { t } = useTranslation();
     const [editar, setEditar] = useState(false);
+    // La policy no deja marcar ni archivar la propia cuenta: no se ofrece.
+    const esUnoMismo =
+        usePage<{ auth: Auth }>().props.auth.user.id === usuario.id;
+
+    if (usuario.archivado) {
+        return (
+            <div className="flex justify-end gap-1">
+                <RestaurarUsuarioButton usuario={usuario} />
+                {usuario.es_prueba ? (
+                    <EliminarDefinitivoDialog usuario={usuario} size="sm" />
+                ) : null}
+            </div>
+        );
+    }
 
     return (
         <div className="flex justify-end gap-1">
@@ -225,39 +244,16 @@ function UsuarioRowActions({
                 </DialogContent>
             </Dialog>
 
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                    >
-                        {t('common.delete')}
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogTitle>
-                        {t('usuarios.actions.deleteTitle', {
-                            name: usuario.name,
-                        })}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {t('usuarios.actions.deleteDescription')}
-                    </DialogDescription>
-                    <DialogFooter>
-                        <Button
-                            variant="destructive"
-                            onClick={() =>
-                                router.delete(
-                                    UsuarioController.destroy(usuario.id).url,
-                                )
-                            }
-                        >
-                            {t('usuarios.actions.deleteConfirm')}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {esUnoMismo ? null : (
+                <>
+                    <MarcarPruebaButton usuario={usuario} size="sm" />
+                    {usuario.es_prueba ? (
+                        <EliminarDefinitivoDialog usuario={usuario} size="sm" />
+                    ) : (
+                        <ArchivarUsuarioDialog usuario={usuario} size="sm" />
+                    )}
+                </>
+            )}
         </div>
     );
 }
@@ -281,8 +277,18 @@ function useColumns(preparadores: Preparador[]): ColumnDef<Usuario>[] {
 
                 return (
                     <div>
-                        <div className="font-medium text-foreground">
+                        <div className="flex items-center gap-2 font-medium text-foreground">
                             {u.name}
+                            {u.es_prueba ? (
+                                <Badge variant="outline">
+                                    {t('cuentaUsuario.badgePrueba')}
+                                </Badge>
+                            ) : null}
+                            {u.archivado ? (
+                                <Badge variant="secondary">
+                                    {t('cuentaUsuario.archivado')}
+                                </Badge>
+                            ) : null}
                         </div>
                         <div className="text-xs text-muted-foreground">
                             {u.email}

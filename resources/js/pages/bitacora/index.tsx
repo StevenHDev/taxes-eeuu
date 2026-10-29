@@ -15,6 +15,8 @@ function useAccionLabel(): Record<AccionAuditoria, string> {
         creado: t('bitacora.acciones.creado'),
         actualizado: t('bitacora.acciones.actualizado'),
         eliminado: t('bitacora.acciones.eliminado'),
+        archivado: t('bitacora.acciones.archivado'),
+        restaurado: t('bitacora.acciones.restaurado'),
         inicio_sesion: t('bitacora.acciones.inicioSesion'),
         cierre_sesion: t('bitacora.acciones.cierreSesion'),
     };
@@ -27,6 +29,8 @@ const ACCION_BADGE_VARIANT: Record<
     creado: 'secondary',
     actualizado: 'default',
     eliminado: 'destructive',
+    archivado: 'secondary',
+    restaurado: 'secondary',
     inicio_sesion: 'outline',
     cierre_sesion: 'outline',
 };

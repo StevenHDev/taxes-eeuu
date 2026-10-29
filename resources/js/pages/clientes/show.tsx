@@ -10,6 +10,7 @@ import {
 import { Fragment, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
+import { ClienteCuentaAcciones } from '@/components/cuenta-usuario-acciones';
 import { DerivationLogsPanel } from '@/components/derivation-logs-panel';
 import type { DerivationLog } from '@/components/derivation-logs-panel';
 import { DeterminacionFiscalPanel } from '@/components/determinacion-fiscal-panel';
@@ -53,7 +54,6 @@ import { humanizarClave } from '@/lib/humanizar-clave';
 import { dashboard } from '@/routes';
 import {
     index as clientesIndex,
-    destroy as clienteDestroy,
     exportMethod as clienteExport,
     marcarRevisado,
     show as clienteShowRoute,
@@ -2144,7 +2144,13 @@ export default function ClienteShow({
     derivationLogs,
     nivelRiesgo,
 }: {
-    cliente: { id: number; name: string; email: string; phone: string | null };
+    cliente: {
+        id: number;
+        name: string;
+        email: string;
+        phone: string | null;
+        es_prueba: boolean;
+    };
     formas: ClienteForma[];
     campos: CampoCliente[];
     catalogoDisponible: CatalogoDisponibleItem[];
@@ -2156,8 +2162,6 @@ export default function ClienteShow({
     const { t } = useTranslation();
     const { auth } = usePage<PageProps>().props;
     const esAdministrador = auth.user.role === 'administrator';
-
-    const [eliminarConversacion, setEliminarConversacion] = useState(false);
 
     // Rango simple alrededor del año actual — alcanza para elegir un año
     // distinto al que trae el backend sin depender de otro prop adicional.
@@ -2233,8 +2237,13 @@ export default function ClienteShow({
             <div className="space-y-8 p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                        <h1 className="font-display text-display text-foreground">
+                        <h1 className="flex items-center gap-2 font-display text-display text-foreground">
                             {cliente.name}
+                            {cliente.es_prueba ? (
+                                <Badge variant="outline">
+                                    {t('cuentaUsuario.badgePrueba')}
+                                </Badge>
+                            ) : null}
                         </h1>
                         {/* Correo y teléfono son identificadores, no prosa. */}
                         <p className="mt-1.5 font-mono text-xs text-muted-foreground">
@@ -2278,71 +2287,9 @@ export default function ClienteShow({
                                 clienteName={cliente.name}
                             />
                         )}
-                        {esAdministrador && (
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="destructive">
-                                        {t('clienteShow.deleteClient.trigger')}
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogTitle>
-                                        {t('clienteShow.deleteClient.title', {
-                                            name: cliente.name,
-                                        })}
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                        {t(
-                                            'clienteShow.deleteClient.description',
-                                        )}
-                                    </DialogDescription>
-
-                                    {cliente.phone && (
-                                        <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
-                                            <Checkbox
-                                                id="eliminar-conversacion"
-                                                checked={eliminarConversacion}
-                                                onCheckedChange={(v) =>
-                                                    setEliminarConversacion(
-                                                        v === true,
-                                                    )
-                                                }
-                                            />
-                                            <Label
-                                                htmlFor="eliminar-conversacion"
-                                                className="text-sm font-normal"
-                                            >
-                                                {t(
-                                                    'clienteShow.deleteClient.alsoDeleteConversation',
-                                                )}
-                                            </Label>
-                                        </div>
-                                    )}
-
-                                    <DialogFooter>
-                                        <Button
-                                            variant="destructive"
-                                            onClick={() =>
-                                                router.delete(
-                                                    clienteDestroy(cliente.id)
-                                                        .url,
-                                                    {
-                                                        data: {
-                                                            eliminar_conversacion_whatsapp:
-                                                                eliminarConversacion,
-                                                        },
-                                                    },
-                                                )
-                                            }
-                                        >
-                                            {t(
-                                                'clienteShow.deleteClient.confirm',
-                                            )}
-                                        </Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        )}
+                        {esAdministrador ? (
+                            <ClienteCuentaAcciones cliente={cliente} />
+                        ) : null}
                     </div>
                 </div>
 
