@@ -43,6 +43,13 @@ Orden sugerido de commits: 0.5 → 0.6 → 0.3 → 0.2 → 0.1 → 0.4. Primero 
 
 **Despliegue:** avisar al equipo de GTS que al entrar tendrán que activar el 2FA (app autenticadora) o una passkey.
 
+**Cómo quedó (29 oct.):**
+- `EnsureStaffHasMfa` va al final del grupo `web` (después de `HandleInertiaRequests`, para que un redirect de Inertia en PUT/PATCH/DELETE salga como 303). Una petición JSON sin MFA recibe 403. El chequeo vive en `User::debeConfigurarMfa()` y se comparte a Inertia como `auth.debeConfigurarMfa`.
+- Mientras falta el MFA, la pantalla de Seguridad muestra el aviso arriba y pone primero la verificación en dos pasos y las passkeys (la acción principal), antes del formulario de contraseña.
+- Se tradujeron al español las secciones de 2FA y passkeys (7 componentes), que estaban en inglés y ahora el personal está obligado a usar.
+- En las pruebas, `tests/TestCase.php` apaga el requisito (la factory crea personal sin 2FA); `EnsureStaffHasMfaTest` lo vuelve a encender.
+- Probado en local: sin 2FA el panel manda a Seguridad; se activa el 2FA desde el modal y el panel vuelve a abrir. Revisado en escritorio y en móvil.
+
 ---
 
 ## 0.2 Cifrar los archivos de los documentos (T2)

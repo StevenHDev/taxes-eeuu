@@ -16,8 +16,8 @@
 
 | Tarea | Título | Prioridad | Estado | Depende de |
 | --- | --- | --- | --- | --- |
-| F0.1 | MFA obligatorio para preparadores y administradores | Alta | ⏳ | — |
-| F0.2 | Cifrar los archivos de los documentos | Alta | 👀 | — |
+| F0.1 | MFA obligatorio para preparadores y administradores | Alta | 🔄 | — |
+| F0.2 | Cifrar los archivos de los documentos | Alta | ✅ | — |
 | F0.3 | No borrar clientes ni documentos (conservar 3 años) | Alta | ✅ | — |
 | F0.4 | Respaldo externo de base de datos y archivos | Alta | ⏳ | Destino del respaldo |
 | F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | ✅ | — |
@@ -39,21 +39,21 @@ Orden sugerido dentro de la fase 0: F0.5 → F0.6 → F0.3 → F0.2 → F0.1 →
 Plan técnico: [`fases/fase-0-seguridad-y-limpieza.md`](fases/fase-0-seguridad-y-limpieza.md) · ✅ Aprobado (28 oct.)
 
 ### F0.1 — MFA obligatorio para preparadores y administradores
-Wiplitask: `cmvskodtw00631420q3excvau` · ⏳
-- [ ] Middleware EnsureStaffHasMfa (2FA confirmado o passkey) registrado en el grupo web
-- [ ] Configuración `security.mfa_roles` (preparer, administrator)
-- [ ] Aviso en la pantalla de Seguridad
-- [ ] Pruebas Pest (preparador sin MFA, con 2FA, con passkey, cliente, rutas libres)
+Wiplitask: `cmvskodtw00631420q3excvau` · 🔄
+- [x] Middleware EnsureStaffHasMfa (2FA confirmado o passkey) registrado en el grupo web
+- [x] Configuración `security.mfa_roles` (preparer, administrator)
+- [x] Aviso en la pantalla de Seguridad
+- [x] Pruebas Pest (preparador sin MFA, con 2FA, con passkey, cliente, rutas libres)
 - [ ] Avisar al equipo de GTS antes de desplegar
 
 ### F0.2 — Cifrar los archivos de los documentos
-Wiplitask: `cmvskoe2a00681420ct1nuysi` · 👀
+Wiplitask: `cmvskoe2a00681420ct1nuysi` · ✅ (29 oct., commits `522c958` y `3199899`, comando corrido en producción)
 - [x] Servicio DocumentoAlmacen (guardar, leer, responder, borrar) con cifrado
 - [x] Migración: columna `documentos.cifrado`
 - [x] Usar el servicio en EventoRecoleccionService, DocumentoController y ClienteExportService (también en el borrado definitivo de F0.3 y en la limpieza a 3 años)
 - [x] Comando `documentos:cifrar-existentes` (con `--dry-run`; se puede correr dos veces)
 - [x] Pruebas Pest (cifrado en disco, ver original, documento viejo, duplicados, ZIP) y prueba local con un PDF real
-- [ ] Correr el comando en producción y verificar (después del deploy, con autorización de Steven)
+- [x] Correr el comando en producción y verificar (2 documentos cifrados, mismo SHA-256 al descifrar desde frontend y worker)
 
 ### F0.3 — No borrar clientes ni documentos (conservar 3 años)
 Wiplitask: `cmvskoe88006d1420v8bj0e8g` · ✅ (29 oct., commits `5c32805` y `02459b3`, probado en local y verificado en producción)
