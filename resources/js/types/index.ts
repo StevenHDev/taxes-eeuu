@@ -4,3 +4,4 @@ export type * from './auth';
 export type * from './navigation';
 export type * from './tax-event';
 export type * from './ui';
+export type * from './catalogo-fiscal';

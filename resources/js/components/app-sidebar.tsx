@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BookOpenCheck,
     Bot,
     ClipboardCheck,
     Code2,
@@ -26,6 +27,7 @@ import { index as agenteMensajesIndex } from '@/routes/agente/mensajes';
 import { index as apiDocsIndex } from '@/routes/api-docs';
 import { index as bitacoraIndex } from '@/routes/bitacora';
 import { index as catalogoIndex } from '@/routes/catalogo';
+import { inicio as catalogoFiscalInicio } from '@/routes/catalogo-fiscal';
 import { index as clientesIndex } from '@/routes/clientes';
 import { index as metaAgenteIndex } from '@/routes/meta-agente';
 import { formulario as portalFormulario } from '@/routes/portal';
@@ -75,6 +77,11 @@ export function AppSidebar() {
                       title: t('nav.proceso'),
                       href: procesoShow(),
                       icon: Workflow,
+                  },
+                  {
+                      title: t('nav.catalogoFiscal'),
+                      href: catalogoFiscalInicio(),
+                      icon: BookOpenCheck,
                   },
               ]
             : []),

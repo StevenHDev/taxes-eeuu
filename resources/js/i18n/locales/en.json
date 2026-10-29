@@ -41,7 +41,8 @@
         "repository": "Repository",
         "documentation": "Documentation",
         "navigationMenu": "Navigation menu",
-        "searchClient": "Search client…"
+        "searchClient": "Search client…",
+        "catalogoFiscal": "Tax catalog"
     },
     "userMenu": {
         "settings": "Settings",
@@ -1077,6 +1078,193 @@
             "description": "This is a test user: all their data, documents and files will be deleted. This action cannot be undone.",
             "alsoDeleteConversation": "Also delete their WhatsApp conversation (messages and control state).",
             "confirm": "Delete permanently"
+        }
+    },
+    "catalogoFiscal": {
+        "titulo": "Tax catalog for the year",
+        "descripcion": "Everything the platform uses for the tax year, with its IRS source: questions, documents, forms, parameters and rules.",
+        "anioFiscal": "Tax year",
+        "estadoAnio": {
+            "borrador": "Draft",
+            "vigente": "Current"
+        },
+        "pestanasAria": "Tax catalog sections",
+        "pestanas": {
+            "preguntas": "Questions",
+            "documentos": "Documents",
+            "formularios": "Forms and lines",
+            "parametros": "Parameters",
+            "reglas": "Rules"
+        },
+        "ayudaPestana": {
+            "preguntas": "The interview questions (IRS Form 13614-C) and what each answer opens.",
+            "documentos": "The documents a client may be asked for, the boxes that matter and the questions that request them.",
+            "formularios": "The forms that get filled in and where each line comes from, up to Form 1040.",
+            "parametros": "The year's amounts, limits and tables. \"Pending\" means the IRS figure is not loaded yet.",
+            "reglas": "Rules to check documents and answers. They start running in the document reading phase."
+        },
+        "buscar": "Search by code or text…",
+        "sinResultados": "Nothing matches the search or filters. Try another text or clear the filters.",
+        "cargando": "Loading the catalog…",
+        "verDetalle": "View",
+        "verDetalleDe": "View details of {{codigo}}",
+        "vacio": {
+            "titulo": "Nothing is loaded here for this year yet",
+            "administrador": "Load it with the catalogo-fiscal:cargar command or copy it from another year.",
+            "preparador": "Ask an administrator to load it."
+        },
+        "error": {
+            "titulo": "This section could not be loaded",
+            "descripcion": "Reload the page. If it keeps failing, tell an administrator."
+        },
+        "validacion": {
+            "validado": "Validated",
+            "sinValidar": "Not validated"
+        },
+        "columnas": {
+            "codigo": "Code",
+            "pregunta": "Question",
+            "bloque": "Block",
+            "nivel": "Level",
+            "validacion": "Validation against the IRS",
+            "acciones": "Actions",
+            "documento": "Document",
+            "grupo": "Group",
+            "loActiva": "Triggered by",
+            "formulario": "Form",
+            "ficha": "Detail",
+            "lineas": "Lines",
+            "parametro": "Parameter",
+            "valor": "Value",
+            "dondeSeUsa": "Where it is used",
+            "regla": "Rule",
+            "severidad": "Severity"
+        },
+        "detalle": {
+            "fuente": "IRS source",
+            "verEnIrs": "View on IRS.gov",
+            "abreNuevaPestana": "(opens in a new tab)",
+            "sinFuente": "No source loaded.",
+            "validadoPor": "Validated by {{nombre}} on {{fecha}}"
+        },
+        "bloques": {
+            "A": "A · Identity",
+            "B": "B · Marital status",
+            "C": "C · Household members",
+            "D": "D · Income",
+            "E": "E · Expenses",
+            "F": "F · Events of the year",
+            "G": "G · Payments and refund"
+        },
+        "niveles": {
+            "entrada": "Entry",
+            "seguimiento": "Follow-up",
+            "no_se_pregunta": "Not asked"
+        },
+        "tiposRespuesta": {
+            "si_no": "Yes / No",
+            "usted_conyuge_no": "You / Spouse / No",
+            "opciones": "Options",
+            "casillas": "Multiple options",
+            "dato": "Data",
+            "fecha": "Date",
+            "numero": "Number"
+        },
+        "objetivos": {
+            "pregunta": "Question",
+            "documento": "Document",
+            "formulario": "Form"
+        },
+        "preguntas": {
+            "porPersona": "Asked for each household member",
+            "sensible": "Sensitive data: portal only, never by WhatsApp",
+            "ayuda": "Help for the client",
+            "respuesta": "Answer",
+            "pantalla": "screen {{numero}}",
+            "cuandoSeMuestra": "When it is shown",
+            "efecto": "What it triggers or rules out",
+            "abre": "Opens",
+            "notas": "Notes",
+            "y": "and",
+            "o": "or"
+        },
+        "gruposDocumento": {
+            "identidad": "Identity",
+            "trabajo": "Work",
+            "negocio": "Own business",
+            "jubilacion": "Retirement and benefits",
+            "inversiones": "Investments and sales",
+            "otros_ingresos": "Other income",
+            "gastos": "Expenses and deductions",
+            "situaciones": "Events of the year",
+            "pagos": "Payments and prior year"
+        },
+        "unoPor": {
+            "unico": "Just one",
+            "empleo": "One per job",
+            "poliza": "One per policy",
+            "persona": "One per person",
+            "fuente": "One per issuer"
+        },
+        "documentos": {
+            "emisor": "Who sends it",
+            "llegaA": "Should arrive by",
+            "siNoLlega": "If it does not arrive",
+            "unoPor": "How many",
+            "formatos": "Formats",
+            "casillas": "Boxes",
+            "casilla": "Box",
+            "descripcion": "Description",
+            "clave": "Read"
+        },
+        "fichas": {
+            "completa": "Complete",
+            "conector": "Connector",
+            "pendiente": "Pending"
+        },
+        "formularios": {
+            "siempre": "Always",
+            "activaOtroFormulario": "Triggered by another form",
+            "lineas": "Lines",
+            "linea": "Line",
+            "deDondeSale": "Where it comes from",
+            "sinLineas": "This form's detail is pending: its lines are not loaded yet."
+        },
+        "origenes": {
+            "casilla": "Box",
+            "linea": "Line",
+            "respuesta": "Answer",
+            "calculo": "Calculated"
+        },
+        "gruposParametro": {
+            "deduccion_estandar": "Standard deduction",
+            "deducciones_detalladas": "Itemized deductions",
+            "ajustes_ingreso": "Adjustments to income",
+            "deducciones_schedule_1a": "New deductions (Schedule 1-A)",
+            "creditos": "Credits",
+            "topes_umbrales": "Limits and thresholds",
+            "tablas": "Tables"
+        },
+        "parametros": {
+            "pendiente": "Pending",
+            "condicion": "When it applies",
+            "tramos_one": "{{count}} bracket",
+            "tramos_other": "{{count}} brackets"
+        },
+        "severidades": {
+            "bloqueante": "Blocking",
+            "revision": "Review",
+            "informativa": "Informational"
+        },
+        "severidadesAyuda": {
+            "bloqueante": "the file does not move forward until it is resolved",
+            "revision": "the preparer has to look at it",
+            "informativa": "shown only, it does not stop anything"
+        },
+        "reglas": {
+            "estado": "Status",
+            "implementada": "Already runs",
+            "noImplementada": "Not running yet (document reading phase)"
         }
     }
 }

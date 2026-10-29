@@ -41,7 +41,8 @@
         "repository": "Repositorio",
         "documentation": "Documentación",
         "navigationMenu": "Menú de navegación",
-        "searchClient": "Buscar cliente…"
+        "searchClient": "Buscar cliente…",
+        "catalogoFiscal": "Catálogo fiscal del año"
     },
     "userMenu": {
         "settings": "Ajustes",
@@ -1077,6 +1078,193 @@
             "description": "Es un usuario de prueba: se borran todos sus datos, documentos y archivos. Esta acción no se puede deshacer.",
             "alsoDeleteConversation": "También eliminar su conversación de WhatsApp (mensajes y estado de control).",
             "confirm": "Eliminar definitivamente"
+        }
+    },
+    "catalogoFiscal": {
+        "titulo": "Catálogo fiscal del año",
+        "descripcion": "Todo lo que la plataforma usa para el año fiscal, con su fuente del IRS: preguntas, documentos, formularios, parámetros y reglas.",
+        "anioFiscal": "Año fiscal",
+        "estadoAnio": {
+            "borrador": "Borrador",
+            "vigente": "Vigente"
+        },
+        "pestanasAria": "Secciones del catálogo fiscal",
+        "pestanas": {
+            "preguntas": "Preguntas",
+            "documentos": "Documentos",
+            "formularios": "Formularios y líneas",
+            "parametros": "Parámetros",
+            "reglas": "Reglas"
+        },
+        "ayudaPestana": {
+            "preguntas": "Las preguntas de la entrevista (Form 13614-C del IRS) y lo que abre cada respuesta.",
+            "documentos": "Los documentos que se le pueden pedir al cliente, las casillas que importan y las preguntas que los piden.",
+            "formularios": "Los formularios que se llenan y de dónde sale cada línea, hasta el Form 1040.",
+            "parametros": "Montos, topes y tablas del año. \"Pendiente\" significa que todavía no tiene la cifra del IRS.",
+            "reglas": "Reglas para revisar documentos y respuestas. Se empiezan a ejecutar en la fase de lectura de documentos."
+        },
+        "buscar": "Buscar por código o texto…",
+        "sinResultados": "Nada coincide con la búsqueda o los filtros. Prueba con otro texto o limpia los filtros.",
+        "cargando": "Cargando el catálogo…",
+        "verDetalle": "Ver",
+        "verDetalleDe": "Ver el detalle de {{codigo}}",
+        "vacio": {
+            "titulo": "Este año todavía no tiene nada cargado aquí",
+            "administrador": "Cárgalo con el comando catalogo-fiscal:cargar o cópialo de otro año.",
+            "preparador": "Pídele a un administrador que lo cargue."
+        },
+        "error": {
+            "titulo": "No se pudo cargar esta sección",
+            "descripcion": "Vuelve a cargar la página. Si sigue fallando, avisa al administrador."
+        },
+        "validacion": {
+            "validado": "Validado",
+            "sinValidar": "Sin validar"
+        },
+        "columnas": {
+            "codigo": "Código",
+            "pregunta": "Pregunta",
+            "bloque": "Bloque",
+            "nivel": "Nivel",
+            "validacion": "Validación contra el IRS",
+            "acciones": "Acciones",
+            "documento": "Documento",
+            "grupo": "Grupo",
+            "loActiva": "Lo activa",
+            "formulario": "Formulario",
+            "ficha": "Ficha",
+            "lineas": "Líneas",
+            "parametro": "Parámetro",
+            "valor": "Valor",
+            "dondeSeUsa": "Dónde se usa",
+            "regla": "Regla",
+            "severidad": "Severidad"
+        },
+        "detalle": {
+            "fuente": "Fuente del IRS",
+            "verEnIrs": "Ver en IRS.gov",
+            "abreNuevaPestana": "(se abre en una pestaña nueva)",
+            "sinFuente": "Sin fuente cargada.",
+            "validadoPor": "Validado por {{nombre}} el {{fecha}}"
+        },
+        "bloques": {
+            "A": "A · Identidad",
+            "B": "B · Estado civil",
+            "C": "C · Personas del hogar",
+            "D": "D · Ingresos",
+            "E": "E · Gastos",
+            "F": "F · Situaciones del año",
+            "G": "G · Pagos y reembolso"
+        },
+        "niveles": {
+            "entrada": "De entrada",
+            "seguimiento": "De seguimiento",
+            "no_se_pregunta": "No se pregunta"
+        },
+        "tiposRespuesta": {
+            "si_no": "Sí / No",
+            "usted_conyuge_no": "Usted / Cónyuge / No",
+            "opciones": "Opciones",
+            "casillas": "Varias opciones",
+            "dato": "Dato",
+            "fecha": "Fecha",
+            "numero": "Número"
+        },
+        "objetivos": {
+            "pregunta": "Pregunta",
+            "documento": "Documento",
+            "formulario": "Formulario"
+        },
+        "preguntas": {
+            "porPersona": "Se pregunta por cada persona del hogar",
+            "sensible": "Dato sensible: solo en el portal, nunca por WhatsApp",
+            "ayuda": "Ayuda para el cliente",
+            "respuesta": "Respuesta",
+            "pantalla": "pantalla {{numero}}",
+            "cuandoSeMuestra": "Cuándo se muestra",
+            "efecto": "Qué activa o descarta",
+            "abre": "Abre",
+            "notas": "Notas",
+            "y": "y",
+            "o": "o"
+        },
+        "gruposDocumento": {
+            "identidad": "Identidad",
+            "trabajo": "Trabajo",
+            "negocio": "Negocio propio",
+            "jubilacion": "Jubilación y beneficios",
+            "inversiones": "Inversiones y ventas",
+            "otros_ingresos": "Otros ingresos",
+            "gastos": "Gastos y deducciones",
+            "situaciones": "Situaciones del año",
+            "pagos": "Pagos y año anterior"
+        },
+        "unoPor": {
+            "unico": "Uno solo",
+            "empleo": "Uno por empleo",
+            "poliza": "Uno por póliza",
+            "persona": "Uno por persona",
+            "fuente": "Uno por quien lo emite"
+        },
+        "documentos": {
+            "emisor": "Quién lo envía",
+            "llegaA": "Debe llegar a más tardar",
+            "siNoLlega": "Si no le llega",
+            "unoPor": "Cuántos",
+            "formatos": "Formatos",
+            "casillas": "Casillas",
+            "casilla": "Casilla",
+            "descripcion": "Descripción",
+            "clave": "Se lee"
+        },
+        "fichas": {
+            "completa": "Completa",
+            "conector": "Conector",
+            "pendiente": "Pendiente"
+        },
+        "formularios": {
+            "siempre": "Siempre",
+            "activaOtroFormulario": "Lo activa otro formulario",
+            "lineas": "Líneas",
+            "linea": "Línea",
+            "deDondeSale": "De dónde sale",
+            "sinLineas": "La ficha de este formulario está pendiente: todavía no tiene el detalle de sus líneas."
+        },
+        "origenes": {
+            "casilla": "Casilla",
+            "linea": "Línea",
+            "respuesta": "Respuesta",
+            "calculo": "Se calcula"
+        },
+        "gruposParametro": {
+            "deduccion_estandar": "Deducción estándar",
+            "deducciones_detalladas": "Deducciones detalladas",
+            "ajustes_ingreso": "Ajustes al ingreso",
+            "deducciones_schedule_1a": "Deducciones nuevas (Schedule 1-A)",
+            "creditos": "Créditos",
+            "topes_umbrales": "Topes y umbrales",
+            "tablas": "Tablas"
+        },
+        "parametros": {
+            "pendiente": "Pendiente",
+            "condicion": "Cuándo aplica",
+            "tramos_one": "{{count}} tramo",
+            "tramos_other": "{{count}} tramos"
+        },
+        "severidades": {
+            "bloqueante": "Bloqueante",
+            "revision": "Revisión",
+            "informativa": "Informativa"
+        },
+        "severidadesAyuda": {
+            "bloqueante": "el expediente no avanza hasta resolverla",
+            "revision": "el preparador la tiene que mirar",
+            "informativa": "se muestra, no detiene nada"
+        },
+        "reglas": {
+            "estado": "Estado",
+            "implementada": "Ya se ejecuta",
+            "noImplementada": "Todavía no se ejecuta (fase de lectura de documentos)"
         }
     }
 }
