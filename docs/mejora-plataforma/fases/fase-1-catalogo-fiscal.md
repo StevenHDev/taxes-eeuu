@@ -174,6 +174,16 @@ Orden sugerido de commits: 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6. Primero 
 - **Año vigente protegido:** un año en estado `vigente` muestra un aviso antes de guardar ("este cambio afecta a los clientes de {anio}"). No bloquea.
 - Frontend: diálogos (`ui/dialog`) con el componente `Form` de Inertia; `processing` deshabilita y muestra spinner; errores con `input-error` junto a cada campo. Sin estado duplicado de las props (react-best-practices: el formulario se reinicia con `key` al abrir otra fila).
 
+**Cómo quedó (30 oct.):**
+- `CatalogoFiscalEditor` aplica las reglas: editar el contenido de algo validado lo vuelve a "sin validar" (cambiar solo el orden o activar/desactivar no), validar exige `fuente_url`, nada se borra. Las casillas y las líneas se sincronizan por su clave: las que se quitan se desactivan y, si cambian, la pieza vuelve a "sin validar".
+- Un Form Request por pieza (`App\Http\Requests\CatalogoFiscal\*`) sobre una base común: solo el administrador, el código solo al crear (y único en el año), fuente con URL válida. Los parámetros no se crean desde la pantalla (las calculadoras los leen por clave): se edita su valor, se puede dejar pendiente y se valida según su tipo (monto, porcentaje entre 0 y 1, fecha, tabla de tramos).
+- `PiezaController` con "Marcar como validado" y activar/desactivar para las 5 pestañas; el Form 1040 no se puede desactivar.
+- El administrador ve también lo desactivado (con la etiqueta "Desactivado") para poder reactivarlo; el preparador solo ve lo activo.
+- Frontend: botón principal "Agregar …" en cada pestaña (menos Parámetros); acciones en el panel de detalle ("Editar" como principal; validar y desactivar como secundarias, con su estado de "procesando"); diálogos con `useForm` de Inertia; errores junto a cada campo (enlazados con `aria-describedby`); filas editables para opciones, casillas, líneas y tramos; aviso si el año está vigente; aviso de éxito al guardar.
+- El diálogo y el panel de detalle viven fuera de `<Deferred>`: al guardar, o si el servidor devuelve errores, la tabla se vuelve a cargar y antes se llevaba el diálogo con ella (se perdían los errores; visto al probar en el navegador).
+- Probado en el navegador: marcar como validado, editar (vuelve a "sin validar" con aviso) y crear con errores (el diálogo queda abierto con los mensajes). Los formularios de preguntas, documentos, formularios y parámetros están cubiertos por las pruebas, no se probaron en pantalla.
+- Las activaciones (qué abre cada respuesta) no se editan todavía desde la pantalla: se cambian en los archivos de datos y con `catalogo-fiscal:cargar`. Se suman cuando la fase 2 las use.
+
 **Pruebas:**
 - El administrador crea, edita, desactiva y valida en cada pestaña; el preparador recibe 403 en todas las escrituras.
 - Editar un parámetro validado lo deja "sin validar" y guarda el valor anterior.

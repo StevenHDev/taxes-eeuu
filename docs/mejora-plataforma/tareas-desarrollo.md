@@ -109,7 +109,7 @@ Wiplitask: `cmvskovkw006x1420a9v9fxo5` · 🔄
 - [x] 1.2 Parámetros del año sobre `parametros_fiscales` (fuente, grupo, valor pendiente)
 - [x] 1.3 Cargar 2025 y 2026 desde el documento madre (comandos `cargar`, `copiar`, `verificar`; caso María). Cargado en producción el 29 oct. (commits `8d2b138` y `c68e03e`): verificar sin problemas en 2025 y 2026, determinaciones de los clientes sin cambios
 - [x] 1.4 Menú "Catálogo fiscal del año" con 5 pestañas (ver: preparador y administrador)
-- [ ] 1.5 Edición por el administrador (sin borrar, historial, "marcar como validado contra el IRS")
+- [x] 1.5 Edición por el administrador (sin borrar, historial, "marcar como validado contra el IRS")
 - [ ] 1.6 Mapa de equivalencias de `campos_cliente` y reporte; el menú viejo queda como "Campos del formulario actual" (solo administrador)
 
 ### F2 — Entrevista por WhatsApp y por el portal
@@ -179,3 +179,4 @@ Cosas vistas al desarrollar que no son de una fase. Se resuelven cuando haya un 
 - [ ] Tabla compartida (`data-table-pagination.tsx`): al pasar a la página 2 el paginador sigue diciendo "Página 1 de N" (visto en F0.3, 29 oct.)
 - [ ] Usuarios: después de restaurar un usuario, la tabla vuelve a la página 1 (visto en F0.3)
 - [ ] Passkeys: el nombre que se propone por defecto dice "Chrome on Mac"; pasarlo a "Chrome en Mac" (visto en F0.1)
+- [ ] Local: `.env` con `APP_LOCALE=en` hace que los errores de validación salgan en inglés (producción está en `es`); además el idioma que elige el usuario (cookie) no cambia el idioma del servidor (visto en F1.5)
