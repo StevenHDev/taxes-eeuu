@@ -136,3 +136,11 @@ return [
     ],
 ];
 ```
+
+## `equivalencias-campos-cliente.php` (F2.3)
+
+Dice a dónde va cada campo del formulario actual (`catalogo_campos` / `campos_cliente`) en el catálogo nuevo: a una pregunta (con una transformación), a un documento, a una persona del bloque C, o a ninguna parte, con el motivo. El formato y las transformaciones se explican al principio del archivo. Para revisarlo y ver cuántos datos tienen destino, sin mostrar ningún valor:
+
+```
+php artisan catalogo-fiscal:equivalencias --reporte
+```
