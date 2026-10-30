@@ -11,6 +11,7 @@ Aquí van los análisis, los ejemplos y las observaciones para mejorar la plataf
 | [`documento-madre.md`](documento-madre.md) | **Documento madre**: referencia única para hacer cambios en la plataforma (en construcción) | 28 oct. 2026 |
 | [`tareas-desarrollo.md`](tareas-desarrollo.md) | Tareas de desarrollo por fase con su checklist (iguales en Wiplitask) | 28 oct. 2026 |
 | [`fases/`](fases/) | Plan técnico de cada fase ("cómo programarlo") | 28 oct. 2026 |
+| [`guia-desarrollo.md`](guia-desarrollo.md) | **Para quien continúe el trabajo**: cómo se hace cada fase y cada entrega (plan, aprobación, pruebas, revisión, commit, deploy, producción) | 30 oct. 2026 |
 | [`modelo-para-firmas-contables-independientes.pdf`](modelo-para-firmas-contables-independientes.pdf) | Documento de análisis y diseño de Juan Pablo (copia local; no trae la sección 12) | 19 oct. 2026 |
 
 **Principio:** el IRS es la fuente de verdad sobre qué se pide, y el 1040 es el formulario "front". Los schedules y los documentos (W-2, 1099…) sirven para llenarlo.
