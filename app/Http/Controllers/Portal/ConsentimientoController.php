@@ -29,7 +29,7 @@ class ConsentimientoController extends Controller
         $taxYear = (int) config('tax.current_tax_year');
 
         if ($this->consentimientos->firmado($cliente, $taxYear)) {
-            return to_route('portal.formulario');
+            return to_route('portal.entrevista.inicio');
         }
 
         $texto = $this->consentimientos->vigente();
@@ -75,6 +75,6 @@ class ConsentimientoController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Consentimiento firmado.')]);
 
-        return to_route('portal.formulario');
+        return to_route('portal.entrevista.inicio');
     }
 }

@@ -42,7 +42,8 @@
         "documentation": "Documentation",
         "navigationMenu": "Navigation menu",
         "searchClient": "Search client…",
-        "catalogoFiscal": "Tax catalog"
+        "catalogoFiscal": "Tax catalog",
+        "portalEntrevista": "My interview"
     },
     "userMenu": {
         "settings": "Settings",
@@ -1329,7 +1330,10 @@
             "tasa": "Rate (0 to 1)",
             "ayudaPorcentaje": "Between 0 and 1: 0.35 is 35%.",
             "ayudaMonto": "In dollars, no symbol or thousands separators.",
-            "validarSinFuentePreparador": "This item has no link to its IRS source yet. Ask an administrator to add it so it can be validated."
+            "validarSinFuentePreparador": "This item has no link to its IRS source yet. Ask an administrator to add it so it can be validated.",
+            "textoPreguntaEn": "Question text in English",
+            "ayudaEn": "Help text in English",
+            "textoOpcionEn": "English text"
         }
     },
     "portalConsentimiento": {
@@ -1341,5 +1345,76 @@
         "faltaCasilla": "Check the box to continue.",
         "faltaNombre": "Type your full name to sign.",
         "firmar": "Sign and continue"
+    },
+    "entrevista": {
+        "pantallaDe": "Screen {{actual}} of {{total}}",
+        "pantallas": {
+            "1": "Your identity",
+            "2": "Your marital status and household",
+            "3": "Do any of these apply to you or your spouse?",
+            "4": "People in your household",
+            "5": "Where did you receive money from in {{anio}}?",
+            "6": "Did you pay any of these expenses?",
+            "7": "Did any of this happen to you in {{anio}}?",
+            "8": "Payments and refund"
+        },
+        "marcaLasQueApliquen": "Check all that apply. If none apply, check “None”.",
+        "faltaMarcar": "Check the ones that apply or “None” to continue.",
+        "ninguna": "None of these",
+        "ningunoMarcado": "If it applies to neither, leave both unchecked.",
+        "si": "Yes",
+        "no": "No",
+        "quien": {
+            "usted": "Me",
+            "conyuge": "My spouse"
+        },
+        "origen": {
+            "whatsapp": "You answered on WhatsApp on {{fecha}}",
+            "preparador": "Your preparer entered it on {{fecha}}",
+            "migracion": "From your previous form ({{fecha}})"
+        },
+        "seguimiento": {
+            "titulo": "A few more questions",
+            "descripcion": "They opened because of what you answered in the previous step."
+        },
+        "persona": {
+            "seguimiento": "{{etiqueta}}: a few more questions"
+        },
+        "continuar": "Continue",
+        "guardando": "Saving…",
+        "atras": "Back",
+        "revisaErrores": "Please check these answers",
+        "sinPreguntas": "There are no questions in this step. You can continue.",
+        "chat": {
+            "abrir": "Questions?",
+            "titulo": "Questions chat",
+            "descripcion": "Ask your assistant. Documents are uploaded in their own place, not here."
+        },
+        "inicio": {
+            "titulo": "Your interview",
+            "descripcion": "Eight short screens to learn what your {{anio}} tax return needs. What you already answered on WhatsApp is checked.",
+            "empezar": "Start",
+            "seguir": "Continue where I left off",
+            "todoRespondido": "You answered every screen. You can review or change any of them."
+        },
+        "estado": {
+            "completa": "Complete",
+            "en_curso": "In progress",
+            "sin_empezar": "Not started"
+        },
+        "personas": {
+            "titulo": "People who lived with you",
+            "descripcion": "Add each person who lived with you during the year or whom you supported, even if they did not live with you.",
+            "vacio": "You have not added anyone yet. Use “Add person” for each one.",
+            "agregar": "Add person",
+            "responder": "Answer",
+            "revisar": "Review",
+            "avance": "{{respondidas}} of {{total}} answered",
+            "quitar": "Remove",
+            "quitarA": "Remove {{etiqueta}}",
+            "quitarTitulo": "Remove {{etiqueta}}?",
+            "quitarDescripcion": "Their answers are kept, but they no longer count for your tax return.",
+            "nombre": "Person {{orden}}"
+        }
     }
 }

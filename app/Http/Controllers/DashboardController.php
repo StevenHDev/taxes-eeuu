@@ -10,6 +10,7 @@ use App\Models\FormaCliente;
 use App\Models\User;
 use App\Services\DashboardSummaryService;
 use App\Support\TaxFieldCatalog;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,12 +20,16 @@ class DashboardController extends Controller
 
     public function __construct(private readonly DashboardSummaryService $summary) {}
 
-    public function index(): Response
+    public function index(): Response|RedirectResponse
     {
         $user = request()->user();
 
         if ($user->role === UserRole::Client) {
-            return $this->miInformacion($user);
+            // F2.5: "Mi información" muestra cálculos sin revisar (9.7); quien
+            // usa la entrevista nueva tiene como inicio su avance.
+            return $user->usaEntrevistaCatalogo()
+                ? redirect()->route('portal.entrevista.inicio')
+                : $this->miInformacion($user);
         }
 
         $taxYear = (int) request()->query('tax_year', config('tax.current_tax_year'));

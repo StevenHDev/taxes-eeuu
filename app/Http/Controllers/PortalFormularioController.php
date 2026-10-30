@@ -61,6 +61,12 @@ class PortalFormularioController extends Controller
     public function index(Request $request): Response|RedirectResponse
     {
         $cliente = $this->clienteAutenticado($request);
+
+        // F2.5: quien usa la entrevista nueva no ve el formulario actual.
+        if ($cliente->usaEntrevistaCatalogo()) {
+            return redirect()->route('portal.entrevista.inicio');
+        }
+
         $fase = $this->resolver->resolver($cliente);
 
         // Sin ninguna forma declarada todavía no hay nada forma-específico que

@@ -14,7 +14,14 @@ import type { PortalMensaje } from '@/types/agente';
  * AgenteConversacionalService::responder(), $canalPortal). El componente en
  * sí no sabe ni le importa en cuál de los dos contextos está.
  */
-export function PortalChatPanel({ mensajes }: { mensajes: PortalMensaje[] }) {
+export function PortalChatPanel({
+    mensajes,
+    conArchivos = true,
+}: {
+    mensajes: PortalMensaje[];
+    /** En la entrevista (F2.5) los documentos se suben en su lugar (2.6), no por el chat. */
+    conArchivos?: boolean;
+}) {
     const { t } = useTranslation();
     const form = useForm<{ contenido: string; archivo: File | null }>({
         contenido: '',
@@ -80,24 +87,32 @@ export function PortalChatPanel({ mensajes }: { mensajes: PortalMensaje[] }) {
             )}
 
             <div className="mt-3 flex items-end gap-2">
-                <input
-                    ref={fileInputRef}
-                    id="portal_chat_archivo"
-                    type="file"
-                    className="hidden"
-                    onChange={(e) =>
-                        form.setData('archivo', e.target.files?.[0] ?? null)
-                    }
-                />
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    title={t('portalChat.attach')}
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <Paperclip className="size-4" />
-                </Button>
+                {conArchivos ? (
+                    <>
+                        <input
+                            ref={fileInputRef}
+                            id="portal_chat_archivo"
+                            type="file"
+                            className="hidden"
+                            onChange={(e) =>
+                                form.setData(
+                                    'archivo',
+                                    e.target.files?.[0] ?? null,
+                                )
+                            }
+                        />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            title={t('portalChat.attach')}
+                            aria-label={t('portalChat.attach')}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <Paperclip className="size-4" />
+                        </Button>
+                    </>
+                ) : null}
 
                 <Textarea
                     id="portal_chat_contenido"

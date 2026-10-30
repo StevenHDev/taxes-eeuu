@@ -67,7 +67,7 @@ class ConsentimientoTest extends TestCase
     {
         $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.7'])->withHeader('User-Agent', 'Prueba/1.0');
 
-        $this->firmar()->assertRedirect(route('portal.formulario'));
+        $this->firmar()->assertRedirect(route('portal.entrevista.inicio'));
 
         $firma = Consentimiento::query()->sole();
         $this->assertSame('Ana Prueba', $firma->nombre_escrito);
@@ -76,8 +76,8 @@ class ConsentimientoTest extends TestCase
         $this->assertSame('Prueba/1.0', $firma->user_agent);
         $this->assertNotNull($firma->aceptado_en);
 
-        $this->actingAs($this->cliente)->get(route('portal.formulario'))->assertRedirect(route('portal.chat'));
-        $this->actingAs($this->cliente)->get(route('portal.consentimiento'))->assertRedirect(route('portal.formulario'));
+        $this->actingAs($this->cliente)->get(route('portal.entrevista.inicio'))->assertOk();
+        $this->actingAs($this->cliente)->get(route('portal.consentimiento'))->assertRedirect(route('portal.entrevista.inicio'));
     }
 
     public function test_sin_casilla_o_nombre_no_firma(): void
@@ -98,7 +98,7 @@ class ConsentimientoTest extends TestCase
 
         $this->actingAs($this->cliente)->get(route('portal.formulario'))->assertRedirect(route('portal.consentimiento'));
         $this->firmar(['version' => 1])->assertSessionHasErrors('version');
-        $this->firmar(['version' => 2])->assertRedirect(route('portal.formulario'));
+        $this->firmar(['version' => 2])->assertRedirect(route('portal.entrevista.inicio'));
     }
 
     public function test_una_firma_no_se_edita_ni_tiene_rutas_para_editar_o_borrar(): void

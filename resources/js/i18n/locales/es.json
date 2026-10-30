@@ -42,7 +42,8 @@
         "documentation": "Documentación",
         "navigationMenu": "Menú de navegación",
         "searchClient": "Buscar cliente…",
-        "catalogoFiscal": "Catálogo fiscal del año"
+        "catalogoFiscal": "Catálogo fiscal del año",
+        "portalEntrevista": "Mi entrevista"
     },
     "userMenu": {
         "settings": "Ajustes",
@@ -1329,7 +1330,10 @@
             "tasa": "Tasa (0 a 1)",
             "ayudaPorcentaje": "Entre 0 y 1: 0.35 es 35 %.",
             "ayudaMonto": "En dólares, sin símbolo ni separadores de miles.",
-            "validarSinFuentePreparador": "Este elemento todavía no tiene enlace a la fuente del IRS. Pídele a un administrador que lo agregue para poder validarlo."
+            "validarSinFuentePreparador": "Este elemento todavía no tiene enlace a la fuente del IRS. Pídele a un administrador que lo agregue para poder validarlo.",
+            "textoPreguntaEn": "Texto de la pregunta en inglés",
+            "ayudaEn": "Ayuda en inglés",
+            "textoOpcionEn": "Texto en inglés"
         }
     },
     "portalConsentimiento": {
@@ -1341,5 +1345,76 @@
         "faltaCasilla": "Marca la casilla para continuar.",
         "faltaNombre": "Escribe tu nombre completo para firmar.",
         "firmar": "Firmar y continuar"
+    },
+    "entrevista": {
+        "pantallaDe": "Pantalla {{actual}} de {{total}}",
+        "pantallas": {
+            "1": "Tus datos de identidad",
+            "2": "Tu estado civil y tu hogar",
+            "3": "¿Alguna de estas aplica a ti o a tu cónyuge?",
+            "4": "Personas a tu cargo",
+            "5": "¿De dónde recibiste dinero en {{anio}}?",
+            "6": "¿Pagaste alguno de estos gastos?",
+            "7": "¿Te pasó algo de esto en {{anio}}?",
+            "8": "Pagos y reembolso"
+        },
+        "marcaLasQueApliquen": "Marca todas las que apliquen. Si ninguna aplica, marca «Ninguna».",
+        "faltaMarcar": "Marca las que apliquen o «Ninguna» para continuar.",
+        "ninguna": "Ninguna de estas",
+        "ningunoMarcado": "Si no aplica a ninguno, deja las dos sin marcar.",
+        "si": "Sí",
+        "no": "No",
+        "quien": {
+            "usted": "Yo",
+            "conyuge": "Mi cónyuge"
+        },
+        "origen": {
+            "whatsapp": "Respondiste por WhatsApp el {{fecha}}",
+            "preparador": "Lo anotó tu preparador el {{fecha}}",
+            "migracion": "Viene de tu formulario anterior ({{fecha}})"
+        },
+        "seguimiento": {
+            "titulo": "Unas preguntas más",
+            "descripcion": "Se abrieron por lo que respondiste en el paso anterior."
+        },
+        "persona": {
+            "seguimiento": "{{etiqueta}}: unas preguntas más"
+        },
+        "continuar": "Continuar",
+        "guardando": "Guardando…",
+        "atras": "Atrás",
+        "revisaErrores": "Revisa estas respuestas",
+        "sinPreguntas": "No hay preguntas en este paso. Puedes continuar.",
+        "chat": {
+            "abrir": "¿Dudas?",
+            "titulo": "Chat de dudas",
+            "descripcion": "Pregúntale a tu asistente. Los documentos se suben en su lugar, no por aquí."
+        },
+        "inicio": {
+            "titulo": "Tu entrevista",
+            "descripcion": "Ocho pantallas cortas para saber qué necesita tu declaración {{anio}}. Lo que ya respondiste por WhatsApp aparece marcado.",
+            "empezar": "Empezar",
+            "seguir": "Seguir donde quedé",
+            "todoRespondido": "Respondiste todas las pantallas. Puedes revisar o cambiar cualquiera."
+        },
+        "estado": {
+            "completa": "Completa",
+            "en_curso": "En curso",
+            "sin_empezar": "Sin empezar"
+        },
+        "personas": {
+            "titulo": "Personas que vivieron contigo",
+            "descripcion": "Agrega a cada persona que vivió contigo en el año o que mantuviste, aunque no viviera contigo.",
+            "vacio": "Todavía no agregaste a nadie. Usa «Agregar persona» para cada una.",
+            "agregar": "Agregar persona",
+            "responder": "Responder",
+            "revisar": "Revisar",
+            "avance": "{{respondidas}} de {{total}} respondidas",
+            "quitar": "Quitar",
+            "quitarA": "Quitar a {{etiqueta}}",
+            "quitarTitulo": "¿Quitar a {{etiqueta}}?",
+            "quitarDescripcion": "Sus respuestas se guardan, pero ya no cuentan para tu declaración.",
+            "nombre": "Persona {{orden}}"
+        }
     }
 }

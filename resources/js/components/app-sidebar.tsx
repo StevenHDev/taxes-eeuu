@@ -3,6 +3,7 @@ import {
     BookOpenCheck,
     Bot,
     ClipboardCheck,
+    ClipboardList,
     Code2,
     FileText,
     History,
@@ -31,6 +32,7 @@ import { inicio as catalogoFiscalInicio } from '@/routes/catalogo-fiscal';
 import { index as clientesIndex } from '@/routes/clientes';
 import { index as metaAgenteIndex } from '@/routes/meta-agente';
 import { formulario as portalFormulario } from '@/routes/portal';
+import { inicio as entrevistaInicio } from '@/routes/portal/entrevista';
 import { show as procesoShow } from '@/routes/proceso';
 import { index as usuariosIndex } from '@/routes/usuarios';
 import type { NavItem } from '@/types';
@@ -46,13 +48,28 @@ export function AppSidebar() {
     const esCliente = auth.user.role === 'client';
     const tieneAccesoAlPanel = auth.user.role !== 'client';
 
+    // F2.5: con la entrevista nueva, el inicio del cliente es su avance; ni
+    // "Mi información" (cálculos sin revisar, 9.7) ni el formulario actual.
+    const conEntrevistaNueva =
+        esCliente && auth.user.entrevista_catalogo === true;
+
     const mainNavItems: NavItem[] = [
-        {
-            title: t('nav.dashboard'),
-            href: dashboard(),
-            icon: LayoutGrid,
-        },
-        ...(esCliente
+        ...(conEntrevistaNueva
+            ? [
+                  {
+                      title: t('nav.portalEntrevista'),
+                      href: entrevistaInicio(),
+                      icon: ClipboardList,
+                  },
+              ]
+            : [
+                  {
+                      title: t('nav.dashboard'),
+                      href: dashboard(),
+                      icon: LayoutGrid,
+                  },
+              ]),
+        ...(esCliente && !conEntrevistaNueva
             ? [
                   // El chat del portal (portal.chat) sigue existiendo y
                   // PortalFormularioController redirige ahí mientras el
