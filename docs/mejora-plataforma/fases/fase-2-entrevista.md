@@ -285,6 +285,30 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 
 **Pruebas:** D1 = sí hace aparecer el W-2 y D1 = no lo saca; una persona con C9 hace aparecer su tarjeta; subir guarda cifrado con `documento_codigo` y la persona; formato no permitido falla con el error junto a la fila; un cliente no ve ni sube documentos de otro.
 
+**Cómo quedó (30 oct.):**
+- **Datos:**
+  - Migración `documentos_de_la_entrevista`: `documentos.forma` y `campo` pasan a ser opcionales, y se agregan `documento_codigo`, `entrevista_id` y `persona_id`.
+  - `catalogo_documentos.siempre` es lo que se pide a todos sin que lo active una respuesta, como el 1040 en formularios. Solo `id-foto` lo tiene.
+  - **A4 pasa a `no_se_pregunta`**: la identificación con foto es un archivo que se sube, no un texto.
+  - Los 42 documentos tienen ahora su nombre en inglés.
+- **Motor:** los documentos activados llevan la persona (`d:tarjeta-ssn#7`), así la tarjeta de cada persona del bloque C es un documento aparte, y los de `siempre` van incluidos. `SituacionEntrevista::documentos` es una lista `{codigo, persona_id, activado_por}`.
+- **`DocumentosEntrevista`:** arma la lista (primero los de siempre, después por grupo y orden del catálogo, y por persona), con el nombre en el idioma del cliente, el "por qué" (el texto de la pregunta que lo activó) y los archivos subidos. También guarda cada archivo cifrado con `DocumentoAlmacen` y su hash (para `DocumentoDuplicadoService`). No corre la lectura con IA (fase 4).
+- **Rutas:**
+  - `portal.entrevista.documentos` (lista);
+  - `documentos.store` (`POST documentos/{codigo}` con `persona_id`, hasta 10 archivos por vez, con límite de 30 por minuto).
+  `SubirDocumentoRequest` acepta solo documentos que la entrevista pide para esa persona, en los formatos del catálogo y de hasta 20 MB.
+- **Interfaz:**
+  - `documento-fila` muestra el nombre (y la persona), el "por qué", una insignia "Falta" o "Recibido (N archivos)" con ícono, los archivos con un enlace firmado para verlos, y "Subir" / "Agregar otro" con el avance mientras sube.
+  - La misma fila aparece en `portal/entrevista/documentos`, en la pantalla 1 (identidad) y en el paso de cada persona.
+  - El inicio muestra "Tus documentos" con cuántos faltan, y el menú tiene "Mis documentos".
+- **Exportación del cliente:** ahora incluye los archivos de la entrevista.
+- **Visto en el navegador:** `trans_choice()` caía al inglés aunque el cliente usara español (sin `lang/es.json`, usa el idioma de respaldo). Se cambió por dos mensajes con `__()`.
+- **Datos de identidad divididos (pedido de Steven, 30 oct.):** A1 "Nombre, fecha de nacimiento y ocupación" pasa a A1 (nombre, precargado de la cuenta), A1.1 (fecha de nacimiento, con selector) y A1.2 (ocupación). A2 pasa a ser solo la dirección postal: el teléfono y el correo salen de la cuenta y no se preguntan. B4 se divide en B4 (nombre del cónyuge), B4.1 (fecha), B4.2 (ocupación) y B4.3 (SSN o ITIN, el único sensible), así lo demás del cónyuge se puede responder por WhatsApp.
+  - Que sean preguntas separadas no obliga a preguntarlas de a una: el portal las muestra juntas en la misma pantalla, y en 2.8 el agente las pide en un solo mensaje y guarda todas con una sola llamada.
+  - Así la fecha se valida y sirve para los cálculos por edad, y en la fase 4 cada dato que se lea de la identificación tiene dónde ir.
+  - El código desempata el orden (A1, A1.1, A1.2 comparten el orden de A1). El mapa de 2.3 lleva la fecha de nacimiento y la ocupación directo a A1.1 y A1.2, y los datos del cónyuge a B4, B4.1 y B4.3. El catálogo 2025 pasa a 93 preguntas.
+- **Pruebas:** `tests/Feature/Portal/DocumentosTest.php` (7).
+
 ---
 
 ## 2.7 Revisión y confirmación del cliente en el portal
