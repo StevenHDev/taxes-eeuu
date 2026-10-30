@@ -125,7 +125,7 @@ Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
   - Contenido del catálogo visto en la revisión de 2.5: ✅ textos en inglés, B2, B4, C4, C6 y D17 corregidos (30 oct.). ✅ C11, D3, D8, D10, D11, D12, D15, E9 y F8 divididas en pregunta + seguimiento (88 preguntas). Pendiente técnico: el importador no desactiva casillas ni líneas que salen del archivo (las activaciones sí, desde F2.5)
 - [x] 2.6 Documentos que pide la entrevista: lista mínima y carga (solo por el portal). En producción el 30 oct. (`fb25854`, `a7f00c9`), catálogo recargado: 93 preguntas, verificar sin problemas
 - [x] 2.7 Revisión y confirmación del cliente en el portal (`41d5b6e`)
-- [x] 2.8 Agente de WhatsApp reescrito sobre el catálogo (entrevista por WhatsApp apagada para clientes reales hasta L3). Falta: borrador de prompts en producción, publicarlo y prueba manual por WhatsApp con un usuario de prueba
+- [x] 2.8 Agente de WhatsApp reescrito sobre el catálogo (entrevista por WhatsApp apagada para clientes reales hasta L3). En producción el 30 oct. (`8fed54c`, `71bc020`); borrador 3 de prompts creado en producción con `agente:borrador-prompts --fases=portal_dudas`. Falta: que Steven lo publique en Agente → Prompts y la prueba manual por WhatsApp con un usuario de prueba
 - [ ] 2.9 Vista del preparador: entrevista en la ficha y chat del portal en Mensajes
 - [ ] 2.10 Cambio de flujo y migración de `campos_cliente` (espera L1)
 - [ ] 2.11 Retiro del flujo anterior (E5, E6, E12, tool y menú viejos)
