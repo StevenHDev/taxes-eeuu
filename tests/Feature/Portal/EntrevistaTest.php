@@ -158,7 +158,7 @@ class EntrevistaTest extends TestCase
             ->put(route('portal.entrevista.guardar', ['pantalla' => 2, 'paso' => 'entrada']), ['respuestas' => ['B1' => 'casado', 'B5' => 'si']])
             ->assertRedirect(route('portal.entrevista.paso', ['pantalla' => 2, 'paso' => 'seguimiento']));
 
-        $this->assertSame(['B2', 'B3', 'B4'], $this->codigosDelPaso(route('portal.entrevista.paso', ['pantalla' => 2, 'paso' => 'seguimiento'])));
+        $this->assertSame(['B2', 'B3', 'B4', 'B4.1', 'B4.2', 'B4.3'], $this->codigosDelPaso(route('portal.entrevista.paso', ['pantalla' => 2, 'paso' => 'seguimiento'])));
 
         $this->actingAs($this->cliente)->get(route('portal.entrevista.paso', ['pantalla' => 3]))
             ->assertInertia(fn (AssertableInertia $page) => $page

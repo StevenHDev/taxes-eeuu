@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\FieldState;
 use App\Enums\MetodoExtraccionDocumento;
+use App\Models\Entrevista\Entrevista;
+use App\Models\Entrevista\EntrevistaPersona;
 use App\Services\DocumentoAlmacen;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,9 +19,12 @@ use Illuminate\Support\Facades\URL;
 /**
  * @property int $id
  * @property int $user_id
- * @property string $forma
+ * @property string|null $forma
  * @property int $tax_year
- * @property string $campo
+ * @property string|null $campo
+ * @property string|null $documento_codigo
+ * @property int|null $entrevista_id
+ * @property int|null $persona_id
  * @property string $file_path
  * @property string $file_original_name
  * @property string $file_mime_type
@@ -36,6 +41,9 @@ use Illuminate\Support\Facades\URL;
     'forma',
     'tax_year',
     'campo',
+    'documento_codigo',
+    'entrevista_id',
+    'persona_id',
     'file_path',
     'file_original_name',
     'file_mime_type',
@@ -120,6 +128,25 @@ class Documento extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * La entrevista que lo pidió (F2.6); nulo en los documentos del
+     * formulario actual, que usan `forma` y `campo`.
+     *
+     * @return BelongsTo<Entrevista, $this>
+     */
+    public function entrevista(): BelongsTo
+    {
+        return $this->belongsTo(Entrevista::class);
+    }
+
+    /**
+     * @return BelongsTo<EntrevistaPersona, $this>
+     */
+    public function persona(): BelongsTo
+    {
+        return $this->belongsTo(EntrevistaPersona::class, 'persona_id')->withTrashed();
     }
 
     /**

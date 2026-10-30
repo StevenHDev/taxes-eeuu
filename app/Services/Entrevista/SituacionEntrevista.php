@@ -19,7 +19,7 @@ final class SituacionEntrevista
 {
     /**
      * @param  array<int, array{numero: int, preguntas: list<array{codigo: string, persona_id: int|null, sensible: bool, respondida: bool}>, total: int, respondidas: int}>  $pantallas
-     * @param  list<array{codigo: string, activado_por: list<string>}>  $documentos
+     * @param  list<array{codigo: string, persona_id: int|null, activado_por: list<string>}>  $documentos  uno por persona en el bloque C
      * @param  list<array{codigo: string, activado_por: list<string>}>  $formularios
      * @param  array<string, mixed>  $respuestas  "codigo" o "codigo#persona" → valor, solo de las visibles
      */
@@ -37,9 +37,9 @@ final class SituacionEntrevista
             ->contains(fn (array $p) => $p['codigo'] === $codigo && $p['persona_id'] === $personaId);
     }
 
-    public function tieneDocumento(string $codigo): bool
+    public function tieneDocumento(string $codigo, ?int $personaId = null): bool
     {
-        return in_array($codigo, array_column($this->documentos, 'codigo'), true);
+        return collect($this->documentos)->contains(fn (array $d) => $d['codigo'] === $codigo && $d['persona_id'] === $personaId);
     }
 
     public function tieneFormulario(string $codigo): bool
@@ -50,11 +50,11 @@ final class SituacionEntrevista
     /**
      * @return list<string>
      */
-    public function activadoPor(string $codigo): array
+    public function activadoPor(string $codigo, ?int $personaId = null): array
     {
-        $todo = [...$this->documentos, ...$this->formularios];
+        $documento = collect($this->documentos)->first(fn (array $d) => $d['codigo'] === $codigo && $d['persona_id'] === $personaId);
 
-        return collect($todo)->firstWhere('codigo', $codigo)['activado_por'] ?? [];
+        return $documento['activado_por'] ?? collect($this->formularios)->firstWhere('codigo', $codigo)['activado_por'] ?? [];
     }
 
     /**

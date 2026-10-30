@@ -43,7 +43,8 @@
         "navigationMenu": "Menú de navegación",
         "searchClient": "Buscar cliente…",
         "catalogoFiscal": "Catálogo fiscal del año",
-        "portalEntrevista": "Mi entrevista"
+        "portalEntrevista": "Mi entrevista",
+        "portalDocumentos": "Mis documentos"
     },
     "userMenu": {
         "settings": "Ajustes",
@@ -1415,6 +1416,29 @@
             "quitarTitulo": "¿Quitar a {{etiqueta}}?",
             "quitarDescripcion": "Sus respuestas se guardan, pero ya no cuentan para tu declaración.",
             "nombre": "Persona {{orden}}"
+        },
+        "documentos": {
+            "titulo": "Tus documentos",
+            "vacio": "Todavía no hay documentos que pedirte: responde la entrevista.",
+            "faltan_one": "Te falta 1 documento.",
+            "faltan_other": "Te faltan {{count}} documentos.",
+            "todos": "Ya subiste todos los documentos.",
+            "siempre": "Lo pedimos a todos para verificar tu identidad.",
+            "porQue": "Lo pedimos porque respondiste: «{{pregunta}}»",
+            "recibido_one": "Recibido (1 archivo)",
+            "recibido_other": "Recibido ({{count}} archivos)",
+            "falta": "Falta",
+            "subir": "Subir",
+            "agregarOtro": "Agregar otro",
+            "subiendo": "Subiendo…",
+            "subiendoPorcentaje": "Subiendo… {{porcentaje}} %",
+            "formatos": "PDF, JPG, PNG o HEIC, hasta 20 MB cada uno. Puedes elegir varios a la vez.",
+            "volver": "Volver a la entrevista",
+            "enEstePaso": "Documentos de este paso",
+            "verTodos": "Tus documentos",
+            "resumen_one": "Falta 1 de {{total}}",
+            "resumen_other": "Faltan {{count}} de {{total}}",
+            "resumenCompleto": "Todos recibidos"
         }
     }
 }

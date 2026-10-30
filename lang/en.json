@@ -20,5 +20,13 @@
     "Esta pregunta ya no aplica con tus respuestas actuales.": "This question no longer applies with your current answers.",
     "La pregunta :codigo no es por persona.": "Question :codigo is not asked per person.",
     "La pregunta :codigo necesita una persona de esta entrevista.": "Question :codigo needs a person from this interview.",
-    "El texto del consentimiento cambió: léelo de nuevo antes de firmar.": "The consent text changed: please read it again before signing."
+    "El texto del consentimiento cambió: léelo de nuevo antes de firmar.": "The consent text changed: please read it again before signing.",
+    "Elige al menos un archivo.": "Choose at least one file.",
+    "Cada archivo puede pesar hasta 20 MB.": "Each file can be up to 20 MB.",
+    "Formato no permitido. Usa :formatos.": "Format not allowed. Use :formatos.",
+    "Esa persona no es de tu entrevista.": "That person is not part of your interview.",
+    "Este documento no está en tu lista.": "This document is not on your list.",
+    "PDF, JPG, PNG o HEIC": "PDF, JPG, PNG or HEIC",
+    "Subiste 1 archivo.": "You uploaded 1 file.",
+    "Subiste :n archivos.": "You uploaded :n files."
 }

@@ -32,7 +32,10 @@ import { inicio as catalogoFiscalInicio } from '@/routes/catalogo-fiscal';
 import { index as clientesIndex } from '@/routes/clientes';
 import { index as metaAgenteIndex } from '@/routes/meta-agente';
 import { formulario as portalFormulario } from '@/routes/portal';
-import { inicio as entrevistaInicio } from '@/routes/portal/entrevista';
+import {
+    documentos as entrevistaDocumentos,
+    inicio as entrevistaInicio,
+} from '@/routes/portal/entrevista';
 import { show as procesoShow } from '@/routes/proceso';
 import { index as usuariosIndex } from '@/routes/usuarios';
 import type { NavItem } from '@/types';
@@ -60,6 +63,11 @@ export function AppSidebar() {
                       title: t('nav.portalEntrevista'),
                       href: entrevistaInicio(),
                       icon: ClipboardList,
+                  },
+                  {
+                      title: t('nav.portalDocumentos'),
+                      href: entrevistaDocumentos(),
+                      icon: FileText,
                   },
               ]
             : [

@@ -43,7 +43,8 @@
         "navigationMenu": "Navigation menu",
         "searchClient": "Search client…",
         "catalogoFiscal": "Tax catalog",
-        "portalEntrevista": "My interview"
+        "portalEntrevista": "My interview",
+        "portalDocumentos": "My documents"
     },
     "userMenu": {
         "settings": "Settings",
@@ -1415,6 +1416,29 @@
             "quitarTitulo": "Remove {{etiqueta}}?",
             "quitarDescripcion": "Their answers are kept, but they no longer count for your tax return.",
             "nombre": "Person {{orden}}"
+        },
+        "documentos": {
+            "titulo": "Your documents",
+            "vacio": "There are no documents to ask you for yet: answer the interview.",
+            "faltan_one": "1 document is missing.",
+            "faltan_other": "{{count}} documents are missing.",
+            "todos": "You uploaded all the documents.",
+            "siempre": "We ask everyone for this to verify your identity.",
+            "porQue": "We ask because you answered: “{{pregunta}}”",
+            "recibido_one": "Received (1 file)",
+            "recibido_other": "Received ({{count}} files)",
+            "falta": "Missing",
+            "subir": "Upload",
+            "agregarOtro": "Add another",
+            "subiendo": "Uploading…",
+            "subiendoPorcentaje": "Uploading… {{porcentaje}}%",
+            "formatos": "PDF, JPG, PNG or HEIC, up to 20 MB each. You can choose several at once.",
+            "volver": "Back to the interview",
+            "enEstePaso": "Documents for this step",
+            "verTodos": "Your documents",
+            "resumen_one": "1 of {{total}} missing",
+            "resumen_other": "{{count}} of {{total}} missing",
+            "resumenCompleto": "All received"
         }
     }
 }

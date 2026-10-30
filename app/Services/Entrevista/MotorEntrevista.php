@@ -68,15 +68,20 @@ class MotorEntrevista
 
         $pantallas = [];
         $respuestas = [];
-        // Se arman por código como texto ("f:1040") para que "1040" no
-        // quede como clave numérica; al final pasan a listas.
-        $documentos = [];
+        // Se arman por código como texto ("f:1040", "d:w2", "d:tarjeta-ssn#7")
+        // para que "1040" no quede como clave numérica; al final pasan a
+        // listas. Los documentos llevan la persona: la tarjeta de cada hijo
+        // es un documento distinto.
+        $documentos = $this->catalogo->documentos($entrevista->tax_year)
+            ->where('siempre', true)
+            ->mapWithKeys(fn (array $d) => ['d:'.$d['codigo'] => []])
+            ->all();
         $formularios = $this->catalogo->formularios($entrevista->tax_year)
             ->where('siempre', true)
             ->mapWithKeys(fn (array $f) => ['f:'.$f['codigo'] => []])
             ->all();
 
-        foreach ($this->preguntas->sortBy(fn (array $p) => [$p['pantalla'] ?? 99, $p['bloque'], $p['orden']]) as $codigo => $pregunta) {
+        foreach ($this->preguntas->sortBy(fn (array $p) => [$p['pantalla'] ?? 99, $p['bloque'], $p['orden'], $p['codigo']]) as $codigo => $pregunta) {
             foreach ($pregunta['por_persona'] ? $this->personas : [null] as $personaId) {
                 if (! $this->visible($codigo, $personaId)) {
                     continue;
@@ -102,7 +107,7 @@ class MotorEntrevista
                     }
 
                     match ($activacion['objetivo_tipo']) {
-                        ObjetivoActivacion::Documento->value => $documentos['d:'.$activacion['objetivo_codigo']][] = $codigo,
+                        ObjetivoActivacion::Documento->value => $documentos['d:'.$activacion['objetivo_codigo'].($personaId === null ? '' : "#{$personaId}")][] = $codigo,
                         ObjetivoActivacion::Formulario->value => $formularios['f:'.$activacion['objetivo_codigo']][] = $codigo,
                         default => null,
                     };
@@ -117,7 +122,13 @@ class MotorEntrevista
             $porCodigo,
         );
 
-        return new SituacionEntrevista($pantallas, $lista($documentos), $lista($formularios), $respuestas);
+        $documentosLista = array_map(function (string $clave, array $origenes) {
+            [$codigo, $persona] = array_pad(explode('#', substr($clave, 2), 2), 2, null);
+
+            return ['codigo' => $codigo, 'persona_id' => $persona === null ? null : (int) $persona, 'activado_por' => array_values(array_unique($origenes))];
+        }, array_keys($documentos), $documentos);
+
+        return new SituacionEntrevista($pantallas, $documentosLista, $lista($formularios), $respuestas);
     }
 
     public static function clave(string $codigo, ?int $personaId): string

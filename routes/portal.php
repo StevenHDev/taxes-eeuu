@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Portal\ConsentimientoController;
+use App\Http\Controllers\Portal\DocumentoEntrevistaController;
 use App\Http\Controllers\Portal\EntrevistaController;
 use App\Http\Controllers\Portal\PersonaController;
 use App\Http\Controllers\PortalChatController;
@@ -32,6 +33,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('portal.entrevista.')
         ->group(function () {
             Route::get('/', [EntrevistaController::class, 'inicio'])->name('inicio');
+            Route::get('documentos', [DocumentoEntrevistaController::class, 'index'])->name('documentos');
+            Route::post('documentos/{codigo}', [DocumentoEntrevistaController::class, 'store'])
+                ->where('codigo', '[a-z0-9-]+')
+                ->middleware('throttle:30,1')
+                ->name('documentos.store');
             Route::get('personas', [PersonaController::class, 'index'])->name('personas');
             Route::post('personas', [PersonaController::class, 'store'])->name('personas.store');
             Route::delete('personas/{persona}', [PersonaController::class, 'destroy'])->name('personas.destroy');

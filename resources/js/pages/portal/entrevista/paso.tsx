@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import AlertError from '@/components/alert-error';
+import { DocumentoFila } from '@/components/entrevista/documento-fila';
 import { ListaCasillas } from '@/components/entrevista/lista-casillas';
 import { MarcoEntrevista } from '@/components/entrevista/marco-entrevista';
 import { PreguntaDato } from '@/components/entrevista/pregunta-dato';
@@ -11,7 +12,11 @@ import { PreguntaUstedConyuge } from '@/components/entrevista/pregunta-usted-con
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import type { PortalMensaje } from '@/types/agente';
-import type { PreguntaPaso, ValorEntrevista } from '@/types/entrevista';
+import type {
+    DocumentoEntrevista,
+    PreguntaPaso,
+    ValorEntrevista,
+} from '@/types/entrevista';
 
 type Props = {
     taxYear: number;
@@ -23,6 +28,8 @@ type Props = {
     accion: string;
     anterior: string;
     sugeridos: Record<string, string>;
+    /** F2.6: lo que se sube en este paso (identidad, tarjeta de la persona). */
+    documentos: DocumentoEntrevista[];
     mensajes?: PortalMensaje[];
 };
 
@@ -50,6 +57,7 @@ function FormularioPaso({
     accion,
     anterior,
     sugeridos,
+    documentos,
     mensajes,
 }: Props) {
     const { t } = useTranslation();
@@ -198,6 +206,28 @@ function FormularioPaso({
                         />
                     ) : null}
                 </form>
+
+                {documentos.length > 0 ? (
+                    <section
+                        aria-labelledby="documentos-del-paso"
+                        className="space-y-3"
+                    >
+                        <h2
+                            id="documentos-del-paso"
+                            className="text-base font-medium text-foreground"
+                        >
+                            {t('entrevista.documentos.enEstePaso')}
+                        </h2>
+                        <ul className="space-y-3">
+                            {documentos.map((d) => (
+                                <DocumentoFila
+                                    key={`${d.codigo}-${d.persona_id ?? ''}`}
+                                    documento={d}
+                                />
+                            ))}
+                        </ul>
+                    </section>
+                ) : null}
             </MarcoEntrevista>
         </>
     );

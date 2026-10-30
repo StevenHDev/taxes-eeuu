@@ -8,6 +8,7 @@ use App\Http\Controllers\Portal\Concerns\ConChatDeDudas;
 use App\Http\Requests\Portal\GuardarPasoRequest;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaPersona;
+use App\Services\Entrevista\DocumentosEntrevista;
 use App\Services\Entrevista\PasosEntrevista;
 use App\Services\Entrevista\RespuestaData;
 use App\Services\Entrevista\RespuestaGuardador;
@@ -33,6 +34,7 @@ class EntrevistaController extends Controller
     public function __construct(
         private readonly PasosEntrevista $pasos,
         private readonly RespuestaGuardador $guardador,
+        private readonly DocumentosEntrevista $documentos,
     ) {}
 
     public function inicio(Request $request): Response
@@ -47,6 +49,10 @@ class EntrevistaController extends Controller
             'continuarEn' => collect($avance)->firstWhere(fn (array $p) => $p['estado'] !== 'completa')['numero'] ?? null,
             'personas' => $entrevista->personas()->count(),
             'conPersonas' => $this->pasos->conPersonas($situacion),
+            'documentos' => [
+                'total' => count($situacion->documentos),
+                'faltan' => collect($this->documentos->lista($entrevista, $situacion, false))->where('archivos', [])->count(),
+            ],
         ]);
     }
 
@@ -111,6 +117,24 @@ class EntrevistaController extends Controller
         return redirect()->to($this->pasos->siguiente($entrevista->fresh(), $request->pantalla(), $request->paso(), $persona?->id));
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function documentosDelPaso(Entrevista $entrevista, SituacionEntrevista $situacion, int $pantalla, string $paso, ?EntrevistaPersona $persona, bool $ingles): array
+    {
+        $enEstePaso = match (true) {
+            $persona !== null => fn (array $d) => $d['persona_id'] === $persona->id,
+            $pantalla === 1 && $paso === 'entrada' => fn (array $d) => $d['persona_id'] === null && $d['grupo'] === 'identidad',
+            default => null,
+        };
+
+        if ($enEstePaso === null) {
+            return [];
+        }
+
+        return array_values(array_filter($this->documentos->lista($entrevista, $situacion, $ingles), $enEstePaso));
+    }
+
     private function entrevista(Request $request): Entrevista
     {
         return $this->guardador->entrevistaDe($request->user(), CanalRespuesta::Portal);
@@ -136,11 +160,12 @@ class EntrevistaController extends Controller
                 ? route('portal.entrevista.persona.guardar', ['persona' => $persona->id, 'paso' => $paso])
                 : route('portal.entrevista.guardar', ['pantalla' => $pantalla, 'paso' => $paso]),
             'anterior' => $this->pasos->anterior($pantalla, $paso, $persona?->id),
-            // A1 y A2 vienen de la cuenta: el cliente confirma o corrige.
-            'sugeridos' => $pantalla === 1 ? [
-                'A1' => $cliente->name,
-                'A2' => trim(implode(' · ', array_filter([$cliente->phone, $cliente->email]))),
-            ] : (object) [],
+            // El nombre viene de la cuenta: el cliente confirma o corrige. El
+            // teléfono y el correo ni se preguntan (ya están en la cuenta).
+            'sugeridos' => $pantalla === 1 ? ['A1' => $cliente->name] : (object) [],
+            // F2.6: los documentos de este paso se suben aquí mismo (la
+            // identidad en la pantalla 1, la tarjeta de cada persona en su paso).
+            'documentos' => $this->documentosDelPaso($entrevista, $situacion, $pantalla, $paso, $persona, $ingles),
             'mensajes' => $this->mensajesDelChat($cliente),
         ]);
     }

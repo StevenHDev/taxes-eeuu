@@ -32,3 +32,25 @@ export type AvancePantalla = {
     respondidas: number;
     estado: EstadoPantalla;
 };
+
+export type ArchivoDocumento = {
+    id: number;
+    nombre: string;
+    tamano: number;
+    subido_en: string | null;
+    /** URL firmada y temporal para verlo. */
+    url: string;
+};
+
+export type DocumentoEntrevista = {
+    codigo: string;
+    persona_id: number | null;
+    persona_orden: number | null;
+    grupo: string;
+    nombre: string;
+    siempre: boolean;
+    /** Textos de las preguntas que lo pidieron ("por qué te lo pedimos"). */
+    por_que: string[];
+    formatos: string[];
+    archivos: ArchivoDocumento[];
+};

@@ -4,11 +4,13 @@ import {
     CircleCheck,
     CircleDashed,
     CircleDot,
+    FileText,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+    documentos as rutaDocumentos,
     paso as rutaPaso,
     personas as rutaPersonas,
 } from '@/routes/portal/entrevista';
@@ -30,12 +32,14 @@ export default function InicioEntrevista({
     pantallas,
     continuarEn,
     conPersonas,
+    documentos,
 }: {
     taxYear: number;
     pantallas: AvancePantalla[];
     continuarEn: number | null;
     personas: number;
     conPersonas: boolean;
+    documentos: { total: number; faltan: number };
 }) {
     const { t } = useTranslation();
     const empezada = pantallas.some((p) => p.respondidas > 0);
@@ -75,6 +79,36 @@ export default function InicioEntrevista({
                         {t('entrevista.inicio.todoRespondido')}
                     </p>
                 )}
+
+                {documentos.total > 0 ? (
+                    <Link
+                        href={rutaDocumentos()}
+                        className="flex min-h-14 items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                    >
+                        <FileText
+                            className="size-5 shrink-0 text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                        <span className="min-w-0 flex-1 text-sm font-medium text-foreground">
+                            {t('entrevista.documentos.verTodos')}
+                        </span>
+                        <Badge
+                            variant={
+                                documentos.faltan === 0
+                                    ? 'secondary'
+                                    : 'outline'
+                            }
+                            className="shrink-0"
+                        >
+                            {documentos.faltan === 0
+                                ? t('entrevista.documentos.resumenCompleto')
+                                : t('entrevista.documentos.resumen', {
+                                      count: documentos.faltan,
+                                      total: documentos.total,
+                                  })}
+                        </Badge>
+                    </Link>
+                ) : null}
 
                 <ol className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
                     {pantallas.map((p) => {

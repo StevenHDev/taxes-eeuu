@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Documento;
 use App\Models\User;
 use Illuminate\Support\Str;
 use ZipArchive;
@@ -52,6 +53,20 @@ class ClienteExportService
                 );
             }
         }
+
+        // F2.6: los archivos que se suben en la entrevista no cuelgan de un
+        // campo del formulario actual, sino de un documento del catálogo.
+        Documento::query()
+            ->where('user_id', $cliente->id)
+            ->whereNotNull('documento_codigo')
+            ->orderBy('id')
+            ->each(function (Documento $documento) use ($zip) {
+                $contents = $this->almacen->leer($documento);
+
+                if (is_string($contents)) {
+                    $zip->addFromString("documentos/{$documento->documento_codigo}_{$documento->id}_{$documento->file_original_name}", $contents);
+                }
+            });
 
         $zip->close();
 
