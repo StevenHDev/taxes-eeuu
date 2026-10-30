@@ -123,6 +123,25 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 
 **Pruebas:** toda clave en alcance de `catalogo_campos` 2025 está en el archivo; todo destino existe en el catálogo 2025 (incluidos los códigos nuevos de 2.2); el reporte cuenta bien con datos de prueba y no imprime valores.
 
+**Cómo quedó (30 oct.):**
+- **Mapa:** `equivalencias-campos-cliente.php` tiene 97 entradas, una por cada campo en alcance de `catalogo_campos` 2025 (1040, Schedules C, E y F, `transversal` y `documentos_extra`).
+  - 29 van a un documento, 30 a una pregunta (o a respuestas que se deducen del dato), 4 se reparten por subcampo y 1 es la lista de dependientes (una persona del bloque C por ítem).
+  - Las 33 restantes no tienen equivalente, cada una con su motivo: casi todas son montos que en el flujo nuevo se leen de los documentos, situaciones fuera del 13614-C y el Schedule F, que espera P3.
+  - Las formas de empresa y la 1040-NR quedan fuera (F0.6).
+  - Las transformaciones forman una lista cerrada, documentada en el archivo; las implementa la migración de 2.10.
+  - Datos que **no se copian**: el número de SSN o ITIN y el PIN (se leen de la tarjeta o la carta) y los datos bancarios (se piden de nuevo en el portal).
+- **Servicio:** `EquivalenciasCamposCliente` lee el archivo y lo revisa contra los dos catálogos:
+  - claves que faltan o sobran;
+  - subcampos que no calzan;
+  - preguntas y documentos que no existen;
+  - transformaciones desconocidas;
+  - respuestas deducidas que no valen para su pregunta (usa `ValorRespuesta`).
+- **Comando:** `catalogo-fiscal:equivalencias [--anio=2025] [--catalogo=] [--reporte]`.
+  - Sin opciones muestra el resumen del mapa y los problemas, y termina con error si hay alguno.
+  - Con `--reporte` cuenta las filas y los clientes de `campos_cliente` por destino, con una consulta agregada (`count`): nunca lee ni descifra valores.
+  - En local: 32 filas; 9 sin equivalente, que son los montos y el SSN.
+- **Pruebas:** `EquivalenciasTest` (4): el archivo real no tiene problemas, las formas fuera de alcance no están, se detectan los errores de un archivo roto, y el reporte cuenta bien y no imprime valores.
+
 ---
 
 ## 2.4 Consentimiento §7216 en el portal (espera L1 para clientes reales)
