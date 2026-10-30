@@ -37,12 +37,17 @@ export type PreguntaCatalogo = FuenteIrs &
         texto_es: string;
         texto_en: string | null;
         ayuda_es: string | null;
+        ayuda_en: string | null;
         bloque: string;
         pantalla: number | null;
         texto: string;
         ayuda: string | null;
         tipo_respuesta: string;
-        opciones: { valor: string; texto_es: string }[];
+        opciones: {
+            valor: string;
+            texto_es: string;
+            texto_en: string | null;
+        }[];
         nivel: 'entrada' | 'seguimiento' | 'no_se_pregunta';
         por_persona: boolean;
         sensible: boolean;

@@ -150,22 +150,43 @@ class CatalogoFiscalImportador
         $pregunta = CatalogoPregunta::query()->firstOrNew(['tax_year' => $anio, 'codigo' => $fila['codigo']]);
         $this->guardar($pregunta, $fila, 'pregunta', $fila['codigo']);
 
+        $vigentes = [];
+
         foreach ($fila['activa'] ?? [] as $activa) {
             $this->validarClaves('activa', $activa, "pregunta {$fila['codigo']}");
             [$tipo, $codigo] = $this->objetivo($activa['objetivo'], $fila['codigo']);
 
+            $activacion = CatalogoActivacion::query()->firstOrNew([
+                'pregunta_id' => $pregunta->id,
+                'objetivo_tipo' => $tipo,
+                'objetivo_codigo' => $codigo,
+            ]);
+
             $this->guardar(
-                CatalogoActivacion::query()->firstOrNew([
-                    'pregunta_id' => $pregunta->id,
-                    'objetivo_tipo' => $tipo,
-                    'objetivo_codigo' => $codigo,
-                ]),
-                ['respuesta' => $activa['respuesta'], 'nota' => $activa['nota'] ?? null],
+                $activacion,
+                ['respuesta' => $activa['respuesta'], 'nota' => $activa['nota'] ?? null, 'activo' => true],
                 'activacion',
                 "{$fila['codigo']} → {$activa['objetivo']}",
                 $anio,
             );
+
+            $vigentes[] = $activacion->id;
         }
+
+        // Una activación que salió del archivo (por ejemplo, porque pasó a un
+        // seguimiento, F2.5) se desactiva; no se borra, queda su historial.
+        CatalogoActivacion::query()
+            ->where('pregunta_id', $pregunta->id)
+            ->where('activo', true)
+            ->whereNotIn('id', $vigentes)
+            ->get()
+            ->each(fn (CatalogoActivacion $a) => $this->guardar(
+                $a,
+                ['activo' => false],
+                'activacion',
+                "{$fila['codigo']} → {$a->objetivo_tipo->value}:{$a->objetivo_codigo}",
+                $anio,
+            ));
     }
 
     /**

@@ -23,7 +23,7 @@ const TIPOS = [
 const NIVELES = ['entrada', 'seguimiento', 'no_se_pregunta'] as const;
 const BLOQUES = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const;
 
-type Opcion = { valor: string; texto_es: string };
+type Opcion = { valor: string; texto_es: string; texto_en?: string | null };
 
 /**
  * Crear o editar una pregunta (F1.5). El código y el bloque solo se ponen
@@ -52,6 +52,7 @@ export function FormularioPregunta({
         texto_es: pregunta?.texto_es ?? '',
         texto_en: pregunta?.texto_en ?? '',
         ayuda_es: pregunta?.ayuda_es ?? '',
+        ayuda_en: pregunta?.ayuda_en ?? '',
         tipo_respuesta: pregunta?.tipo_respuesta ?? 'si_no',
         opciones: (pregunta?.opciones ?? []) as Opcion[],
         nivel: pregunta?.nivel ?? 'entrada',
@@ -90,8 +91,14 @@ export function FormularioPregunta({
             texto_es: d.texto_es,
             texto_en: d.texto_en || null,
             ayuda_es: d.ayuda_es || null,
+            ayuda_en: d.ayuda_en || null,
             tipo_respuesta: d.tipo_respuesta,
-            opciones: llevaOpciones ? d.opciones : [],
+            opciones: llevaOpciones
+                ? d.opciones.map((o) => ({
+                      ...o,
+                      texto_en: o.texto_en || null,
+                  }))
+                : [],
             nivel: d.nivel,
             pantalla: d.pantalla === '' ? null : Number(d.pantalla),
             por_persona: d.por_persona,
@@ -170,6 +177,22 @@ export function FormularioPregunta({
                 error={form.errors.ayuda_es}
                 multilinea
             />
+            <CampoTexto
+                id="p-texto-en"
+                etiqueta={t('catalogoFiscal.edicion.textoPreguntaEn')}
+                valor={form.data.texto_en}
+                onCambio={(v) => form.setData('texto_en', v)}
+                error={form.errors.texto_en}
+                multilinea
+            />
+            <CampoTexto
+                id="p-ayuda-en"
+                etiqueta={t('catalogoFiscal.edicion.ayudaEn')}
+                valor={form.data.ayuda_en}
+                onCambio={(v) => form.setData('ayuda_en', v)}
+                error={form.errors.ayuda_en}
+                multilinea
+            />
 
             <div className="grid gap-4 sm:grid-cols-3">
                 <CampoSelect
@@ -212,13 +235,25 @@ export function FormularioPregunta({
                     titulo={t('catalogoFiscal.edicion.opciones')}
                     filas={form.data.opciones}
                     onCambio={(f) => form.setData('opciones', f)}
-                    nueva={() => ({ valor: '', texto_es: '' })}
+                    nueva={() => ({ valor: '', texto_es: '', texto_en: '' })}
                     errores={form.errors as Record<string, string | undefined>}
                     textoAgregar={t('catalogoFiscal.edicion.agregarOpcion')}
                     columnas={[
                         {
                             campo: 'texto_es',
                             etiqueta: t('catalogoFiscal.edicion.textoOpcion'),
+                            render: (v, c, id, inv) => (
+                                <Input
+                                    id={id}
+                                    value={String(v ?? '')}
+                                    onChange={(e) => c(e.target.value)}
+                                    aria-invalid={inv || undefined}
+                                />
+                            ),
+                        },
+                        {
+                            campo: 'texto_en',
+                            etiqueta: t('catalogoFiscal.edicion.textoOpcionEn'),
                             render: (v, c, id, inv) => (
                                 <Input
                                     id={id}

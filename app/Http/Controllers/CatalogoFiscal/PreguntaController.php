@@ -42,10 +42,11 @@ class PreguntaController extends Controller
                 'texto_en' => $p['texto_en'],
                 'ayuda' => $p['ayuda_es'] ? str_replace('{anio}', (string) $anio, $p['ayuda_es']) : null,
                 'ayuda_es' => $p['ayuda_es'],
+                'ayuda_en' => $p['ayuda_en'] ?? null,
                 'tipo_respuesta' => $p['tipo_respuesta'],
                 'opciones' => collect($p['opciones'] ?? [])->map(fn ($o) => is_array($o)
-                    ? ['valor' => (string) ($o['valor'] ?? ''), 'texto_es' => (string) ($o['texto_es'] ?? $o['valor'] ?? '')]
-                    : ['valor' => (string) $o, 'texto_es' => (string) $o])->values()->all(),
+                    ? ['valor' => (string) ($o['valor'] ?? ''), 'texto_es' => (string) ($o['texto_es'] ?? $o['valor'] ?? ''), 'texto_en' => $o['texto_en'] ?? null]
+                    : ['valor' => (string) $o, 'texto_es' => (string) $o, 'texto_en' => null])->values()->all(),
                 'nivel' => $p['nivel'],
                 'por_persona' => $p['por_persona'],
                 'sensible' => $p['sensible'],

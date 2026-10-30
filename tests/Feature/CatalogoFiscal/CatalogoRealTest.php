@@ -53,7 +53,7 @@ class CatalogoRealTest extends TestCase
         $this->assertSame([], $verificador->verificar(2026));
 
         $conteos = $verificador->conteos(2025);
-        $this->assertSame(79, $conteos['preguntas']);
+        $this->assertSame(88, $conteos['preguntas']);
         $this->assertSame(26, $conteos['formularios']);
         $this->assertSame(13, $conteos['reglas']);
         $this->assertSame($conteos, $verificador->conteos(2026));
@@ -63,8 +63,8 @@ class CatalogoRealTest extends TestCase
     {
         $porBloque = CatalogoPregunta::query()->delAnio(2025)->get()->countBy('bloque')->sortKeys()->all();
 
-        $this->assertSame(['A' => 15, 'B' => 6, 'C' => 15, 'D' => 19, 'E' => 9, 'F' => 10, 'G' => 5], $porBloque);
-        $this->assertSame(14, CatalogoPregunta::query()->delAnio(2025)->where('por_persona', true)->count());
+        $this->assertSame(['A' => 15, 'B' => 6, 'C' => 16, 'D' => 25, 'E' => 10, 'F' => 11, 'G' => 5], $porBloque);
+        $this->assertSame(15, CatalogoPregunta::query()->delAnio(2025)->where('por_persona', true)->count());
     }
 
     public function test_el_1040_es_el_unico_siempre_y_va_primero(): void

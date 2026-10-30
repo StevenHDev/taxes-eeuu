@@ -197,6 +197,43 @@ class CargaTest extends TestCase
         $this->assertSame(1, CatalogoCasilla::query()->delAnio(2026)->whereHas('documento', fn ($q) => $q->where('codigo', '1099-nec'))->where('casilla', '1a')->count());
     }
 
+    public function test_una_activacion_que_sale_del_archivo_se_desactiva_y_vuelve_si_regresa(): void
+    {
+        $base = sys_get_temp_dir().'/catalogo-'.uniqid();
+        mkdir("{$base}/2025", recursive: true);
+
+        foreach (glob("{$this->fixtures}/2025/*.php") as $archivo) {
+            copy($archivo, "{$base}/2025/".basename($archivo));
+        }
+
+        $preguntas = require "{$base}/2025/preguntas.php";
+        $indice = collect($preguntas)->search(fn (array $p) => ! empty($p['activa']));
+        $codigo = $preguntas[$indice]['codigo'];
+        $activas = fn () => CatalogoActivacion::query()->activos()
+            ->whereHas('pregunta', fn ($q) => $q->where('codigo', $codigo))->count();
+
+        try {
+            (new CatalogoFiscalImportador($base))->cargar(2025);
+            $total = $activas();
+            $this->assertGreaterThan(0, $total);
+
+            $sin = $preguntas;
+            $sin[$indice]['activa'] = [];
+            file_put_contents("{$base}/2025/preguntas.php", '<?php return '.var_export($sin, true).';');
+            (new CatalogoFiscalImportador($base))->cargar(2025);
+            $this->assertSame(0, $activas());
+            $this->assertSame($total, CatalogoActivacion::query()->whereHas('pregunta', fn ($q) => $q->where('codigo', $codigo))->count(), 'No se borran.');
+
+            file_put_contents("{$base}/2025/preguntas.php", '<?php return '.var_export($preguntas, true).';');
+            (new CatalogoFiscalImportador($base))->cargar(2025);
+            $this->assertSame($total, $activas());
+        } finally {
+            array_map('unlink', glob("{$base}/2025/*"));
+            rmdir("{$base}/2025");
+            rmdir($base);
+        }
+    }
+
     public function test_no_copia_sobre_un_anio_con_contenido(): void
     {
         app(CatalogoFiscalImportador::class)->cargar(2025);

@@ -28,6 +28,7 @@ class PreguntaRequest extends PiezaCatalogoRequest
             'opciones' => $tipo?->llevaOpciones() ? ['required', 'array', 'min:2'] : ['nullable', 'array', 'max:0'],
             'opciones.*.valor' => ['required', 'string', 'max:60', 'regex:/^[a-z0-9_]+$/', 'distinct'],
             'opciones.*.texto_es' => ['required', 'string', 'max:200'],
+            'opciones.*.texto_en' => ['nullable', 'string', 'max:200'],
             'nivel' => ['required', Rule::enum(NivelPregunta::class)],
             'por_persona' => ['boolean'],
             'sensible' => ['boolean'],

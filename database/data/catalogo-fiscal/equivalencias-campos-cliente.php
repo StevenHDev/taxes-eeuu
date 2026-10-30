@@ -119,7 +119,7 @@ return [
         'costeo_mas_mitad_hogar' => ['pregunta' => 'B5', 'transforma' => 'si_no'],
         'conyuge_fallecio_en_anio' => ['pregunta' => 'B1', 'transforma' => 'viudo_si_verdadero'],
         'anio_fallecimiento_conyuge' => ['pregunta' => 'B6', 'transforma' => 'numero'],
-        'se_caso_en_anio' => ['sin_equivalente' => 'B1 pregunta el estado al 31 de diciembre; basta con eso.'],
+        'se_caso_en_anio' => ['pregunta' => 'B2', 'transforma' => 'si_no'],
         'se_divorcio_o_separo_en_anio' => ['sin_equivalente' => 'No distingue divorcio de separación: B1 se confirma con el cliente.'],
     ]],
     'transversal.identificacion_ssn_itin' => [

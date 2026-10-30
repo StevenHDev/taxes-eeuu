@@ -11,7 +11,7 @@ return [
     // ── Bloque A — Identidad y situación del contribuyente (y del cónyuge) ──
     [
         'codigo' => 'A1', 'bloque' => 'A', 'pantalla' => 1, 'orden' => 1,
-        'texto_es' => 'Nombre, fecha de nacimiento y ocupación', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Nombre, fecha de nacimiento y ocupación', 'texto_en' => 'Name, date of birth and occupation', 'ayuda_es' => null,
         'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Edad ≥ 65 → deducción estándar adicional (línea 12d) y deducción mejorada para mayores del Schedule 1-A (requiere SSN válido; se reduce si el ingreso pasa de USD 75.000, o 150.000 en conjunta). La ocupación sirve para la deducción de propinas (Schedule 1-A)',
@@ -21,7 +21,7 @@ return [
     ],
     [
         'codigo' => 'A2', 'bloque' => 'A', 'pantalla' => 1, 'orden' => 2,
-        'texto_es' => 'Dirección postal, teléfono y correo', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Dirección postal, teléfono y correo', 'texto_en' => 'Mailing address, phone and email', 'ayuda_es' => null,
         'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => null,
@@ -31,12 +31,12 @@ return [
     ],
     [
         'codigo' => 'A3', 'bloque' => 'A', 'pantalla' => 1, 'orden' => 3,
-        'texto_es' => '¿Tienes número de Seguro Social (SSN) o ITIN? ¿Tu tarjeta dice "no válida para trabajar"? Sube la tarjeta o la carta', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Tienes número de Seguro Social (SSN) o ITIN? ¿Tu tarjeta dice "no válida para trabajar"? Sube la tarjeta o la carta', 'texto_en' => 'Do you have a Social Security number (SSN) or ITIN? Does your card say "not valid for employment"? Upload the card or the letter', 'ayuda_es' => null,
         'tipo_respuesta' => 'opciones',
         'opciones' => [
-            ['valor' => 'ssn_valido', 'texto_es' => 'SSN válido para trabajar'],
-            ['valor' => 'ssn_no_valido', 'texto_es' => 'SSN no válido para trabajar'],
-            ['valor' => 'itin', 'texto_es' => 'ITIN'],
+            ['valor' => 'ssn_valido', 'texto_es' => 'SSN válido para trabajar', 'texto_en' => 'SSN valid for employment'],
+            ['valor' => 'ssn_no_valido', 'texto_es' => 'SSN no válido para trabajar', 'texto_en' => 'SSN not valid for employment'],
+            ['valor' => 'itin', 'texto_es' => 'ITIN', 'texto_en' => 'ITIN'],
         ],
         'nivel' => 'entrada', 'por_persona' => false, 'sensible' => true,
         'condicion' => null,
@@ -49,7 +49,7 @@ return [
     ],
     [
         'codigo' => 'A4', 'bloque' => 'A', 'pantalla' => 1, 'orden' => 4,
-        'texto_es' => 'Identificación con foto (licencia de conducir)', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Identificación con foto (licencia de conducir)', 'texto_en' => 'Photo ID (driver\'s license)', 'ayuda_es' => null,
         'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => null,
@@ -59,7 +59,7 @@ return [
     ],
     [
         'codigo' => 'A5', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 5,
-        'texto_es' => '¿Otra persona puede reclamarte como dependiente en su declaración?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Otra persona puede reclamarte como dependiente en su declaración?', 'texto_en' => 'Can someone else claim you as a dependent on their tax return?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Sí → deducción estándar limitada y, en general, sin EITC',
@@ -69,7 +69,7 @@ return [
     ],
     [
         'codigo' => 'A6', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 6,
-        'texto_es' => 'En {anio}, ¿eras ciudadano de EE. UU.?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'En {anio}, ¿eras ciudadano de EE. UU.?', 'texto_en' => 'In {anio}, were you a U.S. citizen?', 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'No → A7',
@@ -81,7 +81,7 @@ return [
     ],
     [
         'codigo' => 'A7', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 7,
-        'texto_es' => 'En {anio}, ¿estabas en EE. UU. con visa?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'En {anio}, ¿estabas en EE. UU. con visa?', 'texto_en' => 'In {anio}, were you in the U.S. on a visa?', 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'A6', 'es' => 'no'],
         'efecto_es' => 'Visa → posible no residente: alerta, fuera del alcance actual',
@@ -91,7 +91,7 @@ return [
     ],
     [
         'codigo' => 'A8', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 8,
-        'texto_es' => 'En {anio}, ¿viviste o trabajaste en dos o más estados?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'En {anio}, ¿viviste o trabajaste en dos o más estados?', 'texto_en' => 'In {anio}, did you live or work in two or more states?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Sí → alerta al preparador: posible declaración en otro estado',
@@ -101,7 +101,7 @@ return [
     ],
     [
         'codigo' => 'A9', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 9,
-        'texto_es' => '¿Eras legalmente ciego?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Eras legalmente ciego?', 'texto_en' => 'Were you legally blind?', 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Sí → deducción estándar adicional',
@@ -111,7 +111,7 @@ return [
     ],
     [
         'codigo' => 'A10', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 10,
-        'texto_es' => '¿Estabas incapacitado total y permanentemente?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Estabas incapacitado total y permanentemente?', 'texto_en' => 'Were you totally and permanently disabled?', 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Sí (o 65+) → evaluar Schedule R',
@@ -123,7 +123,7 @@ return [
     ],
     [
         'codigo' => 'A11', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 11,
-        'texto_es' => '¿Eras estudiante a tiempo completo?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Eras estudiante a tiempo completo?', 'texto_en' => 'Were you a full-time student?', 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Sí → revisar A5 y la pregunta de educación (bloque E)',
@@ -133,7 +133,7 @@ return [
     ],
     [
         'codigo' => 'A12', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 12,
-        'texto_es' => '¿El IRS te dio un PIN de protección de identidad (IP PIN)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿El IRS te dio un PIN de protección de identidad (IP PIN)?', 'texto_en' => 'Did the IRS give you an Identity Protection PIN (IP PIN)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => true,
         'condicion' => null,
         'efecto_es' => 'Sí → pedir el número del año (se recupera en IRS.gov/IPPIN o al 800-908-4490). En conjunta, el de los dos',
@@ -145,7 +145,7 @@ return [
     ],
     [
         'codigo' => 'A13', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 13,
-        'texto_es' => 'En {anio}, ¿tuviste, recibiste, vendiste o cambiaste activos digitales (cripto, NFT)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'En {anio}, ¿tuviste, recibiste, vendiste o cambiaste activos digitales (cripto, NFT)?', 'texto_en' => 'In {anio}, did you hold, receive, sell or exchange digital assets (crypto, NFTs)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Sí → pedir 1099-DA o registros → Form 8949 / Schedule D',
@@ -158,7 +158,7 @@ return [
     ],
     [
         'codigo' => 'A14', 'bloque' => 'A', 'pantalla' => null, 'orden' => 14,
-        'texto_es' => '¿Quieres recibir las cartas del IRS en otro idioma? ¿Cuál?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Quieres recibir las cartas del IRS en otro idioma? ¿Cuál?', 'texto_en' => 'Would you like to receive IRS letters in another language? Which one?', 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'no_se_pregunta', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Sí → Schedule LEP',
@@ -170,7 +170,7 @@ return [
     ],
     [
         'codigo' => 'A15', 'bloque' => 'A', 'pantalla' => null, 'orden' => 15,
-        'texto_es' => '¿Quieres que USD 3 de tus impuestos vayan al Fondo de Campaña Electoral Presidencial?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Quieres que USD 3 de tus impuestos vayan al Fondo de Campaña Electoral Presidencial?', 'texto_en' => 'Do you want $3 of your taxes to go to the Presidential Election Campaign Fund?', 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'no_se_pregunta', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => null,
@@ -182,14 +182,14 @@ return [
     // ── Bloque B — Estado civil ──
     [
         'codigo' => 'B1', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 1,
-        'texto_es' => 'Al 31 de diciembre de {anio}, ¿cuál era tu estado civil?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Al 31 de diciembre de {anio}, ¿cuál era tu estado civil?', 'texto_en' => 'As of December 31, {anio}, what was your marital status?', 'ayuda_es' => null,
         'tipo_respuesta' => 'opciones',
         'opciones' => [
-            ['valor' => 'nunca_casado', 'texto_es' => 'Nunca me casé'],
-            ['valor' => 'casado', 'texto_es' => 'Casado'],
-            ['valor' => 'divorciado', 'texto_es' => 'Divorciado'],
-            ['valor' => 'separado', 'texto_es' => 'Separado legalmente'],
-            ['valor' => 'viudo', 'texto_es' => 'Viudo'],
+            ['valor' => 'nunca_casado', 'texto_es' => 'Nunca me casé', 'texto_en' => 'Never married'],
+            ['valor' => 'casado', 'texto_es' => 'Casado', 'texto_en' => 'Married'],
+            ['valor' => 'divorciado', 'texto_es' => 'Divorciado', 'texto_en' => 'Divorced'],
+            ['valor' => 'separado', 'texto_es' => 'Separado legalmente', 'texto_en' => 'Legally separated'],
+            ['valor' => 'viudo', 'texto_es' => 'Viudo', 'texto_en' => 'Widowed'],
         ],
         'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
@@ -205,17 +205,17 @@ return [
     ],
     [
         'codigo' => 'B2', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 2,
-        'texto_es' => '¿Estabas casado el último día del año?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Te casaste en {anio}?', 'texto_en' => 'Did you get married in {anio}?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'B1', 'es' => 'casado'],
         'efecto_es' => null,
-        'fuente_texto' => 'Pub. 501',
-        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
+        'fuente_texto' => 'Form 13614-C, parte II: si estabas casado al 31 de diciembre, ¿te casaste en el año?',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f13614c.pdf',
         'activa' => [],
     ],
     [
         'codigo' => 'B3', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 3,
-        'texto_es' => '¿Viviste separado de tu cónyuge todos los últimos 6 meses del año?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Viviste separado de tu cónyuge todos los últimos 6 meses del año?', 'texto_en' => 'Did you live apart from your spouse for all of the last 6 months of the year?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'B1', 'es' => 'casado'],
         'efecto_es' => 'Se cumplen todas → puede declarar como cabeza de familia',
@@ -225,7 +225,7 @@ return [
     ],
     [
         'codigo' => 'B4', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 4,
-        'texto_es' => 'Datos del cónyuge: nombre, fecha de nacimiento, ocupación, SSN o ITIN, y sus respuestas de A6–A13', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Datos del cónyuge: nombre, fecha de nacimiento, ocupación y SSN o ITIN', 'texto_en' => 'Your spouse\'s information: name, date of birth, occupation and SSN or ITIN', 'ayuda_es' => null,
         'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => true,
         'condicion' => ['pregunta' => 'B1', 'es' => 'casado'],
         'efecto_es' => 'Habilita la declaración conjunta o por separado',
@@ -235,7 +235,7 @@ return [
     ],
     [
         'codigo' => 'B5', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 5,
-        'texto_es' => '¿Pagaste más de la mitad del costo de mantener tu hogar en {anio}? (renta, intereses de la hipoteca, impuesto predial, seguro de la casa, reparaciones, servicios y comida consumida en casa)', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Pagaste más de la mitad del costo de mantener tu hogar en {anio}? (renta, intereses de la hipoteca, impuesto predial, seguro de la casa, reparaciones, servicios y comida consumida en casa)', 'texto_en' => 'Did you pay more than half the cost of keeping up your home in {anio}? (rent, mortgage interest, property tax, home insurance, repairs, utilities and food eaten at home)', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Sí + persona calificada que vivió contigo más de medio año (bloque C) → cabeza de familia',
@@ -245,7 +245,7 @@ return [
     ],
     [
         'codigo' => 'B6', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 6,
-        'texto_es' => '¿En qué año falleció tu cónyuge?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿En qué año falleció tu cónyuge?', 'texto_en' => 'In what year did your spouse die?', 'ayuda_es' => null,
         'tipo_respuesta' => 'numero', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'B1', 'es' => 'viudo'],
         'efecto_es' => 'Define la opción de estado civil',
@@ -258,7 +258,7 @@ return [
     [
         // F2.2: pregunta de entrada del bloque C (sección 3: "Escribe el nombre de todas las personas…"). "No" salta el bloque.
         'codigo' => 'C0', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 0,
-        'texto_es' => '¿Alguien vivió contigo en {anio} (además de tu cónyuge) o mantuviste a alguien aunque no viviera contigo?', 'texto_en' => null, 'ayuda_es' => 'Hijos, padres, sobrinos, hermanos… cualquier persona.',
+        'texto_es' => '¿Alguien vivió contigo en {anio} (además de tu cónyuge) o mantuviste a alguien aunque no viviera contigo?', 'texto_en' => 'Did anyone live with you in {anio} (other than your spouse), or did you support anyone even if they did not live with you?', 'ayuda_es' => 'Hijos, padres, sobrinos, hermanos… cualquier persona.', 'ayuda_en' => 'Children, parents, nieces and nephews, siblings… anyone.',
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Sí → por cada persona, C1–C14',
@@ -268,7 +268,7 @@ return [
     ],
     [
         'codigo' => 'C1', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 1,
-        'texto_es' => 'Nombre y apellido', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Nombre y apellido', 'texto_en' => 'First and last name', 'ayuda_es' => null,
         'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => true,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => null,
@@ -278,7 +278,7 @@ return [
     ],
     [
         'codigo' => 'C2', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 2,
-        'texto_es' => 'Fecha de nacimiento', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Fecha de nacimiento', 'texto_en' => 'Date of birth', 'ayuda_es' => null,
         'tipo_respuesta' => 'fecha', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => true,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => '< 17 → crédito por hijos (Schedule 8812). < 13 → crédito por cuidado (Form 2441). Hijo calificado: < 19, o < 24 si estudia, y menor que tú (o que tu cónyuge si es conjunta); sin límite si está incapacitado',
@@ -288,16 +288,16 @@ return [
     ],
     [
         'codigo' => 'C3', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 3,
-        'texto_es' => '¿Qué parentesco tiene contigo?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Qué parentesco tiene contigo?', 'texto_en' => 'How is this person related to you?', 'ayuda_es' => null,
         'tipo_respuesta' => 'opciones',
         'opciones' => [
-            ['valor' => 'hijo', 'texto_es' => 'Hijo'],
-            ['valor' => 'hijastro', 'texto_es' => 'Hijastro'],
-            ['valor' => 'hijo_crianza', 'texto_es' => 'Hijo de crianza'],
-            ['valor' => 'hermano', 'texto_es' => 'Hermano'],
-            ['valor' => 'nieto', 'texto_es' => 'Nieto'],
-            ['valor' => 'padre', 'texto_es' => 'Padre'],
-            ['valor' => 'ninguno', 'texto_es' => 'Ninguno'],
+            ['valor' => 'hijo', 'texto_es' => 'Hijo', 'texto_en' => 'Son or daughter'],
+            ['valor' => 'hijastro', 'texto_es' => 'Hijastro', 'texto_en' => 'Stepchild'],
+            ['valor' => 'hijo_crianza', 'texto_es' => 'Hijo de crianza', 'texto_en' => 'Foster child'],
+            ['valor' => 'hermano', 'texto_es' => 'Hermano', 'texto_en' => 'Brother or sister'],
+            ['valor' => 'nieto', 'texto_es' => 'Nieto', 'texto_en' => 'Grandchild'],
+            ['valor' => 'padre', 'texto_es' => 'Padre', 'texto_en' => 'Parent'],
+            ['valor' => 'ninguno', 'texto_es' => 'Ninguno', 'texto_en' => 'None of these'],
         ],
         'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
@@ -308,7 +308,7 @@ return [
     ],
     [
         'codigo' => 'C4', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 4,
-        'texto_es' => '¿Cuántos meses vivió en tu casa en {anio}? ¿Vivió en EE. UU.?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Cuántos meses vivió en tu casa en {anio}?', 'texto_en' => 'How many months did this person live in your home in {anio}?', 'ayuda_es' => 'Cuenta solo el tiempo que vivió contigo en EE. UU. Las ausencias temporales (por ejemplo, la escuela) cuentan como tiempo en casa.', 'ayuda_en' => 'Count only the time they lived with you in the U.S. Temporary absences (for example, school) count as time at home.',
         'tipo_respuesta' => 'numero', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => '≤ 6 meses → no es hijo calificado (salvo excepciones de la Pub. 501)',
@@ -318,7 +318,7 @@ return [
     ],
     [
         'codigo' => 'C5', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 5,
-        'texto_es' => '¿Estaba casado al 31 de diciembre?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Estaba casado al 31 de diciembre?', 'texto_en' => 'Was this person married on December 31?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'Si presentó declaración conjunta (salvo solo para reembolso) → no es dependiente',
@@ -328,7 +328,7 @@ return [
     ],
     [
         'codigo' => 'C6', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 6,
-        'texto_es' => '¿Es ciudadano de EE. UU.? ¿Vive en EE. UU., Canadá o México?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Es ciudadano de EE. UU. o vive en EE. UU., Canadá o México?', 'texto_en' => 'Is this person a U.S. citizen, or do they live in the U.S., Canada or Mexico?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'Ninguna → no es dependiente. Solo residente de Canadá o México → dependiente, pero sin crédito por otros dependientes',
@@ -338,7 +338,7 @@ return [
     ],
     [
         'codigo' => 'C7', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 7,
-        'texto_es' => '¿Era estudiante a tiempo completo?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Era estudiante a tiempo completo?', 'texto_en' => 'Was this person a full-time student?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => '1040, columna (6)',
@@ -348,7 +348,7 @@ return [
     ],
     [
         'codigo' => 'C8', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 8,
-        'texto_es' => '¿Está incapacitado total y permanentemente?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Está incapacitado total y permanentemente?', 'texto_en' => 'Is this person totally and permanently disabled?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => '1040, columna (6)',
@@ -358,12 +358,12 @@ return [
     ],
     [
         'codigo' => 'C9', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 9,
-        'texto_es' => 'Número de identificación: ¿SSN válido para trabajar, ITIN o ATIN? Sube la tarjeta o la carta', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Número de identificación: ¿SSN válido para trabajar, ITIN o ATIN? Sube la tarjeta o la carta', 'texto_en' => 'Identification number: SSN valid for employment, ITIN or ATIN? Upload the card or the letter', 'ayuda_es' => null,
         'tipo_respuesta' => 'opciones',
         'opciones' => [
-            ['valor' => 'ssn_valido', 'texto_es' => 'SSN válido para trabajar'],
-            ['valor' => 'itin', 'texto_es' => 'ITIN'],
-            ['valor' => 'atin', 'texto_es' => 'ATIN'],
+            ['valor' => 'ssn_valido', 'texto_es' => 'SSN válido para trabajar', 'texto_en' => 'SSN valid for employment'],
+            ['valor' => 'itin', 'texto_es' => 'ITIN', 'texto_en' => 'ITIN'],
+            ['valor' => 'atin', 'texto_es' => 'ATIN', 'texto_en' => 'ATIN'],
         ],
         'nivel' => 'entrada', 'por_persona' => true, 'sensible' => true,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
@@ -381,7 +381,7 @@ return [
     ],
     [
         'codigo' => 'C10', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 10,
-        'texto_es' => '¿Se le emitió un IP PIN?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Se le emitió un IP PIN?', 'texto_en' => 'Was this person issued an IP PIN?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => true,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'Sí → pedir el número del año',
@@ -393,10 +393,22 @@ return [
     ],
     [
         'codigo' => 'C11', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 11,
-        'texto_es' => '¿Otra persona (por ejemplo, el otro padre) también puede reclamarlo o lo va a reclamar? ¿Tienes un Form 8332 o un acuerdo de custodia?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Otra persona (por ejemplo, el otro padre) también puede reclamarlo o lo va a reclamar?', 'texto_en' => 'Can someone else (for example, the other parent) also claim this person, or will they?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'Sí → alerta al preparador',
+        'fuente_texto' => 'Pub. 501: reglas de desempate y padres divorciados o separados (Form 8332)',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
+        'activa' => [
+        ],
+    ],
+    [
+        // F2.5: segunda parte de C11, que antes iba en la misma pregunta de sí o no.
+        'codigo' => 'C11.1', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 11,
+        'texto_es' => '¿Tienes un Form 8332 o un acuerdo de custodia?', 'texto_en' => 'Do you have a Form 8332 or a custody agreement?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => true, 'sensible' => false,
+        'condicion' => ['pregunta' => 'C11', 'es' => 'si'],
+        'efecto_es' => 'Sí → pedir el Form 8332 o el acuerdo',
         'fuente_texto' => 'Pub. 501: reglas de desempate y padres divorciados o separados (Form 8332)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
         'activa' => [
@@ -405,7 +417,7 @@ return [
     ],
     [
         'codigo' => 'C12', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 12,
-        'texto_es' => '¿Esta persona pagó más de la mitad de su propia manutención?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Esta persona pagó más de la mitad de su propia manutención?', 'texto_en' => 'Did this person pay more than half of their own support?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['todas' => [['pregunta' => 'C0', 'es' => 'si'], ['alguna' => [['pregunta' => 'C3', 'es' => ['hermano', 'nieto', 'padre', 'ninguno']], ['pregunta' => 'C4', 'hasta' => 6]]]]],
         'efecto_es' => 'Sí → no es hijo calificado',
@@ -415,7 +427,7 @@ return [
     ],
     [
         'codigo' => 'C13', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 13,
-        'texto_es' => '¿Esta persona tuvo ingresos de menos de USD 5.200 en {anio}?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Esta persona tuvo ingresos de menos de USD 5.200 en {anio}?', 'texto_en' => 'Did this person have income of less than $5,200 in {anio}?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['todas' => [['pregunta' => 'C0', 'es' => 'si'], ['alguna' => [['pregunta' => 'C3', 'es' => ['hermano', 'nieto', 'padre', 'ninguno']], ['pregunta' => 'C4', 'hasta' => 6]]]]],
         'efecto_es' => 'No → no es pariente calificado',
@@ -425,7 +437,7 @@ return [
     ],
     [
         'codigo' => 'C14', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 14,
-        'texto_es' => '¿Tú pagaste más de la mitad de la manutención de esta persona?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Tú pagaste más de la mitad de la manutención de esta persona?', 'texto_en' => 'Did you pay more than half of this person\'s support?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => true, 'sensible' => false,
         'condicion' => ['todas' => [['pregunta' => 'C0', 'es' => 'si'], ['alguna' => [['pregunta' => 'C3', 'es' => ['hermano', 'nieto', 'padre', 'ninguno']], ['pregunta' => 'C4', 'hasta' => 6]]]]],
         'efecto_es' => 'No → no es pariente calificado',
@@ -437,7 +449,7 @@ return [
     // ── Bloque D — ¿De dónde recibiste dinero en {anio}? ──
     [
         'codigo' => 'D1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 1,
-        'texto_es' => '¿Recibiste salario como empleado (tiempo parcial o completo) en {anio}?', 'texto_en' => null, 'ayuda_es' => 'Te pediremos un W-2 por cada empleo.',
+        'texto_es' => '¿Recibiste salario como empleado (tiempo parcial o completo) en {anio}?', 'texto_en' => 'Did you receive wages as an employee (part-time or full-time) in {anio}?', 'ayuda_es' => 'Te pediremos un W-2 por cada empleo.', 'ayuda_en' => 'We\'ll ask for a W-2 for each job.',
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => '1040 líneas 1a y 25a (retención)',
@@ -450,7 +462,7 @@ return [
     [
         // F2.2: "uno por fuente" (5.1): un W-2 por empleo.
         'codigo' => 'D1.1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 1,
-        'texto_es' => '¿En cuántos empleos trabajaste en {anio}?', 'texto_en' => null, 'ayuda_es' => 'Te pediremos un W-2 por cada uno.',
+        'texto_es' => '¿En cuántos empleos trabajaste en {anio}?', 'texto_en' => 'How many jobs did you have in {anio}?', 'ayuda_es' => 'Te pediremos un W-2 por cada uno.', 'ayuda_en' => 'We\'ll ask for a W-2 for each one.',
         'tipo_respuesta' => 'numero', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'D1', 'es' => 'si'],
         'efecto_es' => 'Cantidad de W-2 a pedir',
@@ -460,7 +472,7 @@ return [
     ],
     [
         'codigo' => 'D2', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 2,
-        'texto_es' => '¿Te pagaron horas extra?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Te pagaron horas extra?', 'texto_en' => 'Were you paid overtime?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1-A → 1040 línea 13b',
@@ -473,7 +485,7 @@ return [
     ],
     [
         'codigo' => 'D3', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 3,
-        'texto_es' => '¿Recibiste propinas? ¿Le reportaste todas a tu empleador?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Recibiste propinas?', 'texto_en' => 'Did you receive tips?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => '1040 línea 1c; Schedule 1-A',
@@ -482,12 +494,24 @@ return [
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'documento:constancia-horas-propinas'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1a'],
-            ['respuesta' => 'si', 'objetivo' => 'formulario:f4137'],
+        ],
+    ],
+    [
+        // F2.5: segunda parte de D3, que antes iba en la misma pregunta de sí o no.
+        'codigo' => 'D3.1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 3,
+        'texto_es' => '¿Le reportaste todas tus propinas a tu empleador?', 'texto_en' => 'Did you report all of your tips to your employer?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'D3', 'es' => 'si'],
+        'efecto_es' => 'No → propinas no reportadas: Form 4137 → 1040 línea 1c',
+        'fuente_texto' => 'Propinas no reportadas → Form 4137 → 1040 línea 1c. Deducción por propinas (Schedule 1-A) si la ocupación califica (A1)',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
+        'activa' => [
+            ['respuesta' => 'no', 'objetivo' => 'formulario:f4137'],
         ],
     ],
     [
         'codigo' => 'D4', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 4,
-        'texto_es' => '¿Recibiste dinero de una cuenta de jubilación (IRA, 401(k)), pensión o anualidad?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Recibiste dinero de una cuenta de jubilación (IRA, 401(k)), pensión o anualidad?', 'texto_en' => 'Did you receive money from a retirement account (IRA, 401(k)), a pension or an annuity?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => '1040 líneas 4a–5b',
@@ -499,7 +523,7 @@ return [
     ],
     [
         'codigo' => 'D5', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 5,
-        'texto_es' => '¿Recibiste beneficios por incapacidad (seguro, compensación por accidente de trabajo)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Recibiste beneficios por incapacidad (seguro, compensación por accidente de trabajo)?', 'texto_en' => 'Did you receive disability benefits (insurance, workers\' compensation)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => '1040 línea 1h o 5a/5b',
@@ -511,7 +535,7 @@ return [
     ],
     [
         'codigo' => 'D6', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 6,
-        'texto_es' => '¿Recibiste Seguro Social o jubilación ferroviaria?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Recibiste Seguro Social o jubilación ferroviaria?', 'texto_en' => 'Did you receive Social Security or railroad retirement benefits?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => '1040 líneas 6a/6b',
@@ -523,7 +547,7 @@ return [
     ],
     [
         'codigo' => 'D7', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 7,
-        'texto_es' => '¿Recibiste beneficios por desempleo?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Recibiste beneficios por desempleo?', 'texto_en' => 'Did you receive unemployment benefits?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 → 1040 línea 8',
@@ -536,7 +560,7 @@ return [
     ],
     [
         'codigo' => 'D8', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 8,
-        'texto_es' => '¿Recibiste un reembolso de impuesto estatal o local sobre ingresos? ¿Detallaste deducciones el año pasado?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Recibiste un reembolso de impuesto estatal o local sobre ingresos?', 'texto_en' => 'Did you receive a refund of state or local income tax?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 línea 1',
@@ -544,12 +568,24 @@ return [
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040s1.pdf',
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'documento:1099-g'],
+        ],
+    ],
+    [
+        // F2.5: segunda parte de D8, que antes iba en la misma pregunta de sí o no.
+        'codigo' => 'D8.1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 8,
+        'texto_es' => '¿Detallaste deducciones en tu declaración del año pasado?', 'texto_en' => 'Did you itemize deductions on last year’s tax return?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'D8', 'es' => 'si'],
+        'efecto_es' => 'Sí → el reembolso puede ser ingreso: Schedule 1 línea 1',
+        'fuente_texto' => 'Solo es ingreso si el año anterior detallaste deducciones y dedujiste ese impuesto (Schedule 1 línea 1). Florida no cobra renta personal: aplica a quien vino de otro estado',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040s1.pdf',
+        'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1'],
         ],
     ],
     [
         'codigo' => 'D9', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 9,
-        'texto_es' => '¿Recibiste intereses o dividendos (cuenta bancaria, bonos, acciones)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Recibiste intereses o dividendos (cuenta bancaria, bonos, acciones)?', 'texto_en' => 'Did you receive interest or dividends (bank account, bonds, stocks)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => '1040 líneas 2b, 3a, 3b',
@@ -563,7 +599,7 @@ return [
     ],
     [
         'codigo' => 'D10', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 10,
-        'texto_es' => '¿Vendiste acciones, bonos, cripto o bienes inmuebles? ¿Declaraste una pérdida el año pasado?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Vendiste acciones, bonos, cripto o bienes inmuebles?', 'texto_en' => 'Did you sell stocks, bonds, crypto or real estate?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => '1040 línea 7a',
@@ -577,8 +613,19 @@ return [
         ],
     ],
     [
+        // F2.5: segunda parte de D10, que antes iba en la misma pregunta de sí o no.
+        'codigo' => 'D10.1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 10,
+        'texto_es' => '¿Declaraste una pérdida por ventas en tu declaración del año pasado?', 'texto_en' => 'Did you report a loss from sales on last year’s tax return?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'D10', 'es' => 'si'],
+        'efecto_es' => 'Sí → la pérdida no usada se arrastra (Schedule D)',
+        'fuente_texto' => 'Form 8949 y Schedule D. La pérdida no usada del año pasado se arrastra',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040.pdf',
+        'activa' => [],
+    ],
+    [
         'codigo' => 'D11', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 11,
-        'texto_es' => '¿Recibiste pensión de tu excónyuge (no manutención de hijos)? ¿En qué fecha se firmó el acuerdo de divorcio o separación?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Recibiste pensión de tu excónyuge (no manutención de hijos)?', 'texto_en' => 'Did you receive alimony from a former spouse (not child support)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 línea 2a',
@@ -590,8 +637,19 @@ return [
         ],
     ],
     [
+        // F2.5: segunda parte de D11, que antes iba en la misma pregunta de sí o no.
+        'codigo' => 'D11.1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 11,
+        'texto_es' => '¿En qué fecha se firmó el acuerdo de divorcio o separación?', 'texto_en' => 'On what date was the divorce or separation agreement signed?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'fecha', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'D11', 'es' => 'si'],
+        'efecto_es' => 'Acuerdo del 31 dic. 2018 o antes → es ingreso (Schedule 1 línea 2a)',
+        'fuente_texto' => 'Solo es ingreso si el acuerdo es del 31 dic. 2018 o antes',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
+        'activa' => [],
+    ],
+    [
         'codigo' => 'D12', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 12,
-        'texto_es' => '¿Alquilaste tu casa o una habitación? ¿La usaste como vivienda y la alquilaste menos de 15 días?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Alquilaste tu casa o una habitación?', 'texto_en' => 'Did you rent out your home or a room?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule E → Schedule 1 línea 5',
@@ -603,8 +661,19 @@ return [
         ],
     ],
     [
+        // F2.5: segunda parte de D12, que antes iba en la misma pregunta de sí o no.
+        'codigo' => 'D12.1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 12,
+        'texto_es' => '¿También la usaste como vivienda y la alquilaste menos de 15 días en el año?', 'texto_en' => 'Did you also use it as your home and rent it out for fewer than 15 days during the year?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'D12', 'es' => 'si'],
+        'efecto_es' => 'Sí → no se declara (Pub. 527); el preparador lo revisa',
+        'fuente_texto' => 'Pub. 527: si es tu vivienda y la alquilaste menos de 15 días, no se declara. Si no, Schedule E',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p527.pdf',
+        'activa' => [],
+    ],
+    [
         'codigo' => 'D13', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 13,
-        'texto_es' => '¿Alquilaste bienes personales, como un vehículo?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Alquilaste bienes personales, como un vehículo?', 'texto_en' => 'Did you rent out personal property, such as a vehicle?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 línea 8l',
@@ -617,7 +686,7 @@ return [
     ],
     [
         'codigo' => 'D14', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 14,
-        'texto_es' => '¿Ganaste en juegos de azar o lotería?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Ganaste en juegos de azar o lotería?', 'texto_en' => 'Did you have gambling or lottery winnings?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 línea 8b',
@@ -630,7 +699,7 @@ return [
     ],
     [
         'codigo' => 'D15', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 15,
-        'texto_es' => '¿Te pagaron por trabajos por contrato o por cuenta propia? ¿Declaraste pérdida en ese negocio el año pasado?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Te pagaron por trabajos por contrato o por cuenta propia?', 'texto_en' => 'Were you paid for contract work or self-employment?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule C → Schedule 1 línea 3; Schedule SE',
@@ -646,8 +715,19 @@ return [
         ],
     ],
     [
+        // F2.5: segunda parte de D15, que antes iba en la misma pregunta de sí o no.
+        'codigo' => 'D15.1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 15,
+        'texto_es' => '¿Declaraste una pérdida en ese negocio el año pasado?', 'texto_en' => 'Did you report a loss in that business last year?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'D15', 'es' => 'si'],
+        'efecto_es' => 'Sí → el preparador revisa si hay pérdida que arrastrar',
+        'fuente_texto' => 'Schedule C. Schedule SE si la ganancia neta es de USD 400 o más',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
+        'activa' => [],
+    ],
+    [
         'codigo' => 'D16', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 16,
-        'texto_es' => '¿Ganaste dinero con apps de transporte o entregas (Uber, DoorDash…)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Ganaste dinero con apps de transporte o entregas (Uber, DoorDash…)?', 'texto_en' => 'Did you earn money from rideshare or delivery apps (Uber, DoorDash…)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule C (D15)',
@@ -662,7 +742,7 @@ return [
     ],
     [
         'codigo' => 'D17', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 17,
-        'texto_es' => '¿Recibiste otro dinero? (pagos en efectivo, servicio de jurado, premios, activos digitales, regalías, beneficios por huelga)', 'texto_en' => null, 'ayuda_es' => 'Dinos cuál y cuánto.',
+        'texto_es' => '¿Recibiste otro dinero? (pagos en efectivo, servicio de jurado, premios, activos digitales, regalías, beneficios por huelga)', 'texto_en' => 'Did you receive any other money? (cash payments, jury duty, prizes, digital assets, royalties, strike benefits)', 'ayuda_es' => 'Los montos salen de tus documentos o te los pide tu preparador.', 'ayuda_en' => 'The amounts come from your documents, or your preparer will ask you for them.',
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 o Schedule C/E',
@@ -678,7 +758,7 @@ return [
     [
         // F2.2: socio con K-1 (visto al cerrar F0.6). La declaración de la empresa no se atiende; su K-1 personal sí.
         'codigo' => 'D18', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 18,
-        'texto_es' => '¿Eres socio o accionista de una LLC, sociedad o S-corp y recibiste un Schedule K-1 por {anio}?', 'texto_en' => null, 'ayuda_es' => 'Nosotros preparamos tu declaración personal con tu K-1. La declaración de la empresa la hace otra firma.',
+        'texto_es' => '¿Eres socio o accionista de una LLC, sociedad o S-corp y recibiste un Schedule K-1 por {anio}?', 'texto_en' => 'Are you a partner or shareholder in an LLC, partnership or S corporation, and did you receive a Schedule K-1 for {anio}?', 'ayuda_es' => 'Nosotros preparamos tu declaración personal con tu K-1. La declaración de la empresa la hace otra firma.', 'ayuda_en' => 'We prepare your personal return with your K-1. The business return is prepared by another firm.',
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'K-1 → Schedule E, parte II → Schedule 1 línea 5. Alerta al preparador: la declaración de la empresa no la hace GTS',
@@ -694,7 +774,7 @@ return [
     // ── Bloque E — Gastos que pagaste en {anio} ──
     [
         'codigo' => 'E1', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 1,
-        'texto_es' => '¿Pagaste intereses de hipoteca?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Pagaste intereses de hipoteca?', 'texto_en' => 'Did you pay mortgage interest?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule A → 1040 línea 12e',
@@ -707,7 +787,7 @@ return [
     ],
     [
         'codigo' => 'E2', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 2,
-        'texto_es' => '¿Pagaste impuestos estatales o locales: predial, impuesto sobre las ventas, etc.?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Pagaste impuestos estatales o locales: predial, impuesto sobre las ventas, etc.?', 'texto_en' => 'Did you pay state or local taxes: property tax, sales tax, etc.?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule A',
@@ -720,7 +800,7 @@ return [
     ],
     [
         'codigo' => 'E3', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 3,
-        'texto_es' => '¿Pagaste gastos médicos, dentales o de medicamentos recetados?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Pagaste gastos médicos, dentales o de medicamentos recetados?', 'texto_en' => 'Did you pay medical, dental or prescription drug expenses?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule A',
@@ -733,7 +813,7 @@ return [
     ],
     [
         'codigo' => 'E4', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 4,
-        'texto_es' => '¿Hiciste donaciones a organizaciones benéficas?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Hiciste donaciones a organizaciones benéficas?', 'texto_en' => 'Did you make donations to charitable organizations?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule A',
@@ -746,7 +826,7 @@ return [
     ],
     [
         'codigo' => 'E5', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 5,
-        'texto_es' => '¿Pagaste intereses de un préstamo estudiantil?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Pagaste intereses de un préstamo estudiantil?', 'texto_en' => 'Did you pay interest on a student loan?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 línea 21',
@@ -759,7 +839,7 @@ return [
     ],
     [
         'codigo' => 'E6', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 6,
-        'texto_es' => '¿Pagaste el cuidado de un hijo o dependiente para poder trabajar?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Pagaste el cuidado de un hijo o dependiente para poder trabajar?', 'texto_en' => 'Did you pay for the care of a child or dependent so you could work?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Form 2441 → Schedule 3 línea 2 → 1040 línea 20',
@@ -773,7 +853,7 @@ return [
     ],
     [
         'codigo' => 'E7', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 7,
-        'texto_es' => '¿Hiciste aportes a una cuenta de jubilación (IRA tradicional, Roth IRA, 401(k))?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Hiciste aportes a una cuenta de jubilación (IRA tradicional, Roth IRA, 401(k))?', 'texto_en' => 'Did you contribute to a retirement account (traditional IRA, Roth IRA, 401(k))?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 línea 20; Form 8880 → Schedule 3 línea 4',
@@ -787,7 +867,7 @@ return [
     ],
     [
         'codigo' => 'E8', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 8,
-        'texto_es' => '¿Eres maestro, ayudante de maestro u otro educador y compraste útiles escolares?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Eres maestro, ayudante de maestro u otro educador y compraste útiles escolares?', 'texto_en' => 'Are you a teacher, teacher’s aide or other educator who bought classroom supplies?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 línea 11',
@@ -800,7 +880,7 @@ return [
     ],
     [
         'codigo' => 'E9', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 9,
-        'texto_es' => '¿Pagaste pensión a tu excónyuge (no manutención de hijos)? ¿En qué fecha se firmó el acuerdo?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Pagaste pensión a tu excónyuge (no manutención de hijos)?', 'texto_en' => 'Did you pay alimony to a former spouse (not child support)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 líneas 19a–19c',
@@ -811,11 +891,22 @@ return [
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1'],
         ],
     ],
+    [
+        // F2.5: segunda parte de E9, que antes iba en la misma pregunta de sí o no.
+        'codigo' => 'E9.1', 'bloque' => 'E', 'pantalla' => 6, 'orden' => 9,
+        'texto_es' => '¿En qué fecha se firmó el acuerdo de divorcio o separación?', 'texto_en' => 'On what date was the divorce or separation agreement signed?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'fecha', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'E9', 'es' => 'si'],
+        'efecto_es' => 'Acuerdo del 31 dic. 2018 o antes → se deduce (Schedule 1 líneas 19a–19c)',
+        'fuente_texto' => 'Solo se deduce si el acuerdo es del 31 dic. 2018 o antes; pide el SSN de quien la recibe',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
+        'activa' => [],
+    ],
 
     // ── Bloque F — Situaciones de {anio} ──
     [
         'codigo' => 'F1', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 1,
-        'texto_es' => '¿Tú o alguien de tu familia tomó clases (universidad, escuela técnica, cursos del trabajo)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Tú o alguien de tu familia tomó clases (universidad, escuela técnica, cursos del trabajo)?', 'texto_en' => 'Did you or anyone in your family take classes (college, trade school, job training)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 3 línea 3; Schedule 1 línea 8r',
@@ -829,7 +920,7 @@ return [
     ],
     [
         'codigo' => 'F2', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 2,
-        'texto_es' => '¿Vendiste tu casa?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Vendiste tu casa?', 'texto_en' => 'Did you sell your home?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Form 8949 / Schedule D si no se excluye todo',
@@ -842,7 +933,7 @@ return [
     ],
     [
         'codigo' => 'F3', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 3,
-        'texto_es' => '¿Tuviste una cuenta de ahorros para gastos médicos (HSA)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Tuviste una cuenta de ahorros para gastos médicos (HSA)?', 'texto_en' => 'Did you have a health savings account (HSA)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 líneas 13 y 8f',
@@ -857,7 +948,7 @@ return [
     ],
     [
         'codigo' => 'F4', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 4,
-        'texto_es' => '¿Compraste un seguro médico en el Mercado (healthcare.gov)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Compraste un seguro médico en el Mercado (healthcare.gov)?', 'texto_en' => 'Did you buy health insurance through the Marketplace (healthcare.gov)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 3 línea 9 o Schedule 2 línea 1a',
@@ -871,7 +962,7 @@ return [
     [
         // F2.2: "uno por póliza" (5.1): un 1095-A por póliza.
         'codigo' => 'F4.1', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 4,
-        'texto_es' => '¿Cuántas pólizas del Mercado tuviste en {anio}?', 'texto_en' => null, 'ayuda_es' => 'Te pediremos un 1095-A por cada una.',
+        'texto_es' => '¿Cuántas pólizas del Mercado tuviste en {anio}?', 'texto_en' => 'How many Marketplace policies did you have in {anio}?', 'ayuda_es' => 'Te pediremos un 1095-A por cada una.', 'ayuda_en' => 'We\'ll ask for a 1095-A for each one.',
         'tipo_respuesta' => 'numero', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'F4', 'es' => 'si'],
         'efecto_es' => 'Cantidad de 1095-A a pedir',
@@ -881,7 +972,7 @@ return [
     ],
     [
         'codigo' => 'F5', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 5,
-        'texto_es' => '¿Compraste un vehículo nuevo en {anio}, con préstamo, para uso personal?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Compraste un vehículo nuevo en {anio}, con préstamo, para uso personal?', 'texto_en' => 'Did you buy a new vehicle in {anio}, with a loan, for personal use?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1-A → 1040 línea 13b',
@@ -894,7 +985,7 @@ return [
     ],
     [
         'codigo' => 'F6', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 6,
-        'texto_es' => '¿Un banco o prestamista te canceló o perdonó una deuda (tarjeta, hipoteca, otra)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Un banco o prestamista te canceló o perdonó una deuda (tarjeta, hipoteca, otra)?', 'texto_en' => 'Did a bank or lender cancel or forgive a debt (credit card, mortgage, other)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 línea 8c',
@@ -907,7 +998,7 @@ return [
     ],
     [
         'codigo' => 'F7', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 7,
-        'texto_es' => '¿Tuviste pérdidas por un desastre declarado por el gobierno federal (por ejemplo, un huracán)?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Tuviste pérdidas por un desastre declarado por el gobierno federal (por ejemplo, un huracán)?', 'texto_en' => 'Did you have losses from a federally declared disaster (for example, a hurricane)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Form 4684 → Schedule A',
@@ -921,7 +1012,7 @@ return [
     ],
     [
         'codigo' => 'F8', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 8,
-        'texto_es' => '¿El IRS te negó en un año anterior un crédito (EITC, crédito por hijos, crédito educativo o cabeza de familia)? ¿Qué año y por qué?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿El IRS te negó en un año anterior un crédito (EITC, crédito por hijos, crédito educativo o cabeza de familia)?', 'texto_en' => 'In a prior year, did the IRS deny you a credit (EITC, child tax credit, education credit or head of household)?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Form 8862',
@@ -933,8 +1024,19 @@ return [
         ],
     ],
     [
+        // F2.5: segunda parte de F8, que antes iba en la misma pregunta de sí o no.
+        'codigo' => 'F8.1', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 8,
+        'texto_es' => '¿En qué año y por qué?', 'texto_en' => 'Which year, and why?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'F8', 'es' => 'si'],
+        'efecto_es' => 'El preparador revisa si hace falta el Form 8862',
+        'fuente_texto' => 'Puede exigir el Form 8862 para volver a pedir el crédito',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f13614c.pdf',
+        'activa' => [],
+    ],
+    [
         'codigo' => 'F9', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 9,
-        'texto_es' => '¿Recibiste alguna carta o factura del IRS?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Recibiste alguna carta o factura del IRS?', 'texto_en' => 'Did you receive any letter or bill from the IRS?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Revisión del preparador',
@@ -948,7 +1050,7 @@ return [
     // ── Bloque G — Pagos, reembolso y año anterior ──
     [
         'codigo' => 'G1', 'bloque' => 'G', 'pantalla' => 8, 'orden' => 1,
-        'texto_es' => '¿Hiciste pagos estimados al IRS en {anio}, o aplicaste a {anio} parte del reembolso del año pasado?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Hiciste pagos estimados al IRS en {anio}, o aplicaste a {anio} parte del reembolso del año pasado?', 'texto_en' => 'Did you make estimated payments to the IRS in {anio}, or apply part of last year’s refund to {anio}?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => '1040 línea 26',
@@ -960,7 +1062,7 @@ return [
     ],
     [
         'codigo' => 'G2', 'bloque' => 'G', 'pantalla' => 8, 'orden' => 2,
-        'texto_es' => '¿Pediste una extensión (Form 4868) y pagaste algo con ella?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Pediste una extensión (Form 4868) y pagaste algo con ella?', 'texto_en' => 'Did you request an extension (Form 4868) and pay anything with it?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 3 línea 10 → 1040 línea 31',
@@ -973,13 +1075,13 @@ return [
     ],
     [
         'codigo' => 'G3', 'bloque' => 'G', 'pantalla' => 8, 'orden' => 3,
-        'texto_es' => 'Si te toca reembolso, ¿cómo lo quieres?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Si te toca reembolso, ¿cómo lo quieres?', 'texto_en' => 'If you get a refund, how would you like to receive it?', 'ayuda_es' => null,
         'tipo_respuesta' => 'opciones',
         'opciones' => [
-            ['valor' => 'deposito_directo', 'texto_es' => 'Depósito directo'],
-            ['valor' => 'dividir_cuentas', 'texto_es' => 'Dividir entre varias cuentas'],
-            ['valor' => 'aplicar_anio_siguiente', 'texto_es' => 'Aplicarlo al año siguiente'],
-            ['valor' => 'otro', 'texto_es' => 'Otro'],
+            ['valor' => 'deposito_directo', 'texto_es' => 'Depósito directo', 'texto_en' => 'Direct deposit'],
+            ['valor' => 'dividir_cuentas', 'texto_es' => 'Dividir entre varias cuentas', 'texto_en' => 'Split among several accounts'],
+            ['valor' => 'aplicar_anio_siguiente', 'texto_es' => 'Aplicarlo al año siguiente', 'texto_en' => 'Apply it to next year'],
+            ['valor' => 'otro', 'texto_es' => 'Otro', 'texto_en' => 'Other'],
         ],
         'nivel' => 'entrada', 'por_persona' => false, 'sensible' => true,
         'condicion' => null,
@@ -993,11 +1095,11 @@ return [
     ],
     [
         'codigo' => 'G4', 'bloque' => 'G', 'pantalla' => 8, 'orden' => 4,
-        'texto_es' => 'Si te toca pagar, ¿cómo quieres pagar?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => 'Si te toca pagar, ¿cómo quieres pagar?', 'texto_en' => 'If you owe, how would you like to pay?', 'ayuda_es' => null,
         'tipo_respuesta' => 'opciones',
         'opciones' => [
-            ['valor' => 'debito_cuenta', 'texto_es' => 'Débito de cuenta bancaria'],
-            ['valor' => 'otro', 'texto_es' => 'Otro'],
+            ['valor' => 'debito_cuenta', 'texto_es' => 'Débito de cuenta bancaria', 'texto_en' => 'Bank account debit'],
+            ['valor' => 'otro', 'texto_es' => 'Otro', 'texto_en' => 'Other'],
         ],
         'nivel' => 'entrada', 'por_persona' => false, 'sensible' => true,
         'condicion' => null,
@@ -1010,7 +1112,7 @@ return [
     ],
     [
         'codigo' => 'G5', 'bloque' => 'G', 'pantalla' => 8, 'orden' => 5,
-        'texto_es' => '¿Tienes la declaración del año pasado?', 'texto_en' => null, 'ayuda_es' => null,
+        'texto_es' => '¿Tienes la declaración del año pasado?', 'texto_en' => 'Do you have last year\'s tax return?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Revisión del preparador',
