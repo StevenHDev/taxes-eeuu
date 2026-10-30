@@ -120,8 +120,9 @@ Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
 - [x] 2.1 Los preparadores también validan piezas del catálogo
 - [x] 2.2 Respuestas de la entrevista y motor único (+ bandera por cliente, contenido nuevo del catálogo). En producción y catálogo cargado el 30 oct. (`9da755d`, `d8e7487`): 79 preguntas y 42 documentos en 2025 y 2026, verificar sin problemas
 - [x] 2.3 Mapa de equivalencias `campos_cliente` → catálogo y reporte (`catalogo-fiscal:equivalencias --reporte`)
-- [x] 2.4 Primera entrada desde el enlace de WhatsApp (crear contraseña sin pasar por el correo) y consentimiento §7216 en el portal (texto provisional; el definitivo espera L1)
-- [ ] 2.5 Entrevista en el portal: 8 pantallas en tres niveles
+- [x] 2.4 Primera entrada desde el enlace de WhatsApp (crear contraseña sin pasar por el correo) y consentimiento §7216 en el portal (texto provisional; el definitivo espera L1). En producción el 30 oct. (`799f1e4`, `1a19644`), texto provisional cargado con `consentimientos:cargar`
+- [x] 2.5 Entrevista en el portal: 8 pantallas en tres niveles
+  - Contenido del catálogo visto en la revisión de 2.5: ✅ textos en inglés, B2, B4, C4, C6 y D17 corregidos (30 oct.). ✅ C11, D3, D8, D10, D11, D12, D15, E9 y F8 divididas en pregunta + seguimiento (88 preguntas). Pendiente técnico: el importador no desactiva casillas ni líneas que salen del archivo (las activaciones sí, desde F2.5)
 - [ ] 2.6 Documentos que pide la entrevista: lista mínima y carga (solo por el portal)
 - [ ] 2.7 Revisión y confirmación del cliente en el portal
 - [ ] 2.8 Agente de WhatsApp reescrito sobre el catálogo (entrevista por WhatsApp apagada para clientes reales hasta L3)
@@ -191,4 +192,4 @@ Cosas vistas al desarrollar que no son de una fase. Se resuelven cuando haya un 
 - [ ] Tabla compartida (`data-table-pagination.tsx`): al pasar a la página 2 el paginador sigue diciendo "Página 1 de N" (visto en F0.3, 29 oct.)
 - [ ] Usuarios: después de restaurar un usuario, la tabla vuelve a la página 1 (visto en F0.3)
 - [ ] Passkeys: el nombre que se propone por defecto dice "Chrome on Mac"; pasarlo a "Chrome en Mac" (visto en F0.1)
-- [ ] Local: `.env` con `APP_LOCALE=en` hace que los errores de validación salgan en inglés (producción está en `es`); además el idioma que elige el usuario (cookie) no cambia el idioma del servidor (visto en F1.5)
+- [x] Local: `.env` con `APP_LOCALE=en` hace que los errores de validación salgan en inglés (producción está en `es`); además el idioma que elige el usuario (cookie) no cambia el idioma del servidor (visto en F1.5) → resuelto en F2.5: el servidor usa el idioma del selector (`AplicarIdioma`)

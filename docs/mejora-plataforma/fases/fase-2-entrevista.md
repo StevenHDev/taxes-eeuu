@@ -223,6 +223,49 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 - `tests/Feature/Portal/EntrevistaTest.php`: un cliente sin la bandera sigue en el formulario de hoy; con la bandera y el consentimiento ve las 8 pantallas; el paso solo trae sus preguntas (no las de otras pantallas ni las ocultas); guardar la pantalla 5 con D1 y D15 marcados guarda `si` en esos y `no` en las demás y lleva al seguimiento con `D1.1`; "Ninguna" guarda todo en `no` y salta el seguimiento; un código ajeno al paso devuelve error; una persona del bloque C con C3 = padre ve C12–C14; quitar una persona la archiva.
 - `npm run build` y `npm run types:check` sin errores; revisión en el navegador a 375 px de ancho.
 
+**Cómo quedó (30 oct.):**
+- **Rutas** (`portal.entrevista.*`, detrás de `EnsureEntrevistaNueva` y `EnsureConsentimiento7216`):
+  - `inicio`;
+  - `paso/guardar` (`{pantalla}/{paso}`, con paso `entrada` o `seguimiento`);
+  - `personas` (lista, agregar, quitar);
+  - `persona` y `persona.guardar` (`personas/{persona}/{paso}`).
+  Para estos clientes, `/portal`, el panel (`dashboard`) y `portal/formulario` llevan al inicio de la entrevista, y en el menú "Mi entrevista" reemplaza al panel y al formulario. El chat sigue en `portal/chat`.
+- **`PasosEntrevista`** decide las preguntas de cada paso (con el motor de 2.2), si una va en la lista de casillas, el paso siguiente y el anterior, y el avance por pantalla. Un seguimiento que quedó vacío porque cambió una respuesta sigue de largo.
+- **Pantallas con casillas:** 3, 5, 6 y 7. El plan decía 2, 5, 6 y 7, pero con las pantallas 2 y 3 invertidas (decisión 3) la de "¿alguna aplica a ti?" es la 3.
+- **A6 ("¿eras ciudadano?") va aparte**, como pregunta propia (`PasosEntrevista::APARTE`): en una lista de "marca las que aplican", dejarla sin marcar o marcar "Ninguna" abriría la pregunta de la visa a un ciudadano.
+- **Guardar:**
+  - `GuardarPasoRequest` acepta solo los códigos del paso y valida cada valor con `ValorRespuesta`. Las casillas que no vienen se guardan como "no", y lo que viene vacío no se guarda.
+  - Todo el paso se guarda en una transacción con `RespuestaGuardador` (canal `portal`).
+  - El paso siguiente lo calcula el servidor con las respuestas ya guardadas.
+- **"Usted o cónyuge":** si B1 es "casado", cada fila tiene "Yo" y "Mi cónyuge"; si no, una sola casilla (o sí o no).
+- **Pantalla 1:** A1 y A2 vienen precargados con el nombre, teléfono y correo de la cuenta. A4 ("Identificación con foto") por ahora es un texto: la carga del archivo llega con 2.6.
+- **Frontend:**
+  - Un componente por tipo de respuesta, en `components/entrevista/`: `lista-casillas`, `pregunta-si-no`, `pregunta-opciones`, `pregunta-usted-conyuge`, `pregunta-dato`, `pregunta-campo` y `origen-respuesta` ("Respondiste por WhatsApp el…").
+  - `marco-entrevista` tiene la barra de avance (`role="progressbar"`), el título y una barra inferior fija dentro de la columna, con "Atrás" y la acción principal; muestra el motivo si la acción está deshabilitada.
+  - El chat de dudas (`chat-dudas`) va al costado desde `lg` y en un `Sheet` en el celular, cargado con `React.lazy`, con los mensajes diferidos y sin adjuntos (`PortalChatPanel` con `conArchivos={false}`).
+  - Páginas: `portal/entrevista/{inicio,paso,personas}.tsx`. El paso lleva `key` por pantalla, paso y persona, y "Ninguna" se resuelve en el clic.
+- **Revisión en el navegador con Steven (30 oct.), lo que se corrigió:**
+  - Un toque justo sobre el cuadrito de una casilla la cambiaba dos veces (la casilla estaba dentro de su `label`): ahora casilla y etiqueta van lado a lado y toda la fila responde.
+  - Agregar una persona fallaba en PostgreSQL (`FOR UPDATE` con `max()`; las pruebas corren en SQLite y no lo veían): ahora se bloquea la fila de la entrevista.
+  - Los títulos de las pantallas 2 y 4 repetían la pregunta: ahora son "Tu estado civil y tu hogar" y "Personas a tu cargo".
+  - "Persona 1" salía en español en inglés: la etiqueta se traduce en pantalla desde su número.
+  - El personal que abre una ruta de la entrevista vuelve a su panel en lugar de un 403.
+- **Idioma (pedido de Steven):** el servidor ahora usa el idioma del selector (middleware `AplicarIdioma`, cookie `language` sin cifrar). Sin cookie, el frontend toma el del servidor (`lang` del HTML). Al cambiar de idioma la página se recarga para pedir de nuevo lo que arma el servidor. Los mensajes del servidor (avisos y errores de las respuestas, que ya no muestran el código de la pregunta) están en `lang/en.json`. Así se cierra el pendiente suelto "la cookie de idioma no la usa el servidor".
+- **Contenido del catálogo (pedido de Steven, 30 oct.):**
+  - **Inglés:** las 79 preguntas, sus ayudas y sus opciones tienen `texto_en`, `ayuda_en` y `texto_en` por opción. Quedan "sin validar", como todo el catálogo. El formulario de edición del administrador ahora tiene los campos en inglés y conserva las traducciones al guardar.
+  - **B2:** "¿Estabas casado el último día del año?" (repetía B1) pasa a "¿Te casaste en {anio}?", que es el 13614-C, parte II, 1a. El mapa de 2.3 ahora lleva `estado_civil.se_caso_en_anio` a B2.
+  - **B4:** ya no menciona "A6–A13"; lo del cónyuge se responde en la pantalla 3 con "Mi cónyuge".
+  - **C4:** solo pregunta los meses; "en EE. UU." y las ausencias temporales pasan a la ayuda, como dice su fuente.
+  - **C6:** de dos preguntas pasa a una ("¿Es ciudadano de EE. UU. o vive en EE. UU., Canadá o México?"), porque la regla es cualquiera de las dos.
+  - **D17:** su ayuda pedía "cuál y cuánto" sin dónde escribirlo; ahora dice que los montos salen de los documentos.
+  - **Dos preguntas en una respuesta de sí o no, divididas (pedido de Steven):** C11, D3, D8, D10, D11, D12, D15, E9 y F8 quedan con su primera parte. La segunda pasa a un seguimiento que se abre con "sí": C11.1, D3.1, D8.1, D10.1, D11.1 y E9.1 (fecha del acuerdo), D12.1, D15.1 y F8.1 (texto). Las activaciones que dependían de la segunda parte se movieron:
+    - el documento Form 8332, de C11 a C11.1 = sí;
+    - el Form 4137, de D3 a D3.1 = **no** (propinas no reportadas);
+    - el Schedule 1, de D8 a D8.1 = sí (el reembolso solo es ingreso si detalló deducciones).
+    El catálogo 2025 pasa a 88 preguntas.
+  - **Importador:** una activación que sale del archivo ahora se desactiva (con historial, sin borrarse) y se reactiva si vuelve. Antes quedaba activa. Casillas y líneas tienen el mismo hueco; no se tocó porque ningún cambio lo necesita todavía.
+- **Pruebas:** `tests/Feature/Portal/EntrevistaTest.php` (12, con el idioma de los mensajes).
+
 ---
 
 ## 2.6 Documentos que pide la entrevista (lista mínima y carga)
