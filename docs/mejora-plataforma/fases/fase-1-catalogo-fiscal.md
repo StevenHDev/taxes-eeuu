@@ -194,6 +194,8 @@ Orden sugerido de commits: 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6. Primero 
 
 ## 1.6 Equivalencias de `campos_cliente` y retiro de las pseudoformas (E12)
 
+> **Pasó a la fase 2 (decisión de Steven, 30 oct.).** El formulario actual se reemplaza en F2 por la entrevista del catálogo nuevo; el mapa de equivalencias y el cambio de nombre del menú viejo se hacen ahí, cuando ya existe dónde guardar las respuestas nuevas. La fase 1 se cierra con 1.1 a 1.5 en producción.
+
 **Hoy:**
 - `campos_cliente` (`CampoCliente`: `user_id`, `forma`, `tax_year`, `campo`, `valor_texto` cifrado, `documento_id`, `estado`, `source`) guarda lo que respondió cada cliente, por forma o bajo `transversal` / `documentos_extra`.
 - Las pseudoformas se usan en todo el flujo vivo: `CampoCatalogo::pseudoFormas()`, `TaxFieldCatalog::formaAlmacen()`, `EventoRecoleccionService`, `EventoRequest`, `CampoClienteUpdateRequest`, `PortalFormularioController`, `ClienteController`, `ToolExecutor` y la tool `consultar_documentos_extra` (`ToolDefinitions`), los prompts `prompt_actuales/fases/recoleccion.md` y `cierre.md`, y las páginas `portal/formulario.tsx`, `clientes/show.tsx` y `mi-informacion.tsx`.

@@ -22,8 +22,8 @@
 | F0.4 | Respaldo externo de base de datos y archivos | Alta | ⛔ | Destino del respaldo |
 | F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | ✅ | — |
 | F0.6 | Ocultar formas de empresas y 1040-NR | Media | ✅ | — |
-| F1 | Catálogo fiscal del año | Alta | 🔄 | F0 |
-| F2 | Entrevista por WhatsApp y por el portal | Media | ⏳ | F1, L1, L3 |
+| F1 | Catálogo fiscal del año | Alta | ✅ | F0 |
+| F2 | Entrevista por WhatsApp y por el portal | Media | 🔄 | F1, L1, L3 |
 | F3 | Checklist de documentos | Media | ⏳ | F2 |
 | F4 | Lectura y validación de documentos | Media | ⏳ | F1, F3 |
 | F5 | Expediente, revisión del preparador y hoja para TaxWise | Media | ⏳ | F4 |
@@ -103,24 +103,38 @@ Su checklist se detalla al escribir el plan técnico de cada fase.
 ### F1 — Catálogo fiscal del año
 Plan técnico: [`fases/fase-1-catalogo-fiscal.md`](fases/fase-1-catalogo-fiscal.md) · ✅ Aprobado (29 oct.)
 
-Wiplitask: `cmvskovkw006x1420a9v9fxo5` · 🔄
+Wiplitask: `cmvskovkw006x1420a9v9fxo5` · ✅ (30 oct.; F1.1–F1.5 en producción. F1.6 pasó a F2, decisión de Steven)
 - [x] Plan técnico de la fase 1 escrito y aprobado
 - [x] 1.1 Modelo de datos por año (preguntas, documentos y casillas, formularios y líneas, activaciones, reglas, historial de cambios)
 - [x] 1.2 Parámetros del año sobre `parametros_fiscales` (fuente, grupo, valor pendiente)
 - [x] 1.3 Cargar 2025 y 2026 desde el documento madre (comandos `cargar`, `copiar`, `verificar`; caso María). Cargado en producción el 29 oct. (commits `8d2b138` y `c68e03e`): verificar sin problemas en 2025 y 2026, determinaciones de los clientes sin cambios
 - [x] 1.4 Menú "Catálogo fiscal del año" con 5 pestañas (ver: preparador y administrador)
 - [x] 1.5 Edición por el administrador (sin borrar, historial, "marcar como validado contra el IRS")
-- [ ] 1.6 Mapa de equivalencias de `campos_cliente` y reporte; el menú viejo queda como "Campos del formulario actual" (solo administrador)
+- [ ] ~~1.6 Mapa de equivalencias de `campos_cliente` y reporte; menú viejo como "Campos del formulario actual"~~ → pasa a F2 (30 oct.): el mapa solo sirve para mover los datos cuando F2 reemplace el formulario actual
 
 ### F2 — Entrevista por WhatsApp y por el portal
-Wiplitask: `cmvskovqv0072142046gi5vuk` · ⏳
-- [ ] Plan técnico de la fase 2 escrito y aprobado
+Plan técnico: [`fases/fase-2-entrevista.md`](fases/fase-2-entrevista.md) · ✅ Aprobado (30 oct.)
+
+Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
+- [x] Plan técnico de la fase 2 escrito y aprobado
+- [x] 2.1 Los preparadores también validan piezas del catálogo
+- [ ] 2.2 Respuestas de la entrevista y motor único (+ bandera por cliente, contenido nuevo del catálogo)
+- [ ] 2.3 Mapa de equivalencias `campos_cliente` → catálogo y reporte
+- [ ] 2.4 Primera entrada desde el enlace de WhatsApp (crear contraseña sin pasar por el correo) y consentimiento §7216 en el portal (texto provisional; el definitivo espera L1)
+- [ ] 2.5 Entrevista en el portal: 8 pantallas en tres niveles
+- [ ] 2.6 Documentos que pide la entrevista: lista mínima y carga (solo por el portal)
+- [ ] 2.7 Revisión y confirmación del cliente en el portal
+- [ ] 2.8 Agente de WhatsApp reescrito sobre el catálogo (entrevista por WhatsApp apagada para clientes reales hasta L3)
+- [ ] 2.9 Vista del preparador: entrevista en la ficha y chat del portal en Mensajes
+- [ ] 2.10 Cambio de flujo y migración de `campos_cliente` (espera L1)
+- [ ] 2.11 Retiro del flujo anterior (E5, E6, E12, tool y menú viejos)
 - [ ] Consentimiento §7216 en el portal (requiere L1)
 - [ ] Entrevista en tres niveles en el portal
 - [ ] Agente de WhatsApp reescrito sobre el catálogo (requiere L3)
 - [ ] Confirmación del cliente en el portal; reemplazar E5 y E6
 - [ ] Prueba: María empieza por WhatsApp y termina en el portal sin repetir
-- [ ] Migrar `campos_cliente` a las respuestas nuevas con el mapa de F1.6 y eliminar las pseudoformas `transversal` y `documentos_extra` (E12), la tool `consultar_documentos_extra` y el menú "Campos del formulario actual" (decisión de Steven, 29 oct.)
+- [ ] Mapa de equivalencias de `campos_cliente` → catálogo nuevo y reporte de solo lectura (antes F1.6)
+- [ ] Migrar `campos_cliente` a las respuestas nuevas con ese mapa y eliminar las pseudoformas `transversal` y `documentos_extra` (E12), la tool `consultar_documentos_extra` y el menú "Campos del formulario actual" (decisión de Steven, 29 oct.)
 - [ ] Permitir que los preparadores también marquen piezas del catálogo como validadas contra el IRS (decisión de Steven, 29 oct.)
 - [ ] Ingresos en selección múltiple en un solo paso (hoy el árbol pregunta la fuente principal y luego "¿algo más?" una por una)
 - [ ] Socio de LLC o S-corp: la empresa no se atiende, pero su K-1 personal sí (1040 + Schedule E). Hoy el prompt le dice "no lo atendemos" (visto al cerrar F0.6)
