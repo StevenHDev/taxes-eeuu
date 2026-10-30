@@ -61,8 +61,12 @@ class ToolDefinitions
             // propósito: en esta fase el formulario del portal es quien
             // recolecta y guarda, este chat solo responde dudas (ver
             // prompt_actuales/fases/portal_dudas.md).
+            // consultar_entrevista solo responde para clientes con la
+            // entrevista nueva y consultar_pendientes_cliente para el resto:
+            // conviven hasta 2.11 (ver portal_dudas.md).
             FaseConversacion::PortalDudas => [
                 self::consultarPendientesCliente(),
+                self::consultarEntrevista(),
                 self::consultarBaseConocimiento(),
                 self::think(),
             ],
@@ -76,9 +80,25 @@ class ToolDefinitions
                 self::declararFormasCliente(),
                 self::consultarPendientesCliente(),
                 self::consultarBaseConocimiento(),
-                // F2.4: solo responde con un enlace a clientes con la
-                // entrevista nueva y sin contraseña (ver ToolExecutor).
+                self::think(),
+            ],
+            // F2.8: fases de la entrevista nueva. Nunca reciben archivos ni
+            // datos sensibles: eso va por el portal.
+            FaseConversacion::Consentimiento => [
                 self::enviarEnlaceActivacion(),
+                self::consultarBaseConocimiento(),
+                self::think(),
+            ],
+            FaseConversacion::Entrevista => [
+                self::consultarEntrevista(),
+                self::guardarRespuestas(),
+                self::agregarPersona(),
+                self::consultarBaseConocimiento(),
+                self::think(),
+            ],
+            FaseConversacion::Seguimiento => [
+                self::consultarEntrevista(),
+                self::consultarBaseConocimiento(),
                 self::think(),
             ],
         };
@@ -282,6 +302,73 @@ class ToolDefinitions
                 'parameters' => [
                     'type' => 'object',
                     'properties' => (object) [],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function consultarEntrevista(): array
+    {
+        return [
+            'type' => 'function',
+            'function' => [
+                'name' => 'consultar_entrevista',
+                'description' => 'Estado de la entrevista del cliente: las próximas preguntas que se pueden hacer por WhatsApp (código, texto, tipo, opciones y persona), el avance por pantalla, cuántas preguntas sensibles y documentos faltan en el portal, y los enlaces exactos al portal. Úsala al empezar cada turno de entrevista y cuando el cliente pregunte cómo va lo suyo. Copia los enlaces tal cual; nunca los inventes.',
+                'parameters' => ['type' => 'object', 'properties' => (object) []],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function guardarRespuestas(): array
+    {
+        return [
+            'type' => 'function',
+            'function' => [
+                'name' => 'guardar_respuestas',
+                'description' => 'Guarda una o varias respuestas de la entrevista en un solo llamado (por ejemplo, "trabajo en Uber y mi esposa en Walmart" son varias casillas a la vez). Usa solo códigos que te dio consultar_entrevista y valores que el cliente dijo con claridad: "si"/"no"; para usted/cónyuge una lista con "usted" y/o "conyuge", o "no"; para opciones, el valor exacto de la opción; fechas AAAA-MM-DD; números sin texto. Si una respuesta vuelve en `rechazadas`, no la adivines: pregúntale al cliente de nuevo. Nunca guardes datos sensibles: el sistema los rechaza.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'respuestas' => [
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'codigo' => ['type' => 'string', 'description' => 'Código de la pregunta, por ejemplo D1.'],
+                                    'persona_id' => ['type' => 'integer', 'description' => 'Solo en las preguntas de una persona del bloque C.'],
+                                    'valor' => ['description' => 'La respuesta con la forma que pide su tipo.'],
+                                ],
+                                'required' => ['codigo', 'valor'],
+                            ],
+                        ],
+                    ],
+                    'required' => ['respuestas'],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function agregarPersona(): array
+    {
+        return [
+            'type' => 'function',
+            'function' => [
+                'name' => 'agregar_persona',
+                'description' => 'Agrega una persona que vivió con el cliente o que mantuvo (bloque C), después de guardar C0 = "si". Devuelve su persona_id para guardar sus respuestas. Si ya sabes el parentesco, pásalo con uno de los valores de C3.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'parentesco' => ['type' => 'string', 'enum' => ['hijo', 'hijastro', 'hijo_crianza', 'hermano', 'nieto', 'padre', 'ninguno']],
+                    ],
                 ],
             ],
         ];

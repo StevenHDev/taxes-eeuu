@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\Entrevista\EstadoEntrevista;
 use App\Enums\FaseConversacion;
 use App\Enums\OrigenAnalisisMetaAgente;
 use App\Models\MetaAgenteReporte;
@@ -74,7 +75,7 @@ class AnalizarConversacionesAgenteCommand extends Command
             if ($alcance === 'cierre') {
                 $cliente = WhatsappMensaje::query()->where('telefono', $telefono)->latest('created_at')->first()?->cliente;
 
-                if ($cliente === null || $resolver->resolver($cliente) !== FaseConversacion::Cierre) {
+                if ($cliente === null || ! $this->terminada($cliente, $resolver)) {
                     continue;
                 }
             }
@@ -97,5 +98,21 @@ class AnalizarConversacionesAgenteCommand extends Command
         $this->line($reporte !== null
             ? "{$telefono}: ".count($reporte->hallazgos).' hallazgo(s).'
             : "{$telefono}: sin mensajes que analizar.");
+    }
+
+    /**
+     * Flujo actual: fase Cierre. Entrevista nueva (F2.8): la entrevista del
+     * año ya confirmada en el portal.
+     */
+    private function terminada(User $cliente, EstadoConversacionResolver $resolver): bool
+    {
+        if (! $cliente->usaEntrevistaCatalogo()) {
+            return $resolver->resolver($cliente) === FaseConversacion::Cierre;
+        }
+
+        return $cliente->entrevistas()
+            ->where('tax_year', (int) config('tax.current_tax_year'))
+            ->where('estado', EstadoEntrevista::Confirmada)
+            ->exists();
     }
 }

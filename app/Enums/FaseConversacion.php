@@ -34,6 +34,15 @@ enum FaseConversacion: string
     // canal solo entrega el link (una vez) y responde dudas. Cierre NUNCA se reemplaza
     // por esta fase: la atestación final sigue ocurriendo por WhatsApp (ver cierre.md).
     case HandoffPortal = 'handoff_portal';
+    // F2.8: fases del agente sobre el catálogo fiscal, solo para clientes con
+    // la entrevista nueva (bandera de F2.2). Las de arriba siguen para el
+    // resto hasta 2.11.
+    // Falta firmar el consentimiento §7216: explica y manda el enlace.
+    case Consentimiento = 'consentimiento';
+    // Entrevista conversacional (nivel 1 y seguimientos no sensibles).
+    case Entrevista = 'entrevista';
+    // Solo falta lo del portal (sensible, documentos, confirmar) o ya terminó.
+    case Seguimiento = 'seguimiento';
 
     public function label(): string
     {
@@ -44,6 +53,9 @@ enum FaseConversacion: string
             self::Cierre => 'Cierre',
             self::PortalDudas => 'Portal — dudas (formulario a cargo de recolectar)',
             self::HandoffPortal => 'WhatsApp — entrega del link del portal y dudas',
+            self::Consentimiento => 'Entrevista nueva — consentimiento §7216',
+            self::Entrevista => 'Entrevista nueva — preguntas por WhatsApp',
+            self::Seguimiento => 'Entrevista nueva — enlaces al portal, estado y dudas',
         };
     }
 }

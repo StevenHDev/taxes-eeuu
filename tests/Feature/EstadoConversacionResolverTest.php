@@ -23,7 +23,7 @@ class EstadoConversacionResolverTest extends TestCase
     {
         parent::setUp();
 
-        $this->resolver = new EstadoConversacionResolver;
+        $this->resolver = app(EstadoConversacionResolver::class);
     }
 
     /**

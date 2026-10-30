@@ -70,6 +70,24 @@ final class SituacionEntrevista
             ->all();
     }
 
+    /**
+     * Lo que el agente puede preguntar por WhatsApp (F2.8): visible, sin
+     * responder y no sensible, de la pantalla 2 en adelante. La pantalla 1
+     * (identidad) va por el portal con los documentos.
+     *
+     * @return list<array{codigo: string, persona_id: int|null, pantalla: int}>
+     */
+    public function pendientesParaWhatsapp(): array
+    {
+        return collect($this->pantallas)
+            ->filter(fn (array $p) => $p['numero'] >= 2)
+            ->flatMap(fn (array $p) => collect($p['preguntas'])
+                ->filter(fn (array $q) => ! $q['sensible'] && ! $q['respondida'])
+                ->map(fn (array $q) => ['codigo' => $q['codigo'], 'persona_id' => $q['persona_id'], 'pantalla' => $p['numero']]))
+            ->values()
+            ->all();
+    }
+
     public function completa(): bool
     {
         return collect($this->pantallas)->every(fn (array $p) => $p['respondidas'] === $p['total']);

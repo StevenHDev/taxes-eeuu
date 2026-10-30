@@ -32,6 +32,7 @@ class ToolExecutor
         private readonly EventoValidator $eventoValidator,
         private readonly BaseConocimientoService $baseConocimiento,
         private readonly EnlaceActivacion $enlaceActivacion,
+        private readonly HerramientasEntrevista $entrevista,
     ) {}
 
     /**
@@ -76,6 +77,9 @@ class ToolExecutor
             'guardar_campo_cliente' => $this->guardarCampoCliente($cliente, $argumentos, $actor, $file, $metodoExtraccion),
             'consultar_base_conocimiento' => ['resultados' => $this->baseConocimiento->buscar((string) ($argumentos['consulta'] ?? ''))],
             'enviar_enlace_activacion' => $this->enviarEnlaceActivacion($cliente, $telefono),
+            'consultar_entrevista' => $this->entrevista->consultar($cliente),
+            'guardar_respuestas' => $this->entrevista->guardar($cliente, $argumentos, $actor),
+            'agregar_persona' => $this->entrevista->agregarPersona($cliente, $argumentos, $actor),
             'registrar_atestacion_cliente' => $this->tools->registrarAtestacion($cliente, $this->taxYearVigente($cliente), (string) ($argumentos['respuesta_cliente'] ?? '')),
             default => ['error' => "Tool desconocida: {$nombreTool}"],
         };

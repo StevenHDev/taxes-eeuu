@@ -90,21 +90,29 @@ class AgenteConversacionalService
         $promptVersion = AgentePromptVigente::version();
 
         for ($i = 0; $i < self::MAX_ITERACIONES; $i++) {
-            $fase = $this->resolver->resolver($cliente);
+            // F2.8: con la entrevista nueva el resolver ya decide según el
+            // canal; las fases forzadas de abajo son solo del flujo actual.
+            $fase = $this->resolver->resolver($cliente, $canalPortal);
 
-            if ($canalPortal && in_array($fase, [FaseConversacion::Recoleccion, FaseConversacion::Cierre], true)) {
-                $fase = FaseConversacion::PortalDudas;
-            } elseif (! $canalPortal && $fase === FaseConversacion::Recoleccion) {
-                $fase = FaseConversacion::HandoffPortal;
+            if ($cliente?->usaEntrevistaCatalogo() !== true) {
+                if ($canalPortal && in_array($fase, [FaseConversacion::Recoleccion, FaseConversacion::Cierre], true)) {
+                    $fase = FaseConversacion::PortalDudas;
+                } elseif (! $canalPortal && $fase === FaseConversacion::Recoleccion) {
+                    $fase = FaseConversacion::HandoffPortal;
+                }
             }
 
             $mensajesDeEsteTurno = $mensajes;
+
+            if ($fase === FaseConversacion::Consentimiento && $cliente !== null) {
+                $mensajesDeEsteTurno[] = ['role' => 'system', 'content' => $this->notaConsentimiento($mensajes, $cliente, $telefono)];
+            }
 
             if ($fase === FaseConversacion::HandoffPortal) {
                 // Nota efímera, nunca persistida: solo para esta llamada puntual a
                 // la API, no se agrega a $mensajes (que sigue acumulando el resto
                 // del turno) — ver notaLinkPortal().
-                $mensajesDeEsteTurno[] = ['role' => 'system', 'content' => $this->notaLinkPortal($mensajes, $cliente, $telefono)];
+                $mensajesDeEsteTurno[] = ['role' => 'system', 'content' => $this->notaLinkPortal($mensajes)];
             }
 
             $respuesta = $this->openAi->completarChat(
@@ -389,12 +397,8 @@ class AgenteConversacionalService
      * @param  array<int, array<string, mixed>>  $mensajes  ya construidos por mensajesDesdeHistorial(),
      *                                                      antes de agregar la nota de este método
      */
-    private function notaLinkPortal(array $mensajes, ?User $cliente, ?string $telefono): string
+    private function notaLinkPortal(array $mensajes): string
     {
-        if ($cliente !== null && $this->enlaceActivacion->pendiente($cliente) && $this->esSuTelefono($cliente, $telefono)) {
-            return $this->notaEnlaceActivacion($mensajes, $cliente);
-        }
-
         $link = self::linkPortal();
 
         $yaCompartido = collect($mensajes)->contains(
@@ -405,6 +409,31 @@ class AgenteConversacionalService
         return $yaCompartido
             ? 'Ya le compartiste el link del portal antes en esta conversación — no lo repitas de nuevo salvo que el cliente lo pida explícitamente.'
             : "Todavía no le has compartido el link del portal seguro en esta conversación. Inclúyelo tal cual en tu respuesta de este turno, junto con una explicación breve y cálida de qué es y qué debe hacer ahí. Menciona también que le llegó (o le va a llegar en breve) un correo aparte para definir la contraseña de su cuenta — sin ese paso, este link solo lo va a mandar a una pantalla de inicio de sesión sin contraseña que usar: {$link}";
+    }
+
+    /**
+     * F2.8: fase Consentimiento. Sin contraseña, el enlace de activación
+     * (F2.4: crea la contraseña y lleva al consentimiento); con contraseña,
+     * el enlace al consentimiento, que pide iniciar sesión. Lo arma el
+     * código, una vez por conversación.
+     *
+     * @param  array<int, array<string, mixed>>  $mensajes
+     */
+    private function notaConsentimiento(array $mensajes, User $cliente, ?string $telefono): string
+    {
+        if ($this->enlaceActivacion->pendiente($cliente) && $this->esSuTelefono($cliente, $telefono)) {
+            return $this->notaEnlaceActivacion($mensajes, $cliente);
+        }
+
+        $enlace = route('portal.consentimiento');
+
+        $yaCompartido = collect($mensajes)->contains(
+            fn (array $m) => ($m['role'] ?? null) === 'assistant' && str_contains((string) ($m['content'] ?? ''), $enlace),
+        );
+
+        return $yaCompartido
+            ? 'Ya le mandaste el enlace del consentimiento en esta conversación: no lo repitas salvo que te lo pida.'
+            : "El cliente todavía no firmó su consentimiento. Explícale en pocas palabras qué es (nos autoriza a usar su información para preparar su declaración) y mándale este enlace tal cual; entra con su correo y su contraseña: {$enlace}";
     }
 
     /**
