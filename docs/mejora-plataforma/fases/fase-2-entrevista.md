@@ -325,6 +325,23 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 
 **Pruebas:** no se confirma con preguntas pendientes; con documentos pendientes sí, con aviso; confirmar inserta la atestación con canal y hash; cambiar una respuesta reabre y vuelve a pedir confirmación; la confirmación vieja se conserva.
 
+**Cómo quedó (30 oct.):**
+- **Migración `confirmacion_en_el_portal`:** `cliente_atestaciones` suma `canal` (`whatsapp` por defecto para las viejas, `portal` para las nuevas), `entrevista_id` y `resumen_hash`. La tabla sigue siendo de solo inserción.
+- **`ConfirmacionEntrevista`:**
+  - `resumen()` da las respuestas visibles por pantalla con su valor sin formato y el enlace al paso donde se cambian (entrada o seguimiento, o el paso de la persona);
+  - `confirmar()` exige que no falte ninguna pregunta (los documentos no bloquean), inserta la atestación con el texto que vio el cliente en su idioma y el hash SHA-256 de las respuestas, y pone la entrevista en `confirmada`.
+  - Cambiar cualquier respuesta, por cualquier canal, la pasa a `reabierta` (lo hace `RespuestaGuardador` desde 2.2). Confirmar de nuevo agrega otra atestación y la vieja se conserva.
+- **Rutas:** `portal.entrevista.resumen` y `portal.entrevista.confirmar` (`ConfirmarEntrevistaController`, invocable). Después de la pantalla 8, el paso siguiente es el resumen.
+- **Interfaz (`portal/entrevista/resumen.tsx`):**
+  - Lo que falta va arriba, **agrupado por pantalla** ("Ingresos: faltan 18 →"). Visto en el navegador: con muchas pendientes, la lista de una línea por pregunta repetía todo el resumen.
+  - Cada pantalla es una sección con pregunta, respuesta y "Cambiar" (o "Responder"). Las respuestas sensibles salen ocultas, con un botón para mostrarlas.
+  - La sección de documentos dice que se pueden subir después.
+  - Barra fija con una sola acción: "Confirmar que mi información es correcta", o "Completar lo que falta" si falta algo.
+  - Estado de éxito "Recibimos tu información el 30 de octubre…" y aviso de "reabierta".
+  - El inicio pasa a "Revisar y confirmar" cuando todo está respondido y muestra si ya se confirmó.
+- **Sin cambios todavía en el agente:** sigue con su atestación por WhatsApp hasta 2.8.
+- **Pruebas:** `tests/Feature/Portal/ConfirmacionTest.php` (5).
+
 ### Reglas de interfaz del portal (2.4 a 2.7)
 
 | Regla | Cómo se cumple |

@@ -123,8 +123,8 @@ Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
 - [x] 2.4 Primera entrada desde el enlace de WhatsApp (crear contraseña sin pasar por el correo) y consentimiento §7216 en el portal (texto provisional; el definitivo espera L1). En producción el 30 oct. (`799f1e4`, `1a19644`), texto provisional cargado con `consentimientos:cargar`
 - [x] 2.5 Entrevista en el portal: 8 pantallas en tres niveles. En producción el 30 oct. (`d85e906`, `7e282dd`, `f3dc426`), catálogo recargado: 88 preguntas con inglés en 2025 y 2026, verificar sin problemas
   - Contenido del catálogo visto en la revisión de 2.5: ✅ textos en inglés, B2, B4, C4, C6 y D17 corregidos (30 oct.). ✅ C11, D3, D8, D10, D11, D12, D15, E9 y F8 divididas en pregunta + seguimiento (88 preguntas). Pendiente técnico: el importador no desactiva casillas ni líneas que salen del archivo (las activaciones sí, desde F2.5)
-- [x] 2.6 Documentos que pide la entrevista: lista mínima y carga (solo por el portal)
-- [ ] 2.7 Revisión y confirmación del cliente en el portal
+- [x] 2.6 Documentos que pide la entrevista: lista mínima y carga (solo por el portal). En producción el 30 oct. (`fb25854`, `a7f00c9`), catálogo recargado: 93 preguntas, verificar sin problemas
+- [x] 2.7 Revisión y confirmación del cliente en el portal
 - [ ] 2.8 Agente de WhatsApp reescrito sobre el catálogo (entrevista por WhatsApp apagada para clientes reales hasta L3)
 - [ ] 2.9 Vista del preparador: entrevista en la ficha y chat del portal en Mensajes
 - [ ] 2.10 Cambio de flujo y migración de `campos_cliente` (espera L1)
