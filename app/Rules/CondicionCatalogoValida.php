@@ -11,11 +11,12 @@ use Illuminate\Contracts\Validation\ValidationRule;
  * muestra). Es un JSON pequeño y cerrado:
  *
  *   {"pregunta": "B1", "es": "casado"}
+ *   {"pregunta": "C4", "hasta": 6}      (número menor o igual; F2.2)
  *   {"todas": [condición, …]}
  *   {"alguna": [condición, …]}
  *
  * Revisa la forma y que cada código de pregunta exista en el mismo año. En
- * la fase 1 solo se guarda; la evalúa la entrevista de la fase 2.
+ * la fase 1 solo se guarda; la evalúa App\Services\Entrevista\EvaluadorCondicion (fase 2).
  */
 class CondicionCatalogoValida implements ValidationRule
 {
@@ -70,6 +71,16 @@ class CondicionCatalogoValida implements ValidationRule
             $codigos[] = $valor['pregunta'];
 
             return is_scalar($valor['es']) || is_array($valor['es']);
+        }
+
+        if ($claves === ['hasta', 'pregunta']) {
+            if (! is_string($valor['pregunta']) || $valor['pregunta'] === '' || ! is_numeric($valor['hasta'])) {
+                return false;
+            }
+
+            $codigos[] = $valor['pregunta'];
+
+            return true;
         }
 
         if ($claves === ['todas'] || $claves === ['alguna']) {

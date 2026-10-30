@@ -29,8 +29,9 @@ use InvalidArgumentException;
  *   con origen "pantalla" en `catalogo_cambios`), salvo con `$forzar`.
  * - Nunca desactiva ni borra lo que no está en los archivos.
  * - `$dryRun` hace todo dentro de una transacción y la deshace.
- * - Si existe `ajustes.php`, se aplica al final (por ejemplo, 2026 sobre la
- *   copia de 2025).
+ * - Un año copiado de otro (2026 de 2025) se carga con los archivos del año
+ *   de origen y su `ajustes.php` aplicado en memoria: hereda lo nuevo del
+ *   origen (F2.2) y una segunda carga no deja cambios en el historial.
  */
 class CatalogoFiscalImportador
 {
@@ -61,7 +62,7 @@ class CatalogoFiscalImportador
         $this->resultado = new ResultadoCarga;
         $this->forzar = $forzar;
 
-        if (! is_dir("{$this->base}/{$anio}")) {
+        if (! is_dir("{$this->base}/{$anio}") && $this->anioConArchivos($anio) === null) {
             throw new InvalidArgumentException("No hay archivos del catálogo fiscal para {$anio} en {$this->base}/{$anio}.");
         }
 
@@ -70,19 +71,31 @@ class CatalogoFiscalImportador
         try {
             CatalogoAnio::query()->firstOrCreate(['tax_year' => $anio], ['estado' => EstadoAnio::Borrador]);
 
-            foreach ($this->archivo($anio, 'preguntas', 'preguntas') as $fila) {
-                $this->cargarPregunta($anio, $fila);
+            // Un año copiado de otro (2026 de 2025) no tiene archivos propios:
+            // usa los del año de origen con sus ajustes aplicados en memoria,
+            // así hereda lo nuevo de ese año y una segunda carga no cambia nada.
+            $origen = $this->anioConArchivos($anio);
+            $ajustes = $this->leerAjustes($anio);
+            $derivado = $origen !== null && $origen !== $anio;
+            $parametrosDelArchivo = [];
+
+            if ($derivado) {
+                $this->renombrarCasillas($anio, $ajustes['casillas'] ?? []);
             }
 
-            foreach ($this->archivo($anio, 'documentos', 'documentos') as $fila) {
-                $this->cargarDocumento($anio, $fila);
+            foreach ($this->archivo($origen, 'preguntas', 'preguntas') as $fila) {
+                $this->cargarPregunta($anio, $derivado ? $this->ajustarPregunta($fila, $ajustes) : $fila);
             }
 
-            foreach ($this->archivo($anio, 'formularios', 'formularios') as $fila) {
-                $this->cargarFormulario($anio, $fila);
+            foreach ($this->archivo($origen, 'documentos', 'documentos') as $fila) {
+                $this->cargarDocumento($anio, $derivado ? $this->ajustarDocumento($fila, $ajustes) : $fila);
             }
 
-            foreach ($this->archivo($anio, 'reglas', 'reglas') as $fila) {
+            foreach ($this->archivo($origen, 'formularios', 'formularios') as $fila) {
+                $this->cargarFormulario($anio, $derivado ? $this->ajustarFormulario($fila, $ajustes) : $fila);
+            }
+
+            foreach ($this->archivo($origen, 'reglas', 'reglas') as $fila) {
                 $this->guardar(
                     CatalogoRegla::query()->firstOrNew(['tax_year' => $anio, 'codigo' => $fila['codigo']]),
                     $fila,
@@ -91,16 +104,30 @@ class CatalogoFiscalImportador
                 );
             }
 
-            foreach ($this->archivo($anio, 'parametros', 'parametros') as $fila) {
+            foreach ($this->archivo($origen, 'parametros', 'parametros') as $fila) {
+                $codigo = "{$fila['categoria']}.{$fila['clave']}";
+
+                if ($derivado && array_key_exists($codigo, $ajustes['parametros'] ?? [])) {
+                    $fila['valor'] = $ajustes['parametros'][$codigo];
+                }
+
+                $parametrosDelArchivo[] = $codigo;
+
                 $this->guardar(
                     ParametroFiscal::query()->firstOrNew(['tax_year' => $anio, 'categoria' => $fila['categoria'], 'clave' => $fila['clave']]),
                     $fila,
                     'parametro',
-                    "{$fila['categoria']}.{$fila['clave']}",
+                    $codigo,
                 );
             }
 
-            $this->aplicarAjustes($anio);
+            if ($derivado) {
+                // Lo único que no viene en los archivos: los parámetros sembrados
+                // (ParametrosFiscalesSeeder) que el año nuevo trae pendientes.
+                $this->aplicarAjustesDeParametros($anio, array_diff_key($ajustes['parametros'] ?? [], array_flip($parametrosDelArchivo)));
+            } else {
+                $this->aplicarAjustes($anio);
+            }
 
             $dryRun ? DB::rollBack() : DB::commit();
         } catch (\Throwable $e) {
@@ -198,14 +225,7 @@ class CatalogoFiscalImportador
 
         $ajustes = require $ruta;
 
-        foreach ($ajustes['parametros'] ?? [] as $codigo => $valor) {
-            [$categoria, $clave] = explode('.', $codigo, 2);
-            $parametro = ParametroFiscal::query()->where(['tax_year' => $anio, 'categoria' => $categoria, 'clave' => $clave])->first();
-
-            $parametro === null
-                ? $this->resultado->avisos[] = "Ajuste: el parámetro {$codigo} no existe en {$anio}."
-                : $this->guardar($parametro, ['valor' => $valor], 'parametro', $codigo);
-        }
+        $this->aplicarAjustesDeParametros($anio, $ajustes['parametros'] ?? []);
 
         foreach ($ajustes['casillas'] ?? [] as $codigoDocumento => $cambios) {
             foreach ($cambios as $casillaVieja => $atributos) {
@@ -241,6 +261,120 @@ class CatalogoFiscalImportador
                 ? $this->resultado->avisos[] = "Ajuste: la pregunta {$codigo} no existe en {$anio}."
                 : $this->guardar($pregunta, $atributos, 'pregunta', $codigo);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $parametros  categoria.clave => valor
+     */
+    private function aplicarAjustesDeParametros(int $anio, array $parametros): void
+    {
+        foreach ($parametros as $codigo => $valor) {
+            [$categoria, $clave] = explode('.', $codigo, 2);
+            $parametro = ParametroFiscal::query()->where(['tax_year' => $anio, 'categoria' => $categoria, 'clave' => $clave])->first();
+
+            $parametro === null
+                ? $this->resultado->avisos[] = "Ajuste: el parámetro {$codigo} no existe en {$anio}."
+                : $this->guardar($parametro, ['valor' => $valor], 'parametro', $codigo);
+        }
+    }
+
+    /**
+     * El año cuyos archivos se usan para cargar `$anio`: el mismo si tiene
+     * archivos propios; si no, el año del que se copió (CatalogoAnio::copiado_de).
+     */
+    private function anioConArchivos(int $anio): ?int
+    {
+        $tieneArchivos = fn (int $a) => array_diff(glob("{$this->base}/{$a}/*.php") ?: [], ["{$this->base}/{$a}/ajustes.php"]) !== [];
+
+        if ($tieneArchivos($anio)) {
+            return $anio;
+        }
+
+        $origen = CatalogoAnio::query()->where('tax_year', $anio)->value('copiado_de');
+
+        return $origen !== null && $tieneArchivos((int) $origen) ? (int) $origen : null;
+    }
+
+    /**
+     * Las casillas que el año renombra (1099-NEC 1 → 1a) se renombran en la
+     * copia antes de cargar, para que la carga actualice esa fila y no cree
+     * una nueva al lado de la vieja.
+     *
+     * @param  array<string, array<string, array<string, mixed>>>  $casillas
+     */
+    private function renombrarCasillas(int $anio, array $casillas): void
+    {
+        foreach ($casillas as $codigoDocumento => $cambios) {
+            foreach ($cambios as $casillaVieja => $atributos) {
+                $nueva = $atributos['casilla'] ?? null;
+
+                if ($nueva === null || (string) $nueva === (string) $casillaVieja) {
+                    continue;
+                }
+
+                $delDocumento = fn () => CatalogoCasilla::query()
+                    ->where('tax_year', $anio)
+                    ->whereHas('documento', fn ($q) => $q->where('codigo', $codigoDocumento));
+
+                $vieja = $delDocumento()->where('casilla', (string) $casillaVieja)->first();
+
+                if ($vieja !== null && ! $delDocumento()->where('casilla', (string) $nueva)->exists()) {
+                    $this->guardar($vieja, ['casilla' => (string) $nueva], 'casilla', "{$codigoDocumento}:{$casillaVieja}");
+                }
+            }
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function leerAjustes(int $anio): array
+    {
+        $ruta = "{$this->base}/{$anio}/ajustes.php";
+
+        return is_file($ruta) ? require $ruta : [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $fila
+     * @param  array<string, mixed>  $ajustes
+     * @return array<string, mixed>
+     */
+    private function ajustarPregunta(array $fila, array $ajustes): array
+    {
+        return [...$fila, ...($ajustes['preguntas'][$fila['codigo']] ?? [])];
+    }
+
+    /**
+     * @param  array<string, mixed>  $fila
+     * @param  array<string, mixed>  $ajustes
+     * @return array<string, mixed>
+     */
+    private function ajustarDocumento(array $fila, array $ajustes): array
+    {
+        $cambios = $ajustes['casillas'][$fila['codigo']] ?? [];
+
+        $fila['casillas'] = array_map(
+            fn (array $c) => [...$c, ...($cambios[$c['casilla']] ?? [])],
+            $fila['casillas'] ?? [],
+        );
+
+        return $fila;
+    }
+
+    /**
+     * @param  array<string, mixed>  $fila
+     * @param  array<string, mixed>  $ajustes
+     * @return array<string, mixed>
+     */
+    private function ajustarFormulario(array $fila, array $ajustes): array
+    {
+        $fila['lineas'] = array_map(
+            fn (array $l) => [...$l, ...($ajustes['lineas']["{$fila['codigo']}:{$l['linea']}"] ?? [])],
+            $fila['lineas'] ?? [],
+        );
+
+        return $fila;
     }
 
     /**
@@ -283,11 +417,11 @@ class CatalogoFiscalImportador
     /**
      * @return list<array<string, mixed>>
      */
-    private function archivo(int $anio, string $nombre, string $tipo): array
+    private function archivo(?int $anio, string $nombre, string $tipo): array
     {
         $ruta = "{$this->base}/{$anio}/{$nombre}.php";
 
-        if (! is_file($ruta)) {
+        if ($anio === null || ! is_file($ruta)) {
             return [];
         }
 

@@ -58,7 +58,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'A5', 'bloque' => 'A', 'pantalla' => null, 'orden' => 5,
+        'codigo' => 'A5', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 5,
         'texto_es' => '¿Otra persona puede reclamarte como dependiente en su declaración?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
@@ -68,7 +68,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'A6', 'bloque' => 'A', 'pantalla' => 2, 'orden' => 6,
+        'codigo' => 'A6', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 6,
         'texto_es' => 'En {anio}, ¿eras ciudadano de EE. UU.?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
@@ -80,7 +80,7 @@ return [
         ],
     ],
     [
-        'codigo' => 'A7', 'bloque' => 'A', 'pantalla' => 2, 'orden' => 7,
+        'codigo' => 'A7', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 7,
         'texto_es' => 'En {anio}, ¿estabas en EE. UU. con visa?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'A6', 'es' => 'no'],
@@ -90,7 +90,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'A8', 'bloque' => 'A', 'pantalla' => 2, 'orden' => 8,
+        'codigo' => 'A8', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 8,
         'texto_es' => 'En {anio}, ¿viviste o trabajaste en dos o más estados?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
@@ -100,7 +100,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'A9', 'bloque' => 'A', 'pantalla' => 2, 'orden' => 9,
+        'codigo' => 'A9', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 9,
         'texto_es' => '¿Eras legalmente ciego?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
@@ -110,7 +110,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'A10', 'bloque' => 'A', 'pantalla' => 2, 'orden' => 10,
+        'codigo' => 'A10', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 10,
         'texto_es' => '¿Estabas incapacitado total y permanentemente?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
@@ -122,7 +122,7 @@ return [
         ],
     ],
     [
-        'codigo' => 'A11', 'bloque' => 'A', 'pantalla' => 2, 'orden' => 11,
+        'codigo' => 'A11', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 11,
         'texto_es' => '¿Eras estudiante a tiempo completo?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
@@ -132,7 +132,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'A12', 'bloque' => 'A', 'pantalla' => 2, 'orden' => 12,
+        'codigo' => 'A12', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 12,
         'texto_es' => '¿El IRS te dio un PIN de protección de identidad (IP PIN)?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => true,
         'condicion' => null,
@@ -144,7 +144,7 @@ return [
         ],
     ],
     [
-        'codigo' => 'A13', 'bloque' => 'A', 'pantalla' => 2, 'orden' => 13,
+        'codigo' => 'A13', 'bloque' => 'A', 'pantalla' => 3, 'orden' => 13,
         'texto_es' => 'En {anio}, ¿tuviste, recibiste, vendiste o cambiaste activos digitales (cripto, NFT)?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'usted_conyuge_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
@@ -181,7 +181,7 @@ return [
 
     // ── Bloque B — Estado civil ──
     [
-        'codigo' => 'B1', 'bloque' => 'B', 'pantalla' => 3, 'orden' => 1,
+        'codigo' => 'B1', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 1,
         'texto_es' => 'Al 31 de diciembre de {anio}, ¿cuál era tu estado civil?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'opciones',
         'opciones' => [
@@ -204,7 +204,7 @@ return [
         ],
     ],
     [
-        'codigo' => 'B2', 'bloque' => 'B', 'pantalla' => 3, 'orden' => 2,
+        'codigo' => 'B2', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 2,
         'texto_es' => '¿Estabas casado el último día del año?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'B1', 'es' => 'casado'],
@@ -214,7 +214,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'B3', 'bloque' => 'B', 'pantalla' => 3, 'orden' => 3,
+        'codigo' => 'B3', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 3,
         'texto_es' => '¿Viviste separado de tu cónyuge todos los últimos 6 meses del año?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'B1', 'es' => 'casado'],
@@ -224,7 +224,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'B4', 'bloque' => 'B', 'pantalla' => 3, 'orden' => 4,
+        'codigo' => 'B4', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 4,
         'texto_es' => 'Datos del cónyuge: nombre, fecha de nacimiento, ocupación, SSN o ITIN, y sus respuestas de A6–A13', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => true,
         'condicion' => ['pregunta' => 'B1', 'es' => 'casado'],
@@ -234,7 +234,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'B5', 'bloque' => 'B', 'pantalla' => 3, 'orden' => 5,
+        'codigo' => 'B5', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 5,
         'texto_es' => '¿Pagaste más de la mitad del costo de mantener tu hogar en {anio}? (renta, intereses de la hipoteca, impuesto predial, seguro de la casa, reparaciones, servicios y comida consumida en casa)', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
@@ -244,7 +244,7 @@ return [
         'activa' => [],
     ],
     [
-        'codigo' => 'B6', 'bloque' => 'B', 'pantalla' => 3, 'orden' => 6,
+        'codigo' => 'B6', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 6,
         'texto_es' => '¿En qué año falleció tu cónyuge?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'numero', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
         'condicion' => ['pregunta' => 'B1', 'es' => 'viudo'],
@@ -256,10 +256,21 @@ return [
 
     // ── Bloque C — Personas que vivieron contigo o que mantuviste (por persona) ──
     [
+        // F2.2: pregunta de entrada del bloque C (sección 3: "Escribe el nombre de todas las personas…"). "No" salta el bloque.
+        'codigo' => 'C0', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 0,
+        'texto_es' => '¿Alguien vivió contigo en {anio} (además de tu cónyuge) o mantuviste a alguien aunque no viviera contigo?', 'texto_en' => null, 'ayuda_es' => 'Hijos, padres, sobrinos, hermanos… cualquier persona.',
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
+        'condicion' => null,
+        'efecto_es' => 'Sí → por cada persona, C1–C14',
+        'fuente_texto' => '13614-C, parte II: todas las personas que vivieron con el contribuyente o que mantuvo (Pub. 501)',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f13614c.pdf',
+        'activa' => [],
+    ],
+    [
         'codigo' => 'C1', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 1,
         'texto_es' => 'Nombre y apellido', 'texto_en' => null, 'ayuda_es' => null,
-        'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
-        'condicion' => null,
+        'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => true,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => null,
         'fuente_texto' => '1040, sección Dependents, columna (1)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040.pdf',
@@ -268,8 +279,8 @@ return [
     [
         'codigo' => 'C2', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 2,
         'texto_es' => 'Fecha de nacimiento', 'texto_en' => null, 'ayuda_es' => null,
-        'tipo_respuesta' => 'fecha', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
-        'condicion' => null,
+        'tipo_respuesta' => 'fecha', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => true,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => '< 17 → crédito por hijos (Schedule 8812). < 13 → crédito por cuidado (Form 2441). Hijo calificado: < 19, o < 24 si estudia, y menor que tú (o que tu cónyuge si es conjunta); sin límite si está incapacitado',
         'fuente_texto' => 'Pruebas de edad (Pub. 501 y anexos)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -289,7 +300,7 @@ return [
             ['valor' => 'ninguno', 'texto_es' => 'Ninguno'],
         ],
         'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
-        'condicion' => null,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'Hijo, hermano o sus descendientes → posible hijo calificado. Otros → posible pariente calificado',
         'fuente_texto' => 'Pub. 501: prueba de parentesco',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -299,7 +310,7 @@ return [
         'codigo' => 'C4', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 4,
         'texto_es' => '¿Cuántos meses vivió en tu casa en {anio}? ¿Vivió en EE. UU.?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'numero', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
-        'condicion' => null,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => '≤ 6 meses → no es hijo calificado (salvo excepciones de la Pub. 501)',
         'fuente_texto' => 'Prueba de residencia (más de medio año; las ausencias temporales, como la escuela, cuentan como tiempo en casa). 1040, columna "vivió con usted más de la mitad de {anio}… y en EE. UU."',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -309,7 +320,7 @@ return [
         'codigo' => 'C5', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 5,
         'texto_es' => '¿Estaba casado al 31 de diciembre?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
-        'condicion' => null,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'Si presentó declaración conjunta (salvo solo para reembolso) → no es dependiente',
         'fuente_texto' => 'Prueba de declaración conjunta',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -319,7 +330,7 @@ return [
         'codigo' => 'C6', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 6,
         'texto_es' => '¿Es ciudadano de EE. UU.? ¿Vive en EE. UU., Canadá o México?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
-        'condicion' => null,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'Ninguna → no es dependiente. Solo residente de Canadá o México → dependiente, pero sin crédito por otros dependientes',
         'fuente_texto' => 'Pub. 501: ciudadano, nacional o residente de EE. UU., o residente de Canadá o México (excepción para ciertos hijos adoptados). Schedule 8812: el crédito por otros dependientes exige ciudadano, nacional o residente de EE. UU.',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -329,7 +340,7 @@ return [
         'codigo' => 'C7', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 7,
         'texto_es' => '¿Era estudiante a tiempo completo?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
-        'condicion' => null,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => '1040, columna (6)',
         'fuente_texto' => 'Pub. 501: extiende la edad del hijo calificado hasta 24',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -339,7 +350,7 @@ return [
         'codigo' => 'C8', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 8,
         'texto_es' => '¿Está incapacitado total y permanentemente?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
-        'condicion' => null,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => '1040, columna (6)',
         'fuente_texto' => 'Pub. 501: sin límite de edad',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -355,7 +366,7 @@ return [
             ['valor' => 'atin', 'texto_es' => 'ATIN'],
         ],
         'nivel' => 'entrada', 'por_persona' => true, 'sensible' => true,
-        'condicion' => null,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'SSN válido → crédito por hijos (hasta USD 2.200) y EITC con hijo. ITIN o ATIN → crédito por otros dependientes (USD 500)',
         'fuente_texto' => '1040, columna (2). Schedule 8812: el crédito por hijos exige SSN válido para trabajar, emitido antes del vencimiento de la declaración. Pub. 596, regla 2: sin SSN válido del hijo, el EITC es solo el de "sin hijos"',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040s8.pdf',
@@ -372,7 +383,7 @@ return [
         'codigo' => 'C10', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 10,
         'texto_es' => '¿Se le emitió un IP PIN?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => true,
-        'condicion' => null,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'Sí → pedir el número del año',
         'fuente_texto' => 'El 13614-C lo pregunta por cada persona',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f13614c.pdf',
@@ -384,7 +395,7 @@ return [
         'codigo' => 'C11', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 11,
         'texto_es' => '¿Otra persona (por ejemplo, el otro padre) también puede reclamarlo o lo va a reclamar? ¿Tienes un Form 8332 o un acuerdo de custodia?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => true, 'sensible' => false,
-        'condicion' => null,
+        'condicion' => ['pregunta' => 'C0', 'es' => 'si'],
         'efecto_es' => 'Sí → alerta al preparador',
         'fuente_texto' => 'Pub. 501: reglas de desempate y padres divorciados o separados (Form 8332)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -396,7 +407,7 @@ return [
         'codigo' => 'C12', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 12,
         'texto_es' => '¿Esta persona pagó más de la mitad de su propia manutención?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => true, 'sensible' => false,
-        'condicion' => ['alguna' => [['pregunta' => 'C3', 'es' => ['hermano', 'nieto', 'padre', 'ninguno']]]],
+        'condicion' => ['todas' => [['pregunta' => 'C0', 'es' => 'si'], ['alguna' => [['pregunta' => 'C3', 'es' => ['hermano', 'nieto', 'padre', 'ninguno']], ['pregunta' => 'C4', 'hasta' => 6]]]]],
         'efecto_es' => 'Sí → no es hijo calificado',
         'fuente_texto' => 'Prueba de manutención del hijo calificado',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -406,7 +417,7 @@ return [
         'codigo' => 'C13', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 13,
         'texto_es' => '¿Esta persona tuvo ingresos de menos de USD 5.200 en {anio}?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => true, 'sensible' => false,
-        'condicion' => ['alguna' => [['pregunta' => 'C3', 'es' => ['hermano', 'nieto', 'padre', 'ninguno']]]],
+        'condicion' => ['todas' => [['pregunta' => 'C0', 'es' => 'si'], ['alguna' => [['pregunta' => 'C3', 'es' => ['hermano', 'nieto', 'padre', 'ninguno']], ['pregunta' => 'C4', 'hasta' => 6]]]]],
         'efecto_es' => 'No → no es pariente calificado',
         'fuente_texto' => 'Prueba de ingreso bruto del pariente calificado',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -416,7 +427,7 @@ return [
         'codigo' => 'C14', 'bloque' => 'C', 'pantalla' => 4, 'orden' => 14,
         'texto_es' => '¿Tú pagaste más de la mitad de la manutención de esta persona?', 'texto_en' => null, 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => true, 'sensible' => false,
-        'condicion' => ['alguna' => [['pregunta' => 'C3', 'es' => ['hermano', 'nieto', 'padre', 'ninguno']]]],
+        'condicion' => ['todas' => [['pregunta' => 'C0', 'es' => 'si'], ['alguna' => [['pregunta' => 'C3', 'es' => ['hermano', 'nieto', 'padre', 'ninguno']], ['pregunta' => 'C4', 'hasta' => 6]]]]],
         'efecto_es' => 'No → no es pariente calificado',
         'fuente_texto' => 'Prueba de manutención del pariente calificado',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
@@ -435,6 +446,17 @@ return [
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'documento:w2'],
         ],
+    ],
+    [
+        // F2.2: "uno por fuente" (5.1): un W-2 por empleo.
+        'codigo' => 'D1.1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 1,
+        'texto_es' => '¿En cuántos empleos trabajaste en {anio}?', 'texto_en' => null, 'ayuda_es' => 'Te pediremos un W-2 por cada uno.',
+        'tipo_respuesta' => 'numero', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'D1', 'es' => 'si'],
+        'efecto_es' => 'Cantidad de W-2 a pedir',
+        'fuente_texto' => '1040 línea 1a: suma de la casilla 1 de todos los W-2',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040.pdf',
+        'activa' => [],
     ],
     [
         'codigo' => 'D2', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 2,
@@ -653,6 +675,21 @@ return [
             ['respuesta' => 'si', 'objetivo' => 'documento:registros-ingresos-gastos'],
         ],
     ],
+    [
+        // F2.2: socio con K-1 (visto al cerrar F0.6). La declaración de la empresa no se atiende; su K-1 personal sí.
+        'codigo' => 'D18', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 18,
+        'texto_es' => '¿Eres socio o accionista de una LLC, sociedad o S-corp y recibiste un Schedule K-1 por {anio}?', 'texto_en' => null, 'ayuda_es' => 'Nosotros preparamos tu declaración personal con tu K-1. La declaración de la empresa la hace otra firma.',
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
+        'condicion' => null,
+        'efecto_es' => 'K-1 → Schedule E, parte II → Schedule 1 línea 5. Alerta al preparador: la declaración de la empresa no la hace GTS',
+        'fuente_texto' => 'Instrucciones del Schedule E (parte II: ingresos de sociedades y S-corporations)',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040se.pdf',
+        'activa' => [
+            ['respuesta' => 'si', 'objetivo' => 'documento:k-1'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-e'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1'],
+        ],
+    ],
 
     // ── Bloque E — Gastos que pagaste en {anio} ──
     [
@@ -830,6 +867,17 @@ return [
             ['respuesta' => 'si', 'objetivo' => 'documento:1095-a'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:f8962'],
         ],
+    ],
+    [
+        // F2.2: "uno por póliza" (5.1): un 1095-A por póliza.
+        'codigo' => 'F4.1', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 4,
+        'texto_es' => '¿Cuántas pólizas del Mercado tuviste en {anio}?', 'texto_en' => null, 'ayuda_es' => 'Te pediremos un 1095-A por cada una.',
+        'tipo_respuesta' => 'numero', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'F4', 'es' => 'si'],
+        'efecto_es' => 'Cantidad de 1095-A a pedir',
+        'fuente_texto' => 'Form 8962: un 1095-A por cada póliza',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i8962.pdf',
+        'activa' => [],
     ],
     [
         'codigo' => 'F5', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 5,

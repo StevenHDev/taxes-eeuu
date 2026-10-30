@@ -206,12 +206,12 @@ class EdicionTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('catalogo-fiscal.preguntas.store', ['anio' => 2025]), [
-                'codigo' => 'D18', 'bloque' => 'D', 'texto_es' => '¿Recibiste otra cosa?', 'tipo_respuesta' => 'opciones',
+                'codigo' => 'D30', 'bloque' => 'D', 'texto_es' => '¿Recibiste otra cosa?', 'tipo_respuesta' => 'opciones',
                 'opciones' => [['valor' => 'a', 'texto_es' => 'A'], ['valor' => 'b', 'texto_es' => 'B']],
                 'nivel' => 'seguimiento', 'condicion' => ['pregunta' => 'D17', 'es' => 'si'],
             ])
             ->assertSessionHasNoErrors();
-        $this->assertSame(18, $this->pregunta('D18')->orden);
+        $this->assertSame(19, $this->pregunta('D30')->orden);
     }
 
     public function test_validaciones_de_las_preguntas(): void

@@ -20,8 +20,8 @@ class PantallaTest extends TestCase
     use RefreshDatabase;
 
     private const PESTANAS = [
-        'preguntas' => 75,
-        'documentos' => 41,
+        'preguntas' => 79,
+        'documentos' => 42,
         'formularios' => 26,
         'parametros' => 32,
         'reglas' => 13,

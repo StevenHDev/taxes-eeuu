@@ -5,7 +5,7 @@ Contenido del catálogo fiscal, uno por año. Sale del documento madre (`docs/me
 ```
 php artisan catalogo-fiscal:cargar 2025 [--dry-run] [--forzar]
 php artisan catalogo-fiscal:copiar 2025 2026
-php artisan catalogo-fiscal:cargar 2026        # aplica 2026/ajustes.php sobre la copia
+php artisan catalogo-fiscal:cargar 2026        # archivos de 2025 + 2026/ajustes.php
 php artisan catalogo-fiscal:verificar 2025
 ```
 
@@ -31,7 +31,7 @@ Cada archivo devuelve un arreglo PHP plano (`return [ ... ];`). Los códigos son
     'nivel' => 'entrada',           // entrada | seguimiento (si tiene condición) | no_se_pregunta
     'por_persona' => false,         // true en el bloque C
     'sensible' => false,            // true si solo se responde en el portal, nunca por WhatsApp (SSN, cuentas, montos)
-    'condicion' => null,            // cuándo se muestra: ['pregunta' => 'B1', 'es' => 'casado'], ['todas' => [...]], ['alguna' => [...]]
+    'condicion' => null,            // cuándo se muestra: ['pregunta' => 'B1', 'es' => 'casado'], ['pregunta' => 'C4', 'hasta' => 6], ['todas' => [...]], ['alguna' => [...]]
     'efecto_es' => 'Un W-2 por empleo → 1040 líneas 1a y 25a',   // columna "Activa / descarta" o "Va a", tal cual
     'fuente_texto' => '1040 línea 1a: suma de la casilla 1 de todos los W-2',  // columna "Por qué (IRS)"
     'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
@@ -116,7 +116,7 @@ Los 31 parámetros de 2025 que ya existen siguen en `ParametrosFiscalesSeeder` (
 
 ## `2026/ajustes.php`
 
-Se aplica después de `catalogo-fiscal:copiar 2025 2026`. Solo lo que el documento madre ya trae de 2026; el resto de los montos queda **pendiente** (sin cifra).
+2026 no tiene archivos propios: después de `catalogo-fiscal:copiar 2025 2026`, `cargar 2026` lee los archivos de 2025 y les aplica en memoria este archivo (F2.2). Así lo que se sume a 2025 también llega a 2026, y cargar dos veces no deja cambios. Solo trae lo que el documento madre ya tiene de 2026; el resto de los montos queda **pendiente** (sin cifra). Los parámetros que vienen de `ParametrosFiscalesSeeder` (no de `parametros.php`) se ajustan directo en la base.
 
 ```php
 return [

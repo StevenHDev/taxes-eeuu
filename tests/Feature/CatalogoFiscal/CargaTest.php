@@ -176,6 +176,27 @@ class CargaTest extends TestCase
         $this->assertSame([], app(CatalogoFiscalVerificador::class)->verificar(2026));
     }
 
+    public function test_un_anio_copiado_hereda_lo_nuevo_del_origen_y_recargarlo_no_cambia_nada(): void
+    {
+        $importador = app(CatalogoFiscalImportador::class);
+        $importador->cargar(2025);
+        $this->artisan('catalogo-fiscal:copiar', ['desde' => 2025, 'hasta' => 2026])->assertSuccessful();
+        $importador->cargar(2026);
+
+        // Una pieza que se sumó a los archivos de 2025 después de copiar.
+        CatalogoPregunta::query()->delAnio(2026)->where('codigo', 'D1')->sole()->activaciones()->delete();
+        CatalogoPregunta::query()->delAnio(2026)->where('codigo', 'D1')->delete();
+
+        $importador->cargar(2026);
+        $this->assertSame('1040 línea 1a (2026)', CatalogoPregunta::query()->delAnio(2026)->where('codigo', 'D1')->value('fuente_texto'));
+        $this->assertSame($this->conteos(2025), $this->conteos(2026));
+
+        $otra = $importador->cargar(2026);
+        $this->assertSame([], $otra->creados);
+        $this->assertSame([], $otra->actualizados);
+        $this->assertSame(1, CatalogoCasilla::query()->delAnio(2026)->whereHas('documento', fn ($q) => $q->where('codigo', '1099-nec'))->where('casilla', '1a')->count());
+    }
+
     public function test_no_copia_sobre_un_anio_con_contenido(): void
     {
         app(CatalogoFiscalImportador::class)->cargar(2025);

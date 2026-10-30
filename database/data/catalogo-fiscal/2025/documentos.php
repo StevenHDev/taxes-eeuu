@@ -460,4 +460,15 @@ return [
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f13614c.pdf',
         'casillas' => [],
     ],
+    [
+        // F2.2: K-1 del socio de una LLC, sociedad o S-corp (D18).
+        'codigo' => 'k-1', 'grupo' => 'negocio', 'nombre_oficial' => 'Schedule K-1 (Form 1065 o 1120-S)',
+        'nombre_sencillo_es' => 'Schedule K-1 de tu sociedad o S-corp', 'nombre_sencillo_en' => null,
+        'emisor_es' => 'La sociedad o S-corp de la que eres socio', 'emisor_en' => null,
+        'fecha_llegada' => null, 'si_no_llega_es' => 'Pídeselo a la empresa o a su contador.', 'si_no_llega_en' => null,
+        'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 5,
+        'fuente_texto' => 'Instrucciones del Schedule E, parte II',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040se.pdf',
+        'casillas' => [],
+    ],
 ];
