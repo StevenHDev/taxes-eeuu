@@ -77,14 +77,40 @@ class EdicionTest extends TestCase
         $this->assertStringContainsString('salario', (string) $cambio->valor_anterior);
     }
 
-    public function test_el_preparador_no_puede_escribir(): void
+    public function test_el_preparador_no_puede_editar_ni_desactivar(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $d1 = $this->pregunta('D1');
 
         $this->actingAs($preparador)->patch(route('catalogo-fiscal.preguntas.update', ['anio' => 2025, 'pregunta' => $d1]), $this->datosPregunta($d1))->assertForbidden();
-        $this->actingAs($preparador)->post(route('catalogo-fiscal.validar', ['anio' => 2025, 'tipo' => 'preguntas', 'id' => $d1->id]))->assertForbidden();
+        $this->actingAs($preparador)->post(route('catalogo-fiscal.reglas.store', ['anio' => 2025]), ['codigo' => 'R-20', 'descripcion' => 'x', 'severidad' => 'revision'])->assertForbidden();
         $this->actingAs($preparador)->patch(route('catalogo-fiscal.activo', ['anio' => 2025, 'tipo' => 'preguntas', 'id' => $d1->id]), ['activo' => false])->assertForbidden();
+        $this->assertTrue($d1->fresh()->activo);
+    }
+
+    public function test_el_preparador_si_puede_validar_y_queda_su_nombre(): void
+    {
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $d1 = $this->pregunta('D1');
+
+        $this->actingAs($preparador)
+            ->post(route('catalogo-fiscal.validar', ['anio' => 2025, 'tipo' => 'preguntas', 'id' => $d1->id]))
+            ->assertSessionHasNoErrors();
+
+        $d1->refresh();
+        $this->assertNotNull($d1->validado_en);
+        $this->assertSame($preparador->id, $d1->validado_por);
+        $this->assertDatabaseHas('catalogo_cambios', ['auditable_id' => $d1->id, 'campo' => 'validado_por', 'actor_id' => $preparador->id]);
+    }
+
+    public function test_el_cliente_no_puede_validar(): void
+    {
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        $d1 = $this->pregunta('D1');
+
+        $this->actingAs($cliente)
+            ->post(route('catalogo-fiscal.validar', ['anio' => 2025, 'tipo' => 'preguntas', 'id' => $d1->id]))
+            ->assertForbidden();
     }
 
     public function test_validar_exige_la_fuente_y_guarda_quien_y_cuando(): void

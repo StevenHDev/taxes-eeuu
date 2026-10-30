@@ -41,6 +41,7 @@ export default function CatalogoParametros({
     anio,
     estadoAnio,
     puedeEditar,
+    puedeValidar,
     parametros,
 }: Props) {
     const { t } = useTranslation();
@@ -85,12 +86,16 @@ export default function CatalogoParametros({
 
             <DetallePieza
                 acciones={
-                    editor && seleccionado ? (
+                    (editor || puedeValidar) && seleccionado ? (
                         <AccionesPieza
-                            anio={editor.anio}
+                            anio={anio}
                             tipo="parametros"
                             pieza={seleccionado}
-                            onEditar={() => setEditando(seleccionado)}
+                            onEditar={
+                                editor
+                                    ? () => setEditando(seleccionado)
+                                    : undefined
+                            }
                             onHecho={cerrarTodo}
                             sePuedeDesactivar={false}
                         />

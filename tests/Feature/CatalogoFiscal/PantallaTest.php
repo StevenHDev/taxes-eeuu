@@ -53,6 +53,7 @@ class PantallaTest extends TestCase
                         ->where('anio', 2025)
                         ->where('anios', [2026, 2025])
                         ->where('puedeEditar', $rol === UserRole::Administrator)
+                        ->where('puedeValidar', true)
                         ->missing($pestana)
                         ->loadDeferredProps(fn (Assert $reload) => $reload->has($pestana, $cantidad)));
             }

@@ -36,6 +36,7 @@ export default function CatalogoPreguntas({
     anio,
     estadoAnio,
     puedeEditar,
+    puedeValidar,
     preguntas,
 }: Props) {
     const { t } = useTranslation();
@@ -79,12 +80,16 @@ export default function CatalogoPreguntas({
 
             <DetallePieza
                 acciones={
-                    editor && seleccionada ? (
+                    (editor || puedeValidar) && seleccionada ? (
                         <AccionesPieza
-                            anio={editor.anio}
+                            anio={anio}
                             tipo="preguntas"
                             pieza={seleccionada}
-                            onEditar={() => setEditando(seleccionada)}
+                            onEditar={
+                                editor
+                                    ? () => setEditando(seleccionada)
+                                    : undefined
+                            }
                             onHecho={cerrarTodo}
                             sePuedeDesactivar={true}
                         />

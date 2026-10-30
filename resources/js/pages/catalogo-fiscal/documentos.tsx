@@ -53,6 +53,7 @@ export default function CatalogoDocumentos({
     anio,
     estadoAnio,
     puedeEditar,
+    puedeValidar,
     documentos,
 }: Props) {
     const { t } = useTranslation();
@@ -98,12 +99,16 @@ export default function CatalogoDocumentos({
 
             <DetallePieza
                 acciones={
-                    editor && seleccionado ? (
+                    (editor || puedeValidar) && seleccionado ? (
                         <AccionesPieza
-                            anio={editor.anio}
+                            anio={anio}
                             tipo="documentos"
                             pieza={seleccionado}
-                            onEditar={() => setEditando(seleccionado)}
+                            onEditar={
+                                editor
+                                    ? () => setEditando(seleccionado)
+                                    : undefined
+                            }
                             onHecho={cerrarTodo}
                             sePuedeDesactivar={true}
                         />

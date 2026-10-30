@@ -18,9 +18,10 @@ type Tipo =
 export type Editor = { anio: number; vigente: boolean };
 
 /**
- * Acciones del administrador en el detalle de una pieza (F1.5): editar,
- * marcar como validado contra el IRS y desactivar o reactivar. La acción
- * principal es "Editar"; las demás van como secundarias.
+ * Acciones en el detalle de una pieza: el administrador edita, valida y
+ * desactiva (F1.5); el preparador solo valida (F2.1), así que sin
+ * `onEditar` solo aparece "Marcar como validado". Para el administrador la
+ * acción principal es "Editar"; para el preparador, validar.
  */
 export function AccionesPieza({
     anio,
@@ -33,7 +34,8 @@ export function AccionesPieza({
     anio: number;
     tipo: Tipo;
     pieza: FuenteIrs & { id: number; activo: boolean; codigo: string };
-    onEditar: () => void;
+    /** Solo el administrador; sin esto no se ven Editar ni Desactivar. */
+    onEditar?: () => void;
     onHecho: () => void;
     sePuedeDesactivar?: boolean;
 }) {
@@ -75,17 +77,19 @@ export function AccionesPieza({
             aria-label={t('catalogoFiscal.edicion.acciones')}
         >
             <div className="flex flex-wrap gap-2">
+                {onEditar ? (
+                    <Button
+                        type="button"
+                        onClick={onEditar}
+                        disabled={enCurso !== null}
+                    >
+                        <Pencil aria-hidden="true" />
+                        {t('catalogoFiscal.edicion.editar')}
+                    </Button>
+                ) : null}
                 <Button
                     type="button"
-                    onClick={onEditar}
-                    disabled={enCurso !== null}
-                >
-                    <Pencil aria-hidden="true" />
-                    {t('catalogoFiscal.edicion.editar')}
-                </Button>
-                <Button
-                    type="button"
-                    variant="outline"
+                    variant={onEditar ? 'outline' : 'default'}
                     onClick={validar}
                     disabled={
                         enCurso !== null ||
@@ -105,7 +109,7 @@ export function AccionesPieza({
                         ? t('catalogoFiscal.edicion.yaValidado')
                         : t('catalogoFiscal.edicion.marcarValidado')}
                 </Button>
-                {sePuedeDesactivar ? (
+                {onEditar && sePuedeDesactivar ? (
                     <Button
                         type="button"
                         variant="ghost"
@@ -128,7 +132,11 @@ export function AccionesPieza({
                     id={`validar-ayuda-${pieza.id}`}
                     className="text-xs text-muted-foreground"
                 >
-                    {t('catalogoFiscal.edicion.validarSinFuente')}
+                    {onEditar
+                        ? t('catalogoFiscal.edicion.validarSinFuente')
+                        : t(
+                              'catalogoFiscal.edicion.validarSinFuentePreparador',
+                          )}
                 </p>
             ) : null}
             <InputError message={errors.fuente_url} />

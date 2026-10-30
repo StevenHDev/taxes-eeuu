@@ -40,6 +40,7 @@ export default function CatalogoReglas({
     anio,
     estadoAnio,
     puedeEditar,
+    puedeValidar,
     reglas,
 }: Props) {
     const { t } = useTranslation();
@@ -83,12 +84,16 @@ export default function CatalogoReglas({
 
             <DetallePieza
                 acciones={
-                    editor && seleccionada ? (
+                    (editor || puedeValidar) && seleccionada ? (
                         <AccionesPieza
-                            anio={editor.anio}
+                            anio={anio}
                             tipo="reglas"
                             pieza={seleccionada}
-                            onEditar={() => setEditando(seleccionada)}
+                            onEditar={
+                                editor
+                                    ? () => setEditando(seleccionada)
+                                    : undefined
+                            }
                             onHecho={cerrarTodo}
                             sePuedeDesactivar={true}
                         />

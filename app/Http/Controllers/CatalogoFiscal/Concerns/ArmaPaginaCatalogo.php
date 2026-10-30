@@ -38,6 +38,7 @@ trait ArmaPaginaCatalogo
             'estadoAnio' => $anios->firstWhere('tax_year', $anio)->estado->value,
             'anios' => $anios->pluck('tax_year')->all(),
             'puedeEditar' => Gate::allows('update', CatalogoAnio::class),
+            'puedeValidar' => Gate::allows('validar', CatalogoAnio::class),
             $prop => Inertia::defer($datos, rescue: true),
         ]);
     }

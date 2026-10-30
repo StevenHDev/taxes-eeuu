@@ -6,10 +6,10 @@ use App\Enums\UserRole;
 use App\Models\User;
 
 /**
- * Catálogo fiscal del año (F1.4 y F1.5): lo ven preparadores y
- * administradores, nunca clientes; lo edita y lo valida contra el IRS solo
- * el administrador (decisión de Steven, 29 oct.). Más adelante también los
- * preparadores podrán validar (F2): es cambiar `validar()`.
+ * Catálogo fiscal del año (F1.4, F1.5 y F2.1): lo ven preparadores y
+ * administradores, nunca clientes; lo edita solo el administrador; lo
+ * validan contra el IRS el administrador y el preparador, que es quien
+ * acompaña el proceso del cliente (decisión de Steven, 29 oct.).
  */
 class CatalogoFiscalPolicy
 {
@@ -25,6 +25,6 @@ class CatalogoFiscalPolicy
 
     public function validar(User $actor): bool
     {
-        return $actor->role === UserRole::Administrator;
+        return in_array($actor->role, [UserRole::Preparer, UserRole::Administrator], true);
     }
 }

@@ -14,6 +14,8 @@ export type CatalogoFiscalPageProps = {
     estadoAnio: 'borrador' | 'vigente';
     anios: number[];
     puedeEditar: boolean;
+    /** Administrador y preparador (F2.1). */
+    puedeValidar: boolean;
 };
 
 export type ActivacionCatalogo = {

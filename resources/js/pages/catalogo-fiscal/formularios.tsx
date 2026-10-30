@@ -47,6 +47,7 @@ export default function CatalogoFormularios({
     anio,
     estadoAnio,
     puedeEditar,
+    puedeValidar,
     formularios,
 }: Props) {
     const { t } = useTranslation();
@@ -92,12 +93,16 @@ export default function CatalogoFormularios({
 
             <DetallePieza
                 acciones={
-                    editor && seleccionado ? (
+                    (editor || puedeValidar) && seleccionado ? (
                         <AccionesPieza
-                            anio={editor.anio}
+                            anio={anio}
                             tipo="formularios"
                             pieza={seleccionado}
-                            onEditar={() => setEditando(seleccionado)}
+                            onEditar={
+                                editor
+                                    ? () => setEditando(seleccionado)
+                                    : undefined
+                            }
                             onHecho={cerrarTodo}
                             sePuedeDesactivar={!seleccionado.siempre}
                         />

@@ -1311,7 +1311,8 @@
             "desde": "From (USD)",
             "tasa": "Rate (0 to 1)",
             "ayudaPorcentaje": "Between 0 and 1: 0.35 is 35%.",
-            "ayudaMonto": "In dollars, no symbol or thousands separators."
+            "ayudaMonto": "In dollars, no symbol or thousands separators.",
+            "validarSinFuentePreparador": "This item has no link to its IRS source yet. Ask an administrator to add it so it can be validated."
         }
     }
 }
