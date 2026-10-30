@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AplicarIdioma;
 use App\Http\Middleware\EnsureStaffHasMfa;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -23,10 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // HTTP y genera URLs de assets con http:// (error de Mixed Content).
         $middleware->trustProxies(at: '*');
 
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        // `language` la escribe el navegador (selector de idioma) sin cifrar.
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', AplicarIdioma::COOKIE]);
 
         $middleware->web(append: [
             HandleAppearance::class,
+            AplicarIdioma::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             // F0.1: el personal sin 2FA ni passkey solo puede ir a Seguridad.

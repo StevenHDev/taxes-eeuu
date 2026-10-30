@@ -59,7 +59,7 @@ class EquivalenciasTest extends TestCase
         $this->assertTrue($problemas->contains('Falta en el archivo: transversal.form_1099_nec.'));
         $this->assertTrue($problemas->contains('No existe en catalogo_campos 2025: form_1040.no_existe.'));
         $this->assertTrue($problemas->contains('transversal.w2: el documento no-existe no existe en el catálogo nuevo.'));
-        $this->assertTrue($problemas->contains('transversal.w2: La respuesta de D1 debe ser "si" o "no".'));
+        $this->assertTrue($problemas->contains('transversal.w2: D1 → '.__('Elige «sí» o «no».')));
         $this->assertTrue($problemas->contains('transversal.ocupacion: la pregunta Z9 no existe en el catálogo nuevo.'));
         $this->assertTrue($problemas->contains('transversal.ocupacion: transformación desconocida para Z9.'));
         $this->assertTrue($problemas->contains(fn (string $p) => str_starts_with($p, 'transversal.estado_civil: los subcampos no calzan')));

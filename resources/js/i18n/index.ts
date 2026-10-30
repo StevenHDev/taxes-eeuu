@@ -29,8 +29,9 @@ function readCookie(name: string): string | null {
 }
 
 /**
- * Idioma inicial: preferencia guardada (localStorage o cookie) o, si no hay,
- * inglés por defecto.
+ * Idioma inicial: preferencia guardada (localStorage o cookie); si no hay, el
+ * del servidor (atributo `lang` de la página, ver AplicarIdioma), para que
+ * la interfaz y lo que arma el servidor arranquen en el mismo idioma.
  */
 export function getInitialLanguage(): Language {
     if (typeof window === 'undefined') {
@@ -41,7 +42,13 @@ export function getInitialLanguage(): Language {
         localStorage.getItem(LANGUAGE_STORAGE_KEY) ??
         readCookie(LANGUAGE_STORAGE_KEY);
 
-    return isLanguage(stored) ? stored : DEFAULT_LANGUAGE;
+    if (isLanguage(stored)) {
+        return stored;
+    }
+
+    const delServidor = document.documentElement.lang.slice(0, 2);
+
+    return isLanguage(delServidor) ? delServidor : DEFAULT_LANGUAGE;
 }
 
 i18n.use(initReactI18next).init({

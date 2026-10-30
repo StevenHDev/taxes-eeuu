@@ -55,7 +55,10 @@ class RespuestaGuardador
     public function agregarPersona(Entrevista $entrevista, ?string $etiqueta = null): EntrevistaPersona
     {
         return DB::transaction(function () use ($entrevista, $etiqueta) {
-            $orden = (int) EntrevistaPersona::withTrashed()->where('entrevista_id', $entrevista->id)->lockForUpdate()->max('orden') + 1;
+            // Se bloquea la entrevista y no las personas: PostgreSQL no acepta
+            // FOR UPDATE junto con max().
+            Entrevista::query()->whereKey($entrevista->id)->lockForUpdate()->first();
+            $orden = (int) EntrevistaPersona::withTrashed()->where('entrevista_id', $entrevista->id)->max('orden') + 1;
 
             $persona = $entrevista->personas()->create(['orden' => $orden, 'etiqueta' => $etiqueta ?? "Persona {$orden}"]);
             $entrevista->unsetRelation('personas');
@@ -90,16 +93,16 @@ class RespuestaGuardador
 
             $codigo = $datos->preguntaCodigo;
             $pregunta = $this->catalogo->preguntas($entrevista->tax_year)->firstWhere('codigo', $codigo)
-                ?? throw new RespuestaRechazada($codigo, "La pregunta {$codigo} no existe en {$entrevista->tax_year}.");
+                ?? throw new RespuestaRechazada($codigo, __('La pregunta :codigo no existe en :anio.', ['codigo' => $codigo, 'anio' => $entrevista->tax_year]));
 
             if ($canal === CanalRespuesta::Whatsapp && $pregunta['sensible']) {
-                throw new RespuestaRechazada($codigo, "La pregunta {$codigo} es sensible: se responde solo en el portal.");
+                throw new RespuestaRechazada($codigo, __('La pregunta :codigo es sensible: se responde solo en el portal.', ['codigo' => $codigo]));
             }
 
             $this->validarPersona($entrevista, $pregunta, $datos->personaId);
 
             if (! $this->motor->situacion($entrevista)->esVisible($codigo, $datos->personaId)) {
-                throw new RespuestaRechazada($codigo, "La pregunta {$codigo} no aplica con las respuestas actuales.");
+                throw new RespuestaRechazada($codigo, __('Esta pregunta ya no aplica con tus respuestas actuales.'));
             }
 
             $valor = ValorRespuesta::desde($pregunta, $datos->valor)->valor;
@@ -139,14 +142,14 @@ class RespuestaGuardador
 
         if (! $pregunta['por_persona']) {
             if ($personaId !== null) {
-                throw new RespuestaRechazada($codigo, "La pregunta {$codigo} no es por persona.");
+                throw new RespuestaRechazada($codigo, __('La pregunta :codigo no es por persona.', ['codigo' => $codigo]));
             }
 
             return;
         }
 
         if ($personaId === null || ! $entrevista->personas()->whereKey($personaId)->exists()) {
-            throw new RespuestaRechazada($codigo, "La pregunta {$codigo} necesita una persona de esta entrevista.");
+            throw new RespuestaRechazada($codigo, __('La pregunta :codigo necesita una persona de esta entrevista.', ['codigo' => $codigo]));
         }
     }
 

@@ -187,7 +187,7 @@ class EquivalenciasCamposCliente
             try {
                 ValorRespuesta::desde($pregunta, $valor);
             } catch (RespuestaRechazada $e) {
-                $problemas[] = "{$clave}: {$e->getMessage()}";
+                $problemas[] = "{$clave}: {$codigo} → {$e->getMessage()}";
             }
         }
 

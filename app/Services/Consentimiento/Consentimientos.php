@@ -62,7 +62,7 @@ class Consentimientos
             $vigente = $this->vigente($codigo);
 
             if ($vigente === null || $vigente->version !== $version) {
-                throw new InvalidArgumentException('El texto del consentimiento cambió: léelo de nuevo antes de firmar.');
+                throw new InvalidArgumentException(__('El texto del consentimiento cambió: léelo de nuevo antes de firmar.'));
             }
 
             return Consentimiento::query()->create([

@@ -39,28 +39,29 @@ final class ValorRespuesta
         $codigo = $pregunta['codigo'];
         $tipo = TipoRespuesta::from($pregunta['tipo_respuesta']);
         $opciones = array_column($pregunta['opciones'] ?? [], 'valor');
-        $rechazo = fn (string $motivo) => new RespuestaRechazada($codigo, "La respuesta de {$codigo} {$motivo}.");
+        // Mensajes para el cliente (van junto a la pregunta, sin el código).
+        $rechazo = fn (string $mensaje) => new RespuestaRechazada($codigo, $mensaje);
 
         return new self(match ($tipo) {
             TipoRespuesta::SiNo => match (true) {
                 $crudo === true, $crudo === 'si' => 'si',
                 $crudo === false, $crudo === 'no' => 'no',
-                default => throw $rechazo('debe ser "si" o "no"'),
+                default => throw $rechazo(__('Elige «sí» o «no».')),
             },
-            TipoRespuesta::UstedConyugeNo => self::ustedConyugeNo($crudo) ?? throw $rechazo('debe ser "no", "usted", "conyuge" o ambos'),
+            TipoRespuesta::UstedConyugeNo => self::ustedConyugeNo($crudo) ?? throw $rechazo(__('Elige «no», «yo», «mi cónyuge» o ambos.')),
             TipoRespuesta::Opciones => is_string($crudo) && in_array($crudo, $opciones, true)
                 ? $crudo
-                : throw $rechazo('no es una de sus opciones'),
+                : throw $rechazo(__('Elige una de las opciones.')),
             TipoRespuesta::Casillas => is_array($crudo) && array_is_list($crudo) && array_diff($crudo, $opciones) === []
                 ? array_values(array_intersect($opciones, $crudo))
-                : throw $rechazo('debe ser una lista de sus opciones'),
+                : throw $rechazo(__('Elige entre las opciones de la lista.')),
             TipoRespuesta::Dato => is_scalar($crudo) && ($texto = trim((string) $crudo)) !== '' && mb_strlen($texto) <= self::LARGO_MAXIMO_DATO
                 ? $texto
-                : throw $rechazo('debe ser un texto de hasta '.self::LARGO_MAXIMO_DATO.' caracteres'),
-            TipoRespuesta::Fecha => self::fecha($crudo) ?? throw $rechazo('debe ser una fecha AAAA-MM-DD'),
+                : throw $rechazo(__('Escribe un texto de hasta :max caracteres.', ['max' => self::LARGO_MAXIMO_DATO])),
+            TipoRespuesta::Fecha => self::fecha($crudo) ?? throw $rechazo(__('Escribe una fecha válida (AAAA-MM-DD).')),
             TipoRespuesta::Numero => is_numeric($crudo) && $crudo >= 0
                 ? $crudo + 0
-                : throw $rechazo('debe ser un número de 0 o más'),
+                : throw $rechazo(__('Escribe un número de 0 o más.')),
         });
     }
 

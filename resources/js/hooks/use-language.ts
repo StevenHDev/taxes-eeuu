@@ -1,3 +1,4 @@
+import { router } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGE_STORAGE_KEY, SUPPORTED_LANGUAGES } from '@/i18n';
 import type { Language } from '@/i18n';
@@ -30,6 +31,10 @@ export function useLanguage() {
         if (typeof document !== 'undefined') {
             document.documentElement.lang = next;
         }
+
+        // Lo que arma el servidor (preguntas, consentimiento, mensajes) se
+        // vuelve a pedir en el idioma nuevo (ver AplicarIdioma).
+        router.reload();
     };
 
     return { language, setLanguage, languages: SUPPORTED_LANGUAGES } as const;
