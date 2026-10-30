@@ -14,6 +14,7 @@ use App\Services\WhatsappAgent\AdjuntosWhatsappService;
 use App\Services\WhatsappAgent\AgenteConversacionalService;
 use App\Support\AgenteWhatsappUser;
 use App\Support\ContenidoMensajeConAdjuntos;
+use App\Support\RedactorDatosSensibles;
 use App\Support\TelefonoWhatsapp;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -39,6 +40,13 @@ use Illuminate\Support\Facades\Cache;
 class ProcesarMensajeWhatsappJob implements ShouldQueue
 {
     use Queueable;
+
+    /**
+     * Lo que queda en el historial cuando un cliente con la entrevista nueva
+     * manda un archivo: el agente lo ve y responde con el enlace a
+     * documentos del portal (ver seguimiento.md y entrevista.md).
+     */
+    public const ARCHIVO_NO_GUARDADO = '[El cliente envió un archivo por WhatsApp; no se guardó. Los documentos se suben solo en el portal.]';
 
     public function __construct(private readonly MensajeEntranteWhatsapp $mensaje) {}
 
@@ -84,15 +92,30 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
             // construirContenido), para que el historial re-leído en
             // cualquier turno futuro —no solo este— siga viendo qué decía el
             // documento, sin depender de que el agente lo procese ahora mismo.
-            $adjuntos = $this->mensaje->mediaReferencias !== []
+            $clienteActual = $control->cliente_id ? User::query()->whereKey($control->cliente_id)->first() : null;
+
+            // F2.8 (9.6, T9): con la entrevista nueva, un archivo por WhatsApp
+            // no se descarga ni se lee (nada llega a OpenAI): los documentos
+            // van solo por el portal. Y lo sensible escrito en el chat se
+            // oculta antes de guardarlo. También antes de que exista la
+            // cuenta: todavía no se sabe qué flujo va a usar.
+            $entrevistaNueva = $clienteActual?->usaEntrevistaCatalogo() === true;
+            $protegido = $entrevistaNueva || $clienteActual === null;
+
+            $adjuntos = $this->mensaje->mediaReferencias !== [] && ! $entrevistaNueva
                 ? $adjuntosService->resolver($this->mensaje->mediaReferencias)
                 : [];
+
+            $texto = $protegido ? RedactorDatosSensibles::redactar($this->mensaje->texto) : $this->mensaje->texto;
+            $contenido = $entrevistaNueva && $this->mensaje->mediaReferencias !== []
+                ? trim($texto."\n".self::ARCHIVO_NO_GUARDADO)
+                : ContenidoMensajeConAdjuntos::construir($texto, $adjuntos);
 
             WhatsappMensaje::query()->create([
                 'telefono' => $telefono,
                 'cliente_id' => $control->cliente_id,
                 'rol' => RolMensajeWhatsapp::Cliente,
-                'contenido' => ContenidoMensajeConAdjuntos::construir($this->mensaje->texto, $adjuntos),
+                'contenido' => $contenido,
                 'mensaje_externo_id' => $this->mensaje->mensajeId,
                 'proveedor' => $this->mensaje->proveedor,
             ]);
@@ -101,7 +124,7 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
                 return;
             }
 
-            $cliente = $control->cliente_id ? User::query()->whereKey($control->cliente_id)->first() : null;
+            $cliente = $clienteActual;
             $historial = WhatsappMensaje::query()->where('telefono', $telefono)->orderBy('id')->get();
 
             $resultado = $agente->responder($cliente, $historial, AgenteWhatsappUser::resolver(), $adjuntos, $telefono);
