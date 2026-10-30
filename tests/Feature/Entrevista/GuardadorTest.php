@@ -65,7 +65,7 @@ class GuardadorTest extends TestCase
      */
     public static function sensibles(): array
     {
-        return array_combine($codigos = ['A3', 'A12', 'B4', 'C9', 'C10', 'G3', 'G4'], array_map(fn ($c) => [$c], $codigos));
+        return array_combine($codigos = ['A3', 'A12', 'B4.3', 'C9', 'C10', 'G3', 'G4'], array_map(fn ($c) => [$c], $codigos));
     }
 
     #[DataProvider('sensibles')]

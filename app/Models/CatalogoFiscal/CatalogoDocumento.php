@@ -31,7 +31,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'tax_year', 'codigo', 'grupo', 'nombre_oficial', 'nombre_sencillo_es', 'nombre_sencillo_en',
     'emisor_es', 'emisor_en', 'fecha_llegada', 'si_no_llega_es', 'si_no_llega_en', 'formatos',
-    'uno_por', 'orden', 'fuente_texto', 'fuente_url', 'activo',
+    'uno_por', 'siempre', 'orden', 'fuente_texto', 'fuente_url', 'activo',
 ])]
 class CatalogoDocumento extends Model
 {
@@ -46,6 +46,7 @@ class CatalogoDocumento extends Model
     {
         return [
             'formatos' => 'array',
+            'siempre' => 'boolean',
             'orden' => 'integer',
         ];
     }

@@ -61,7 +61,7 @@ class PasosEntrevista
         return $this->catalogo->preguntas($entrevista->tax_year)
             ->whereIn('codigo', $codigos)
             ->filter(fn (array $p) => ($p['nivel'] === NivelPregunta::Entrada->value) === ($paso === 'entrada'))
-            ->sortBy(fn (array $p) => [$p['bloque'], $p['orden']])
+            ->sortBy(fn (array $p) => [$p['bloque'], $p['orden'], $p['codigo']])
             ->values();
     }
 

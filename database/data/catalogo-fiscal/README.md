@@ -62,6 +62,7 @@ Cada archivo devuelve un arreglo PHP plano (`return [ ... ];`). Los códigos son
     'si_no_llega_en' => null,
     'formatos' => ['pdf', 'jpg', 'png', 'heic'],
     'uno_por' => 'empleo',          // unico | empleo | poliza | persona | fuente
+    'siempre' => false,             // true si se pide a todos aunque ninguna respuesta lo active (id-foto; F2.6)
     'orden' => 1,
     'fuente_texto' => 'Instrucciones del 1040 de 2025',
     'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',

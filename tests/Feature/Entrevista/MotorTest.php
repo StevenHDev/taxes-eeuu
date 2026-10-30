@@ -155,6 +155,6 @@ class MotorTest extends TestCase
         $falta = collect($this->situacion()->faltaEnPortal())->pluck('codigo');
 
         $this->assertContains('A3', $falta);
-        $this->assertNotContains('B4', $falta, 'B4 no se ve hasta que B1 sea casado.');
+        $this->assertNotContains('B4.3', $falta, 'El SSN del cónyuge (B4.3) no se ve hasta que B1 sea casado.');
     }
 }

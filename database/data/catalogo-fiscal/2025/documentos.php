@@ -13,17 +13,17 @@ return [
     // ── Identidad ──
     [
         'codigo' => 'id-foto', 'grupo' => 'identidad', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Identificación con foto (contribuyente y cónyuge)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Identificación con foto (contribuyente y cónyuge)', 'nombre_sencillo_en' => 'Photo ID (you and your spouse)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
-        'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 1,
+        'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'siempre' => true, 'orden' => 1,
         'fuente_texto' => 'Lo pide el 13614-C para verificar identidad (contribuyente y cónyuge)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f13614c.pdf',
         'casillas' => [],
     ],
     [
         'codigo' => 'tarjeta-ssn', 'grupo' => 'identidad', 'nombre_oficial' => 'Tarjeta del Seguro Social, carta ITIN o ATIN',
-        'nombre_sencillo_es' => 'Tarjeta del Seguro Social, carta ITIN o ATIN de cada persona de la declaración', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Tarjeta del Seguro Social, carta ITIN o ATIN de cada persona de la declaración', 'nombre_sencillo_en' => 'Social Security card, ITIN or ATIN letter for each person on the return',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'persona', 'orden' => 2,
@@ -33,7 +33,7 @@ return [
     ],
     [
         'codigo' => 'ip-pin', 'grupo' => 'identidad', 'nombre_oficial' => 'IP PIN (protección de identidad)',
-        'nombre_sencillo_es' => 'Número del IP PIN del año', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Número del IP PIN del año', 'nombre_sencillo_en' => 'This year\'s IP PIN',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 3,
@@ -43,7 +43,7 @@ return [
     ],
     [
         'codigo' => 'form-8332', 'grupo' => 'identidad', 'nombre_oficial' => 'Form 8332 o acuerdo de custodia',
-        'nombre_sencillo_es' => 'Form 8332 o acuerdo de custodia', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Form 8332 o acuerdo de custodia', 'nombre_sencillo_en' => 'Form 8332 or custody agreement',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 4,
@@ -55,7 +55,7 @@ return [
     // ── Trabajo ──
     [
         'codigo' => 'w2', 'grupo' => 'trabajo', 'nombre_oficial' => 'Form W-2',
-        'nombre_sencillo_es' => 'Comprobante de salario de tu empleador', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Comprobante de salario de tu empleador', 'nombre_sencillo_en' => 'Wage statement from your employer (W-2)',
         'emisor_es' => 'Tu empleador', 'emisor_en' => null,
         'fecha_llegada' => '2026-02-02', 'si_no_llega_es' => 'Pídeselo a tu empleador. Igual tienes que declarar ese ingreso.', 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'empleo', 'orden' => 1,
@@ -77,7 +77,7 @@ return [
     ],
     [
         'codigo' => 'constancia-horas-propinas', 'grupo' => 'trabajo', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Constancia de horas extra o de propinas', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Constancia de horas extra o de propinas', 'nombre_sencillo_en' => 'Overtime or tips statement',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 2,
@@ -89,7 +89,7 @@ return [
     // ── Negocio propio ──
     [
         'codigo' => '1099-nec', 'grupo' => 'negocio', 'nombre_oficial' => 'Form 1099-NEC',
-        'nombre_sencillo_es' => 'Pagos por trabajo independiente (1099-NEC)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Pagos por trabajo independiente (1099-NEC)', 'nombre_sencillo_en' => 'Payments for independent work (1099-NEC)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
@@ -101,7 +101,7 @@ return [
     ],
     [
         'codigo' => '1099-k', 'grupo' => 'negocio', 'nombre_oficial' => 'Form 1099-K',
-        'nombre_sencillo_es' => 'Pagos recibidos por apps o tarjetas (1099-K)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Pagos recibidos por apps o tarjetas (1099-K)', 'nombre_sencillo_en' => 'Payments received through apps or cards (1099-K)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 2,
@@ -113,7 +113,7 @@ return [
     ],
     [
         'codigo' => '1099-misc', 'grupo' => 'negocio', 'nombre_oficial' => 'Form 1099-MISC',
-        'nombre_sencillo_es' => 'Otros pagos recibidos (1099-MISC)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Otros pagos recibidos (1099-MISC)', 'nombre_sencillo_en' => 'Other payments received (1099-MISC)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 3,
@@ -123,7 +123,7 @@ return [
     ],
     [
         'codigo' => 'registros-ingresos-gastos', 'grupo' => 'negocio', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Registros de ingresos y gastos del negocio (extractos, recibos, millaje, oficina en casa)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Registros de ingresos y gastos del negocio (extractos, recibos, millaje, oficina en casa)', 'nombre_sencillo_en' => 'Business income and expense records (statements, receipts, mileage, home office)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 4,
@@ -135,7 +135,7 @@ return [
     // ── Jubilación y beneficios ──
     [
         'codigo' => '1099-r', 'grupo' => 'jubilacion', 'nombre_oficial' => 'Form 1099-R',
-        'nombre_sencillo_es' => 'Retiros de jubilación, pensiones o anualidades (1099-R)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Retiros de jubilación, pensiones o anualidades (1099-R)', 'nombre_sencillo_en' => 'Retirement, pension or annuity distributions (1099-R)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
@@ -145,7 +145,7 @@ return [
     ],
     [
         'codigo' => 'ssa-1099', 'grupo' => 'jubilacion', 'nombre_oficial' => 'SSA-1099 o RRB-1099',
-        'nombre_sencillo_es' => 'Beneficios del Seguro Social o jubilación ferroviaria (SSA-1099 o RRB-1099)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Beneficios del Seguro Social o jubilación ferroviaria (SSA-1099 o RRB-1099)', 'nombre_sencillo_en' => 'Social Security or railroad retirement benefits (SSA-1099 or RRB-1099)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 2,
@@ -155,7 +155,7 @@ return [
     ],
     [
         'codigo' => '1099-g', 'grupo' => 'jubilacion', 'nombre_oficial' => 'Form 1099-G',
-        'nombre_sencillo_es' => 'Desempleo o reembolso de impuesto estatal (1099-G)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Desempleo o reembolso de impuesto estatal (1099-G)', 'nombre_sencillo_en' => 'Unemployment or state tax refund (1099-G)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 3,
@@ -167,7 +167,7 @@ return [
     // ── Inversiones y ventas ──
     [
         'codigo' => '1099-int', 'grupo' => 'inversiones', 'nombre_oficial' => 'Form 1099-INT',
-        'nombre_sencillo_es' => 'Intereses (1099-INT)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Intereses (1099-INT)', 'nombre_sencillo_en' => 'Interest (1099-INT)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
@@ -177,7 +177,7 @@ return [
     ],
     [
         'codigo' => '1099-div', 'grupo' => 'inversiones', 'nombre_oficial' => 'Form 1099-DIV',
-        'nombre_sencillo_es' => 'Dividendos (1099-DIV)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Dividendos (1099-DIV)', 'nombre_sencillo_en' => 'Dividends (1099-DIV)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 2,
@@ -187,7 +187,7 @@ return [
     ],
     [
         'codigo' => '1099-b', 'grupo' => 'inversiones', 'nombre_oficial' => 'Form 1099-B (con el estado del bróker)',
-        'nombre_sencillo_es' => 'Ventas de acciones o bonos (1099-B, con el estado del bróker)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Ventas de acciones o bonos (1099-B, con el estado del bróker)', 'nombre_sencillo_en' => 'Sales of stocks or bonds (1099-B, with the broker\'s statement)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 3,
@@ -197,7 +197,7 @@ return [
     ],
     [
         'codigo' => '1099-s', 'grupo' => 'inversiones', 'nombre_oficial' => 'Form 1099-S (con los datos de compra y venta de la casa)',
-        'nombre_sencillo_es' => 'Venta de un inmueble (1099-S)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Venta de un inmueble (1099-S)', 'nombre_sencillo_en' => 'Sale of real estate (1099-S)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 4,
@@ -207,7 +207,7 @@ return [
     ],
     [
         'codigo' => '1099-da', 'grupo' => 'inversiones', 'nombre_oficial' => 'Form 1099-DA',
-        'nombre_sencillo_es' => 'Ventas de activos digitales (1099-DA)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Ventas de activos digitales (1099-DA)', 'nombre_sencillo_en' => 'Digital asset sales (1099-DA)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 5,
@@ -219,7 +219,7 @@ return [
     // ── Otros ingresos ──
     [
         'codigo' => 'acuerdo-divorcio', 'grupo' => 'otros_ingresos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Acuerdo de divorcio o separación (pensión del excónyuge)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Acuerdo de divorcio o separación (pensión del excónyuge)', 'nombre_sencillo_en' => 'Divorce or separation agreement (alimony)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 1,
@@ -229,7 +229,7 @@ return [
     ],
     [
         'codigo' => 'registros-alquiler', 'grupo' => 'otros_ingresos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Registros de alquiler', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Registros de alquiler', 'nombre_sencillo_en' => 'Rental records',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 2,
@@ -239,7 +239,7 @@ return [
     ],
     [
         'codigo' => 'w2g', 'grupo' => 'otros_ingresos', 'nombre_oficial' => 'Form W-2G',
-        'nombre_sencillo_es' => 'Premios de juegos de azar o lotería (W-2G)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Premios de juegos de azar o lotería (W-2G)', 'nombre_sencillo_en' => 'Gambling or lottery winnings (W-2G)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 3,
@@ -249,7 +249,7 @@ return [
     ],
     [
         'codigo' => '1099-c', 'grupo' => 'otros_ingresos', 'nombre_oficial' => 'Form 1099-C',
-        'nombre_sencillo_es' => 'Deuda cancelada (1099-C)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Deuda cancelada (1099-C)', 'nombre_sencillo_en' => 'Canceled debt (1099-C)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 4,
@@ -261,7 +261,7 @@ return [
     // ── Gastos y deducciones ──
     [
         'codigo' => '1098', 'grupo' => 'gastos', 'nombre_oficial' => 'Form 1098 (intereses de hipoteca)',
-        'nombre_sencillo_es' => 'Intereses de hipoteca (1098)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Intereses de hipoteca (1098)', 'nombre_sencillo_en' => 'Mortgage interest (1098)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
@@ -271,7 +271,7 @@ return [
     ],
     [
         'codigo' => 'recibo-predial', 'grupo' => 'gastos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Recibo del impuesto predial', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Recibo del impuesto predial', 'nombre_sencillo_en' => 'Property tax bill',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 2,
@@ -281,7 +281,7 @@ return [
     ],
     [
         'codigo' => 'recibos-medicos', 'grupo' => 'gastos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Recibos de gastos médicos', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Recibos de gastos médicos', 'nombre_sencillo_en' => 'Medical expense receipts',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 3,
@@ -291,7 +291,7 @@ return [
     ],
     [
         'codigo' => 'recibos-donaciones', 'grupo' => 'gastos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Recibos de donaciones', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Recibos de donaciones', 'nombre_sencillo_en' => 'Donation receipts',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 4,
@@ -301,7 +301,7 @@ return [
     ],
     [
         'codigo' => '1098-e', 'grupo' => 'gastos', 'nombre_oficial' => 'Form 1098-E',
-        'nombre_sencillo_es' => 'Intereses de préstamo estudiantil (1098-E)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Intereses de préstamo estudiantil (1098-E)', 'nombre_sencillo_en' => 'Student loan interest (1098-E)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 5,
@@ -311,7 +311,7 @@ return [
     ],
     [
         'codigo' => 'recibo-cuidado', 'grupo' => 'gastos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Recibo del proveedor de cuidado (nombre, dirección, SSN o EIN, monto)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Recibo del proveedor de cuidado (nombre, dirección, SSN o EIN, monto)', 'nombre_sencillo_en' => 'Care provider\'s receipt (name, address, SSN or EIN, amount)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 6,
@@ -321,7 +321,7 @@ return [
     ],
     [
         'codigo' => 'estado-cuenta-ira', 'grupo' => 'gastos', 'nombre_oficial' => 'Estado de cuenta o Form 5498 (IRA)',
-        'nombre_sencillo_es' => 'Estado de cuenta o 5498 de la IRA', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Estado de cuenta o 5498 de la IRA', 'nombre_sencillo_en' => 'IRA statement or Form 5498',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 7,
@@ -331,7 +331,7 @@ return [
     ],
     [
         'codigo' => 'recibos-utiles-educador', 'grupo' => 'gastos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Recibos de útiles del educador', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Recibos de útiles del educador', 'nombre_sencillo_en' => 'Educator\'s supply receipts',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 8,
@@ -343,7 +343,7 @@ return [
     // ── Situaciones del año ──
     [
         'codigo' => '1098-t', 'grupo' => 'situaciones', 'nombre_oficial' => 'Form 1098-T',
-        'nombre_sencillo_es' => 'Matrícula pagada (1098-T)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Matrícula pagada (1098-T)', 'nombre_sencillo_en' => 'Tuition paid (1098-T)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
@@ -353,7 +353,7 @@ return [
     ],
     [
         'codigo' => 'estado-cuenta-escuela', 'grupo' => 'situaciones', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Estado de cuenta de la escuela', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Estado de cuenta de la escuela', 'nombre_sencillo_en' => 'School account statement',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 2,
@@ -363,7 +363,7 @@ return [
     ],
     [
         'codigo' => '5498-sa', 'grupo' => 'situaciones', 'nombre_oficial' => 'Form 5498-SA',
-        'nombre_sencillo_es' => 'Aportes a la cuenta de ahorros médicos (5498-SA)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Aportes a la cuenta de ahorros médicos (5498-SA)', 'nombre_sencillo_en' => 'Health savings account contributions (5498-SA)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 3,
@@ -373,7 +373,7 @@ return [
     ],
     [
         'codigo' => '1099-sa', 'grupo' => 'situaciones', 'nombre_oficial' => 'Form 1099-SA',
-        'nombre_sencillo_es' => 'Retiros de la cuenta de ahorros médicos (1099-SA)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Retiros de la cuenta de ahorros médicos (1099-SA)', 'nombre_sencillo_en' => 'Health savings account distributions (1099-SA)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 4,
@@ -383,7 +383,7 @@ return [
     ],
     [
         'codigo' => '1095-a', 'grupo' => 'situaciones', 'nombre_oficial' => 'Form 1095-A',
-        'nombre_sencillo_es' => 'Seguro médico del Mercado (1095-A, uno por póliza)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Seguro médico del Mercado (1095-A, uno por póliza)', 'nombre_sencillo_en' => 'Marketplace health insurance (1095-A, one per policy)',
         'emisor_es' => 'Marketplace (healthcare.gov)', 'emisor_en' => null,
         'fecha_llegada' => '2026-01-31', 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'poliza', 'orden' => 5,
@@ -400,7 +400,7 @@ return [
     ],
     [
         'codigo' => 'estado-prestamo-vehiculo', 'grupo' => 'situaciones', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Estado del préstamo del vehículo con los intereses, y el VIN', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Estado del préstamo del vehículo con los intereses, y el VIN', 'nombre_sencillo_en' => 'Vehicle loan statement with the interest, and the VIN',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 6,
@@ -410,7 +410,7 @@ return [
     ],
     [
         'codigo' => 'registros-desastre', 'grupo' => 'situaciones', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Registros de pérdidas por desastre y del seguro', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Registros de pérdidas por desastre y del seguro', 'nombre_sencillo_en' => 'Disaster loss and insurance records',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 7,
@@ -420,7 +420,7 @@ return [
     ],
     [
         'codigo' => 'carta-irs', 'grupo' => 'situaciones', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Carta del IRS', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Carta del IRS', 'nombre_sencillo_en' => 'IRS letter',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 8,
@@ -432,7 +432,7 @@ return [
     // ── Pagos y año anterior ──
     [
         'codigo' => 'comprobantes-pagos', 'grupo' => 'pagos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Comprobantes de pagos estimados y del pago con la extensión', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Comprobantes de pagos estimados y del pago con la extensión', 'nombre_sencillo_en' => 'Proof of estimated payments and of the payment with the extension',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 1,
@@ -442,7 +442,7 @@ return [
     ],
     [
         'codigo' => 'datos-bancarios', 'grupo' => 'pagos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Datos bancarios (número de ruta y de cuenta)', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Datos bancarios (número de ruta y de cuenta)', 'nombre_sencillo_en' => 'Bank details (routing and account number)',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 2,
@@ -452,7 +452,7 @@ return [
     ],
     [
         'codigo' => 'declaracion-anterior', 'grupo' => 'pagos', 'nombre_oficial' => null,
-        'nombre_sencillo_es' => 'Declaración del año anterior', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Declaración del año anterior', 'nombre_sencillo_en' => 'Last year\'s tax return',
         'emisor_es' => null, 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => null, 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 3,
@@ -463,7 +463,7 @@ return [
     [
         // F2.2: K-1 del socio de una LLC, sociedad o S-corp (D18).
         'codigo' => 'k-1', 'grupo' => 'negocio', 'nombre_oficial' => 'Schedule K-1 (Form 1065 o 1120-S)',
-        'nombre_sencillo_es' => 'Schedule K-1 de tu sociedad o S-corp', 'nombre_sencillo_en' => null,
+        'nombre_sencillo_es' => 'Schedule K-1 de tu sociedad o S-corp', 'nombre_sencillo_en' => 'Schedule K-1 from your partnership or S corporation',
         'emisor_es' => 'La sociedad o S-corp de la que eres socio', 'emisor_en' => null,
         'fecha_llegada' => null, 'si_no_llega_es' => 'Pídeselo a la empresa o a su contador.', 'si_no_llega_en' => null,
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 5,

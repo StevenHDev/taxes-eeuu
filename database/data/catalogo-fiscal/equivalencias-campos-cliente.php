@@ -27,7 +27,7 @@
  *   viudo_si_verdadero                    verdadero → "viudo"
  *   relacion_a_c3                         texto de parentesco → opción de C3
  *   menor_al_limite_c13                   ingreso menor que el límite del año → "si"
- *   parte_de_dato                         se suma al texto de una pregunta `dato` compuesta
+ *   parte_de_dato                         un dato con partes (la dirección) se junta en un texto
  *
  * Los montos no pasan: en el flujo nuevo se leen de los documentos (9.3.2).
  * `campos_cliente` no se borra; queda como histórico (L12).
@@ -126,9 +126,9 @@ return [
         'sin_equivalente' => 'El número se lee de la tarjeta (documento tarjeta-ssn) y A3 se pregunta en el portal.',
     ],
     'transversal.info_conyuge' => ['subcampos' => [
-        'nombre_completo' => ['pregunta' => 'B4', 'transforma' => 'parte_de_dato'],
-        'fecha_nacimiento' => ['pregunta' => 'B4', 'transforma' => 'parte_de_dato'],
-        'ssn' => ['pregunta' => 'B4', 'transforma' => 'parte_de_dato'],
+        'nombre_completo' => ['pregunta' => 'B4', 'transforma' => 'tal_cual'],
+        'fecha_nacimiento' => ['pregunta' => 'B4.1', 'transforma' => 'fecha'],
+        'ssn' => ['pregunta' => 'B4.3', 'transforma' => 'tal_cual'],
     ]],
     'transversal.info_dependientes' => [
         'por_persona' => true,
@@ -146,9 +146,9 @@ return [
             'custodia_compartida_sin_conflicto' => ['sin_equivalente' => 'No dice quién reclama a la persona: C11 se pregunta de nuevo.'],
         ],
     ],
-    'transversal.fecha_nacimiento_contribuyente' => ['pregunta' => 'A1', 'transforma' => 'parte_de_dato'],
+    'transversal.fecha_nacimiento_contribuyente' => ['pregunta' => 'A1.1', 'transforma' => 'fecha'],
     'transversal.direccion_contribuyente' => ['pregunta' => 'A2', 'transforma' => 'parte_de_dato'],
-    'transversal.ocupacion' => ['pregunta' => 'A1', 'transforma' => 'parte_de_dato'],
+    'transversal.ocupacion' => ['pregunta' => 'A1.2', 'transforma' => 'tal_cual'],
     'transversal.puede_ser_reclamado_como_dependiente' => ['pregunta' => 'A5', 'transforma' => 'si_no'],
     'transversal.vivio_trabajo_fuera_eeuu' => ['sin_equivalente' => $fueraDel13614('Vivir o trabajar fuera de EE. UU. (Form 2555)')],
     'transversal.ip_pin' => [

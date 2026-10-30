@@ -53,7 +53,7 @@ class CatalogoRealTest extends TestCase
         $this->assertSame([], $verificador->verificar(2026));
 
         $conteos = $verificador->conteos(2025);
-        $this->assertSame(88, $conteos['preguntas']);
+        $this->assertSame(93, $conteos['preguntas']);
         $this->assertSame(26, $conteos['formularios']);
         $this->assertSame(13, $conteos['reglas']);
         $this->assertSame($conteos, $verificador->conteos(2026));
@@ -63,7 +63,7 @@ class CatalogoRealTest extends TestCase
     {
         $porBloque = CatalogoPregunta::query()->delAnio(2025)->get()->countBy('bloque')->sortKeys()->all();
 
-        $this->assertSame(['A' => 15, 'B' => 6, 'C' => 16, 'D' => 25, 'E' => 10, 'F' => 11, 'G' => 5], $porBloque);
+        $this->assertSame(['A' => 17, 'B' => 9, 'C' => 16, 'D' => 25, 'E' => 10, 'F' => 11, 'G' => 5], $porBloque);
         $this->assertSame(15, CatalogoPregunta::query()->delAnio(2025)->where('por_persona', true)->count());
     }
 

@@ -97,7 +97,8 @@ class CatalogoFiscal
         return Cache::rememberForever(self::claveCache($taxYear), fn () => [
             'preguntas' => CatalogoPregunta::query()->delAnio($taxYear)->activos()
                 ->with(['activaciones' => fn ($q) => $q->activos()])
-                ->orderBy('bloque')->orderBy('orden')
+                // El código desempata: A1, A1.1 y A1.2 comparten el orden de A1.
+                ->orderBy('bloque')->orderBy('orden')->orderBy('codigo')
                 ->get()->toArray(),
             'documentos' => CatalogoDocumento::query()->delAnio($taxYear)->activos()
                 ->with(['casillas' => fn ($q) => $q->activos()])
