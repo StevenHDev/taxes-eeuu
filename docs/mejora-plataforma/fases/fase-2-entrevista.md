@@ -397,6 +397,25 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 - **Prueba de María** (`tests/Feature/Entrevista/MariaTest.php`, sección 3 y 4.8): por WhatsApp responde las pantallas 2, 3, 5, 6, 7 y G1/G2/G5 (simulando las tool calls); el agente le manda el enlace; en el portal **las pantallas 2, 3, 5, 6 y 7 ya aparecen completas** y solo le quedan la pantalla 1, los datos sensibles del hijo (C9 y lo que se marque sensible), G3/G4 y los documentos; confirma. Se verifica que **ninguna respuesta se pidió dos veces** (cada código tiene una sola respuesta y ningún cambio en el historial salvo los que ella hace), que el total ronda las **21 respuestas**, y que se activaron W-2, tarjeta del hijo, recibo de la guardería, Schedule 8812, Form 2441 y EIC.
 - Prueba manual con un usuario de prueba en producción (WhatsApp real) antes de pedir L3.
 
+**Cómo quedó (30 oct.):**
+- **Fases nuevas** en `FaseConversacion`: `Consentimiento`, `Entrevista` y `Seguimiento`.
+  - `EstadoConversacionResolver::resolver($cliente, $canalPortal)` las decide solo para clientes con la bandera: sin consentimiento → Consentimiento; chat del portal → PortalDudas; con la entrevista por WhatsApp habilitada y preguntas no sensibles por responder de las pantallas 2 a 8 → Entrevista; si no → Seguimiento.
+  - **Habilitada** = el cliente es de prueba, o `tax.entrevista_whatsapp` está encendido (apagado hasta L3).
+  - Sin la bandera, todo sigue igual, incluidas las fases forzadas de `responder()`.
+- **Tools nuevas** (`HerramientasEntrevista`, usadas por `ToolExecutor`):
+  - `consultar_entrevista`: próximas preguntas no sensibles (hasta 25), avance, cantidad de lo que falta en el portal y los enlaces armados por el código;
+  - `guardar_respuestas`: varias respuestas en orden, cada una por el guardador con canal `whatsapp` y el actor del agente. Lo rechazado vuelve con su motivo y no se escribe;
+  - `agregar_persona`: exige C0 = sí y, si viene el parentesco, lo guarda como C3.
+  - Por fase: Consentimiento (`enviar_enlace_activacion`, base de conocimiento, `think`); Entrevista (las tres nuevas, base de conocimiento, `think`); Seguimiento (`consultar_entrevista`, base de conocimiento, `think`); PortalDudas suma `consultar_entrevista`.
+- **Nota de la fase Consentimiento:** sin contraseña, el enlace de activación (2.4); con contraseña, el enlace a `portal/consentimiento`. Una sola vez por conversación. El enlace de activación ya no se ofrece en HandoffPortal, porque los clientes con la bandera no llegan ahí.
+- **WhatsApp (job):** para un cliente con la bandera, un adjunto **no se descarga ni se lee**; queda "[El cliente envió un archivo por WhatsApp; no se guardó…]" y el agente manda el enlace a documentos. `RedactorDatosSensibles` oculta números de 9 dígitos (SSN, ITIN, ruta) y de 12 a 17 (cuentas) antes de guardar el mensaje y de mandarlo a OpenAI. Se aplica a los clientes con la bandera y a quien todavía no tiene cuenta. No toca teléfonos con "+" ni montos.
+- **Prompts:** `consentimiento.md`, `entrevista.md` y `seguimiento.md` nuevos; `portal_dudas.md` ajustado para los dos flujos. `entrevista.md` cubre agrupar casillas en un mensaje, guardar en una llamada, preguntar de nuevo lo rechazado, nunca pedir lo sensible ni documentos, no decidir posiciones fiscales y el socio con K-1. `verificacion_cuenta.md` no cambió: la cuenta nueva nace con el flujo actual hasta 2.10.
+- **Publicar los prompts:** `php artisan agente:borrador-prompts --fases=portal_dudas` arma un **borrador** (copia la versión vigente con sus ediciones; las fases nuevas y las pedidas salen del archivo). Un administrador lo revisa y lo publica en "Agente → Prompts".
+- **Analizador de conversaciones:** con la bandera, cuenta como terminada la entrevista confirmada en el portal (antes, solo la fase Cierre). `FASES_ACOPLADAS` no cambió.
+- **Corrección al plan:** María no deja la pantalla 3 completa por WhatsApp: A12 (IP PIN) es sensible y va por el portal. La prueba lo refleja.
+- **Pruebas:** `AgenteEntrevistaTest` (7) y `MariaTest` (1). María da 25 respuestas o menos sin contar los "no"; ninguna se repite (sin cambios en el historial) y se activan W-2, la tarjeta del hijo, el recibo de cuidado, 8812, 2441 y EIC.
+- **Falta (manual):** probarlo con un usuario de prueba por WhatsApp real en producción, después de publicar los prompts.
+
 ---
 
 ## 2.9 Vista del preparador: entrevista en la ficha y chat del portal en Mensajes
