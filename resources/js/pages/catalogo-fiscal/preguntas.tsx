@@ -1,8 +1,10 @@
 import { Deferred, Head } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Lock, Users } from 'lucide-react';
+import { Lock, Users, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Editor } from '@/components/catalogo-fiscal/acciones-pieza';
+import { AccionesPieza } from '@/components/catalogo-fiscal/acciones-pieza';
 import {
     filtroIncluye,
     useColumnasComunes,
@@ -16,9 +18,11 @@ import {
     CatalogoError,
     CatalogoVacio,
 } from '@/components/catalogo-fiscal/estado-pagina';
+import { FormularioPregunta } from '@/components/catalogo-fiscal/formularios/formulario-pregunta';
 import { FuenteIrs } from '@/components/catalogo-fiscal/fuente-irs';
 import { TablaSkeleton } from '@/components/catalogo-fiscal/tabla-skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import type { CatalogoFiscalPageProps, PreguntaCatalogo } from '@/types';
@@ -30,10 +34,26 @@ type Props = CatalogoFiscalPageProps & { preguntas?: PreguntaCatalogo[] };
 
 export default function CatalogoPreguntas({
     anio,
+    estadoAnio,
     puedeEditar,
     preguntas,
 }: Props) {
     const { t } = useTranslation();
+    // Fuera de <Deferred>: al guardar (o si el servidor devuelve errores) la
+    // tabla se vuelve a cargar, y el diálogo y el detalle no deben cerrarse con ella.
+    const editor: Editor | null = puedeEditar
+        ? { anio, vigente: estadoAnio === 'vigente' }
+        : null;
+    const [seleccionada, setSeleccionada] = useState<PreguntaCatalogo | null>(
+        null,
+    );
+    const [editando, setEditando] = useState<PreguntaCatalogo | 'nueva' | null>(
+        null,
+    );
+    const cerrarTodo = () => {
+        setEditando(null);
+        setSeleccionada(null);
+    };
 
     return (
         <>
@@ -47,21 +67,69 @@ export default function CatalogoPreguntas({
                 rescue={<CatalogoError />}
             >
                 {preguntas && preguntas.length > 0 ? (
-                    <TablaPreguntas preguntas={preguntas} />
+                    <TablaPreguntas
+                        preguntas={preguntas}
+                        onVer={setSeleccionada}
+                        onAgregar={editor ? () => setEditando('nueva') : null}
+                    />
                 ) : (
                     <CatalogoVacio puedeEditar={puedeEditar} />
                 )}
             </Deferred>
+
+            <DetallePieza
+                acciones={
+                    editor && seleccionada ? (
+                        <AccionesPieza
+                            anio={editor.anio}
+                            tipo="preguntas"
+                            pieza={seleccionada}
+                            onEditar={() => setEditando(seleccionada)}
+                            onHecho={cerrarTodo}
+                            sePuedeDesactivar={true}
+                        />
+                    ) : null
+                }
+                abierto={seleccionada !== null}
+                onCerrar={() => setSeleccionada(null)}
+                titulo={
+                    seleccionada
+                        ? `${seleccionada.codigo} · ${t(`catalogoFiscal.bloques.${seleccionada.bloque}`)}`
+                        : ''
+                }
+                descripcion={seleccionada?.texto}
+            >
+                {seleccionada ? (
+                    <DetallePregunta pregunta={seleccionada} />
+                ) : null}
+            </DetallePieza>
+
+            {editor && editando !== null ? (
+                <FormularioPregunta
+                    key={editando === 'nueva' ? 'nueva' : editando.id}
+                    anio={editor.anio}
+                    anioVigente={editor.vigente}
+                    pregunta={editando === 'nueva' ? null : editando}
+                    abierto
+                    onCerrar={() => setEditando(null)}
+                    onGuardado={cerrarTodo}
+                />
+            ) : null}
         </>
     );
 }
 
-function TablaPreguntas({ preguntas }: { preguntas: PreguntaCatalogo[] }) {
+function TablaPreguntas({
+    preguntas,
+    onVer,
+    onAgregar,
+}: {
+    preguntas: PreguntaCatalogo[];
+    onVer: (pieza: PreguntaCatalogo) => void;
+    onAgregar: (() => void) | null;
+}) {
     const { t } = useTranslation();
-    const [seleccionada, setSeleccionada] = useState<PreguntaCatalogo | null>(
-        null,
-    );
-    const comunes = useColumnasComunes<PreguntaCatalogo>(setSeleccionada);
+    const comunes = useColumnasComunes<PreguntaCatalogo>(onVer);
     const filtroValidacion = useFiltroValidacion();
 
     const columnas = useMemo<ColumnDef<PreguntaCatalogo>[]>(
@@ -138,6 +206,14 @@ function TablaPreguntas({ preguntas }: { preguntas: PreguntaCatalogo[] }) {
                 initialPageSize={20}
                 searchPlaceholder={t('catalogoFiscal.buscar')}
                 emptyMessage={t('catalogoFiscal.sinResultados')}
+                toolbarActions={
+                    onAgregar ? (
+                        <Button onClick={onAgregar}>
+                            <Plus aria-hidden="true" />
+                            {t('catalogoFiscal.edicion.agregarPregunta')}
+                        </Button>
+                    ) : null
+                }
                 facetedFilters={[
                     {
                         columnId: 'bloque',
@@ -158,21 +234,6 @@ function TablaPreguntas({ preguntas }: { preguntas: PreguntaCatalogo[] }) {
                     filtroValidacion,
                 ]}
             />
-
-            <DetallePieza
-                abierto={seleccionada !== null}
-                onCerrar={() => setSeleccionada(null)}
-                titulo={
-                    seleccionada
-                        ? `${seleccionada.codigo} · ${t(`catalogoFiscal.bloques.${seleccionada.bloque}`)}`
-                        : ''
-                }
-                descripcion={seleccionada?.texto}
-            >
-                {seleccionada ? (
-                    <DetallePregunta pregunta={seleccionada} />
-                ) : null}
-            </DetallePieza>
         </>
     );
 }
@@ -191,7 +252,7 @@ function DetallePregunta({ pregunta }: { pregunta: PreguntaCatalogo }) {
                         `catalogoFiscal.tiposRespuesta.${pregunta.tipo_respuesta}`,
                     )}
                     {pregunta.opciones.length > 0
-                        ? `: ${pregunta.opciones.join(' / ')}`
+                        ? `: ${pregunta.opciones.map((o) => o.texto_es).join(' / ')}`
                         : ''}
                 </DatoDetalle>
                 <DatoDetalle etiqueta={t('catalogoFiscal.columnas.nivel')}>

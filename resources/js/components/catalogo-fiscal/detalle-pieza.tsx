@@ -16,12 +16,15 @@ export function DetallePieza({
     onCerrar,
     titulo,
     descripcion,
+    acciones,
     children,
 }: {
     abierto: boolean;
     onCerrar: () => void;
     titulo: ReactNode;
     descripcion?: ReactNode;
+    /** Acciones del administrador (F1.5), arriba del detalle. */
+    acciones?: ReactNode;
     children: ReactNode;
 }) {
     return (
@@ -33,7 +36,10 @@ export function DetallePieza({
                         <SheetDescription>{descripcion}</SheetDescription>
                     ) : null}
                 </SheetHeader>
-                <div className="space-y-6 px-4 pb-6">{children}</div>
+                <div className="space-y-6 px-4 pb-6">
+                    {acciones}
+                    {children}
+                </div>
             </SheetContent>
         </Sheet>
     );

@@ -2,6 +2,8 @@ import { Deferred, Head } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Editor } from '@/components/catalogo-fiscal/acciones-pieza';
+import { AccionesPieza } from '@/components/catalogo-fiscal/acciones-pieza';
 import {
     filtroIncluye,
     useColumnasComunes,
@@ -15,6 +17,7 @@ import {
     CatalogoError,
     CatalogoVacio,
 } from '@/components/catalogo-fiscal/estado-pagina';
+import { FormularioParametro } from '@/components/catalogo-fiscal/formularios/formulario-parametro';
 import { FuenteIrs } from '@/components/catalogo-fiscal/fuente-irs';
 import { TablaSkeleton } from '@/components/catalogo-fiscal/tabla-skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -36,10 +39,26 @@ type Props = CatalogoFiscalPageProps & { parametros?: ParametroCatalogo[] };
 
 export default function CatalogoParametros({
     anio,
+    estadoAnio,
     puedeEditar,
     parametros,
 }: Props) {
     const { t } = useTranslation();
+    // Fuera de <Deferred>: al guardar (o si el servidor devuelve errores) la
+    // tabla se vuelve a cargar, y el diálogo y el detalle no deben cerrarse con ella.
+    const editor: Editor | null = puedeEditar
+        ? { anio, vigente: estadoAnio === 'vigente' }
+        : null;
+    const [seleccionado, setSeleccionado] = useState<ParametroCatalogo | null>(
+        null,
+    );
+    const [editando, setEditando] = useState<
+        ParametroCatalogo | 'nueva' | null
+    >(null);
+    const cerrarTodo = () => {
+        setEditando(null);
+        setSeleccionado(null);
+    };
 
     return (
         <>
@@ -55,21 +74,94 @@ export default function CatalogoParametros({
                 rescue={<CatalogoError />}
             >
                 {parametros && parametros.length > 0 ? (
-                    <TablaParametros parametros={parametros} />
+                    <TablaParametros
+                        parametros={parametros}
+                        onVer={setSeleccionado}
+                    />
                 ) : (
                     <CatalogoVacio puedeEditar={puedeEditar} />
                 )}
             </Deferred>
+
+            <DetallePieza
+                acciones={
+                    editor && seleccionado ? (
+                        <AccionesPieza
+                            anio={editor.anio}
+                            tipo="parametros"
+                            pieza={seleccionado}
+                            onEditar={() => setEditando(seleccionado)}
+                            onHecho={cerrarTodo}
+                            sePuedeDesactivar={false}
+                        />
+                    ) : null
+                }
+                abierto={seleccionado !== null}
+                onCerrar={() => setSeleccionado(null)}
+                titulo={seleccionado?.nombre ?? ''}
+                descripcion={
+                    seleccionado ? (
+                        <span className="font-mono text-xs">
+                            {seleccionado.codigo}
+                        </span>
+                    ) : undefined
+                }
+            >
+                {seleccionado ? (
+                    <>
+                        <dl className="grid gap-4">
+                            <DatoDetalle
+                                etiqueta={t('catalogoFiscal.columnas.valor')}
+                            >
+                                <ValorParametro
+                                    parametro={seleccionado}
+                                    completo
+                                />
+                            </DatoDetalle>
+                            <DatoDetalle
+                                etiqueta={t(
+                                    'catalogoFiscal.parametros.condicion',
+                                )}
+                            >
+                                {seleccionado.condicion}
+                            </DatoDetalle>
+                            <DatoDetalle
+                                etiqueta={t(
+                                    'catalogoFiscal.columnas.dondeSeUsa',
+                                )}
+                            >
+                                {seleccionado.formulario_linea}
+                            </DatoDetalle>
+                        </dl>
+                        <FuenteIrs pieza={seleccionado} />
+                    </>
+                ) : null}
+            </DetallePieza>
+
+            {editor && editando !== null && editando !== 'nueva' ? (
+                <FormularioParametro
+                    key={editando.id}
+                    anio={editor.anio}
+                    anioVigente={editor.vigente}
+                    parametro={editando}
+                    abierto
+                    onCerrar={() => setEditando(null)}
+                    onGuardado={cerrarTodo}
+                />
+            ) : null}
         </>
     );
 }
 
-function TablaParametros({ parametros }: { parametros: ParametroCatalogo[] }) {
+function TablaParametros({
+    parametros,
+    onVer,
+}: {
+    parametros: ParametroCatalogo[];
+    onVer: (pieza: ParametroCatalogo) => void;
+}) {
     const { t } = useTranslation();
-    const [seleccionado, setSeleccionado] = useState<ParametroCatalogo | null>(
-        null,
-    );
-    const comunes = useColumnasComunes<ParametroCatalogo>(setSeleccionado);
+    const comunes = useColumnasComunes<ParametroCatalogo>(onVer);
     const filtroValidacion = useFiltroValidacion();
 
     const columnas = useMemo<ColumnDef<ParametroCatalogo>[]>(
@@ -150,49 +242,6 @@ function TablaParametros({ parametros }: { parametros: ParametroCatalogo[] }) {
                     filtroValidacion,
                 ]}
             />
-
-            <DetallePieza
-                abierto={seleccionado !== null}
-                onCerrar={() => setSeleccionado(null)}
-                titulo={seleccionado?.nombre ?? ''}
-                descripcion={
-                    seleccionado ? (
-                        <span className="font-mono text-xs">
-                            {seleccionado.codigo}
-                        </span>
-                    ) : undefined
-                }
-            >
-                {seleccionado ? (
-                    <>
-                        <dl className="grid gap-4">
-                            <DatoDetalle
-                                etiqueta={t('catalogoFiscal.columnas.valor')}
-                            >
-                                <ValorParametro
-                                    parametro={seleccionado}
-                                    completo
-                                />
-                            </DatoDetalle>
-                            <DatoDetalle
-                                etiqueta={t(
-                                    'catalogoFiscal.parametros.condicion',
-                                )}
-                            >
-                                {seleccionado.condicion}
-                            </DatoDetalle>
-                            <DatoDetalle
-                                etiqueta={t(
-                                    'catalogoFiscal.columnas.dondeSeUsa',
-                                )}
-                            >
-                                {seleccionado.formulario_linea}
-                            </DatoDetalle>
-                        </dl>
-                        <FuenteIrs pieza={seleccionado} />
-                    </>
-                ) : null}
-            </DetallePieza>
         </>
     );
 }

@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import type { FuenteIrs } from '@/types';
@@ -10,7 +11,9 @@ import { EstadoValidacion, estadoValidacion } from './estado-validacion';
  * Columnas que comparten las 5 pestañas: el código al inicio (monoespaciado,
  * para escanear rápido), el estado de validación y el botón de detalle.
  */
-export function useColumnasComunes<T extends FuenteIrs & { codigo: string }>(
+export function useColumnasComunes<
+    T extends FuenteIrs & { codigo: string; activo?: boolean },
+>(
     onVer: (pieza: T) => void,
 ): {
     codigo: ColumnDef<T>;
@@ -32,9 +35,19 @@ export function useColumnasComunes<T extends FuenteIrs & { codigo: string }>(
                     />
                 ),
                 cell: ({ row }) => (
-                    <span className="font-mono text-xs font-semibold">
-                        {row.original.codigo}
-                    </span>
+                    <div className="flex flex-col items-start gap-1">
+                        <span className="font-mono text-xs font-semibold">
+                            {row.original.codigo}
+                        </span>
+                        {row.original.activo === false ? (
+                            <Badge
+                                variant="outline"
+                                className="text-muted-foreground"
+                            >
+                                {t('catalogoFiscal.edicion.desactivado')}
+                            </Badge>
+                        ) : null}
+                    </div>
                 ),
                 enableHiding: false,
             },

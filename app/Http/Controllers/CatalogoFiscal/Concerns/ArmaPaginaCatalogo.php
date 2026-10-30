@@ -6,6 +6,9 @@ use App\Models\CatalogoFiscal\CatalogoAnio;
 use App\Models\User;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use Closure;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -82,5 +85,48 @@ trait ArmaPaginaCatalogo
                 ->map(fn (array $a) => ['objetivo' => $a['objetivo_codigo'], 'pregunta' => $p['codigo']]))
             ->groupBy('objetivo')
             ->map(fn (Collection $filas) => $filas->pluck('pregunta')->unique()->values()->all());
+    }
+
+    /**
+     * Las piezas del año como arreglos. El administrador ve también las
+     * desactivadas (para poder reactivarlas); el preparador solo las activas.
+     *
+     * @param  class-string<Model>  $clase
+     * @param  array<int|string, mixed>  $with
+     * @param  Closure(Builder<Model>): void  $orden
+     * @return Collection<int, array<string, mixed>>
+     */
+    protected function piezas(string $clase, int $anio, array $with, Closure $orden): Collection
+    {
+        $consulta = $clase::query()->where('tax_year', $anio)->with($with);
+
+        if (! Gate::allows('update', CatalogoAnio::class)) {
+            $consulta->where('activo', true);
+        }
+
+        $orden($consulta);
+
+        return $consulta->get()->map(fn (Model $m) => $m->toArray());
+    }
+
+    /**
+     * La pieza tiene que ser del año de la URL.
+     */
+    protected function delAnio(Model $pieza, int $anio): void
+    {
+        abort_unless((int) $pieza->getAttribute('tax_year') === $anio, 404);
+    }
+
+    /**
+     * Vuelve a la pestaña con el aviso de éxito (y si se reabrió la validación).
+     */
+    protected function guardado(string $mensaje, bool $reabierta = false): RedirectResponse
+    {
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $reabierta ? "{$mensaje} Quedó sin validar: el contenido cambió." : $mensaje,
+        ]);
+
+        return back();
     }
 }

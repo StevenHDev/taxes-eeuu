@@ -1,7 +1,10 @@
 import { Deferred, Head } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Editor } from '@/components/catalogo-fiscal/acciones-pieza';
+import { AccionesPieza } from '@/components/catalogo-fiscal/acciones-pieza';
 import {
     filtroIncluye,
     useColumnasComunes,
@@ -15,9 +18,11 @@ import {
     CatalogoError,
     CatalogoVacio,
 } from '@/components/catalogo-fiscal/estado-pagina';
+import { FormularioFormulario } from '@/components/catalogo-fiscal/formularios/formulario-formulario';
 import { FuenteIrs } from '@/components/catalogo-fiscal/fuente-irs';
 import { TablaSkeleton } from '@/components/catalogo-fiscal/tabla-skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
@@ -40,10 +45,26 @@ type Props = CatalogoFiscalPageProps & { formularios?: FormularioCatalogo[] };
 
 export default function CatalogoFormularios({
     anio,
+    estadoAnio,
     puedeEditar,
     formularios,
 }: Props) {
     const { t } = useTranslation();
+    // Fuera de <Deferred>: al guardar (o si el servidor devuelve errores) la
+    // tabla se vuelve a cargar, y el diálogo y el detalle no deben cerrarse con ella.
+    const editor: Editor | null = puedeEditar
+        ? { anio, vigente: estadoAnio === 'vigente' }
+        : null;
+    const [seleccionado, setSeleccionado] = useState<FormularioCatalogo | null>(
+        null,
+    );
+    const [editando, setEditando] = useState<
+        FormularioCatalogo | 'nueva' | null
+    >(null);
+    const cerrarTodo = () => {
+        setEditando(null);
+        setSeleccionado(null);
+    };
 
     return (
         <>
@@ -59,25 +80,65 @@ export default function CatalogoFormularios({
                 rescue={<CatalogoError />}
             >
                 {formularios && formularios.length > 0 ? (
-                    <TablaFormularios formularios={formularios} />
+                    <TablaFormularios
+                        formularios={formularios}
+                        onVer={setSeleccionado}
+                        onAgregar={editor ? () => setEditando('nueva') : null}
+                    />
                 ) : (
                     <CatalogoVacio puedeEditar={puedeEditar} />
                 )}
             </Deferred>
+
+            <DetallePieza
+                acciones={
+                    editor && seleccionado ? (
+                        <AccionesPieza
+                            anio={editor.anio}
+                            tipo="formularios"
+                            pieza={seleccionado}
+                            onEditar={() => setEditando(seleccionado)}
+                            onHecho={cerrarTodo}
+                            sePuedeDesactivar={!seleccionado.siempre}
+                        />
+                    ) : null
+                }
+                abierto={seleccionado !== null}
+                onCerrar={() => setSeleccionado(null)}
+                titulo={seleccionado?.nombre ?? ''}
+                descripcion={seleccionado?.para_que ?? undefined}
+            >
+                {seleccionado ? (
+                    <DetalleFormulario formulario={seleccionado} />
+                ) : null}
+            </DetallePieza>
+
+            {editor && editando !== null ? (
+                <FormularioFormulario
+                    key={editando === 'nueva' ? 'nueva' : editando.id}
+                    anio={editor.anio}
+                    anioVigente={editor.vigente}
+                    formulario={editando === 'nueva' ? null : editando}
+                    abierto
+                    onCerrar={() => setEditando(null)}
+                    onGuardado={cerrarTodo}
+                />
+            ) : null}
         </>
     );
 }
 
 function TablaFormularios({
     formularios,
+    onVer,
+    onAgregar,
 }: {
     formularios: FormularioCatalogo[];
+    onVer: (pieza: FormularioCatalogo) => void;
+    onAgregar: (() => void) | null;
 }) {
     const { t } = useTranslation();
-    const [seleccionado, setSeleccionado] = useState<FormularioCatalogo | null>(
-        null,
-    );
-    const comunes = useColumnasComunes<FormularioCatalogo>(setSeleccionado);
+    const comunes = useColumnasComunes<FormularioCatalogo>(onVer);
     const filtroValidacion = useFiltroValidacion();
 
     const columnas = useMemo<ColumnDef<FormularioCatalogo>[]>(
@@ -151,6 +212,14 @@ function TablaFormularios({
                 initialPageSize={30}
                 searchPlaceholder={t('catalogoFiscal.buscar')}
                 emptyMessage={t('catalogoFiscal.sinResultados')}
+                toolbarActions={
+                    onAgregar ? (
+                        <Button onClick={onAgregar}>
+                            <Plus aria-hidden="true" />
+                            {t('catalogoFiscal.edicion.agregarFormulario')}
+                        </Button>
+                    ) : null
+                }
                 facetedFilters={[
                     {
                         columnId: 'ficha',
@@ -163,17 +232,6 @@ function TablaFormularios({
                     filtroValidacion,
                 ]}
             />
-
-            <DetallePieza
-                abierto={seleccionado !== null}
-                onCerrar={() => setSeleccionado(null)}
-                titulo={seleccionado?.nombre ?? ''}
-                descripcion={seleccionado?.para_que ?? undefined}
-            >
-                {seleccionado ? (
-                    <DetalleFormulario formulario={seleccionado} />
-                ) : null}
-            </DetallePieza>
         </>
     );
 }

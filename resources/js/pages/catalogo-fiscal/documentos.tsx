@@ -1,7 +1,10 @@
 import { Deferred, Head } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Editor } from '@/components/catalogo-fiscal/acciones-pieza';
+import { AccionesPieza } from '@/components/catalogo-fiscal/acciones-pieza';
 import {
     filtroIncluye,
     useColumnasComunes,
@@ -15,9 +18,11 @@ import {
     CatalogoError,
     CatalogoVacio,
 } from '@/components/catalogo-fiscal/estado-pagina';
+import { FormularioDocumento } from '@/components/catalogo-fiscal/formularios/formulario-documento';
 import { FuenteIrs } from '@/components/catalogo-fiscal/fuente-irs';
 import { TablaSkeleton } from '@/components/catalogo-fiscal/tabla-skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
@@ -46,10 +51,26 @@ type Props = CatalogoFiscalPageProps & { documentos?: DocumentoCatalogo[] };
 
 export default function CatalogoDocumentos({
     anio,
+    estadoAnio,
     puedeEditar,
     documentos,
 }: Props) {
     const { t } = useTranslation();
+    // Fuera de <Deferred>: al guardar (o si el servidor devuelve errores) la
+    // tabla se vuelve a cargar, y el diálogo y el detalle no deben cerrarse con ella.
+    const editor: Editor | null = puedeEditar
+        ? { anio, vigente: estadoAnio === 'vigente' }
+        : null;
+    const [seleccionado, setSeleccionado] = useState<DocumentoCatalogo | null>(
+        null,
+    );
+    const [editando, setEditando] = useState<
+        DocumentoCatalogo | 'nueva' | null
+    >(null);
+    const cerrarTodo = () => {
+        setEditando(null);
+        setSeleccionado(null);
+    };
 
     return (
         <>
@@ -65,21 +86,65 @@ export default function CatalogoDocumentos({
                 rescue={<CatalogoError />}
             >
                 {documentos && documentos.length > 0 ? (
-                    <TablaDocumentos documentos={documentos} />
+                    <TablaDocumentos
+                        documentos={documentos}
+                        onVer={setSeleccionado}
+                        onAgregar={editor ? () => setEditando('nueva') : null}
+                    />
                 ) : (
                     <CatalogoVacio puedeEditar={puedeEditar} />
                 )}
             </Deferred>
+
+            <DetallePieza
+                acciones={
+                    editor && seleccionado ? (
+                        <AccionesPieza
+                            anio={editor.anio}
+                            tipo="documentos"
+                            pieza={seleccionado}
+                            onEditar={() => setEditando(seleccionado)}
+                            onHecho={cerrarTodo}
+                            sePuedeDesactivar={true}
+                        />
+                    ) : null
+                }
+                abierto={seleccionado !== null}
+                onCerrar={() => setSeleccionado(null)}
+                titulo={seleccionado?.nombre ?? ''}
+                descripcion={seleccionado?.nombre_oficial ?? undefined}
+            >
+                {seleccionado ? (
+                    <DetalleDocumento documento={seleccionado} />
+                ) : null}
+            </DetallePieza>
+
+            {editor && editando !== null ? (
+                <FormularioDocumento
+                    key={editando === 'nueva' ? 'nueva' : editando.id}
+                    anio={editor.anio}
+                    anioVigente={editor.vigente}
+                    documento={editando === 'nueva' ? null : editando}
+                    abierto
+                    onCerrar={() => setEditando(null)}
+                    onGuardado={cerrarTodo}
+                />
+            ) : null}
         </>
     );
 }
 
-function TablaDocumentos({ documentos }: { documentos: DocumentoCatalogo[] }) {
+function TablaDocumentos({
+    documentos,
+    onVer,
+    onAgregar,
+}: {
+    documentos: DocumentoCatalogo[];
+    onVer: (pieza: DocumentoCatalogo) => void;
+    onAgregar: (() => void) | null;
+}) {
     const { t } = useTranslation();
-    const [seleccionado, setSeleccionado] = useState<DocumentoCatalogo | null>(
-        null,
-    );
-    const comunes = useColumnasComunes<DocumentoCatalogo>(setSeleccionado);
+    const comunes = useColumnasComunes<DocumentoCatalogo>(onVer);
     const filtroValidacion = useFiltroValidacion();
 
     const columnas = useMemo<ColumnDef<DocumentoCatalogo>[]>(
@@ -137,6 +202,14 @@ function TablaDocumentos({ documentos }: { documentos: DocumentoCatalogo[] }) {
                 initialPageSize={20}
                 searchPlaceholder={t('catalogoFiscal.buscar')}
                 emptyMessage={t('catalogoFiscal.sinResultados')}
+                toolbarActions={
+                    onAgregar ? (
+                        <Button onClick={onAgregar}>
+                            <Plus aria-hidden="true" />
+                            {t('catalogoFiscal.edicion.agregarDocumento')}
+                        </Button>
+                    ) : null
+                }
                 facetedFilters={[
                     {
                         columnId: 'grupo',
@@ -149,17 +222,6 @@ function TablaDocumentos({ documentos }: { documentos: DocumentoCatalogo[] }) {
                     filtroValidacion,
                 ]}
             />
-
-            <DetallePieza
-                abierto={seleccionado !== null}
-                onCerrar={() => setSeleccionado(null)}
-                titulo={seleccionado?.nombre ?? ''}
-                descripcion={seleccionado?.nombre_oficial ?? undefined}
-            >
-                {seleccionado ? (
-                    <DetalleDocumento documento={seleccionado} />
-                ) : null}
-            </DetallePieza>
         </>
     );
 }
