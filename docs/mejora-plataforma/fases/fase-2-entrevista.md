@@ -169,6 +169,23 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 
 **Pruebas:** sin consentimiento, la entrevista redirige a la firma; con firma, entra; la firma guarda texto, versión, IP y hora; un texto nuevo vuelve a pedir la firma; no hay ruta para editar ni borrar; un cliente real no puede activarse con texto provisional; el preparador ve la versión y la fecha en la ficha (2.9).
 
+**Cómo quedó (30 oct.):**
+- **Enlace de activación** (`EnlaceActivacion`): es una URL firmada a `activar/{usuario}` que vence a los 60 minutos y solo sirve mientras `contrasena_definida_en` sea nula. Crear la contraseña la hace de un solo uso. Cambio respecto al plan: **no** usa el token de restablecimiento, porque crear uno nuevo invalida el del correo de bienvenida, que sigue de respaldo. La pantalla (`auth/activar-cuenta`) no muestra el correo ni ningún dato de la cuenta. Al crear la contraseña inicia sesión y lleva a `portal/consentimiento`.
+- **`users.contrasena_definida_en`:** la migración la llena para todas las cuentas que ya existían (el enlace es solo para cuentas nuevas). Se marca al restablecer por correo, al cambiar la contraseña en Seguridad, al registrarse y cuando el administrador crea un usuario o le pone contraseña.
+- **Todo va detrás de la bandera de F2.2:** solo a un cliente con la entrevista nueva y sin contraseña:
+  - el agente le manda el enlace de activación en lugar de `/portal` (la nota del handoff se arma una vez por conversación);
+  - le funciona la tool `enviar_enlace_activacion` (ofrecida en la fase HandoffPortal). La tool rechaza otro número de teléfono, y con la contraseña ya definida responde "¿Olvidaste tu contraseña?" sin enlace.
+  El prompt nuevo del agente es de 2.8.
+- **Consentimiento:**
+  - Tablas `consentimiento_textos` y `consentimientos` (solo se inserta: el modelo lanza error al editar).
+  - Los textos están en `database/data/consentimientos/` (`textos.php` + `uso_7216-v1.{es,en}.md`, **provisional**). Se cargan con `consentimientos:cargar`, que es idempotente y se detiene si alguien cambia una versión ya firmada.
+  - Pantalla `portal/consentimiento`: el texto en `max-w-prose` (markdown convertido en el servidor sin HTML de entrada), la franja "Texto provisional", la casilla, el nombre como firma y "Firmar y continuar", con el motivo junto al botón mientras está deshabilitado.
+- **Middleware `EnsureConsentimiento7216`:** protege `portal/formulario` y el guardado de campos (las rutas de 2.5 lo usarán); el chat no lo exige. Por ahora, después de firmar el cliente va a `portal/formulario`; 2.5 lo cambia a la entrevista.
+- **Freno para clientes reales:** con el texto provisional, Usuarios no deja activar la entrevista nueva a quien no es de prueba (sale un aviso), y la firma devuelve 403 para quien no es de prueba.
+- **Verificación en dos pasos para clientes:** sin cambios; ya es opcional en Ajustes → Seguridad.
+- **Pendiente para 2.9:** que el preparador vea la versión y la fecha de la firma en la ficha.
+- **Pruebas:** `ActivacionCuentaTest` (7), `ConsentimientoTest` (9) y una prueba del handoff en `AgenteConversacionalServiceTest`.
+
 ---
 
 ## 2.5 Entrevista en el portal: 8 pantallas en tres niveles

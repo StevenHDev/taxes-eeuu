@@ -120,7 +120,7 @@ Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
 - [x] 2.1 Los preparadores también validan piezas del catálogo
 - [x] 2.2 Respuestas de la entrevista y motor único (+ bandera por cliente, contenido nuevo del catálogo). En producción y catálogo cargado el 30 oct. (`9da755d`, `d8e7487`): 79 preguntas y 42 documentos en 2025 y 2026, verificar sin problemas
 - [x] 2.3 Mapa de equivalencias `campos_cliente` → catálogo y reporte (`catalogo-fiscal:equivalencias --reporte`)
-- [ ] 2.4 Primera entrada desde el enlace de WhatsApp (crear contraseña sin pasar por el correo) y consentimiento §7216 en el portal (texto provisional; el definitivo espera L1)
+- [x] 2.4 Primera entrada desde el enlace de WhatsApp (crear contraseña sin pasar por el correo) y consentimiento §7216 en el portal (texto provisional; el definitivo espera L1)
 - [ ] 2.5 Entrevista en el portal: 8 pantallas en tres niveles
 - [ ] 2.6 Documentos que pide la entrevista: lista mínima y carga (solo por el portal)
 - [ ] 2.7 Revisión y confirmación del cliente en el portal
