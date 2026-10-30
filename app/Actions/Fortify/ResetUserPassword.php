@@ -22,8 +22,11 @@ class ResetUserPassword implements ResetsUserPasswords
             'password' => $this->passwordRules(),
         ])->validate();
 
+        // Restablecerla desde el correo también cuenta como definirla: desde
+        // ese momento el agente ya no manda enlaces de activación (F2.4).
         $user->forceFill([
             'password' => $input['password'],
+            'contrasena_definida_en' => $user->contrasena_definida_en ?? now(),
         ])->save();
     }
 }

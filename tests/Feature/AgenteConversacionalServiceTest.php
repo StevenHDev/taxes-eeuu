@@ -598,4 +598,29 @@ class AgenteConversacionalServiceTest extends TestCase
         $prompt = collect($cuerpo['messages'])->first()['content'];
         $this->assertStringContainsString('FASE ACTUAL: CIERRE', $prompt);
     }
+
+    /**
+     * F2.4: a un cliente con la entrevista nueva y sin contraseña, el enlace
+     * del handoff es el de activación (crea la contraseña), no /portal.
+     */
+    public function test_handoff_manda_el_enlace_de_activacion_a_un_cliente_de_la_entrevista_nueva(): void
+    {
+        $telefono = '+15559990002';
+        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => $telefono, 'es_prueba' => true]);
+        $cliente->forceFill(['entrevista_catalogo' => true, 'contrasena_definida_en' => null])->save();
+        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
+
+        Http::fake([
+            'api.openai.com/*' => Http::response($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Listo'])),
+        ]);
+
+        $this->agente->responder($cliente, $this->historialCon($telefono, 'Hola'), $this->actor, [], $telefono);
+
+        $cuerpo = Http::recorded()->first()[0]->data();
+        $nota = collect($cuerpo['messages'])->last(fn (array $m) => $m['role'] === 'system');
+
+        $this->assertStringContainsString(url('/activar/'.$cliente->id), $nota['content']);
+        $this->assertStringContainsString('signature=', $nota['content']);
+        $this->assertContains('enviar_enlace_activacion', collect($cuerpo['tools'])->pluck('function.name')->all());
+    }
 }

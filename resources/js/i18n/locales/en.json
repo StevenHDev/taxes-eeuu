@@ -131,6 +131,18 @@
             "linkSent": "A new verification link has been sent to the email address you provided during registration.",
             "resend": "Resend verification email",
             "logout": "Log out"
+        },
+        "activarCuenta": {
+            "headTitle": "Create password",
+            "layoutTitle": "Create your password",
+            "layoutDescription": "You will use this password to enter the secure portal where you send your information and documents.",
+            "usadoDescription": "This link was already used or has expired.",
+            "irAlInicio": "Go to sign in",
+            "olvide": "Forgot your password?",
+            "passwordLabel": "New password",
+            "confirmLabel": "Confirm password",
+            "submit": "Create password and continue",
+            "vence": "The link works once and expires after 60 minutes. If it expired, ask the assistant on WhatsApp for a new one."
         }
     },
     "dashboard": {
@@ -1319,5 +1331,15 @@
             "ayudaMonto": "In dollars, no symbol or thousands separators.",
             "validarSinFuentePreparador": "This item has no link to its IRS source yet. Ask an administrator to add it so it can be validated."
         }
+    },
+    "portalConsentimiento": {
+        "paso": "Before starting your {{anio}} tax return",
+        "provisional": "Provisional text, for testing only: it will be replaced by the text approved by counsel.",
+        "acepto": "I have read this consent and I agree to it.",
+        "nombreLabel": "Your full name",
+        "nombreAyuda": "Typing it counts as your signature.",
+        "faltaCasilla": "Check the box to continue.",
+        "faltaNombre": "Type your full name to sign.",
+        "firmar": "Sign and continue"
     }
 }

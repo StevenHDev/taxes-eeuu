@@ -10,9 +10,11 @@ use App\Models\FormaCliente;
 use App\Models\User;
 use App\Services\AgenteToolService;
 use App\Services\BaseConocimientoService;
+use App\Services\Consentimiento\EnlaceActivacion;
 use App\Services\EventoRecoleccionService;
 use App\Support\EventoValidator;
 use App\Support\TaxFieldCatalog;
+use App\Support\TelefonoWhatsapp;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
 
@@ -29,6 +31,7 @@ class ToolExecutor
         private readonly EventoRecoleccionService $eventos,
         private readonly EventoValidator $eventoValidator,
         private readonly BaseConocimientoService $baseConocimiento,
+        private readonly EnlaceActivacion $enlaceActivacion,
     ) {}
 
     /**
@@ -72,9 +75,43 @@ class ToolExecutor
             'consultar_documentos_extra' => $this->tools->documentosExtra($this->taxYearVigente($cliente)),
             'guardar_campo_cliente' => $this->guardarCampoCliente($cliente, $argumentos, $actor, $file, $metodoExtraccion),
             'consultar_base_conocimiento' => ['resultados' => $this->baseConocimiento->buscar((string) ($argumentos['consulta'] ?? ''))],
+            'enviar_enlace_activacion' => $this->enviarEnlaceActivacion($cliente, $telefono),
             'registrar_atestacion_cliente' => $this->tools->registrarAtestacion($cliente, $this->taxYearVigente($cliente), (string) ($argumentos['respuesta_cliente'] ?? '')),
             default => ['error' => "Tool desconocida: {$nombreTool}"],
         };
+    }
+
+    /**
+     * F2.4: un enlace nuevo para crear la contraseña, solo si la cuenta usa
+     * la entrevista nueva, todavía no tiene contraseña y la conversación es
+     * desde el mismo número de la cuenta. Con la contraseña ya definida
+     * nunca se manda nada: cambiarla va por "¿Olvidaste tu contraseña?" y el
+     * correo (así quien tome el WhatsApp del cliente no puede cambiarla).
+     *
+     * @return array<string, mixed>
+     */
+    private function enviarEnlaceActivacion(User $cliente, ?string $telefono): array
+    {
+        if (! $cliente->usaEntrevistaCatalogo()) {
+            return ['enviado' => false, 'motivo' => 'Este cliente entra al portal con su correo y contraseña; no hay enlace de activación.'];
+        }
+
+        if ($telefono === null || $cliente->phone === null || TelefonoWhatsapp::normalizar($telefono) !== $cliente->phone) {
+            return ['enviado' => false, 'motivo' => 'Los enlaces de activación solo se mandan al WhatsApp registrado en la cuenta.'];
+        }
+
+        $enlace = $this->enlaceActivacion->para($cliente);
+
+        if ($enlace === null) {
+            return ['enviado' => false, 'motivo' => 'La cuenta ya tiene contraseña. Si la olvidó, que use "¿Olvidaste tu contraseña?" en la pantalla de inicio de sesión del portal; le llega un correo. Nunca mandes enlaces para cambiarla.'];
+        }
+
+        return [
+            'enviado' => true,
+            'enlace' => $enlace,
+            'vence_en_minutos' => EnlaceActivacion::MINUTOS,
+            'instruccion' => 'Incluye el enlace tal cual en tu respuesta. Sirve para crear la contraseña y entrar al portal.',
+        ];
     }
 
     /**

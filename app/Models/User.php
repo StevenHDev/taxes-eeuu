@@ -33,6 +33,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $phone
  * @property Carbon|null $email_verified_at
  * @property string $password
+ * @property Carbon|null $contrasena_definida_en
  * @property UserRole $role
  * @property int|null $preparer_id
  * @property bool $es_prueba
@@ -65,6 +66,7 @@ class User extends Authenticatable implements PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'contrasena_definida_en' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
             'role' => UserRole::class,
             'es_prueba' => 'boolean',

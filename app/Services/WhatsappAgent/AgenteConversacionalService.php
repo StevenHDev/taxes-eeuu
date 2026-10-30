@@ -8,7 +8,9 @@ use App\Enums\FaseConversacion;
 use App\Enums\MetodoExtraccionDocumento;
 use App\Enums\RolMensajeWhatsapp;
 use App\Models\User;
+use App\Services\Consentimiento\EnlaceActivacion;
 use App\Support\AgentePromptVigente;
+use App\Support\TelefonoWhatsapp;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 
@@ -46,6 +48,7 @@ class AgenteConversacionalService
         private readonly EstadoConversacionResolver $resolver,
         private readonly OpenAiClient $openAi,
         private readonly ToolExecutor $toolExecutor,
+        private readonly EnlaceActivacion $enlaceActivacion,
     ) {}
 
     /**
@@ -101,7 +104,7 @@ class AgenteConversacionalService
                 // Nota efímera, nunca persistida: solo para esta llamada puntual a
                 // la API, no se agrega a $mensajes (que sigue acumulando el resto
                 // del turno) — ver notaLinkPortal().
-                $mensajesDeEsteTurno[] = ['role' => 'system', 'content' => $this->notaLinkPortal($mensajes)];
+                $mensajesDeEsteTurno[] = ['role' => 'system', 'content' => $this->notaLinkPortal($mensajes, $cliente, $telefono)];
             }
 
             $respuesta = $this->openAi->completarChat(
@@ -386,8 +389,12 @@ class AgenteConversacionalService
      * @param  array<int, array<string, mixed>>  $mensajes  ya construidos por mensajesDesdeHistorial(),
      *                                                      antes de agregar la nota de este método
      */
-    private function notaLinkPortal(array $mensajes): string
+    private function notaLinkPortal(array $mensajes, ?User $cliente, ?string $telefono): string
     {
+        if ($cliente !== null && $this->enlaceActivacion->pendiente($cliente) && $this->esSuTelefono($cliente, $telefono)) {
+            return $this->notaEnlaceActivacion($mensajes, $cliente);
+        }
+
         $link = self::linkPortal();
 
         $yaCompartido = collect($mensajes)->contains(
@@ -398,6 +405,38 @@ class AgenteConversacionalService
         return $yaCompartido
             ? 'Ya le compartiste el link del portal antes en esta conversación — no lo repitas de nuevo salvo que el cliente lo pida explícitamente.'
             : "Todavía no le has compartido el link del portal seguro en esta conversación. Inclúyelo tal cual en tu respuesta de este turno, junto con una explicación breve y cálida de qué es y qué debe hacer ahí. Menciona también que le llegó (o le va a llegar en breve) un correo aparte para definir la contraseña de su cuenta — sin ese paso, este link solo lo va a mandar a una pantalla de inicio de sesión sin contraseña que usar: {$link}";
+    }
+
+    /**
+     * F2.4: a un cliente con la entrevista nueva y sin contraseña, el primer
+     * enlace crea la contraseña (EnlaceActivacion), lo deja con la sesión
+     * iniciada y lo lleva al consentimiento. Se arma una sola vez por
+     * conversación: si ya se mandó y venció, el modelo pide otro con la tool
+     * `enviar_enlace_activacion`.
+     *
+     * @param  array<int, array<string, mixed>>  $mensajes
+     */
+    private function notaEnlaceActivacion(array $mensajes, User $cliente): string
+    {
+        $prefijo = EnlaceActivacion::prefijo();
+
+        $yaCompartido = collect($mensajes)->contains(
+            fn (array $m) => ($m['role'] ?? null) === 'assistant'
+                && str_contains((string) ($m['content'] ?? ''), $prefijo),
+        );
+
+        if ($yaCompartido) {
+            return 'Ya le mandaste el enlace para crear su contraseña en esta conversación: no lo repitas. Si el cliente dice que venció o no le funciona, pide uno nuevo con la tool enviar_enlace_activacion.';
+        }
+
+        $enlace = $this->enlaceActivacion->para($cliente);
+
+        return 'Todavía no le has mandado el enlace del portal seguro. Inclúyelo tal cual en tu respuesta de este turno, con una explicación breve y cálida: con ese enlace crea su contraseña y entra directo al portal, donde primero firma su consentimiento. Dile que el enlace vence en '.EnlaceActivacion::MINUTOS.' minutos y que, si vence, te pida otro. No le pidas que revise el correo: '.$enlace;
+    }
+
+    private function esSuTelefono(User $cliente, ?string $telefono): bool
+    {
+        return $telefono !== null && $cliente->phone !== null && TelefonoWhatsapp::normalizar($telefono) === $cliente->phone;
     }
 
     /**

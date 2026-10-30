@@ -131,6 +131,18 @@
             "linkSent": "Se ha enviado un nuevo enlace de verificación al correo electrónico que proporcionaste durante el registro.",
             "resend": "Reenviar correo de verificación",
             "logout": "Cerrar sesión"
+        },
+        "activarCuenta": {
+            "headTitle": "Crear contraseña",
+            "layoutTitle": "Crea tu contraseña",
+            "layoutDescription": "Con esta contraseña vas a entrar al portal seguro donde envías tus datos y documentos.",
+            "usadoDescription": "Este enlace ya se usó o venció.",
+            "irAlInicio": "Ir al inicio de sesión",
+            "olvide": "¿Olvidaste tu contraseña?",
+            "passwordLabel": "Contraseña nueva",
+            "confirmLabel": "Confirma la contraseña",
+            "submit": "Crear contraseña y entrar",
+            "vence": "El enlace es de un solo uso y vence a los 60 minutos. Si venció, pídele uno nuevo al asistente por WhatsApp."
         }
     },
     "dashboard": {
@@ -1319,5 +1331,15 @@
             "ayudaMonto": "En dólares, sin símbolo ni separadores de miles.",
             "validarSinFuentePreparador": "Este elemento todavía no tiene enlace a la fuente del IRS. Pídele a un administrador que lo agregue para poder validarlo."
         }
+    },
+    "portalConsentimiento": {
+        "paso": "Antes de empezar tu declaración {{anio}}",
+        "provisional": "Texto provisional, solo para pruebas: lo reemplaza el texto que apruebe el abogado.",
+        "acepto": "Leí este consentimiento y lo acepto.",
+        "nombreLabel": "Tu nombre completo",
+        "nombreAyuda": "Escribirlo cuenta como tu firma.",
+        "faltaCasilla": "Marca la casilla para continuar.",
+        "faltaNombre": "Escribe tu nombre completo para firmar.",
+        "firmar": "Firmar y continuar"
     }
 }

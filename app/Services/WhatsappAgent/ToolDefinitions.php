@@ -76,6 +76,9 @@ class ToolDefinitions
                 self::declararFormasCliente(),
                 self::consultarPendientesCliente(),
                 self::consultarBaseConocimiento(),
+                // F2.4: solo responde con un enlace a clientes con la
+                // entrevista nueva y sin contraseña (ver ToolExecutor).
+                self::enviarEnlaceActivacion(),
                 self::think(),
             ],
         };
@@ -261,6 +264,24 @@ class ToolDefinitions
                         'respuesta_cliente' => ['type' => 'string', 'description' => 'El texto literal que el cliente escribió confirmando — nunca una frase que tú inventes o resumas, es el registro exacto de su respuesta.'],
                     ],
                     'required' => ['respuesta_cliente'],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function enviarEnlaceActivacion(): array
+    {
+        return [
+            'type' => 'function',
+            'function' => [
+                'name' => 'enviar_enlace_activacion',
+                'description' => 'Pide un enlace nuevo para que el cliente cree la contraseña de su cuenta del portal, cuando el que le mandaste venció o no le funciona. El enlace lo arma el sistema: inclúyelo tal cual si la respuesta trae "enviado": true. Si trae "enviado": false, explícale el motivo; nunca inventes un enlace. Nunca sirve para cambiar una contraseña que ya existe.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => (object) [],
                 ],
             ],
         ];
