@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -97,6 +98,13 @@ export function EntrevistaCatalogoButton({
                         preserveScroll: true,
                         onStart: () => setEnviando(true),
                         onFinish: () => setEnviando(false),
+                        // Con el consentimiento provisional (F2.4) un
+                        // cliente real no puede pasar a la entrevista nueva.
+                        onError: (errores) => {
+                            if (errores.entrevista_catalogo) {
+                                toast.error(errores.entrevista_catalogo);
+                            }
+                        },
                     },
                 )
             }

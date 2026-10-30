@@ -174,12 +174,14 @@ class GuardadorTest extends TestCase
         $this->actingAs($preparador)->patch(route('usuarios.entrevista-catalogo', $this->cliente), ['entrevista_catalogo' => true])->assertForbidden();
         $this->actingAs($admin)->patch(route('usuarios.entrevista-catalogo', $preparador), ['entrevista_catalogo' => true])->assertForbidden();
 
+        // Con el consentimiento provisional (F2.4) solo pasan los de prueba.
+        $this->cliente->forceFill(['es_prueba' => true])->save();
         $this->actingAs($admin)->patch(route('usuarios.entrevista-catalogo', $this->cliente), ['entrevista_catalogo' => true])->assertRedirect();
 
         $this->assertTrue($this->cliente->fresh()->usaEntrevistaCatalogo());
         $this->assertSame(['entrevista_catalogo'], BitacoraActividad::query()
             ->where('auditable_type', User::class)->where('auditable_id', $this->cliente->id)
-            ->where('accion', AccionAuditoria::Actualizado->value)->sole()->campos_afectados);
+            ->where('accion', AccionAuditoria::Actualizado->value)->latest('id')->first()->campos_afectados);
     }
 
     public function test_los_clientes_nuevos_toman_la_bandera_de_la_configuracion(): void
