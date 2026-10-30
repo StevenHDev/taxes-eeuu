@@ -20,6 +20,9 @@ use App\Models\CatalogoFiscal\CatalogoPregunta;
 use App\Models\CatalogoFiscal\CatalogoRegla;
 use App\Models\DeterminacionFiscal;
 use App\Models\Documento;
+use App\Models\Entrevista\Entrevista;
+use App\Models\Entrevista\EntrevistaPersona;
+use App\Models\Entrevista\EntrevistaRespuesta;
 use App\Models\FormaCliente;
 use App\Models\NivelRiesgoManual;
 use App\Models\ParametroFiscal;
@@ -27,6 +30,7 @@ use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Observers\AuditoriaObserver;
 use App\Observers\CatalogoCambioObserver;
+use App\Observers\RespuestaEntrevistaObserver;
 use App\Observers\WhatsappMensajeObserver;
 use App\Policies\AgentePromptPolicy;
 use App\Policies\AgenteToolPolicy;
@@ -103,6 +107,13 @@ class AppServiceProvider extends ServiceProvider
         foreach ([CatalogoPregunta::class, CatalogoDocumento::class, CatalogoFormulario::class, CatalogoRegla::class] as $pieza) {
             $pieza::observe(AuditoriaObserver::class);
         }
+
+        // Entrevista (F2.2): a la bitácora solo van los nombres de atributo;
+        // el historial con valores cifrados lo lleva RespuestaEntrevistaObserver.
+        foreach ([Entrevista::class, EntrevistaPersona::class, EntrevistaRespuesta::class] as $modelo) {
+            $modelo::observe(AuditoriaObserver::class);
+        }
+        EntrevistaRespuesta::observe(RespuestaEntrevistaObserver::class);
 
         foreach ([CatalogoPregunta::class, CatalogoDocumento::class, CatalogoCasilla::class, CatalogoFormulario::class, CatalogoLinea::class, CatalogoActivacion::class, CatalogoRegla::class, ParametroFiscal::class] as $pieza) {
             $pieza::observe(CatalogoCambioObserver::class);

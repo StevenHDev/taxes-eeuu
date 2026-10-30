@@ -1078,6 +1078,11 @@
             "description": "Es un usuario de prueba: se borran todos sus datos, documentos y archivos. Esta acción no se puede deshacer.",
             "alsoDeleteConversation": "También eliminar su conversación de WhatsApp (mensajes y estado de control).",
             "confirm": "Eliminar definitivamente"
+        },
+        "entrevistaCatalogo": {
+            "badge": "Entrevista nueva",
+            "activar": "Usar entrevista nueva",
+            "quitar": "Volver al formulario actual"
         }
     },
     "catalogoFiscal": {

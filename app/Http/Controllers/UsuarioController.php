@@ -27,7 +27,7 @@ class UsuarioController extends Controller
             'usuarios' => User::withTrashed()
                 ->with('preparer:id,name')
                 ->orderBy('name')
-                ->get(['id', 'name', 'email', 'phone', 'role', 'preparer_id', 'es_prueba', 'deleted_at'])
+                ->get(['id', 'name', 'email', 'phone', 'role', 'preparer_id', 'es_prueba', 'entrevista_catalogo', 'deleted_at'])
                 ->map(fn (User $u) => [
                     'id' => $u->id,
                     'name' => $u->name,
@@ -36,6 +36,7 @@ class UsuarioController extends Controller
                     'role' => $u->role,
                     'preparer' => $u->preparer?->only(['id', 'name']),
                     'es_prueba' => $u->es_prueba,
+                    'entrevista_catalogo' => $u->entrevista_catalogo,
                     'archivado' => $u->trashed(),
                 ]),
             'preparadores' => User::query()
@@ -97,6 +98,22 @@ class UsuarioController extends Controller
         $validado = $request->validate(['es_prueba' => ['required', 'boolean']]);
 
         $usuario->forceFill(['es_prueba' => $validado['es_prueba']])->save();
+
+        return back();
+    }
+
+    /**
+     * Pasa un cliente a la entrevista nueva sobre el catálogo fiscal (F2.2)
+     * o lo devuelve al formulario actual. Queda en la bitácora por el
+     * AuditoriaObserver (campo `entrevista_catalogo`).
+     */
+    public function marcarEntrevistaCatalogo(Request $request, User $usuario): RedirectResponse
+    {
+        $this->authorize('marcarEntrevistaCatalogo', $usuario);
+
+        $validado = $request->validate(['entrevista_catalogo' => ['required', 'boolean']]);
+
+        $usuario->forceFill(['entrevista_catalogo' => $validado['entrevista_catalogo']])->save();
 
         return back();
     }

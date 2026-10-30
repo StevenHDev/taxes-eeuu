@@ -78,6 +78,15 @@ class ClientePolicy
         return $actor->role === UserRole::Administrator && $actor->id !== $target->id;
     }
 
+    /**
+     * La bandera de la entrevista nueva (F2.2) es solo de clientes y la
+     * cambia solo el administrador.
+     */
+    public function marcarEntrevistaCatalogo(User $actor, User $target): bool
+    {
+        return $actor->role === UserRole::Administrator && $target->role === UserRole::Client;
+    }
+
     private function tieneAcceso(User $actor, User $cliente): bool
     {
         return match ($actor->role) {

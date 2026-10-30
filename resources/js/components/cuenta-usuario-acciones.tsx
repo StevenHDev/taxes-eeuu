@@ -12,9 +12,11 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { destroy as clienteArchivar } from '@/routes/clientes';
 import {
     destroy as usuarioArchivar,
+    entrevistaCatalogo as usuarioEntrevistaCatalogo,
     forceDestroy as usuarioEliminarDefinitivo,
     prueba as usuarioMarcarPrueba,
     restore as usuarioRestaurar,
@@ -59,6 +61,48 @@ export function MarcarPruebaButton({
             {usuario.es_prueba
                 ? t('cuentaUsuario.quitarPrueba')
                 : t('cuentaUsuario.marcarPrueba')}
+        </Button>
+    );
+}
+
+/**
+ * Bandera de F2.2: pasa a un cliente a la entrevista nueva sobre el
+ * catálogo fiscal o lo devuelve al formulario actual. Hasta el cambio de
+ * flujo (2.10) se usa solo con clientes de prueba.
+ */
+export function EntrevistaCatalogoButton({
+    usuario,
+    size = 'default',
+}: {
+    usuario: { id: number; name: string; entrevista_catalogo: boolean };
+    size?: TamanoBoton;
+}) {
+    const { t } = useTranslation();
+    const [enviando, setEnviando] = useState(false);
+    const etiqueta = usuario.entrevista_catalogo
+        ? t('cuentaUsuario.entrevistaCatalogo.quitar')
+        : t('cuentaUsuario.entrevistaCatalogo.activar');
+
+    return (
+        <Button
+            variant="outline"
+            size={size}
+            disabled={enviando}
+            aria-label={`${etiqueta}: ${usuario.name}`}
+            onClick={() =>
+                router.patch(
+                    usuarioEntrevistaCatalogo(usuario.id).url,
+                    { entrevista_catalogo: !usuario.entrevista_catalogo },
+                    {
+                        preserveScroll: true,
+                        onStart: () => setEnviando(true),
+                        onFinish: () => setEnviando(false),
+                    },
+                )
+            }
+        >
+            {enviando ? <Spinner aria-hidden="true" /> : null}
+            {etiqueta}
         </Button>
     );
 }

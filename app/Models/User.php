@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use App\Models\Entrevista\Entrevista;
 use App\Services\UsuarioRetencionService;
 use App\Support\TelefonoWhatsapp;
 use Database\Factories\UserFactory;
@@ -35,6 +36,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property UserRole $role
  * @property int|null $preparer_id
  * @property bool $es_prueba
+ * @property bool $entrevista_catalogo
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -66,7 +68,30 @@ class User extends Authenticatable implements PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'role' => UserRole::class,
             'es_prueba' => 'boolean',
+            'entrevista_catalogo' => 'boolean',
         ];
+    }
+
+    /**
+     * Los clientes nuevos toman la bandera de la entrevista nueva de
+     * `tax.entrevista_catalogo_por_defecto` (falso hasta 2.10).
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if ($user->role === UserRole::Client && ! array_key_exists('entrevista_catalogo', $user->getAttributes())) {
+                $user->entrevista_catalogo = (bool) config('tax.entrevista_catalogo_por_defecto');
+            }
+        });
+    }
+
+    /**
+     * Único lugar que lee la bandera de la entrevista sobre el catálogo
+     * fiscal (F2.2). Se borra en 2.11, cuando todos usen el flujo nuevo.
+     */
+    public function usaEntrevistaCatalogo(): bool
+    {
+        return $this->role === UserRole::Client && $this->entrevista_catalogo;
     }
 
     /**
@@ -124,6 +149,14 @@ class User extends Authenticatable implements PasskeyUser
     public function preparer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'preparer_id');
+    }
+
+    /**
+     * @return HasMany<Entrevista, $this>
+     */
+    public function entrevistas(): HasMany
+    {
+        return $this->hasMany(Entrevista::class);
     }
 
     /**

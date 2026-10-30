@@ -1078,6 +1078,11 @@
             "description": "This is a test user: all their data, documents and files will be deleted. This action cannot be undone.",
             "alsoDeleteConversation": "Also delete their WhatsApp conversation (messages and control state).",
             "confirm": "Delete permanently"
+        },
+        "entrevistaCatalogo": {
+            "badge": "New interview",
+            "activar": "Use new interview",
+            "quitar": "Back to current form"
         }
     },
     "catalogoFiscal": {
