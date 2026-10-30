@@ -118,7 +118,7 @@ Plan técnico: [`fases/fase-2-entrevista.md`](fases/fase-2-entrevista.md) · ✅
 Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
 - [x] Plan técnico de la fase 2 escrito y aprobado
 - [x] 2.1 Los preparadores también validan piezas del catálogo
-- [ ] 2.2 Respuestas de la entrevista y motor único (+ bandera por cliente, contenido nuevo del catálogo)
+- [x] 2.2 Respuestas de la entrevista y motor único (+ bandera por cliente, contenido nuevo del catálogo). Falta cargar el contenido nuevo en producción después del deploy (`cargar 2025`, `cargar 2026`, `verificar`)
 - [ ] 2.3 Mapa de equivalencias `campos_cliente` → catálogo y reporte
 - [ ] 2.4 Primera entrada desde el enlace de WhatsApp (crear contraseña sin pasar por el correo) y consentimiento §7216 en el portal (texto provisional; el definitivo espera L1)
 - [ ] 2.5 Entrevista en el portal: 8 pantallas en tres niveles
@@ -135,7 +135,6 @@ Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
 - [ ] Prueba: María empieza por WhatsApp y termina en el portal sin repetir
 - [ ] Mapa de equivalencias de `campos_cliente` → catálogo nuevo y reporte de solo lectura (antes F1.6)
 - [ ] Migrar `campos_cliente` a las respuestas nuevas con ese mapa y eliminar las pseudoformas `transversal` y `documentos_extra` (E12), la tool `consultar_documentos_extra` y el menú "Campos del formulario actual" (decisión de Steven, 29 oct.)
-- [ ] Permitir que los preparadores también marquen piezas del catálogo como validadas contra el IRS (decisión de Steven, 29 oct.)
 - [ ] Ingresos en selección múltiple en un solo paso (hoy el árbol pregunta la fuente principal y luego "¿algo más?" una por una)
 - [ ] Socio de LLC o S-corp: la empresa no se atiende, pero su K-1 personal sí (1040 + Schedule E). Hoy el prompt le dice "no lo atendemos" (visto al cerrar F0.6)
 

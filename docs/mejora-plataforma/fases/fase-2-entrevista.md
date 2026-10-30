@@ -101,6 +101,15 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 - Cada cambio deja una fila de historial con el valor anterior; responder una entrevista confirmada la reabre.
 - El valor queda cifrado en la base.
 
+**Cómo quedó (30 oct.):**
+- **Datos:** migración `crea_entrevistas` con las 4 tablas y `users.entrevista_catalogo`. Modelos en `App\Models\Entrevista\*`. El valor usa el cast `ValorCifrado` en lugar de `encrypted:array`, porque ese cast solo acepta arreglos y aquí el valor puede ser texto, número o lista; se guarda envuelto (`{"v": …}`) y cifrado igual. El historial lo escribe `RespuestaEntrevistaObserver`. La primera respuesta no deja fila de historial (ya está en la propia respuesta) y repetir el mismo valor tampoco.
+- **Motor:** `MotorEntrevista::situacion()` devuelve `SituacionEntrevista`. Se cambió el nombre `EstadoEntrevista` del plan porque ya es el enum de estados. Documentos y formularios activados van como **listas** `{codigo, activado_por}`, no como mapas: "1040" quedaría como clave numérica, igual que en el lector.
+- **Bloque C:** C1–C14 llevan en los datos la condición "C0 = sí". Así "no" salta todo el bloque sin una regla escondida en el código. Las preguntas por persona solo se ven por persona.
+- **Guardador:** `RespuestaGuardador` también abre la entrevista del año (`entrevistaDe`) y agrega o quita personas (quitar archiva y recalcula). Al sincronizar `FormaCliente`, una forma que deja de activarse se borra solo si ningún preparador la revisó. Un rechazo es `RespuestaRechazada` con el código de la pregunta.
+- **Bandera:** botón "Usar entrevista nueva" / "Volver al formulario actual" en Usuarios, solo en filas de clientes, con la insignia "Entrevista nueva". La ruta es `usuarios.entrevista-catalogo` (política `marcarEntrevistaCatalogo`). La ficha del cliente no lo tiene todavía: llega con su vista de la entrevista (2.9). Hay dos claves de configuración, `tax.entrevista_catalogo_por_defecto` y `tax.entrevista_whatsapp` (las dos en falso).
+- **Catálogo:** C0, D1.1, D18, F4.1 y el documento `k-1` (79 preguntas y 42 documentos). El importador ahora carga un año copiado (2026) con los **archivos del año de origen** y su `ajustes.php` aplicado en memoria. Las casillas renombradas se renombran antes, para no duplicarse. Así 2026 hereda lo nuevo de 2025 y una segunda carga no deja cambios. Probado en local: `cargar 2025`, `cargar 2026` dos veces y `verificar` sin problemas en los dos años.
+- **Pruebas:** `MotorTest` (8) y `GuardadorTest` (17, con las 7 sensibles por WhatsApp), más una prueba de la carga derivada en `CargaTest`. Suite: 632 pruebas, 630 pasan y 2 se saltan.
+
 ---
 
 ## 2.3 Mapa de equivalencias `campos_cliente` → catálogo y reporte (antes F1.6)
