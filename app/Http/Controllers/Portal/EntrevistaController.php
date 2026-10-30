@@ -8,6 +8,7 @@ use App\Http\Controllers\Portal\Concerns\ConChatDeDudas;
 use App\Http\Requests\Portal\GuardarPasoRequest;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaPersona;
+use App\Services\Entrevista\ConfirmacionEntrevista;
 use App\Services\Entrevista\DocumentosEntrevista;
 use App\Services\Entrevista\PasosEntrevista;
 use App\Services\Entrevista\RespuestaData;
@@ -49,10 +50,35 @@ class EntrevistaController extends Controller
             'continuarEn' => collect($avance)->firstWhere(fn (array $p) => $p['estado'] !== 'completa')['numero'] ?? null,
             'personas' => $entrevista->personas()->count(),
             'conPersonas' => $this->pasos->conPersonas($situacion),
+            'estado' => $entrevista->estado->value,
             'documentos' => [
                 'total' => count($situacion->documentos),
                 'faltan' => collect($this->documentos->lista($entrevista, $situacion, false))->where('archivos', [])->count(),
             ],
+        ]);
+    }
+
+    /**
+     * Revisión de todo antes de confirmar (F2.7).
+     */
+    public function resumen(Request $request, ConfirmacionEntrevista $confirmacion): Response
+    {
+        $entrevista = $this->entrevista($request);
+        $situacion = $this->pasos->situacion($entrevista);
+        $ingles = str_starts_with(app()->getLocale(), 'en');
+        $documentos = $this->documentos->lista($entrevista, $situacion, $ingles);
+
+        return Inertia::render('portal/entrevista/resumen', [
+            'taxYear' => $entrevista->tax_year,
+            'estado' => $entrevista->estado->value,
+            'confirmadaEn' => $entrevista->confirmada_en?->toIso8601String(),
+            'pantallas' => $confirmacion->resumen($entrevista, $situacion, $ingles),
+            'documentos' => array_map(fn (array $d) => [
+                'codigo' => $d['codigo'],
+                'persona_orden' => $d['persona_orden'],
+                'nombre' => $d['nombre'],
+                'archivos' => count($d['archivos']),
+            ], $documentos),
         ]);
     }
 

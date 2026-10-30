@@ -13,6 +13,7 @@ import {
     documentos as rutaDocumentos,
     paso as rutaPaso,
     personas as rutaPersonas,
+    resumen as rutaResumen,
 } from '@/routes/portal/entrevista';
 import type { AvancePantalla, EstadoPantalla } from '@/types/entrevista';
 
@@ -33,6 +34,7 @@ export default function InicioEntrevista({
     continuarEn,
     conPersonas,
     documentos,
+    estado,
 }: {
     taxYear: number;
     pantallas: AvancePantalla[];
@@ -40,6 +42,7 @@ export default function InicioEntrevista({
     personas: number;
     conPersonas: boolean;
     documentos: { total: number; faltan: number };
+    estado: 'en_curso' | 'confirmada' | 'reabierta';
 }) {
     const { t } = useTranslation();
     const empezada = pantallas.some((p) => p.respondidas > 0);
@@ -72,13 +75,39 @@ export default function InicioEntrevista({
                         </Link>
                     </Button>
                 ) : (
-                    <p
-                        role="status"
-                        className="rounded-lg border border-border bg-card p-4 text-sm"
-                    >
-                        {t('entrevista.inicio.todoRespondido')}
-                    </p>
+                    <div className="space-y-3">
+                        <p
+                            role="status"
+                            className="rounded-lg border border-border bg-card p-4 text-sm"
+                        >
+                            {estado === 'confirmada'
+                                ? t('entrevista.estadoEntrevista.confirmada')
+                                : t('entrevista.inicio.todoRespondido')}
+                        </p>
+                        <Button
+                            asChild
+                            size="lg"
+                            variant={
+                                estado === 'confirmada' ? 'outline' : 'default'
+                            }
+                            className="w-full sm:w-auto"
+                        >
+                            <Link href={rutaResumen()} prefetch>
+                                {t('entrevista.resumen.revisar')}
+                                <ChevronRight aria-hidden="true" />
+                            </Link>
+                        </Button>
+                    </div>
                 )}
+
+                {estado === 'reabierta' ? (
+                    <p
+                        role="note"
+                        className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+                    >
+                        {t('entrevista.estadoEntrevista.reabierta')}
+                    </p>
+                ) : null}
 
                 {documentos.total > 0 ? (
                     <Link

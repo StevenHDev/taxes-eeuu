@@ -18,10 +18,13 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property int $tax_year
+ * @property string $canal whatsapp (fase Cierre del agente actual) o portal (F2.7)
+ * @property int|null $entrevista_id
+ * @property string|null $resumen_hash hash de las respuestas que confirmó (F2.7)
  * @property string $respuesta_cliente
  * @property Carbon $confirmado_en
  */
-#[Fillable(['user_id', 'tax_year', 'respuesta_cliente', 'confirmado_en'])]
+#[Fillable(['user_id', 'tax_year', 'canal', 'entrevista_id', 'respuesta_cliente', 'resumen_hash', 'confirmado_en'])]
 class ClienteAtestacion extends Model
 {
     protected $table = 'cliente_atestaciones';

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Portal\ConfirmarEntrevistaController;
 use App\Http\Controllers\Portal\ConsentimientoController;
 use App\Http\Controllers\Portal\DocumentoEntrevistaController;
 use App\Http\Controllers\Portal\EntrevistaController;
@@ -33,6 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('portal.entrevista.')
         ->group(function () {
             Route::get('/', [EntrevistaController::class, 'inicio'])->name('inicio');
+            Route::get('resumen', [EntrevistaController::class, 'resumen'])->name('resumen');
+            Route::post('confirmar', ConfirmarEntrevistaController::class)->name('confirmar');
             Route::get('documentos', [DocumentoEntrevistaController::class, 'index'])->name('documentos');
             Route::post('documentos/{codigo}', [DocumentoEntrevistaController::class, 'store'])
                 ->where('codigo', '[a-z0-9-]+')

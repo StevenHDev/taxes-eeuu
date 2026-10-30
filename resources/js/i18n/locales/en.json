@@ -1396,7 +1396,7 @@
             "descripcion": "Eight short screens to learn what your {{anio}} tax return needs. What you already answered on WhatsApp is checked.",
             "empezar": "Start",
             "seguir": "Continue where I left off",
-            "todoRespondido": "You answered every screen. You can review or change any of them."
+            "todoRespondido": "You answered every screen. Review your information and confirm it."
         },
         "estado": {
             "completa": "Complete",
@@ -1439,6 +1439,31 @@
             "resumen_one": "1 of {{total}} missing",
             "resumen_other": "{{count}} of {{total}} missing",
             "resumenCompleto": "All received"
+        },
+        "resumen": {
+            "titulo": "Review your information",
+            "descripcion": "This is what you told us for your {{anio}} tax return. If something is not right, change it.",
+            "sinResponder": "Not answered",
+            "mostrar": "Show",
+            "ocultar": "Hide",
+            "cambiar": "Change",
+            "responder": "Answer",
+            "faltan_one": "1 answer is missing before you can confirm.",
+            "faltan_other": "{{count}} answers are missing before you can confirm.",
+            "confirmada": "We received your information on {{fecha}}. Your preparer will review it. If you change anything, you will need to confirm again.",
+            "reabierta": "You changed something after confirming. Review and confirm again.",
+            "verDocumentos": "See documents",
+            "documentosDespues": "You can confirm now and upload the missing documents later.",
+            "volver": "Back to the interview",
+            "completar": "Complete what is missing",
+            "confirmar": "Confirm my information is correct",
+            "revisar": "Review and confirm",
+            "faltanEnPantalla_one": "{{pantalla}}: 1 missing",
+            "faltanEnPantalla_other": "{{pantalla}}: {{count}} missing"
+        },
+        "estadoEntrevista": {
+            "confirmada": "You confirmed your information. Your preparer will review it.",
+            "reabierta": "You changed something: confirm again"
         }
     }
 }

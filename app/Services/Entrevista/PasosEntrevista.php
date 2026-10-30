@@ -101,9 +101,10 @@ class PasosEntrevista
             return route('portal.entrevista.personas');
         }
 
+        // Después de la última pantalla, la revisión para confirmar (F2.7).
         return $pantalla < self::PANTALLAS
             ? route('portal.entrevista.paso', ['pantalla' => $pantalla + 1])
-            : route('portal.entrevista.inicio');
+            : route('portal.entrevista.resumen');
     }
 
     public function anterior(int $pantalla, string $paso, ?int $personaId = null): string

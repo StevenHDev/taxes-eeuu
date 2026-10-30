@@ -1396,7 +1396,7 @@
             "descripcion": "Ocho pantallas cortas para saber qué necesita tu declaración {{anio}}. Lo que ya respondiste por WhatsApp aparece marcado.",
             "empezar": "Empezar",
             "seguir": "Seguir donde quedé",
-            "todoRespondido": "Respondiste todas las pantallas. Puedes revisar o cambiar cualquiera."
+            "todoRespondido": "Respondiste todas las pantallas. Revisa tu información y confírmala."
         },
         "estado": {
             "completa": "Completa",
@@ -1439,6 +1439,31 @@
             "resumen_one": "Falta 1 de {{total}}",
             "resumen_other": "Faltan {{count}} de {{total}}",
             "resumenCompleto": "Todos recibidos"
+        },
+        "resumen": {
+            "titulo": "Revisa tu información",
+            "descripcion": "Esto es lo que nos contaste para tu declaración {{anio}}. Si algo no está bien, cámbialo.",
+            "sinResponder": "Sin responder",
+            "mostrar": "Mostrar",
+            "ocultar": "Ocultar",
+            "cambiar": "Cambiar",
+            "responder": "Responder",
+            "faltan_one": "Te falta 1 respuesta para poder confirmar.",
+            "faltan_other": "Te faltan {{count}} respuestas para poder confirmar.",
+            "confirmada": "Recibimos tu información el {{fecha}}. Tu preparador la revisará. Si cambias algo, tendrás que confirmar de nuevo.",
+            "reabierta": "Cambiaste algo después de confirmar. Revisa y confirma de nuevo.",
+            "verDocumentos": "Ver documentos",
+            "documentosDespues": "Puedes confirmar ahora y subir después los documentos que faltan.",
+            "volver": "Volver a la entrevista",
+            "completar": "Completar lo que falta",
+            "confirmar": "Confirmar que mi información es correcta",
+            "revisar": "Revisar y confirmar",
+            "faltanEnPantalla_one": "{{pantalla}}: falta 1",
+            "faltanEnPantalla_other": "{{pantalla}}: faltan {{count}}"
+        },
+        "estadoEntrevista": {
+            "confirmada": "Confirmaste tu información. Tu preparador la revisará.",
+            "reabierta": "Cambiaste algo: confirma de nuevo"
         }
     }
 }
