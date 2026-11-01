@@ -149,6 +149,10 @@ class AgenteEntrevistaTest extends TestCase
         $this->assertNotContains('A1', $codigos, 'La pantalla 1 va por el portal.');
         $this->assertSame(route('portal.entrevista.documentos'), $resultado['enlaces']['documentos']);
         $this->assertGreaterThan(0, $resultado['falta_en_el_portal']['preguntas_sensibles']);
+        $this->assertFalse($resultado['con_conyuge']);
+
+        $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'B1', 'valor' => 'casado']]]);
+        $this->assertTrue($this->tool('consultar_entrevista')['con_conyuge']);
     }
 
     public function test_con_la_entrevista_por_whatsapp_apagada_nunca_se_ofrece_guardar_respuestas(): void

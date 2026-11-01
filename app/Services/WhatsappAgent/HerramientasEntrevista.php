@@ -50,6 +50,9 @@ class HerramientasEntrevista
         return [
             'estado' => $entrevista->estado->value,
             'puede_preguntar_por_whatsapp' => EstadoConversacionResolver::entrevistaPorWhatsapp($cliente),
+            // Sin cónyuge (B1 distinto de "casado"), las preguntas "usted o
+            // cónyuge" se hacen como sí o no y "sí" se guarda como ["usted"].
+            'con_conyuge' => $this->pasos->conConyuge($situacion),
             'proximas_preguntas' => collect($situacion->pendientesParaWhatsapp())
                 ->take(self::PROXIMAS)
                 ->map(function (array $p) use ($preguntas, $personas, $entrevista) {
