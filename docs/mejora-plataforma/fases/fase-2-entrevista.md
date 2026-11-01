@@ -414,7 +414,14 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 - **Analizador de conversaciones:** con la bandera, cuenta como terminada la entrevista confirmada en el portal (antes, solo la fase Cierre). `FASES_ACOPLADAS` no cambió.
 - **Corrección al plan:** María no deja la pantalla 3 completa por WhatsApp: A12 (IP PIN) es sensible y va por el portal. La prueba lo refleja.
 - **Pruebas:** `AgenteEntrevistaTest` (7) y `MariaTest` (1). María da 25 respuestas o menos sin contar los "no"; ninguna se repite (sin cambios en el historial) y se activan W-2, la tarjeta del hijo, el recibo de cuidado, 8812, 2441 y EIC.
-- **Falta (manual):** probarlo con un usuario de prueba por WhatsApp real en producción, después de publicar los prompts.
+- **Prueba manual por WhatsApp (1 nov., cliente de prueba #27):**
+  - **Funcionó:** el paso del flujo actual a la entrevista nueva, el enlace de activación, la firma, las preguntas agrupadas, los seguimientos (D1.1, D3.1, D12.1, D15.1, A7, C12–C14), que no pidiera nada sensible y 43 respuestas sin errores.
+  - **Ajustes que salieron de la prueba:**
+    - `consultar_entrevista` ahora devuelve `con_conyuge`, y el prompt pide sí o no (sin "yo, mi cónyuge o ambos") cuando el cliente no está casado;
+    - regla **"Aclara antes de guardar"**: en las preguntas con "o" basta una parte para que sea "sí", y si hay contradicciones se pregunta. En la prueba, "no es de Estados Unidos" se guardó como C6 = no para una persona que vivió todo el año en EE. UU.;
+    - C0 = sí ya confirma que la persona vivió con el cliente, así que no se vuelve a preguntar;
+    - las preguntas van siempre numeradas.
+  - **Queda anotado:** D17 ("otro dinero") no pregunta de qué tipo; podría ser un seguimiento del catálogo.
 
 ---
 
