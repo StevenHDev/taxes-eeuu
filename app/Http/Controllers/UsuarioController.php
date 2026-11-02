@@ -5,12 +5,10 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Http\Requests\UsuarioRequest;
 use App\Models\User;
-use App\Services\Consentimiento\Consentimientos;
 use App\Services\UsuarioRetencionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -116,19 +114,11 @@ class UsuarioController extends Controller
      * o lo devuelve al formulario actual. Queda en la bitácora por el
      * AuditoriaObserver (campo `entrevista_catalogo`).
      */
-    public function marcarEntrevistaCatalogo(Request $request, User $usuario, Consentimientos $consentimientos): RedirectResponse
+    public function marcarEntrevistaCatalogo(Request $request, User $usuario): RedirectResponse
     {
         $this->authorize('marcarEntrevistaCatalogo', $usuario);
 
         $validado = $request->validate(['entrevista_catalogo' => ['required', 'boolean']]);
-
-        // F2.4: mientras el consentimiento §7216 sea el texto provisional
-        // (falta L1), la entrevista nueva es solo para usuarios de prueba.
-        if ($validado['entrevista_catalogo'] && ! $usuario->es_prueba && $consentimientos->soloPruebas()) {
-            throw ValidationException::withMessages([
-                'entrevista_catalogo' => __('Mientras el consentimiento sea provisional, la entrevista nueva es solo para usuarios de prueba.'),
-            ]);
-        }
 
         $usuario->forceFill(['entrevista_catalogo' => $validado['entrevista_catalogo']])->save();
 

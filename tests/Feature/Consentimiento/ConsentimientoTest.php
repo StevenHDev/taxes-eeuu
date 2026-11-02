@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\Consentimiento\Consentimiento;
 use App\Models\Consentimiento\ConsentimientoTexto;
 use App\Models\User;
+use App\Services\Consentimiento\Consentimientos;
 use App\Services\Consentimiento\ConsentimientosCargador;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
@@ -116,18 +117,25 @@ class ConsentimientoTest extends TestCase
         $this->assertEqualsCanonicalizing(['GET', 'HEAD', 'POST'], $rutas->flatMap(fn ($r) => $r->methods())->unique()->values()->all());
     }
 
-    public function test_con_texto_provisional_un_cliente_real_no_pasa_a_la_entrevista_nueva(): void
+    public function test_un_cliente_real_firma_el_texto_provisional_sin_ver_el_aviso_de_pruebas(): void
     {
+        // F2.10: los clientes reales firman el texto provisional; cuando
+        // llegue el definitivo (otra versión) firman de nuevo.
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
         $real = User::factory()->create(['role' => UserRole::Client]);
 
         $this->actingAs($admin)->patch(route('usuarios.entrevista-catalogo', $real), ['entrevista_catalogo' => true])
-            ->assertSessionHasErrors('entrevista_catalogo');
-        $this->assertFalse($real->fresh()->entrevista_catalogo);
+            ->assertSessionHasNoErrors();
+        $this->assertTrue($real->fresh()->entrevista_catalogo);
 
-        // Y aunque se le hubiera activado por otro camino, no puede firmar.
-        $real->forceFill(['entrevista_catalogo' => true])->save();
-        $this->actingAs($real)->post(route('portal.consentimiento.store'), ['acepto' => true, 'nombre_escrito' => 'Real', 'version' => 1])->assertForbidden();
+        $this->actingAs($real->fresh())->get(route('portal.consentimiento'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('texto.provisional', false));
+
+        $this->actingAs($real->fresh())
+            ->post(route('portal.consentimiento.store'), ['acepto' => true, 'nombre_escrito' => 'Real', 'version' => 1])
+            ->assertRedirect(route('portal.entrevista.inicio'));
+        $this->assertTrue(app(Consentimientos::class)->firmado($real, (int) config('tax.current_tax_year')));
     }
 
     public function test_la_carga_es_idempotente_y_no_cambia_un_texto_ya_firmado(): void

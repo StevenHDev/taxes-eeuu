@@ -44,7 +44,10 @@ class ConsentimientoController extends Controller
                 // El texto viene de los archivos del repositorio, no de un
                 // usuario; igual se descarta cualquier HTML que traiga.
                 'html' => Str::markdown($ingles ? $texto->texto_en : $texto->texto_es, ['html_input' => 'strip', 'allow_unsafe_links' => false]),
-                'provisional' => $texto->provisional,
+                // F2.10: los clientes reales también firman el texto
+                // provisional (decisión de Steven, 1 nov.); el aviso de
+                // "provisional" queda solo para los usuarios de prueba.
+                'provisional' => $texto->provisional && $cliente->es_prueba,
             ],
             'taxYear' => $taxYear,
             'nombreSugerido' => $cliente->name,
@@ -55,10 +58,6 @@ class ConsentimientoController extends Controller
     {
         $cliente = $request->user();
         $taxYear = (int) config('tax.current_tax_year');
-
-        if ($this->consentimientos->soloPruebas() && ! $cliente->es_prueba) {
-            abort(403, 'El texto del consentimiento todavía es provisional: solo lo firman usuarios de prueba.');
-        }
 
         try {
             $this->consentimientos->firmar(

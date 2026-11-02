@@ -45,15 +45,6 @@ class Consentimientos
     }
 
     /**
-     * Si el texto vigente todavía es el provisional: entonces solo lo
-     * firman usuarios de prueba.
-     */
-    public function soloPruebas(string $codigo = ConsentimientoTexto::USO_7216): bool
-    {
-        return $this->vigente($codigo)?->provisional ?? true;
-    }
-
-    /**
      * @throws InvalidArgumentException si la versión firmada no es la vigente
      */
     public function firmar(User $cliente, int $taxYear, int $version, string $nombreEscrito, ?string $ip, ?string $userAgent, string $codigo = ConsentimientoTexto::USO_7216): Consentimiento
