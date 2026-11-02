@@ -155,6 +155,23 @@ class AgenteEntrevistaTest extends TestCase
         $this->assertTrue($this->tool('consultar_entrevista')['con_conyuge']);
     }
 
+    public function test_consultar_entrevista_trae_que_subir_pero_no_la_nota_del_cliente(): void
+    {
+        $this->firmar();
+        $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'D12', 'valor' => 'si']]]);
+        $entrevista = Entrevista::query()->where('user_id', $this->cliente->id)->firstOrFail();
+        $entrevista->documentos()->where('documento_codigo', 'registros-alquiler')->firstOrFail()->update(['nota_cliente' => 'Vacía en marzo.']);
+
+        $pendientes = $this->tool('consultar_entrevista')['documentos']['pendientes'];
+        $alquiler = collect($pendientes)->firstWhere('nombre', 'Registros de alquiler');
+
+        $this->assertNotNull($alquiler);
+        $this->assertStringContainsString('No tienes que sumar nada', $alquiler['que_subir']);
+        $this->assertArrayNotHasKey('nota_cliente', $alquiler);
+        $this->assertStringNotContainsString('Vacía en marzo.', json_encode($pendientes));
+        $this->assertStringNotContainsString('plantillas/', json_encode($pendientes));
+    }
+
     public function test_consultar_entrevista_explica_los_documentos_que_faltan_sin_archivos(): void
     {
         Storage::fake(Documento::disco());

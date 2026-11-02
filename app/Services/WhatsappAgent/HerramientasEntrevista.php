@@ -195,6 +195,7 @@ class HerramientasEntrevista
                     'quien_lo_envia' => $d['emisor'],
                     'fecha_llegada' => $d['fecha_llegada'],
                     'si_no_llega' => $d['si_no_llega'],
+                    'que_subir' => $d['que_subir'],
                     'devuelto_por_el_preparador' => in_array($d['estado'], $devueltos, true),
                     'comentario_del_preparador' => in_array($d['estado'], $devueltos, true) ? $d['observacion'] : null,
                 ];
