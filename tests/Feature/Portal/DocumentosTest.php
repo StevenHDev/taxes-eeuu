@@ -41,7 +41,6 @@ class DocumentosTest extends TestCase
     private function clienteConEntrevista(): User
     {
         $cliente = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true]);
-        $cliente->forceFill(['entrevista_catalogo' => true])->save();
         app(Consentimientos::class)->firmar($cliente, (int) config('tax.current_tax_year'), 1, 'Cliente', null, null);
 
         return $cliente;

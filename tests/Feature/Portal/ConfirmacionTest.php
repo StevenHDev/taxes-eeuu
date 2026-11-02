@@ -35,7 +35,6 @@ class ConfirmacionTest extends TestCase
         $this->seed(CatalogoFiscalSeeder::class);
         app(ConsentimientosCargador::class)->cargar();
         $this->cliente = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true]);
-        $this->cliente->forceFill(['entrevista_catalogo' => true])->save();
         app(Consentimientos::class)->firmar($this->cliente, (int) config('tax.current_tax_year'), 1, 'Cliente', null, null);
     }
 

@@ -6,25 +6,18 @@ use App\Http\Controllers\Portal\DocumentoEntrevistaController;
 use App\Http\Controllers\Portal\EntrevistaController;
 use App\Http\Controllers\Portal\PersonaController;
 use App\Http\Controllers\PortalChatController;
-use App\Http\Controllers\PortalFormularioController;
 use App\Http\Middleware\EnsureConsentimiento7216;
 use App\Http\Middleware\EnsureEntrevistaNueva;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Punto de entrada único: PortalFormularioController::index() manda de
-    // vuelta a portal.chat mientras el cliente no tenga ninguna forma
-    // declarada todavía (ver decisión de arquitectura del portal seguro).
-    // F2.5: quien usa la entrevista nueva entra a su avance.
-    Route::get('portal', fn (Request $request) => redirect()->route(
-        $request->user()?->usaEntrevistaCatalogo() ? 'portal.entrevista.inicio' : 'portal.formulario',
-    ))->name('portal');
+    // Punto de entrada único del portal: el avance de la entrevista.
+    Route::get('portal', fn () => redirect()->route('portal.entrevista.inicio'))->name('portal');
 
     Route::get('portal/chat', [PortalChatController::class, 'index'])->name('portal.chat');
     Route::post('portal/chat', [PortalChatController::class, 'send'])->name('portal.chat.send');
 
-    // F2.4: consentimiento §7216, solo para clientes con la entrevista nueva.
+    // F2.4: consentimiento §7216.
     Route::get('portal/consentimiento', [ConsentimientoController::class, 'show'])->name('portal.consentimiento');
     Route::post('portal/consentimiento', [ConsentimientoController::class, 'store'])->name('portal.consentimiento.store');
 
@@ -59,11 +52,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->whereIn('paso', ['entrada', 'seguimiento'])
                 ->name('guardar');
         });
-
-    // Datos y documentos del cliente: piden el consentimiento firmado a
-    // quien usa la entrevista nueva (el chat de dudas no).
-    Route::middleware(EnsureConsentimiento7216::class)->group(function () {
-        Route::get('portal/formulario', [PortalFormularioController::class, 'index'])->name('portal.formulario');
-        Route::post('portal/formulario/campos', [PortalFormularioController::class, 'guardarCampo'])->name('portal.formulario.campos.store');
-    });
 });

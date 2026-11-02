@@ -4,11 +4,8 @@ import { PortalChatPanel } from '@/components/portal-chat-panel';
 import type { PortalMensaje } from '@/types/agente';
 
 /**
- * Chat de autoservicio del cliente en el portal seguro, a pantalla completa —
- * lo que ve mientras todavía no tiene ninguna forma declarada (fase
- * DeterminacionFormas: ver PortalFormularioController::index(), que redirige
- * acá en ese caso). Una vez declaradas, este mismo chat aparece embebido al
- * lado del formulario en vez de acá.
+ * Chat de dudas del cliente en el portal seguro, a pantalla completa. Al
+ * lado de la entrevista aparece el mismo panel (chat-dudas).
  */
 export default function PortalChat({
     mensajes,

@@ -14,8 +14,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('usuarios/{usuario}/prueba', [UsuarioController::class, 'marcarPrueba'])
         ->withTrashed()
         ->name('usuarios.prueba');
-    Route::patch('usuarios/{usuario}/entrevista-catalogo', [UsuarioController::class, 'marcarEntrevistaCatalogo'])
-        ->name('usuarios.entrevista-catalogo');
     Route::delete('usuarios/{usuario}/definitivo', [UsuarioController::class, 'forceDestroy'])
         ->withTrashed()
         ->name('usuarios.force-destroy');

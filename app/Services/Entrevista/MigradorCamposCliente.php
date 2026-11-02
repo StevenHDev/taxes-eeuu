@@ -24,7 +24,7 @@ use Throwable;
  * - crea una persona del bloque C por cada dependiente;
  * - pone `documento_codigo` y la entrevista a los archivos que tienen
  *   equivalente;
- * - marca la entrevista como migrada y prende la bandera.
+ * - marca la entrevista como migrada.
  *
  * `campos_cliente` no se toca: queda como histórico (L12). La entrevista
  * queda en curso: el cliente firma el consentimiento y confirma en el
@@ -209,7 +209,6 @@ class MigradorCamposCliente
         }
 
         $entrevista->update(['migrada_en' => now()]);
-        $cliente->forceFill(['entrevista_catalogo' => true])->save();
 
         $resultado['no_aplicaron'] = array_values(array_unique($resultado['no_aplicaron']));
         sort($resultado['no_aplicaron']);

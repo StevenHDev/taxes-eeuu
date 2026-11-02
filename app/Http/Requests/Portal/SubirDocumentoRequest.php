@@ -24,7 +24,7 @@ class SubirDocumentoRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()?->usaEntrevistaCatalogo() ?? false;
+        return $this->user()?->esCliente() ?? false;
     }
 
     /**

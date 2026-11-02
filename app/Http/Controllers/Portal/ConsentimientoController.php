@@ -24,7 +24,7 @@ class ConsentimientoController extends Controller
     public function show(Request $request): Response|RedirectResponse
     {
         $cliente = $request->user();
-        abort_unless($cliente->usaEntrevistaCatalogo(), 403);
+        abort_unless($cliente->esCliente(), 403);
 
         $taxYear = (int) config('tax.current_tax_year');
 

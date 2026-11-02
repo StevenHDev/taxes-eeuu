@@ -40,7 +40,6 @@ class MariaTest extends TestCase
         app(ConsentimientosCargador::class)->cargar();
 
         $this->maria = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true, 'phone' => self::TELEFONO, 'name' => 'María Prueba']);
-        $this->maria->forceFill(['entrevista_catalogo' => true])->save();
         app(Consentimientos::class)->firmar($this->maria, (int) config('tax.current_tax_year'), 1, 'María Prueba', null, null);
     }
 

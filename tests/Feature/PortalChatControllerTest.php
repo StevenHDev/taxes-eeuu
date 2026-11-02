@@ -2,18 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Enums\MetodoExtraccionDocumento;
 use App\Enums\RolMensajeWhatsapp;
 use App\Enums\UserRole;
-use App\Models\Documento;
-use App\Models\FormaCliente;
 use App\Models\PortalMensaje;
 use App\Models\User;
 use Database\Seeders\AgentePromptsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PortalChatControllerTest extends TestCase
@@ -132,52 +127,5 @@ class PortalChatControllerTest extends TestCase
         file_put_contents($ruta, $pdf);
 
         return $ruta;
-    }
-
-    public function test_un_cliente_puede_adjuntar_un_documento_y_el_agente_lo_guarda(): void
-    {
-        Storage::fake('s3');
-
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        $rutaPdf = $this->crearPdfConTexto('W-2 de prueba con texto legible y suficiente longitud.');
-        $archivo = new UploadedFile($rutaPdf, 'w2.pdf', 'application/pdf', test: true);
-
-        Http::fake([
-            'api.openai.com/*' => Http::sequence()
-                ->push($this->respuestaOpenAi([
-                    'role' => 'assistant',
-                    'content' => null,
-                    'tool_calls' => [
-                        ['id' => 'call_1', 'type' => 'function', 'function' => [
-                            'name' => 'guardar_campo_cliente',
-                            'arguments' => json_encode([
-                                'forma' => 'form_1040',
-                                'campo' => 'w2',
-                                'tipo_campo' => 'documento',
-                                'modo' => 'archivo',
-                                // El controlador genera la referencia del adjunto
-                                // (portal:<uuid>) — con un único adjunto en el
-                                // turno, AgenteConversacionalService::resolverArchivo()
-                                // lo usa igual aunque esta referencia no coincida.
-                                'contenido' => 'referencia-que-no-coincide',
-                            ]),
-                        ]],
-                    ],
-                ]))
-                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Recibí tu W-2, gracias.'])),
-        ]);
-
-        $this->actingAs($cliente)
-            ->from(route('portal.chat'))
-            ->post(route('portal.chat.send'), ['archivo' => $archivo])
-            ->assertRedirect(route('portal.chat'));
-
-        $documento = Documento::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first();
-        $this->assertNotNull($documento);
-        $this->assertSame(MetodoExtraccionDocumento::TextoPdf, $documento->metodo_extraccion);
-
-        unlink($rutaPdf);
     }
 }

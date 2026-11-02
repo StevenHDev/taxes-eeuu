@@ -34,10 +34,7 @@ function Panel({ mensajes }: { mensajes: PortalMensaje[] | undefined }) {
     return (
         <Deferred data="mensajes" fallback={<Cargando />}>
             <Suspense fallback={<Cargando />}>
-                <PortalChatPanel
-                    mensajes={mensajes ?? []}
-                    conArchivos={false}
-                />
+                <PortalChatPanel mensajes={mensajes ?? []} />
             </Suspense>
         </Deferred>
     );

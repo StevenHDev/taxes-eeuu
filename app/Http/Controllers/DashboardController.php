@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
-use App\Models\DeterminacionFiscal;
-use App\Models\FormaCliente;
 use App\Models\User;
 use App\Services\DashboardSummaryService;
-use App\Support\TaxFieldCatalog;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,12 +20,11 @@ class DashboardController extends Controller
     {
         $user = request()->user();
 
+        // El inicio del cliente es su entrevista (F2.5); "Mi información"
+        // (cálculos sin revisar, 9.7) se retiró en F2.11 y la reemplaza la
+        // fase 5.
         if ($user->role === UserRole::Client) {
-            // F2.5: "Mi información" muestra cálculos sin revisar (9.7); quien
-            // usa la entrevista nueva tiene como inicio su avance.
-            return $user->usaEntrevistaCatalogo()
-                ? redirect()->route('portal.entrevista.inicio')
-                : $this->miInformacion($user);
+            return redirect()->route('portal.entrevista.inicio');
         }
 
         $taxYear = (int) request()->query('tax_year', config('tax.current_tax_year'));
@@ -51,73 +46,6 @@ class DashboardController extends Controller
                 ...$this->summary->resumenPara($clientes, $taxYear),
             ],
             'taxYearActual' => $taxYear,
-        ]);
-    }
-
-    /**
-     * Vista de autoservicio del cliente final (el mismo `User` con el que
-     * conversa el agente externo por WhatsApp): todo lo que ya entregó,
-     * organizado por forma, más las determinaciones fiscales que ya se hayan
-     * calculado. A propósito NO reutiliza `ClienteController::show` (la ficha
-     * del preparador) — esa incluye acciones y datos exclusivos del equipo
-     * interno (nivel de riesgo, revelar sensibles, editar/eliminar campos,
-     * detección de duplicados entre clientes) que un cliente no debe ver ni
-     * accionar. `ClientePolicy` sigue negando por completo el acceso de un
-     * cliente al panel de preparadores; esta vista es su único acceso propio.
-     */
-    private function miInformacion(User $cliente): Response
-    {
-        $taxYear = (int) request()->query('tax_year', config('tax.current_tax_year'));
-
-        $cliente->load([
-            'formasCliente' => fn ($query) => $query->where('tax_year', $taxYear),
-            'camposCliente' => fn ($query) => $query->where('tax_year', $taxYear)->with('documento')->orderBy('campo'),
-            'determinacionesFiscales' => fn ($query) => $query->where('tax_year', $taxYear),
-        ]);
-
-        return Inertia::render('mi-informacion', [
-            'cliente' => [
-                'id' => $cliente->id,
-                'name' => $cliente->name,
-                'email' => $cliente->email,
-                'phone' => $cliente->phone,
-            ],
-            'taxYearActual' => $taxYear,
-            'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
-                'forma' => $f->forma,
-                'forma_label' => TaxForm::from($f->forma)->label(),
-                'estado' => $f->estado,
-            ]),
-            'campos' => $cliente->camposCliente->map(function ($c) use ($taxYear) {
-                $definicion = TaxFieldCatalog::find($taxYear, $c->forma, $c->campo);
-
-                return [
-                    'forma' => $c->forma,
-                    'campo' => $c->campo,
-                    'tipo_campo' => $c->tipo_campo,
-                    'tipo_dato' => $definicion['tipo_dato']?->value,
-                    'subcampos' => $definicion['subcampos'] ?? null,
-                    'modo' => $c->modo,
-                    'estado' => $c->estado,
-                    'valor' => $c->valor,
-                    'es_sensible' => $c->esSensible(),
-                    'documento' => $c->documento ? [
-                        'id' => $c->documento->id,
-                        'file_original_name' => $c->documento->file_original_name,
-                        'file_mime_type' => $c->documento->file_mime_type,
-                        'formato' => $c->documento->formato,
-                        'download_url' => $c->documento->downloadUrl(),
-                        'preview_url' => $c->documento->previewUrl(),
-                    ] : null,
-                    'updated_at' => $c->updated_at,
-                ];
-            }),
-            'determinaciones' => $cliente->determinacionesFiscales->map(fn (DeterminacionFiscal $d) => [
-                'tipo' => $d->tipo->value,
-                'resultado' => $d->resultado,
-                'version_reglas' => $d->version_reglas,
-                'calculado_en' => $d->calculado_en,
-            ]),
         ]);
     }
 }

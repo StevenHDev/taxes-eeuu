@@ -24,18 +24,11 @@ return [
     | Entrevista sobre el catálogo fiscal (F2)
     |--------------------------------------------------------------------------
     |
-    | `entrevista_catalogo_por_defecto`: con qué valor de la bandera
-    | `users.entrevista_catalogo` nacen los clientes nuevos. Verdadero desde
-    | el cambio de flujo (2.10): todos los clientes nuevos entran a la
-    | entrevista. La bandera y esta opción se retiran en 2.11.
-    |
     | `entrevista_whatsapp`: si el agente hace la entrevista por WhatsApp a
     | clientes reales. Apagado hasta L3 (decisión de Steven, 30 oct.); los
     | usuarios de prueba la tienen siempre.
     |
     */
-    'entrevista_catalogo_por_defecto' => (bool) env('ENTREVISTA_CATALOGO_POR_DEFECTO', true),
-
     'entrevista_whatsapp' => (bool) env('ENTREVISTA_WHATSAPP', false),
 
 ];

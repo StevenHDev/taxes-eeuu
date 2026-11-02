@@ -355,7 +355,6 @@ export type Usuario = {
     preparer?: { id: number; name: string } | null;
     es_prueba: boolean;
     /** Usa la entrevista nueva sobre el catálogo fiscal (F2.2, solo clientes). */
-    entrevista_catalogo: boolean;
     archivado: boolean;
 };
 

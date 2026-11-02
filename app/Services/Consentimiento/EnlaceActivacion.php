@@ -37,7 +37,7 @@ class EnlaceActivacion
 
     public function pendiente(User $cliente): bool
     {
-        return $cliente->contrasena_definida_en === null && $cliente->usaEntrevistaCatalogo();
+        return $cliente->contrasena_definida_en === null && $cliente->esCliente();
     }
 
     /**

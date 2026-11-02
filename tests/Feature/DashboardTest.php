@@ -30,36 +30,6 @@ class DashboardTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_un_cliente_ve_su_propia_informacion_en_vez_del_resumen_de_estadisticas(): void
-    {
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
-        $otroCliente = User::factory()->create(['role' => UserRole::Client]);
-
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        CampoCliente::query()->create([
-            'user_id' => $cliente->id, 'forma' => 'form_1040', 'campo' => 'impuestos_retenidos', 'tax_year' => 2025,
-            'tipo_campo' => 'dato', 'modo' => 'texto', 'valor_texto' => '9800',
-            'estado' => 'recibido', 'source' => 'agente_ia',
-        ]);
-        CampoCliente::query()->create([
-            'user_id' => $otroCliente->id, 'forma' => 'form_1040', 'campo' => 'impuestos_retenidos', 'tax_year' => 2025,
-            'tipo_campo' => 'dato', 'modo' => 'texto', 'valor_texto' => '1',
-            'estado' => 'recibido', 'source' => 'agente_ia',
-        ]);
-
-        $this->actingAs($cliente)
-            ->get(route('dashboard'))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('mi-informacion')
-                ->where('cliente.id', $cliente->id)
-                ->where('taxYearActual', 2025)
-                ->has('campos', 1)
-                ->where('campos.0.campo', 'impuestos_retenidos')
-                ->where('campos.0.valor', '9800'));
-    }
-
     public function test_un_preparador_ve_el_resumen_solo_de_sus_clientes(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
@@ -116,5 +86,13 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('resumen.actividad_reciente.0.forma_label', 'Datos del cliente'));
+    }
+
+    public function test_el_inicio_del_cliente_es_su_entrevista(): void
+    {
+        // F2.11: "Mi información" se retiró; la reemplaza la fase 5.
+        $cliente = User::factory()->create(['role' => UserRole::Client]);
+
+        $this->actingAs($cliente)->get(route('dashboard'))->assertRedirect(route('portal.entrevista.inicio'));
     }
 }

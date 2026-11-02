@@ -1,7 +1,6 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -13,11 +12,9 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { destroy as clienteArchivar } from '@/routes/clientes';
 import {
     destroy as usuarioArchivar,
-    entrevistaCatalogo as usuarioEntrevistaCatalogo,
     forceDestroy as usuarioEliminarDefinitivo,
     prueba as usuarioMarcarPrueba,
     restore as usuarioRestaurar,
@@ -63,134 +60,6 @@ export function MarcarPruebaButton({
                 ? t('cuentaUsuario.quitarPrueba')
                 : t('cuentaUsuario.marcarPrueba')}
         </Button>
-    );
-}
-
-/**
- * Bandera de F2.2: pasa a un cliente a la entrevista nueva sobre el
- * catálogo fiscal o lo devuelve al formulario actual. Hasta el cambio de
- * flujo (2.10) se usa solo con clientes de prueba.
- */
-export function EntrevistaCatalogoButton({
-    usuario,
-    size = 'default',
-}: {
-    usuario: { id: number; name: string; entrevista_catalogo: boolean };
-    size?: TamanoBoton;
-}) {
-    const { t } = useTranslation();
-    const [enviando, setEnviando] = useState(false);
-    const etiqueta = usuario.entrevista_catalogo
-        ? t('cuentaUsuario.entrevistaCatalogo.quitar')
-        : t('cuentaUsuario.entrevistaCatalogo.activar');
-
-    return (
-        <Button
-            variant="outline"
-            size={size}
-            disabled={enviando}
-            aria-label={`${etiqueta}: ${usuario.name}`}
-            onClick={() =>
-                router.patch(
-                    usuarioEntrevistaCatalogo(usuario.id).url,
-                    { entrevista_catalogo: !usuario.entrevista_catalogo },
-                    {
-                        preserveScroll: true,
-                        onStart: () => setEnviando(true),
-                        onFinish: () => setEnviando(false),
-                        // Con el consentimiento provisional (F2.4) un
-                        // cliente real no puede pasar a la entrevista nueva.
-                        onError: (errores) => {
-                            if (errores.entrevista_catalogo) {
-                                toast.error(errores.entrevista_catalogo);
-                            }
-                        },
-                    },
-                )
-            }
-        >
-            {enviando ? <Spinner aria-hidden="true" /> : null}
-            {etiqueta}
-        </Button>
-    );
-}
-
-/**
- * La misma bandera desde la ficha del cliente (F2.9), con confirmación:
- * ahí el cambio es menos evidente que en la tabla de Usuarios.
- */
-export function EntrevistaCatalogoDialog({
-    usuario,
-}: {
-    usuario: { id: number; name: string; entrevista_catalogo: boolean };
-}) {
-    const { t } = useTranslation();
-    const [abierto, setAbierto] = useState(false);
-    const [enviando, setEnviando] = useState(false);
-    const activa = usuario.entrevista_catalogo;
-
-    return (
-        <Dialog open={abierto} onOpenChange={setAbierto}>
-            <DialogTrigger asChild>
-                <Button variant="outline">
-                    {activa
-                        ? t('cuentaUsuario.entrevistaCatalogo.quitar')
-                        : t('cuentaUsuario.entrevistaCatalogo.activar')}
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogTitle>
-                    {activa
-                        ? t('cuentaUsuario.entrevistaCatalogo.tituloQuitar', {
-                              name: usuario.name,
-                          })
-                        : t('cuentaUsuario.entrevistaCatalogo.tituloActivar', {
-                              name: usuario.name,
-                          })}
-                </DialogTitle>
-                <DialogDescription>
-                    {activa
-                        ? t(
-                              'cuentaUsuario.entrevistaCatalogo.descripcionQuitar',
-                          )
-                        : t(
-                              'cuentaUsuario.entrevistaCatalogo.descripcionActivar',
-                          )}
-                </DialogDescription>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setAbierto(false)}>
-                        {t('cuentaUsuario.entrevistaCatalogo.cancelar')}
-                    </Button>
-                    <Button
-                        disabled={enviando}
-                        onClick={() =>
-                            router.patch(
-                                usuarioEntrevistaCatalogo(usuario.id).url,
-                                { entrevista_catalogo: !activa },
-                                {
-                                    preserveScroll: true,
-                                    onStart: () => setEnviando(true),
-                                    onFinish: () => setEnviando(false),
-                                    onSuccess: () => setAbierto(false),
-                                    onError: (errores) => {
-                                        if (errores.entrevista_catalogo) {
-                                            toast.error(
-                                                errores.entrevista_catalogo,
-                                            );
-                                        }
-                                    },
-                                },
-                            )
-                        }
-                    >
-                        {enviando ? <Spinner aria-hidden="true" /> : null}
-                        {activa
-                            ? t('cuentaUsuario.entrevistaCatalogo.quitar')
-                            : t('cuentaUsuario.entrevistaCatalogo.activar')}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
     );
 }
 

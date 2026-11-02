@@ -2,12 +2,10 @@
 
 namespace Tests\Feature\Entrevista;
 
-use App\Enums\AccionAuditoria;
 use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\Entrevista\EstadoEntrevista;
 use App\Enums\TaxForm;
 use App\Enums\UserRole;
-use App\Models\BitacoraActividad;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaRespuesta;
 use App\Models\FormaCliente;
@@ -164,33 +162,5 @@ class GuardadorTest extends TestCase
         $this->responder('D18', 'si');
 
         $this->assertContains(TaxForm::ScheduleE->value, FormaCliente::query()->where('user_id', $this->cliente->id)->pluck('forma')->all());
-    }
-
-    public function test_solo_el_administrador_cambia_la_bandera_y_queda_en_la_bitacora(): void
-    {
-        $admin = User::factory()->create(['role' => UserRole::Administrator]);
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-
-        $this->actingAs($preparador)->patch(route('usuarios.entrevista-catalogo', $this->cliente), ['entrevista_catalogo' => true])->assertForbidden();
-        $this->actingAs($admin)->patch(route('usuarios.entrevista-catalogo', $preparador), ['entrevista_catalogo' => true])->assertForbidden();
-
-        // Con el consentimiento provisional (F2.4) solo pasan los de prueba.
-        $this->cliente->forceFill(['es_prueba' => true])->save();
-        $this->actingAs($admin)->patch(route('usuarios.entrevista-catalogo', $this->cliente), ['entrevista_catalogo' => true])->assertRedirect();
-
-        $this->assertTrue($this->cliente->fresh()->usaEntrevistaCatalogo());
-        $this->assertSame(['entrevista_catalogo'], BitacoraActividad::query()
-            ->where('auditable_type', User::class)->where('auditable_id', $this->cliente->id)
-            ->where('accion', AccionAuditoria::Actualizado->value)->latest('id')->first()->campos_afectados);
-    }
-
-    public function test_los_clientes_nuevos_toman_la_bandera_de_la_configuracion(): void
-    {
-        $this->assertFalse($this->cliente->usaEntrevistaCatalogo());
-
-        config(['tax.entrevista_catalogo_por_defecto' => true]);
-
-        $this->assertTrue(User::factory()->create(['role' => UserRole::Client])->usaEntrevistaCatalogo());
-        $this->assertFalse(User::factory()->create(['role' => UserRole::Preparer])->fresh()->entrevista_catalogo);
     }
 }

@@ -92,7 +92,7 @@ class EnsureStaffHasMfaTest extends TestCase
     {
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
-        $this->actingAs($cliente)->get(route('dashboard'))->assertOk();
+        $this->actingAs($cliente)->get(route('portal.chat'))->assertOk();
     }
 
     public function test_las_rutas_para_configurar_el_mfa_siguen_libres(): void

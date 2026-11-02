@@ -6,7 +6,6 @@ import UsuarioController from '@/actions/App/Http/Controllers/UsuarioController'
 import {
     ArchivarUsuarioDialog,
     EliminarDefinitivoDialog,
-    EntrevistaCatalogoButton,
     MarcarPruebaButton,
     RestaurarUsuarioButton,
 } from '@/components/cuenta-usuario-acciones';
@@ -245,10 +244,6 @@ function UsuarioRowActions({
                 </DialogContent>
             </Dialog>
 
-            {usuario.role === 'client' ? (
-                <EntrevistaCatalogoButton usuario={usuario} size="sm" />
-            ) : null}
-
             {esUnoMismo ? null : (
                 <>
                     <MarcarPruebaButton usuario={usuario} size="sm" />
@@ -287,13 +282,6 @@ function useColumns(preparadores: Preparador[]): ColumnDef<Usuario>[] {
                             {u.es_prueba ? (
                                 <Badge variant="outline">
                                     {t('cuentaUsuario.badgePrueba')}
-                                </Badge>
-                            ) : null}
-                            {u.entrevista_catalogo ? (
-                                <Badge variant="outline">
-                                    {t(
-                                        'cuentaUsuario.entrevistaCatalogo.badge',
-                                    )}
                                 </Badge>
                             ) : null}
                             {u.archivado ? (

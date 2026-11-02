@@ -8,7 +8,6 @@ import {
     FileText,
     History,
     LayoutGrid,
-    ListChecks,
     UserCog,
     Users,
     Workflow,
@@ -27,11 +26,9 @@ import { dashboard } from '@/routes';
 import { index as agenteMensajesIndex } from '@/routes/agente/mensajes';
 import { index as apiDocsIndex } from '@/routes/api-docs';
 import { index as bitacoraIndex } from '@/routes/bitacora';
-import { index as catalogoIndex } from '@/routes/catalogo';
 import { inicio as catalogoFiscalInicio } from '@/routes/catalogo-fiscal';
 import { index as clientesIndex } from '@/routes/clientes';
 import { index as metaAgenteIndex } from '@/routes/meta-agente';
-import { formulario as portalFormulario } from '@/routes/portal';
 import {
     documentos as entrevistaDocumentos,
     inicio as entrevistaInicio,
@@ -51,13 +48,9 @@ export function AppSidebar() {
     const esCliente = auth.user.role === 'client';
     const tieneAccesoAlPanel = auth.user.role !== 'client';
 
-    // F2.5: con la entrevista nueva, el inicio del cliente es su avance; ni
-    // "Mi información" (cálculos sin revisar, 9.7) ni el formulario actual.
-    const conEntrevistaNueva =
-        esCliente && auth.user.entrevista_catalogo === true;
-
     const mainNavItems: NavItem[] = [
-        ...(conEntrevistaNueva
+        // El inicio del cliente es su entrevista (F2.5).
+        ...(esCliente
             ? [
                   {
                       title: t('nav.portalEntrevista'),
@@ -77,20 +70,6 @@ export function AppSidebar() {
                       icon: LayoutGrid,
                   },
               ]),
-        ...(esCliente && !conEntrevistaNueva
-            ? [
-                  // El chat del portal (portal.chat) sigue existiendo y
-                  // PortalFormularioController redirige ahí mientras el
-                  // cliente no tenga forma declarada — a propósito ya no
-                  // tiene entrada en el sidebar (pedido explícito): solo
-                  // Panel y Formulario.
-                  {
-                      title: t('nav.portalFormulario'),
-                      href: portalFormulario(),
-                      icon: FileText,
-                  },
-              ]
-            : []),
         ...(tieneAccesoAlPanel
             ? [
                   {
@@ -112,11 +91,6 @@ export function AppSidebar() {
             : []),
         ...(esAdministrador
             ? [
-                  {
-                      title: t('nav.catalog'),
-                      href: catalogoIndex(),
-                      icon: ListChecks,
-                  },
                   {
                       title: t('nav.users'),
                       href: usuariosIndex(),

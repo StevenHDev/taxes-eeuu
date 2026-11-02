@@ -34,7 +34,6 @@ class EntrevistaTest extends TestCase
         app(ConsentimientosCargador::class)->cargar();
 
         $this->cliente = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true, 'phone' => '+15550003333']);
-        $this->cliente->forceFill(['entrevista_catalogo' => true])->save();
         app(Consentimientos::class)->firmar($this->cliente, (int) config('tax.current_tax_year'), 1, 'Cliente', null, null);
     }
 
@@ -65,22 +64,16 @@ class EntrevistaTest extends TestCase
         return $codigos;
     }
 
-    public function test_sin_la_bandera_sigue_el_formulario_actual(): void
+    public function test_el_personal_vuelve_a_su_panel(): void
     {
-        $otro = User::factory()->create(['role' => UserRole::Client]);
-
-        $this->actingAs($otro)->get(route('portal.entrevista.inicio'))->assertRedirect(route('portal.formulario'));
-        $this->actingAs($otro)->get('/portal')->assertRedirect(route('portal.formulario'));
-
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
         $this->actingAs($admin)->get(route('portal.entrevista.inicio'))->assertRedirect(route('dashboard'));
     }
 
-    public function test_con_la_bandera_el_portal_y_el_panel_llevan_a_la_entrevista(): void
+    public function test_el_portal_y_el_panel_llevan_a_la_entrevista(): void
     {
         $this->actingAs($this->cliente)->get('/portal')->assertRedirect(route('portal.entrevista.inicio'));
         $this->actingAs($this->cliente)->get(route('dashboard'))->assertRedirect(route('portal.entrevista.inicio'));
-        $this->actingAs($this->cliente)->get(route('portal.formulario'))->assertRedirect(route('portal.entrevista.inicio'));
 
         $this->actingAs($this->cliente)->get(route('portal.entrevista.inicio'))
             ->assertOk()
@@ -93,7 +86,6 @@ class EntrevistaTest extends TestCase
     public function test_sin_consentimiento_la_entrevista_pide_firmar(): void
     {
         $nuevo = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true]);
-        $nuevo->forceFill(['entrevista_catalogo' => true])->save();
 
         $this->actingAs($nuevo)->get(route('portal.entrevista.paso', ['pantalla' => 5]))->assertRedirect(route('portal.consentimiento'));
     }
@@ -190,7 +182,6 @@ class EntrevistaTest extends TestCase
         $persona = EntrevistaPersona::query()->sole();
 
         $otro = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true]);
-        $otro->forceFill(['entrevista_catalogo' => true])->save();
         app(Consentimientos::class)->firmar($otro, (int) config('tax.current_tax_year'), 1, 'Otro', null, null);
         $this->actingAs($otro)->get(route('portal.entrevista.persona', ['persona' => $persona->id]))->assertNotFound();
         $this->actingAs($otro)->delete(route('portal.entrevista.personas.destroy', $persona))->assertNotFound();

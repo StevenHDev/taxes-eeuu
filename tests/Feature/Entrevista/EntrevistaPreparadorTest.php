@@ -40,7 +40,6 @@ class EntrevistaPreparadorTest extends TestCase
         $this->seed(CatalogoFiscalSeeder::class);
         $this->preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $this->cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $this->preparador->id]);
-        $this->cliente->forceFill(['entrevista_catalogo' => true])->save();
 
         $guardador = app(RespuestaGuardador::class);
         $this->entrevista = $guardador->entrevistaDe($this->cliente, CanalRespuesta::Portal);
@@ -67,7 +66,6 @@ class EntrevistaPreparadorTest extends TestCase
             ->get(route('clientes.show', $this->cliente))
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('clientes/show')
-                ->where('cliente.entrevista_catalogo', true)
                 ->missing('entrevista')
                 ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
                     ->where('entrevista.estado', 'en_curso')
@@ -93,15 +91,6 @@ class EntrevistaPreparadorTest extends TestCase
                 ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
                     ->where('entrevista.consentimiento.version', 1)
                     ->where('entrevista.consentimiento.provisional', true)));
-    }
-
-    public function test_sin_la_bandera_no_hay_seccion_de_entrevista(): void
-    {
-        $this->cliente->forceFill(['entrevista_catalogo' => false])->save();
-
-        $this->actingAs($this->preparador)
-            ->get(route('clientes.show', $this->cliente))
-            ->assertInertia(fn (AssertableInertia $page) => $page->where('entrevista', null));
     }
 
     public function test_otro_preparador_no_ve_ni_toca_la_entrevista(): void
@@ -204,7 +193,6 @@ class EntrevistaPreparadorTest extends TestCase
     public function test_un_cliente_sin_entrevista_trae_null(): void
     {
         $nuevo = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $this->preparador->id]);
-        $nuevo->forceFill(['entrevista_catalogo' => true])->save();
 
         $this->actingAs($this->preparador)
             ->get(route('clientes.show', $nuevo))

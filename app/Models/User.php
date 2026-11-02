@@ -37,7 +37,6 @@ use Laravel\Sanctum\HasApiTokens;
  * @property UserRole $role
  * @property int|null $preparer_id
  * @property bool $es_prueba
- * @property bool $entrevista_catalogo
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -70,30 +69,12 @@ class User extends Authenticatable implements PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'role' => UserRole::class,
             'es_prueba' => 'boolean',
-            'entrevista_catalogo' => 'boolean',
         ];
     }
 
-    /**
-     * Los clientes nuevos toman la bandera de la entrevista nueva de
-     * `tax.entrevista_catalogo_por_defecto` (falso hasta 2.10).
-     */
-    protected static function booted(): void
+    public function esCliente(): bool
     {
-        static::creating(function (User $user) {
-            if ($user->role === UserRole::Client && ! array_key_exists('entrevista_catalogo', $user->getAttributes())) {
-                $user->entrevista_catalogo = (bool) config('tax.entrevista_catalogo_por_defecto');
-            }
-        });
-    }
-
-    /**
-     * Único lugar que lee la bandera de la entrevista sobre el catálogo
-     * fiscal (F2.2). Se borra en 2.11, cuando todos usen el flujo nuevo.
-     */
-    public function usaEntrevistaCatalogo(): bool
-    {
-        return $this->role === UserRole::Client && $this->entrevista_catalogo;
+        return $this->role === UserRole::Client;
     }
 
     /**

@@ -32,7 +32,6 @@ class ConsentimientoTest extends TestCase
 
         app(ConsentimientosCargador::class)->cargar();
         $this->cliente = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true, 'name' => 'Ana Prueba']);
-        $this->cliente->forceFill(['entrevista_catalogo' => true])->save();
     }
 
     private function firmar(array $datos = []): TestResponse
@@ -44,7 +43,7 @@ class ConsentimientoTest extends TestCase
 
     public function test_sin_firma_los_datos_del_portal_llevan_al_consentimiento(): void
     {
-        $this->actingAs($this->cliente)->get(route('portal.formulario'))->assertRedirect(route('portal.consentimiento'));
+        $this->actingAs($this->cliente)->get(route('portal.entrevista.documentos'))->assertRedirect(route('portal.consentimiento'));
         $this->actingAs($this->cliente)->get(route('portal.chat'))->assertOk();
 
         $this->actingAs($this->cliente)->get(route('portal.consentimiento'))
@@ -56,12 +55,11 @@ class ConsentimientoTest extends TestCase
                 ->where('taxYear', config('tax.current_tax_year')));
     }
 
-    public function test_el_flujo_actual_no_pide_consentimiento(): void
+    public function test_el_personal_no_firma_el_consentimiento(): void
     {
-        $otro = User::factory()->create(['role' => UserRole::Client]);
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
 
-        $this->actingAs($otro)->get(route('portal.formulario'))->assertRedirect(route('portal.chat'));
-        $this->actingAs($otro)->get(route('portal.consentimiento'))->assertForbidden();
+        $this->actingAs($preparador)->get(route('portal.consentimiento'))->assertForbidden();
     }
 
     public function test_la_firma_guarda_texto_version_ip_y_hora_y_deja_entrar(): void
@@ -97,7 +95,7 @@ class ConsentimientoTest extends TestCase
             'provisional' => true, 'vigente_desde' => now()->toDateString(),
         ]);
 
-        $this->actingAs($this->cliente)->get(route('portal.formulario'))->assertRedirect(route('portal.consentimiento'));
+        $this->actingAs($this->cliente)->get(route('portal.entrevista.documentos'))->assertRedirect(route('portal.consentimiento'));
         $this->firmar(['version' => 1])->assertSessionHasErrors('version');
         $this->firmar(['version' => 2])->assertRedirect(route('portal.entrevista.inicio'));
     }
@@ -121,12 +119,7 @@ class ConsentimientoTest extends TestCase
     {
         // F2.10: los clientes reales firman el texto provisional; cuando
         // llegue el definitivo (otra versión) firman de nuevo.
-        $admin = User::factory()->create(['role' => UserRole::Administrator]);
         $real = User::factory()->create(['role' => UserRole::Client]);
-
-        $this->actingAs($admin)->patch(route('usuarios.entrevista-catalogo', $real), ['entrevista_catalogo' => true])
-            ->assertSessionHasNoErrors();
-        $this->assertTrue($real->fresh()->entrevista_catalogo);
 
         $this->actingAs($real->fresh())->get(route('portal.consentimiento'))
             ->assertOk()

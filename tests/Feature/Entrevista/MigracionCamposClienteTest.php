@@ -116,7 +116,6 @@ class MigracionCamposClienteTest extends TestCase
         $entrevista = Entrevista::query()->where('user_id', $cliente->id)->firstOrFail();
         $this->assertNotNull($entrevista->migrada_en);
         $this->assertSame(EstadoEntrevista::EnCurso, $entrevista->estado);
-        $this->assertTrue($cliente->fresh()->entrevista_catalogo);
         $this->assertTrue($entrevista->respuestas()->get()->every(fn ($r) => $r->canal === CanalRespuesta::Migracion));
 
         $w2 = Documento::query()->where('user_id', $cliente->id)->where('campo', 'w2')->firstOrFail();
@@ -180,7 +179,6 @@ class MigracionCamposClienteTest extends TestCase
 
         $this->assertSame(0, Entrevista::query()->count());
         $this->assertSame(0, EntrevistaRespuesta::query()->count());
-        $this->assertFalse((bool) $cliente->fresh()->entrevista_catalogo);
         $this->assertSame(0, Documento::query()->whereNotNull('documento_codigo')->count());
     }
 

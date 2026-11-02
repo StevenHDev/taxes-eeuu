@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { Paperclip, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -8,26 +8,13 @@ import { send } from '@/routes/portal/chat';
 import type { PortalMensaje } from '@/types/agente';
 
 /**
- * Panel de chat del portal seguro — usado standalone en portal/chat.tsx y
- * embebido al lado del formulario en portal/formulario.tsx (ahí, el mismo
- * endpoint responde en modo "solo dudas": ver
- * AgenteConversacionalService::responder(), $canalPortal). El componente en
- * sí no sabe ni le importa en cuál de los dos contextos está.
+ * Panel del chat de dudas del portal — usado standalone en portal/chat.tsx y
+ * al lado de la entrevista (chat-dudas). Solo texto: los documentos se suben
+ * en la entrevista (F2.6).
  */
-export function PortalChatPanel({
-    mensajes,
-    conArchivos = true,
-}: {
-    mensajes: PortalMensaje[];
-    /** En la entrevista (F2.5) los documentos se suben en su lugar (2.6), no por el chat. */
-    conArchivos?: boolean;
-}) {
+export function PortalChatPanel({ mensajes }: { mensajes: PortalMensaje[] }) {
     const { t } = useTranslation();
-    const form = useForm<{ contenido: string; archivo: File | null }>({
-        contenido: '',
-        archivo: null,
-    });
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const form = useForm<{ contenido: string }>({ contenido: '' });
     const finalRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -35,20 +22,13 @@ export function PortalChatPanel({
     }, [mensajes.length]);
 
     const enviar = () => {
-        if (form.data.contenido.trim() === '' && !form.data.archivo) {
+        if (form.data.contenido.trim() === '') {
             return;
         }
 
         form.post(send.url(), {
-            forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => {
-                form.setData({ contenido: '', archivo: null });
-
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                }
-            },
+            onSuccess: () => form.setData('contenido', ''),
         });
     };
 
@@ -87,33 +67,6 @@ export function PortalChatPanel({
             )}
 
             <div className="mt-3 flex items-end gap-2">
-                {conArchivos ? (
-                    <>
-                        <input
-                            ref={fileInputRef}
-                            id="portal_chat_archivo"
-                            type="file"
-                            className="hidden"
-                            onChange={(e) =>
-                                form.setData(
-                                    'archivo',
-                                    e.target.files?.[0] ?? null,
-                                )
-                            }
-                        />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            title={t('portalChat.attach')}
-                            aria-label={t('portalChat.attach')}
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            <Paperclip className="size-4" />
-                        </Button>
-                    </>
-                ) : null}
-
                 <Textarea
                     id="portal_chat_contenido"
                     value={form.data.contenido}
@@ -140,12 +93,6 @@ export function PortalChatPanel({
                         : t('portalChat.send')}
                 </Button>
             </div>
-
-            {form.data.archivo && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                    {form.data.archivo.name}
-                </p>
-            )}
         </div>
     );
 }

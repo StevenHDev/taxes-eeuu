@@ -36,8 +36,6 @@
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
-        <!-- Hasta 2.11 las pruebas del formulario actual crean clientes sin la bandera. -->
-        <env name="ENTREVISTA_CATALOGO_POR_DEFECTO" value="false"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

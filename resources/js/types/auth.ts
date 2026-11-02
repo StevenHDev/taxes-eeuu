@@ -7,7 +7,6 @@ export type User = {
     two_factor_enabled?: boolean;
     role: 'client' | 'preparer' | 'administrator';
     /** F2.2: el cliente usa la entrevista nueva sobre el catálogo fiscal. */
-    entrevista_catalogo?: boolean;
     preparer_id: number | null;
     created_at: string;
     updated_at: string;

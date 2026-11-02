@@ -34,7 +34,7 @@ class ActivacionCuentaTest extends TestCase
         $this->cliente = User::factory()->create([
             'role' => UserRole::Client, 'phone' => self::TELEFONO, 'es_prueba' => true,
         ]);
-        $this->cliente->forceFill(['entrevista_catalogo' => true, 'contrasena_definida_en' => null])->save();
+        $this->cliente->forceFill(['contrasena_definida_en' => null])->save();
     }
 
     private function enlace(): string
@@ -89,12 +89,12 @@ class ActivacionCuentaTest extends TestCase
         $this->post($enlace, ['password' => 'Nueva-clave-segura-2025', 'password_confirmation' => 'Nueva-clave-segura-2025'])->assertForbidden();
     }
 
-    public function test_sin_la_entrevista_nueva_o_con_contrasena_no_hay_enlace(): void
+    public function test_sin_ser_cliente_o_con_contrasena_no_hay_enlace(): void
     {
-        $this->cliente->forceFill(['entrevista_catalogo' => false])->save();
-        $this->assertNull(app(EnlaceActivacion::class)->para($this->cliente));
+        $preparador = User::factory()->create(['role' => UserRole::Preparer, 'contrasena_definida_en' => null]);
+        $this->assertNull(app(EnlaceActivacion::class)->para($preparador));
 
-        $this->cliente->forceFill(['entrevista_catalogo' => true, 'contrasena_definida_en' => now()])->save();
+        $this->cliente->forceFill(['contrasena_definida_en' => now()])->save();
         $this->assertNull(app(EnlaceActivacion::class)->para($this->cliente));
     }
 
