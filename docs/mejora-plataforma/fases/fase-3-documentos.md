@@ -83,6 +83,14 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7. 3.1 y 3.7 n
 
 **Pruebas:** D1.1 = 2 crea dos W-2 y cambiar a 1 retira el segundo sin borrar sus archivos; C0 = sí con dos personas crea dos tarjetas; cada transición permitida funciona y las no permitidas fallan; un cliente no puede validar; "otro" no se retira; la migración liga los archivos viejos a su ítem.
 
+**Cómo quedó (2 nov., Opus 5.5):**
+- **Datos:** tabla `entrevista_documentos` (con `agregado_por_cliente` para lo que suma el cliente: "otro banco", "otro empleo" u "otro documento") y `documentos.entrevista_documento_id`. El índice único no frena duplicados con `persona_id` nulo en PostgreSQL; eso lo evita el bloqueo de la entrevista en cada escritura.
+- **`EstadoDocumento`** con `resueltoParaElCliente()` (decisión 4: "no aplica" cuenta apenas se marca) y `cerrado()` (validado o "no aplica").
+- **`ChecklistDocumentos`:** `sincronizar()`, `vigentes()`, `completo()`, `primero()`, `agregar()` y las transiciones `archivoSubido()`, `marcarNoAplica()`, `validar()` (exige archivos), `observar()` y `rechazarNoAplica()`. Una transición no permitida lanza `TransicionNoPermitida` sin escribir nada. Subir un archivo a un documento validado lo devuelve a "subido" para que el preparador lo vea.
+- **Conexiones:** `RespuestaGuardador` sincroniza el checklist junto con las formas después de cada respuesta y al quitar una persona; la página de documentos lo sincroniza al abrirse; la carga de 2.6 sube al primer ítem vigente del documento (3.3 pasa a elegir el ítem). Los ítems van a la bitácora.
+- **Comando** `documentos:sincronizar` para las entrevistas que ya existían: arma el checklist y liga los archivos de 2.6 al ítem número 1. Se puede correr de nuevo. En local ligó 2 archivos.
+- **Pruebas:** `Entrevista/ChecklistDocumentosTest` (8). Suite: 622 pruebas, 620 pasan y 2 se saltan.
+
 ---
 
 ## 3.3 Checklist del cliente en el portal
