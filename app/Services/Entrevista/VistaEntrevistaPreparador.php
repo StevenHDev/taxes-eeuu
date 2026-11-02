@@ -108,10 +108,30 @@ class VistaEntrevistaPreparador
                     ];
                 })->values()->all(),
             ])->values()->all(),
+            'avisos' => $this->avisos($situacion),
             'documentos' => $this->documentos($entrevista, $situacion, $ingles),
             'documentos_resumen' => $this->checklist->resumenPorCliente([$cliente->id], $taxYear)[$cliente->id]
                 ?? ['faltan' => 0, 'por_revisar' => 0, 'validados' => 0, 'no_aplica' => 0, 'total' => 0, 'completo' => false],
         ];
+    }
+
+    /**
+     * Lo que el preparador debe saber antes de empezar (F3.8). Sale de las
+     * respuestas visibles: si el cliente cambia la que lo abre, desaparece.
+     * Es solo un aviso; la cola de excepciones es de la fase 5.
+     *
+     * @return list<array{tipo: string, detalle: string|null}>
+     */
+    private function avisos(SituacionEntrevista $situacion): array
+    {
+        $avisos = [];
+
+        if (($situacion->respuestas['G5.1'] ?? null) === 'no_presente_algunos') {
+            $anios = $situacion->respuestas['G5.2'] ?? null;
+            $avisos[] = ['tipo' => 'anios_sin_declarar', 'detalle' => is_string($anios) && trim($anios) !== '' ? trim($anios) : null];
+        }
+
+        return $avisos;
     }
 
     /**

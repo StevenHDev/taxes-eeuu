@@ -5,7 +5,7 @@
  *
  * Origen: docs/mejora-plataforma/documento-madre.md, sección 3 (tablas de los bloques A a G),
  * "Observaciones de Steven sobre la sección 3" (pantallas 1–8 y niveles de seguimiento).
- * Conteo esperado: A15, B6, C14 (por persona), D17, E9, F9, G5 = 75.
+ * Conteo esperado: A15, B6, C14 (por persona), D17, E9, F9, G5 = 75 (después, F2.5–F3.8 sumaron seguimientos).
  */
 return [
     // ── Bloque A — Identidad y situación del contribuyente (y del cónyuge) ──
@@ -1188,5 +1188,33 @@ return [
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'documento:declaracion-anterior'],
         ],
+    ],
+    [
+        // F3.8: un "no" en G5 significa cosas distintas para el preparador.
+        'codigo' => 'G5.1', 'bloque' => 'G', 'pantalla' => 8, 'orden' => 5,
+        'texto_es' => '¿Por qué no la tienes?', 'texto_en' => 'Why don\'t you have it?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'opciones',
+        'opciones' => [
+            ['valor' => 'presente_sin_copia', 'texto_es' => 'La presenté, pero no tengo la copia (o la hizo otro preparador)', 'texto_en' => 'I filed it, but I don\'t have a copy (or another preparer did it)'],
+            ['valor' => 'primera_vez', 'texto_es' => 'Es la primera vez que declaro', 'texto_en' => 'This is my first time filing'],
+            ['valor' => 'no_presente_algunos', 'texto_es' => 'No presenté algunos años', 'texto_en' => 'I didn\'t file some years'],
+            ['valor' => 'no_se', 'texto_es' => 'No sé o no me acuerdo', 'texto_en' => 'I don\'t know or don\'t remember'],
+        ],
+        'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'G5', 'es' => 'no'],
+        'efecto_es' => 'La presentó sin copia → el preparador puede pedir la transcripción al IRS. Primera vez → no hay año anterior para comparar y en el e-file el AGI del año anterior es 0. No presentó algunos años → aviso al preparador y se pregunta cuáles (G5.2). No sabe → el preparador lo confirma',
+        'fuente_texto' => 'El 13614-C pide la declaración del año anterior. Para validar la firma del e-file, el IRS pide el AGI del año anterior; quien no presentó ese año pone 0. La transcripción de una declaración ya presentada se pide al IRS (Get Transcript)',
+        'fuente_url' => 'https://www.irs.gov/e-file-providers/validating-your-electronically-filed-tax-return',
+        'activa' => [],
+    ],
+    [
+        'codigo' => 'G5.2', 'bloque' => 'G', 'pantalla' => 8, 'orden' => 5,
+        'texto_es' => '¿Qué años no presentaste?', 'texto_en' => 'Which years didn\'t you file?', 'ayuda_es' => 'Por ejemplo: 2022 y 2023. Si no te acuerdas bien, escribe lo que sepas.', 'ayuda_en' => 'For example: 2022 and 2023. If you don\'t remember exactly, write what you know.',
+        'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'G5.1', 'es' => 'no_presente_algunos'],
+        'efecto_es' => 'Aviso al preparador en la ficha: años sin declarar. Qué se pide después depende de cómo los maneje la firma (pregunta P10 a GTS)',
+        'fuente_texto' => 'El IRS pide presentar las declaraciones atrasadas (en general, los últimos seis años) aunque no se puedan pagar',
+        'fuente_url' => 'https://www.irs.gov/businesses/small-businesses-self-employed/filing-past-due-tax-returns',
+        'activa' => [],
     ],
 ];

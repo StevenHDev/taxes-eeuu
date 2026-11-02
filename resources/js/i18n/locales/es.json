@@ -572,6 +572,12 @@
             "confirmada": "Confirmada el {{fecha}}",
             "consentimiento": "Consentimiento §7216 versión {{version}} firmado el {{fecha}}",
             "consentimientoProvisional": "texto provisional",
+            "avisos": {
+                "titulo": "Para revisar antes de empezar",
+                "aniosSinDeclarar": "Tiene años sin declarar",
+                "aniosSinDeclararDetalle": "Tiene años sin declarar: {{anios}}",
+                "aniosSinDeclararAyuda": "Revisa si hay que presentar esos años y si tiene cartas del IRS."
+            },
             "sinConsentimiento": "Sin consentimiento §7216 firmado",
             "formularios": "Formularios activados",
             "vacio": "El cliente todavía no empezó la entrevista de {{anio}}.",

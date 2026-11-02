@@ -159,6 +159,8 @@ export type VistaEntrevista = {
         respondidas: number;
         preguntas: RespuestaPreparador[];
     }[];
+    /** Lo que el preparador debe saber antes de empezar (F3.8). */
+    avisos: { tipo: 'anios_sin_declarar'; detalle: string | null }[];
     documentos: DocumentoRevision[];
     documentos_resumen: ResumenDocumentos;
 };

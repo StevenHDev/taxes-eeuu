@@ -7,6 +7,7 @@ import {
     History,
     MessageSquareWarning,
     Pencil,
+    TriangleAlert,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -17,6 +18,7 @@ import AlertError from '@/components/alert-error';
 import { DocumentoEstado } from '@/components/entrevista/documento-estado';
 import { useFormatearValor } from '@/components/entrevista/formatear-valor';
 import { Pregunta } from '@/components/entrevista/pregunta';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -245,6 +247,36 @@ export function EntrevistaCliente({
             </CardHeader>
 
             <CardContent className="space-y-6">
+                {entrevista.avisos.length > 0 ? (
+                    <Alert>
+                        <TriangleAlert aria-hidden="true" />
+                        <AlertTitle>
+                            {t('clienteShow.entrevista.avisos.titulo')}
+                        </AlertTitle>
+                        <AlertDescription>
+                            <ul className="space-y-1">
+                                {entrevista.avisos.map((aviso) => (
+                                    <li key={aviso.tipo}>
+                                        <span className="font-medium text-foreground">
+                                            {aviso.detalle
+                                                ? t(
+                                                      'clienteShow.entrevista.avisos.aniosSinDeclararDetalle',
+                                                      { anios: aviso.detalle },
+                                                  )
+                                                : t(
+                                                      'clienteShow.entrevista.avisos.aniosSinDeclarar',
+                                                  )}
+                                        </span>
+                                        .{' '}
+                                        {t(
+                                            'clienteShow.entrevista.avisos.aniosSinDeclararAyuda',
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </AlertDescription>
+                    </Alert>
+                ) : null}
                 {entrevista.pantallas.map((pantalla) => (
                     <section
                         key={pantalla.numero}

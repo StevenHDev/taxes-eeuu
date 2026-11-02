@@ -572,6 +572,12 @@
             "confirmada": "Confirmed on {{fecha}}",
             "consentimiento": "§7216 consent version {{version}} signed on {{fecha}}",
             "consentimientoProvisional": "provisional text",
+            "avisos": {
+                "titulo": "Review before you start",
+                "aniosSinDeclarar": "Has unfiled years",
+                "aniosSinDeclararDetalle": "Has unfiled years: {{anios}}",
+                "aniosSinDeclararAyuda": "Check whether those years need to be filed and whether there are IRS letters."
+            },
             "sinConsentimiento": "No §7216 consent signed",
             "formularios": "Activated forms",
             "vacio": "The client hasn't started the {{anio}} interview yet.",
