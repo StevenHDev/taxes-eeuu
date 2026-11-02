@@ -25,12 +25,13 @@ use Illuminate\Support\Carbon;
  * @property CanalRespuesta $canal_inicio
  * @property Carbon $iniciada_en
  * @property Carbon|null $confirmada_en
+ * @property Carbon|null $migrada_en
  * @property int|null $consentimiento_id
  * @property-read User $user
  * @property-read Collection<int, EntrevistaPersona> $personas
  * @property-read Collection<int, EntrevistaRespuesta> $respuestas
  */
-#[Fillable(['user_id', 'tax_year', 'estado', 'canal_inicio', 'iniciada_en', 'confirmada_en', 'consentimiento_id'])]
+#[Fillable(['user_id', 'tax_year', 'estado', 'canal_inicio', 'iniciada_en', 'confirmada_en', 'migrada_en', 'consentimiento_id'])]
 class Entrevista extends Model
 {
     /**
@@ -44,6 +45,7 @@ class Entrevista extends Model
             'canal_inicio' => CanalRespuesta::class,
             'iniciada_en' => 'datetime',
             'confirmada_en' => 'datetime',
+            'migrada_en' => 'datetime',
         ];
     }
 
