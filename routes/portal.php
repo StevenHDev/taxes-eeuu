@@ -38,6 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::post('documentos/{item}/no-aplica', [DocumentoEntrevistaController::class, 'noAplica'])
                     ->whereNumber('item')
                     ->name('documentos.no-aplica');
+                Route::patch('documentos/{item}/nota', [DocumentoEntrevistaController::class, 'nota'])
+                    ->whereNumber('item')
+                    ->name('documentos.nota');
                 Route::post('documentos/{item}/otro', [DocumentoEntrevistaController::class, 'agregarOtro'])
                     ->whereNumber('item')
                     ->name('documentos.otro.agregar');

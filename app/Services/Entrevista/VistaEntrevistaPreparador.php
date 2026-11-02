@@ -129,7 +129,7 @@ class VistaEntrevistaPreparador
             $item = $revisiones->get($d['id']);
 
             return [
-                ...array_intersect_key($d, array_flip(['id', 'codigo', 'numero', 'persona_orden', 'nombre', 'nombre_oficial', 'descripcion', 'estado', 'motivo_no_aplica', 'observacion', 'archivos'])),
+                ...array_intersect_key($d, array_flip(['id', 'codigo', 'numero', 'persona_orden', 'nombre', 'nombre_oficial', 'descripcion', 'estado', 'motivo_no_aplica', 'observacion', 'nota_cliente', 'archivos'])),
                 'revisado_por' => $item?->revisor?->name,
                 'revisado_en' => $item?->revisado_en?->toIso8601String(),
             ];

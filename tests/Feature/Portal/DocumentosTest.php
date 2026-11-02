@@ -12,8 +12,11 @@ use App\Models\User;
 use App\Services\Consentimiento\Consentimientos;
 use App\Services\Consentimiento\ConsentimientosCargador;
 use App\Services\Entrevista\ChecklistDocumentos;
+use App\Services\Entrevista\DocumentosEntrevista;
+use App\Services\Entrevista\PasosEntrevista;
 use App\Services\Entrevista\RespuestaData;
 use App\Services\Entrevista\RespuestaGuardador;
+use App\Services\Entrevista\VistaEntrevistaPreparador;
 use Database\Seeders\CatalogoFiscalSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -353,5 +356,121 @@ class DocumentosTest extends TestCase
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('documentos.0.codigo', 'id-foto')
                 ->where('preguntas', fn ($preguntas) => ! collect($preguntas)->contains('codigo', 'A4')));
+    }
+
+    public function test_que_subir_y_las_plantillas_solo_salen_en_los_registros_propios(): void
+    {
+        $this->withUnencryptedCookie('language', 'es');
+        $this->responder('D1', 'si');
+        $this->responder('D12', 'si');
+        $this->responder('D15', 'si');
+        $w2 = $this->item('w2');
+        $negocio = $this->item('registros-ingresos-gastos');
+        $alquiler = $this->item('registros-alquiler');
+
+        $fila = $this->fila($w2->id);
+        $this->assertNull($fila['que_subir']);
+        $this->assertNull($fila['plantillas']);
+        $this->assertNull($fila['nota_cliente']);
+
+        $fila = $this->fila($negocio->id);
+        $this->assertStringContainsString('No tienes que sumar nada', $fila['que_subir']);
+        $this->assertSame(asset('plantillas/registros-negocio-es.xlsx'), $fila['plantillas']['xlsx']);
+        $this->assertSame(asset('plantillas/registros-negocio-es.pdf'), $fila['plantillas']['pdf']);
+
+        $fila = $this->fila($alquiler->id);
+        $this->assertSame(asset('plantillas/registros-alquiler-es.pdf'), $fila['plantillas']['pdf']);
+    }
+
+    public function test_en_ingles_el_texto_y_las_plantillas_salen_en_ingles(): void
+    {
+        $this->responder('D12', 'si');
+        $this->item('registros-alquiler');
+        $entrevista = $this->entrevista();
+        $filas = app(DocumentosEntrevista::class)->lista($entrevista, app(PasosEntrevista::class)->situacion($entrevista), true);
+        $fila = collect($filas)->firstWhere('codigo', 'registros-alquiler');
+
+        $this->assertStringContainsString('the lease for each property', (string) $fila['que_subir']);
+        $this->assertSame(asset('plantillas/registros-alquiler-en.xlsx'), $fila['plantillas']['xlsx']);
+    }
+
+    public function test_los_archivos_de_las_plantillas_existen(): void
+    {
+        foreach (['registros-negocio', 'registros-alquiler'] as $base) {
+            foreach (['es', 'en'] as $idioma) {
+                foreach (['xlsx', 'pdf'] as $formato) {
+                    $this->assertFileExists(public_path("plantillas/{$base}-{$idioma}.{$formato}"));
+                }
+            }
+        }
+    }
+
+    public function test_se_puede_subir_un_registro_propio_sin_usar_la_plantilla(): void
+    {
+        $this->responder('D12', 'si');
+        $item = $this->item('registros-alquiler');
+
+        $this->subir($item, 'contrato.pdf')->assertRedirect();
+
+        $this->assertSame(EstadoDocumento::Subido, $item->fresh()->estado);
+        $this->assertSame(1, Documento::query()->count());
+    }
+
+    public function test_el_cliente_guarda_y_borra_su_nota_sin_cambiar_el_estado(): void
+    {
+        $this->responder('D12', 'si');
+        $item = $this->item('registros-alquiler');
+        $ruta = route('portal.entrevista.documentos.nota', ['item' => $item->id]);
+
+        $this->actingAs($this->cliente)->patch($ruta, ['nota' => '  La casa de Oak St. estuvo vacía en marzo.  '])->assertRedirect();
+
+        $this->assertSame('La casa de Oak St. estuvo vacía en marzo.', $item->fresh()->nota_cliente);
+        $this->assertSame(EstadoDocumento::Pendiente, $item->fresh()->estado);
+        $this->assertSame('La casa de Oak St. estuvo vacía en marzo.', $this->fila($item->id)['nota_cliente']);
+
+        $this->subir($item);
+        $this->actingAs($this->cliente)->patch($ruta, ['nota' => 'Otra nota'])->assertRedirect();
+        $this->assertSame(EstadoDocumento::Subido, $item->fresh()->estado);
+
+        $this->actingAs($this->cliente)->patch($ruta, ['nota' => ''])->assertRedirect();
+        $this->assertNull($item->fresh()->nota_cliente);
+    }
+
+    public function test_la_nota_no_pasa_de_mil_caracteres(): void
+    {
+        $this->responder('D12', 'si');
+        $item = $this->item('registros-alquiler');
+
+        $this->actingAs($this->cliente)
+            ->patch(route('portal.entrevista.documentos.nota', ['item' => $item->id]), ['nota' => str_repeat('a', 1001)])
+            ->assertSessionHasErrors('nota');
+
+        $this->assertNull($item->fresh()->nota_cliente);
+    }
+
+    public function test_un_cliente_no_escribe_la_nota_de_otro(): void
+    {
+        $this->responder('D12', 'si');
+        $item = $this->item('registros-alquiler');
+        $otro = $this->clienteConEntrevista();
+
+        $this->actingAs($otro)
+            ->patch(route('portal.entrevista.documentos.nota', ['item' => $item->id]), ['nota' => 'x'])
+            ->assertNotFound();
+
+        $this->assertNull($item->fresh()->nota_cliente);
+    }
+
+    public function test_el_preparador_ve_la_nota_del_cliente(): void
+    {
+        $this->responder('D15', 'si');
+        $item = $this->item('registros-ingresos-gastos');
+        $item->update(['nota_cliente' => 'Cobré 800 en efectivo sin recibo.']);
+
+        $entrevista = $this->entrevista();
+        $vista = app(VistaEntrevistaPreparador::class)->para($this->cliente, $entrevista->tax_year, false);
+        $fila = collect($vista['documentos'])->firstWhere('id', $item->id);
+
+        $this->assertSame('Cobré 800 en efectivo sin recibo.', $fila['nota_cliente']);
     }
 }

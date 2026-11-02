@@ -921,6 +921,13 @@ function DocumentoFilaPreparador({
                         })}
                     </p>
                 ) : null}
+                {d.nota_cliente ? (
+                    <p className="text-xs whitespace-pre-line text-muted-foreground">
+                        {t('clienteShow.entrevista.notaCliente', {
+                            texto: d.nota_cliente,
+                        })}
+                    </p>
+                ) : null}
                 {d.observacion ? (
                     <p className="text-xs text-amber-700 dark:text-amber-400">
                         {t('clienteShow.entrevista.observacionActual', {

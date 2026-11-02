@@ -1,9 +1,10 @@
 import { useForm } from '@inertiajs/react';
-import { FileText, MessageSquareWarning, Plus } from 'lucide-react';
+import { Download, FileText, MessageSquareWarning, Plus } from 'lucide-react';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DocumentoEstado } from '@/components/entrevista/documento-estado';
 import { DocumentoNoAplica } from '@/components/entrevista/documento-no-aplica';
+import { DocumentoNota } from '@/components/entrevista/documento-nota';
 import { DocumentoSubir } from '@/components/entrevista/documento-subir';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -157,7 +158,8 @@ export function DocumentoFila({
                         )}
                     />
                 ) : null}
-                {documento.si_no_llega ? (
+                {/* En los registros propios nadie los envía: "Qué subir" lo reemplaza. */}
+                {documento.si_no_llega && !documento.que_subir ? (
                     <div className="sm:col-span-2">
                         <Dato
                             titulo={t('entrevista.documentos.siNoLlega')}
@@ -166,6 +168,47 @@ export function DocumentoFila({
                     </div>
                 ) : null}
             </dl>
+
+            {documento.que_subir ? (
+                <div className="space-y-4 rounded-md border border-border bg-muted/40 p-3">
+                    <Dato
+                        titulo={t('entrevista.documentos.queSubir')}
+                        texto={documento.que_subir}
+                    />
+                    <DocumentoNota
+                        id={documento.id}
+                        nombre={titulo}
+                        nota={documento.nota_cliente}
+                    />
+                    {documento.plantillas ? (
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                            <span className="text-muted-foreground">
+                                {t('entrevista.documentos.plantilla')}
+                            </span>
+                            {(['xlsx', 'pdf'] as const).map((formato) => (
+                                <Button
+                                    key={formato}
+                                    variant="link"
+                                    size="sm"
+                                    asChild
+                                >
+                                    <a
+                                        href={documento.plantillas?.[formato]}
+                                        download
+                                        aria-label={t(
+                                            'entrevista.documentos.descargarPlantilla',
+                                            { formato: formato.toUpperCase() },
+                                        )}
+                                    >
+                                        <Download aria-hidden="true" />
+                                        {formato === 'xlsx' ? 'Excel' : 'PDF'}
+                                    </a>
+                                </Button>
+                            ))}
+                        </div>
+                    ) : null}
+                </div>
+            ) : null}
 
             {recibido ? (
                 <ul

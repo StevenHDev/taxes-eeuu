@@ -6,6 +6,7 @@ use App\Enums\Entrevista\CanalRespuesta;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\AgregarOtroDocumentoRequest;
 use App\Http\Requests\Portal\MarcarNoAplicaRequest;
+use App\Http\Requests\Portal\NotaDocumentoRequest;
 use App\Http\Requests\Portal\OtroDocumentoRequest;
 use App\Http\Requests\Portal\SubirDocumentoRequest;
 use App\Models\Entrevista\EntrevistaDocumento;
@@ -70,6 +71,21 @@ class DocumentoEntrevistaController extends Controller
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Listo, lo marcamos como "no aplica".')]);
+
+        return back();
+    }
+
+    /**
+     * La nota del cliente en un documento de registros propios (F3.7). No
+     * cambia el estado del ítem: es información para el preparador.
+     */
+    public function nota(NotaDocumentoRequest $request): RedirectResponse
+    {
+        $nota = trim((string) $request->validated('nota'));
+
+        $request->item()->update(['nota_cliente' => $nota === '' ? null : $nota]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $nota === '' ? __('Quitamos tu nota.') : __('Guardamos tu nota.')]);
 
         return back();
     }

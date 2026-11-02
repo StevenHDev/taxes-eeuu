@@ -27,11 +27,12 @@ use Illuminate\Support\Carbon;
  * @property EstadoDocumento $estado
  * @property string|null $motivo_no_aplica
  * @property string|null $observacion
+ * @property string|null $nota_cliente
  * @property int|null $revisado_por
  * @property Carbon|null $revisado_en
  * @property Carbon|null $retirado_en
  */
-#[Fillable(['entrevista_id', 'documento_codigo', 'persona_id', 'numero', 'agregado_por_cliente', 'descripcion', 'estado', 'motivo_no_aplica', 'observacion', 'revisado_por', 'revisado_en', 'retirado_en'])]
+#[Fillable(['entrevista_id', 'documento_codigo', 'persona_id', 'numero', 'agregado_por_cliente', 'descripcion', 'estado', 'motivo_no_aplica', 'observacion', 'nota_cliente', 'revisado_por', 'revisado_en', 'retirado_en'])]
 class EntrevistaDocumento extends Model
 {
     /** El código de los documentos que el cliente agrega por fuera de la lista. */

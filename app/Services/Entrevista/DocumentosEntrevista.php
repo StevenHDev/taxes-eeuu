@@ -61,7 +61,7 @@ class DocumentosEntrevista
 
         return $items
             ->filter(fn (EntrevistaDocumento $i) => $i->esOtro() || $catalogo->has($i->documento_codigo))
-            ->map(function (EntrevistaDocumento $item) use ($catalogo, $preguntas, $personas, $activados, $repetidos, $grupos, $texto) {
+            ->map(function (EntrevistaDocumento $item) use ($catalogo, $preguntas, $personas, $activados, $repetidos, $grupos, $texto, $ingles) {
                 $otro = $item->esOtro();
                 $documento = $otro ? null : $catalogo->get($item->documento_codigo);
                 $unoPor = $documento['uno_por'] ?? null;
@@ -87,6 +87,9 @@ class DocumentosEntrevista
                     'emisor' => $documento === null ? null : $texto($documento['emisor_es'] ?? null, $documento['emisor_en'] ?? null),
                     'fecha_llegada' => $llegada === null ? null : substr((string) $llegada, 0, 10),
                     'si_no_llega' => $documento === null ? null : $texto($documento['si_no_llega_es'] ?? null, $documento['si_no_llega_en'] ?? null),
+                    'que_subir' => $documento === null ? null : $texto($documento['que_subir_es'] ?? null, $documento['que_subir_en'] ?? null),
+                    'plantillas' => $this->plantillas($documento['plantilla'] ?? null, $ingles),
+                    'nota_cliente' => $item->nota_cliente,
                     'formatos' => $otro ? ['pdf', 'jpg', 'png', 'heic'] : ($documento['formatos'] ?? []),
                     'estado' => $item->estado->value,
                     'resuelto' => $item->estado->resueltoParaElCliente(),
@@ -117,6 +120,26 @@ class DocumentosEntrevista
             ->map(fn (array $d) => array_diff_key($d, ['_orden' => true]))
             ->values()
             ->all();
+    }
+
+    /**
+     * Los enlaces de la plantilla opcional (F3.7), en el idioma del cliente:
+     * archivos estáticos en `public/plantillas`. Los arma el código.
+     *
+     * @return array{xlsx: string, pdf: string}|null
+     */
+    private function plantillas(?string $base, bool $ingles): ?array
+    {
+        if ($base === null || $base === '') {
+            return null;
+        }
+
+        $idioma = $ingles ? 'en' : 'es';
+
+        return [
+            'xlsx' => asset("plantillas/{$base}-{$idioma}.xlsx"),
+            'pdf' => asset("plantillas/{$base}-{$idioma}.pdf"),
+        ];
     }
 
     /**

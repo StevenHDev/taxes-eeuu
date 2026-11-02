@@ -72,6 +72,12 @@ export type DocumentoEntrevista = {
     /** Fecha ISO (AAAA-MM-DD) en que debe llegar, si el catálogo la tiene. */
     fecha_llegada: string | null;
     si_no_llega: string | null;
+    /** Qué subir cuando no hay formulario (registros propios); null en los demás. */
+    que_subir: string | null;
+    /** Plantilla opcional (Excel y PDF) en el idioma del cliente. */
+    plantillas: { xlsx: string; pdf: string } | null;
+    /** Lo que el cliente escribió que los papeles no dicen. */
+    nota_cliente: string | null;
     formatos: string[];
     estado: EstadoDocumento;
     /** Al cliente ya no le falta nada por hacer. */
@@ -117,6 +123,7 @@ export type DocumentoRevision = {
     estado: EstadoDocumento;
     motivo_no_aplica: string | null;
     observacion: string | null;
+    nota_cliente: string | null;
     archivos: ArchivoDocumento[];
     revisado_por: string | null;
     revisado_en: string | null;
