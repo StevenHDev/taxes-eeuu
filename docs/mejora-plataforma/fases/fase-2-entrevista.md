@@ -476,6 +476,7 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 - **Bandera por defecto:** `tax.entrevista_catalogo_por_defecto` pasa a verdadero (los clientes nuevos entran a la entrevista). `phpunit.xml` la deja en falso hasta 2.11 para las pruebas del flujo viejo.
 - **Catálogo:** D17.1 (94 preguntas). Hay que recargar 2025 y 2026 en producción.
 - **No se hizo:** el aviso a los clientes migrados: en producción todos son usuarios de prueba.
+- **Producción (1 nov.):** catálogo 2025 y 2026 recargado con D17.1 (verificar sin problemas). `--migrar --dry-run` no encontró clientes: `campos_cliente` está vacía en producción, así que no hubo que migrar nada.
 - **Pruebas:** `Entrevista/MigracionCamposClienteTest` (6: empleada con dependiente, independiente con Marketplace, dos corridas sin duplicar ni pisar, `--dry-run`, `--cliente`, el portal muestra "migración"); `ConsentimientoTest` cambia la prueba del freno por "un cliente real firma el provisional".
 
 ---
@@ -494,6 +495,18 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 | Bandera | `users.entrevista_catalogo`, `tax.entrevista_catalogo_por_defecto`, los `if` de convivencia | Todos usan la entrevista |
 
 **Pruebas:** la suite completa pasa (se borran las pruebas del flujo viejo y se ajustan las que lo usaban); `npm run build` y `types:check`; Agente → Prompts y Tools abren sin errores con las filas viejas en la base; la ficha de un cliente migrado sigue mostrando su histórico.
+
+**Resultado (2 nov.):**
+- **Decisiones de Steven (decisiones 14 y 15):** la API externa (E3) queda igual hasta que se decida su retiro, y los datos del formulario anterior quedan en la ficha como histórico de solo lectura.
+- **E5 (agente):** fuera las fases `determinacion_formas`, `recoleccion`, `cierre` y `handoff_portal` y sus 4 prompts, y las tools `declarar_formas_cliente`, `consultar_pendientes_cliente`, `consultar_documentos_extra`, `guardar_campo_cliente` y `registrar_atestacion_cliente`. Quedan `verificacion_cuenta`, `portal_dudas`, `consentimiento`, `entrevista` y `seguimiento`. `AgenteToolEstados` lee las fases con `tryFrom()`; las filas viejas de `agente_prompts` quedan como historial.
+- **Adjuntos:** WhatsApp nunca descarga archivos (se borraron `AdjuntosWhatsappService`, `ContenidoMensajeConAdjuntos` y `AdjuntoWhatsapp`) y el chat del portal es solo texto. `DocumentoExtraccionService` se conserva para la fase 4.
+- **E6:** fuera `PromptActivoStep`, `TipoPromptActivoStep`, `ActivosResolver`, `ActivosPromptComposer` y `PromptActivoStepsSeeder`; la migración borra `prompt_activo_steps`. La API pierde `siguiente_activo` en `pendientes`.
+- **Portal:** fuera `PortalFormularioController`, `portal/formulario.tsx`, `RevelacionExtractorService` y "Mi información" (`mi-informacion.tsx`). `/portal` y el panel del cliente llevan a la entrevista.
+- **Menú viejo "Catálogo":** fuera `CatalogoController`, `CatalogoPolicy`, `CatalogoCampoRequest`, `routes/catalogo.php` y `pages/catalogo/index.tsx` (con su inspector de derivaciones; la ficha conserva el panel).
+- **Ficha:** los datos de `campos_cliente` se ven, se revelan y tienen historial, pero ya no se agregan, editan, borran ni suben (fuera las rutas web `clientes.campos.update` y `destroy`). `show.tsx` pasó de unas 2.390 a 1.336 líneas.
+- **Bandera:** fuera `users.entrevista_catalogo` (la migración borra la columna), `tax.entrevista_catalogo_por_defecto`, `usaEntrevistaCatalogo()` (ahora `User::esCliente()`), la ruta `usuarios.entrevista-catalogo` y sus botones.
+- **Se conserva para la API (E3):** `EventoRecoleccionService`, `EventoRequest`, `EventoValidator`, `CampoClienteUpdateRequest`, las pseudoformas, `TaxFieldCatalog` y `AgenteToolService` (crear cliente, declarar formas, pendientes y documentos extra).
+- **Pruebas:** se borraron las del flujo viejo y se ajustaron las demás (las subidas de documentos de `DocumentoCifradoTest` y `DocumentoDuplicadoTest` van por la API). Suite: 613 pruebas, 611 pasan y 2 se saltan; `npm run build`, `types:check`, ESLint y Pint pasan.
 
 ---
 
@@ -577,3 +590,5 @@ Para 2.10, además: `consentimientos:cargar` con el texto de L1; `equivalencias 
 
 12. **2.10 y 2.11 sin esperar L1:** el texto definitivo del consentimiento llega después. Los clientes reales **firman el texto provisional** (versión 1, registrada con texto, versión, fecha, IP y navegador). Cuando llegue el texto de L1 se carga como versión 2 y el portal les pide firmar de nuevo (eso ya funciona: `firmado()` compara con la versión vigente). El aviso "texto provisional, solo para pruebas" se ve solo en usuarios de prueba.
 13. **D17.1:** "¿Qué tipo de dinero fue y de dónde vino?" (texto, seguimiento de D17 = sí), para que el preparador sepa qué documento pedir.
+14. **API externa (E3):** queda igual en la 2.11 (`/api/eventos`, campos, pendientes y documentos-extra) hasta que se decida su retiro; el servicio y las pseudoformas quedan solo para ella.
+15. **Ficha:** los datos del formulario anterior quedan en solo lectura (ver, revelar, historial y documentos); se corrige en la sección Entrevista.
