@@ -132,6 +132,29 @@ class ConfirmacionTest extends TestCase
             ->assertRedirect(route('portal.entrevista.resumen'));
     }
 
+    public function test_un_seguimiento_que_abre_otro_se_queda_en_el_paso_hasta_responderlo(): void
+    {
+        $seguimiento = route('portal.entrevista.guardar', ['pantalla' => 8, 'paso' => 'seguimiento']);
+
+        $this->actingAs($this->cliente)
+            ->put(route('portal.entrevista.guardar', ['pantalla' => 8, 'paso' => 'entrada']), ['respuestas' => ['G1' => 'no', 'G2' => 'no', 'G5' => 'no']])
+            ->assertRedirect(route('portal.entrevista.paso', ['pantalla' => 8, 'paso' => 'seguimiento']));
+
+        // G5.1 = "no presenté algunos años" abre G5.2 en el mismo paso.
+        $this->actingAs($this->cliente)
+            ->put($seguimiento, ['respuestas' => ['G5.1' => 'no_presente_algunos']])
+            ->assertRedirect(route('portal.entrevista.paso', ['pantalla' => 8, 'paso' => 'seguimiento']));
+
+        $this->actingAs($this->cliente)
+            ->put($seguimiento, ['respuestas' => ['G5.1' => 'no_presente_algunos', 'G5.2' => '2022 y 2023']])
+            ->assertRedirect(route('portal.entrevista.resumen'));
+
+        // Sin otra pregunta nueva sigue de largo, aunque deje una sin responder.
+        $this->actingAs($this->cliente)
+            ->put($seguimiento, ['respuestas' => ['G5.1' => 'no_presente_algunos', 'G5.2' => '']])
+            ->assertRedirect(route('portal.entrevista.resumen'));
+    }
+
     public function test_el_resumen_lleva_cada_respuesta_a_su_paso_y_marca_las_sensibles(): void
     {
         app(RespuestaGuardador::class)->guardar($this->entrevista(), new RespuestaData('B1', 'casado'), CanalRespuesta::Portal, $this->cliente);

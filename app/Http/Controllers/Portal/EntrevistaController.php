@@ -140,7 +140,7 @@ class EntrevistaController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Guardado.')]);
 
-        return redirect()->to($this->pasos->siguiente($entrevista->fresh(), $request->pantalla(), $request->paso(), $persona?->id));
+        return redirect()->to($this->pasos->siguiente($entrevista->fresh(), $request->pantalla(), $request->paso(), $persona?->id, $request->preguntasDelPaso()->pluck('codigo')->all()));
     }
 
     /**

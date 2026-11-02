@@ -83,9 +83,20 @@ class PasosEntrevista
      * A dónde va el cliente después de guardar un paso. Se calcula con las
      * respuestas ya guardadas, así un seguimiento recién abierto aparece.
      */
-    public function siguiente(Entrevista $entrevista, int $pantalla, string $paso, ?int $personaId = null): string
+    /**
+     * @param  list<string>  $mostradas  las preguntas que tenía el paso al guardarlo: si
+     *                                   una respuesta del seguimiento abrió otra (G5.1 → G5.2, F3.8), se queda
+     */
+    public function siguiente(Entrevista $entrevista, int $pantalla, string $paso, ?int $personaId = null, array $mostradas = []): string
     {
         $situacion = $this->situacion($entrevista);
+
+        if ($paso === 'seguimiento' && $mostradas !== []
+            && $this->preguntas($entrevista, $situacion, $pantalla, 'seguimiento', $personaId)->pluck('codigo')->diff($mostradas)->isNotEmpty()) {
+            return $personaId === null
+                ? route('portal.entrevista.paso', ['pantalla' => $pantalla, 'paso' => 'seguimiento'])
+                : route('portal.entrevista.persona', ['persona' => $personaId, 'paso' => 'seguimiento']);
+        }
 
         if ($personaId !== null) {
             return $paso === 'entrada' && $this->preguntas($entrevista, $situacion, $pantalla, 'seguimiento', $personaId)->isNotEmpty()
