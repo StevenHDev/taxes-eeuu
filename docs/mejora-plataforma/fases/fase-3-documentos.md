@@ -53,6 +53,7 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7. 3.1 y 3.7 n
 - Sin fecha (no tienen plazo de entrega al cliente): identificación, tarjetas, registros propios, recibos, datos bancarios, carta del IRS, declaración anterior, etc. El estado de cuenta de la IRA (5498) también queda sin fecha: tiene dos plazos (2 de febrero y 1 de junio) según lo que informe.
 - Los 42 documentos tienen quién lo envía y qué hacer si no llega, en español y en inglés.
 - Prueba nueva en `CatalogoRealTest`: todo documento con fecha dice quién lo envía y de dónde sale la fecha, y todos dicen qué hacer si no llegan.
+- **Producción (2 nov.):** catálogo 2025 y 2026 recargado (42 documentos actualizados); la verificación pasa en los dos años.
 
 ---
 
@@ -90,6 +91,7 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7. 3.1 y 3.7 n
 - **Conexiones:** `RespuestaGuardador` sincroniza el checklist junto con las formas después de cada respuesta y al quitar una persona; la página de documentos lo sincroniza al abrirse; la carga de 2.6 sube al primer ítem vigente del documento (3.3 pasa a elegir el ítem). Los ítems van a la bitácora.
 - **Comando** `documentos:sincronizar` para las entrevistas que ya existían: arma el checklist y liga los archivos de 2.6 al ítem número 1. Se puede correr de nuevo. En local ligó 2 archivos.
 - **Pruebas:** `Entrevista/ChecklistDocumentosTest` (8). Suite: 622 pruebas, 620 pasan y 2 se saltan.
+- **Producción (2 nov.):** migración aplicada, sin errores en el log; `documentos:sincronizar` armó el checklist de la única entrevista que hay (no tenía archivos que ligar).
 
 ---
 
@@ -111,6 +113,22 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7. 3.1 y 3.7 n
 
 **Pruebas:** cada fila trae su información y estado; subir pasa a `subido`; "no aplica" sin motivo falla; "otro documento" crea un ítem `otro`; agregar otro W-2 crea el número siguiente; un cliente no ve ni toca ítems de otro.
 
+**Cómo quedó (2 nov., subagente Sonnet 5.5 + revisión con Opus 5.5):**
+- **Lista por ítem:** `DocumentosEntrevista::lista()` arma una fila por ítem vigente. Primero va lo que el preparador devolvió, después identidad, grupo, orden, persona y número, y los "otro" al final. Cada fila trae nombre sencillo y oficial, `#n` (solo si hay más de uno), por qué, quién lo envía, cuándo llega, qué hacer si no llega, formatos, estado, motivo, observación y archivos. Si la entrevista todavía no tiene ítems, `lista()` sincroniza una vez.
+- **Rutas** (con `throttle:30,1`), cada una con su request que carga el ítem solo de la entrevista del cliente (404 si es de otro o ya no está vigente):
+  - `POST documentos/{item}/archivos`;
+  - `POST documentos/{item}/no-aplica`;
+  - `POST documentos/{item}/otro` ("agregar otro de este documento", solo en `fuente`, `empleo` y `poliza`);
+  - `POST documentos/otro` (descripción y archivos).
+  Se retiró `POST documentos/{codigo}`.
+- **Interfaz:** la fila (`documento-fila`, también en la pantalla 1 y en cada persona) muestra la insignia con ícono y texto de los 8 estados, el diálogo de "no aplica" con motivo obligatorio, la nota de lo devuelto por el preparador y la tarjeta "Otro documento". El inicio, "Mis documentos" y el agente cuentan solo lo que el cliente todavía tiene que hacer.
+- **Revisión en el navegador (cliente de prueba local con 2 empleos, intereses y una persona):** se corrigieron cuatro detalles:
+  - las acciones en el celular quedaban desalineadas;
+  - después de "no aplica" el botón decía "Agregar otro archivo" sin haber archivos;
+  - había dos botones principales (ahora "Subir otro documento" es secundario);
+  - el ejemplo del motivo hablaba de un empleador en cualquier documento.
+- **Pruebas:** `Portal/DocumentosTest` (12 nuevas o cambiadas). Suite: 631 pruebas, 629 pasan y 2 se saltan.
+
 ---
 
 ## 3.4 Documentos en la ficha del preparador
@@ -128,6 +146,15 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7. 3.1 y 3.7 n
 **Interfaz:** acciones de solo ícono con `aria-label` que nombra el documento y tooltip; diálogos con `processing`; toast al guardar; la observación se ve igual a como la verá el cliente.
 
 **Pruebas:** validar, observar y rechazar cambian el estado y quedan en la bitácora; un preparador no toca documentos de clientes ajenos; la observación aparece en el portal del cliente; la columna de la lista cuenta bien.
+
+**Cómo quedó (2 nov., reglas con Opus 5.5 y pantalla con un subagente Sonnet 5.5, revisado en el navegador):**
+- **Reglas:** ruta `PATCH clientes/{cliente}/entrevista/documentos/{item}` con `RevisarDocumentoRequest`, que exige que el ítem sea de ese cliente y la política `update` (solo sus clientes). Las acciones son `validar`, `observar` y `rechazar_no_aplica`; las dos últimas exigen texto. Las reglas de cada cambio son las de `ChecklistDocumentos`, y un cambio no permitido vuelve como error.
+- **Datos:** `EstadoDocumento::grupo()` (faltan, por revisar, validados, no aplica) y `ChecklistDocumentos::resumenPorCliente()`, una sola consulta para la ficha y la lista. La ficha recibe por ítem el estado, el motivo, la observación, quién lo revisó y cuándo, además de `documentos_resumen`.
+- **Pantalla:**
+  - **Ficha:** resumen arriba e insignia de estado (la misma del portal). Acciones de solo ícono según el estado: validar (solo con archivos), observación y rechazar "no aplica", con diálogo, texto obligatorio, avance y aviso al terminar.
+  - **Lista de clientes:** columna "Documentos" ("Faltan N · N por revisar", "Completo" o "—"), que se puede ordenar.
+- **Visto en el navegador:** después de cada acción la ficha volvía arriba, porque la entrevista llega diferida y pasaba por el esqueleto. Ahora las acciones de la sección (incluido "Corregir" de 2.9) recargan solo `entrevista` y la posición se mantiene.
+- **Pruebas:** `Entrevista/RevisionDocumentosTest` (5). Suite: 636 pruebas, 634 pasan y 2 se saltan.
 
 ---
 

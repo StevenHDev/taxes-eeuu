@@ -143,7 +143,7 @@ Plan técnico: [`fases/fase-3-documentos.md`](fases/fase-3-documentos.md) · ✅
 
 Wiplitask: `cmvskovx900771420nj5xy1du` · 🔄
 - [x] Plan técnico de la fase 3 escrito y aprobado (2 nov.)
-- [ ] Checklist según respuestas, con estados por documento
+- [ ] Checklist según respuestas, con estados por documento 🔄 (3.1 y 3.2 en producción el 2 nov.: contenido de cada documento y checklist guardado con estados; falta la pantalla del cliente, 3.3)
 - [ ] "No aplica" con motivo, varios archivos por tipo y "otro documento"
 - [ ] Recordatorios del agente con plantillas; el agente no acepta documentos
 
