@@ -560,6 +560,67 @@
         }
     },
     "clienteShow": {
+        "entrevista": {
+            "titulo": "Interview {{anio}}",
+            "estado": {
+                "en_curso": "In progress",
+                "confirmada": "Confirmed",
+                "reabierta": "Reopened"
+            },
+            "iniciada": "Started on {{fecha}} via {{canal}}",
+            "confirmada": "Confirmed on {{fecha}}",
+            "consentimiento": "§7216 consent version {{version}} signed on {{fecha}}",
+            "consentimientoProvisional": "provisional text",
+            "sinConsentimiento": "No §7216 consent signed",
+            "formularios": "Activated forms",
+            "vacio": "The client hasn't started the {{anio}} interview yet.",
+            "error": "The interview couldn't be loaded.",
+            "avance": "{{respondidas}} of {{total}}",
+            "sinResponder": "Not answered",
+            "sensibleOculta": "Sensitive data hidden",
+            "persona": "Person {{orden}}",
+            "canal": {
+                "whatsapp": "WhatsApp",
+                "portal": "Portal",
+                "preparador": "Preparer",
+                "migracion": "Migration"
+            },
+            "quien": {
+                "usted": "Client",
+                "conyuge": "Spouse"
+            },
+            "pantallas": {
+                "1": "Identity",
+                "2": "Marital status and household",
+                "3": "Client or spouse situations",
+                "4": "Dependents",
+                "5": "Income",
+                "6": "Expenses",
+                "7": "Events during the year",
+                "8": "Payments and refund"
+            },
+            "revelar": "Reveal {{codigo}}",
+            "confirmarContrasena": "Confirm your password to reveal",
+            "corregir": "Correct {{codigo}}",
+            "corregirTitulo": "Correct {{codigo}}",
+            "corregirDescripcion": "It's saved as the preparer's answer, in the history. If the interview was confirmed, it reopens and the client confirms again.",
+            "guardar": "Save correction",
+            "cancelar": "Cancel",
+            "corregida": "Answer corrected.",
+            "historial": "View history of {{codigo}}",
+            "historialTitulo": "History of {{codigo}}",
+            "historialVacio": "No changes recorded.",
+            "historialError": "The history couldn't be loaded.",
+            "antes": "Before",
+            "despues": "After",
+            "valorOculto": "Sensitive value: not shown in the history.",
+            "cambios_one": "{{count}} change",
+            "cambios_other": "{{count}} changes",
+            "documentos": "Documents requested by the interview",
+            "documentoPendiente": "Pending",
+            "verArchivo": "View {{nombre}}",
+            "sinDocumentos": "No documents activated yet."
+        },
         "viewer": {
             "viewTitle": "View {{name}}",
             "noPreview": "No preview available.",
@@ -776,10 +837,15 @@
         },
         "mensajes": {
             "title": "Messages",
-            "subtitle": "Everything received and sent by the WhatsApp agent, for any client, in the last 30 days — useful to validate its behavior and as a webhook log.",
+            "subtitle": "Everything received and sent by the agent, over WhatsApp and the portal chat, for any client, in the last 30 days — useful to validate its behavior and as a webhook log.",
             "searchPlaceholder": "Search by phone, client, or content…",
             "empty": "No messages recorded.",
             "sinCuenta": "No account yet",
+            "canal": {
+                "whatsapp": "WhatsApp",
+                "portal": "Portal"
+            },
+            "sinTelefono": "No phone",
             "rol": {
                 "cliente": "Client",
                 "agente": "Agent",
@@ -787,6 +853,7 @@
                 "sistema": "System"
             },
             "columns": {
+                "channel": "Channel",
                 "date": "Date",
                 "origin": "Origin",
                 "role": "Role",
@@ -1096,7 +1163,12 @@
         "entrevistaCatalogo": {
             "badge": "New interview",
             "activar": "Use new interview",
-            "quitar": "Back to current form"
+            "quitar": "Back to current form",
+            "tituloActivar": "Move {{name}} to the new interview?",
+            "descripcionActivar": "The client answers the new interview in the portal (and over WhatsApp if it's a test user). What they already have in the current form isn't deleted.",
+            "tituloQuitar": "Return {{name}} to the current form?",
+            "descripcionQuitar": "They stop seeing the new interview. Their answers are kept and come back if it's turned on again.",
+            "cancelar": "Cancel"
         }
     },
     "catalogoFiscal": {

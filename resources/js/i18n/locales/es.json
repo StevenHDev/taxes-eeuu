@@ -560,6 +560,67 @@
         }
     },
     "clienteShow": {
+        "entrevista": {
+            "titulo": "Entrevista {{anio}}",
+            "estado": {
+                "en_curso": "En curso",
+                "confirmada": "Confirmada",
+                "reabierta": "Reabierta"
+            },
+            "iniciada": "Empezó el {{fecha}} por {{canal}}",
+            "confirmada": "Confirmada el {{fecha}}",
+            "consentimiento": "Consentimiento §7216 versión {{version}} firmado el {{fecha}}",
+            "consentimientoProvisional": "texto provisional",
+            "sinConsentimiento": "Sin consentimiento §7216 firmado",
+            "formularios": "Formularios activados",
+            "vacio": "El cliente todavía no empezó la entrevista de {{anio}}.",
+            "error": "No se pudo cargar la entrevista.",
+            "avance": "{{respondidas}} de {{total}}",
+            "sinResponder": "Sin responder",
+            "sensibleOculta": "Dato sensible oculto",
+            "persona": "Persona {{orden}}",
+            "canal": {
+                "whatsapp": "WhatsApp",
+                "portal": "Portal",
+                "preparador": "Preparador",
+                "migracion": "Migración"
+            },
+            "quien": {
+                "usted": "Cliente",
+                "conyuge": "Cónyuge"
+            },
+            "pantallas": {
+                "1": "Identidad",
+                "2": "Estado civil y hogar",
+                "3": "Situaciones del cliente o el cónyuge",
+                "4": "Personas a cargo",
+                "5": "Ingresos",
+                "6": "Gastos",
+                "7": "Situaciones del año",
+                "8": "Pagos y reembolso"
+            },
+            "revelar": "Revelar {{codigo}}",
+            "confirmarContrasena": "Confirma tu contraseña para revelar",
+            "corregir": "Corregir {{codigo}}",
+            "corregirTitulo": "Corregir {{codigo}}",
+            "corregirDescripcion": "Queda guardada como respuesta del preparador, en el historial. Si la entrevista estaba confirmada, se reabre y el cliente vuelve a confirmar.",
+            "guardar": "Guardar corrección",
+            "cancelar": "Cancelar",
+            "corregida": "Respuesta corregida.",
+            "historial": "Ver historial de {{codigo}}",
+            "historialTitulo": "Historial de {{codigo}}",
+            "historialVacio": "Sin cambios registrados.",
+            "historialError": "No se pudo cargar el historial.",
+            "antes": "Antes",
+            "despues": "Después",
+            "valorOculto": "Valor sensible: no se muestra en el historial.",
+            "cambios_one": "{{count}} cambio",
+            "cambios_other": "{{count}} cambios",
+            "documentos": "Documentos que pide la entrevista",
+            "documentoPendiente": "Pendiente",
+            "verArchivo": "Ver {{nombre}}",
+            "sinDocumentos": "Todavía no se activó ningún documento."
+        },
         "viewer": {
             "viewTitle": "Ver {{name}}",
             "noPreview": "No hay previsualización disponible.",
@@ -776,10 +837,15 @@
         },
         "mensajes": {
             "title": "Mensajes",
-            "subtitle": "Todo lo recibido y enviado por el agente de WhatsApp, de cualquier cliente, en los últimos 30 días — sirve para validar su comportamiento y como log del webhook.",
+            "subtitle": "Todo lo recibido y enviado por el agente, por WhatsApp y por el chat del portal, de cualquier cliente, en los últimos 30 días — sirve para validar su comportamiento y como log del webhook.",
             "searchPlaceholder": "Buscar por teléfono, cliente o contenido…",
             "empty": "Sin mensajes registrados.",
             "sinCuenta": "Sin cuenta todavía",
+            "canal": {
+                "whatsapp": "WhatsApp",
+                "portal": "Portal"
+            },
+            "sinTelefono": "Sin teléfono",
             "rol": {
                 "cliente": "Cliente",
                 "agente": "Agente",
@@ -787,6 +853,7 @@
                 "sistema": "Sistema"
             },
             "columns": {
+                "channel": "Canal",
                 "date": "Fecha",
                 "origin": "Origen",
                 "role": "Rol",
@@ -1096,7 +1163,12 @@
         "entrevistaCatalogo": {
             "badge": "Entrevista nueva",
             "activar": "Usar entrevista nueva",
-            "quitar": "Volver al formulario actual"
+            "quitar": "Volver al formulario actual",
+            "tituloActivar": "¿Pasar a {{name}} a la entrevista nueva?",
+            "descripcionActivar": "El cliente responde la entrevista nueva en el portal (y por WhatsApp si es de prueba). Lo que ya tiene en el formulario actual no se borra.",
+            "tituloQuitar": "¿Devolver a {{name}} al formulario actual?",
+            "descripcionQuitar": "Deja de ver la entrevista nueva. Sus respuestas se conservan y vuelven a aparecer si se activa de nuevo.",
+            "cancelar": "Cancelar"
         }
     },
     "catalogoFiscal": {

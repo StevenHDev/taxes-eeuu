@@ -5,6 +5,7 @@ use App\Http\Controllers\CampoClienteController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\DeterminacionFiscalController;
 use App\Http\Controllers\DocumentoController;
+use App\Http\Controllers\EntrevistaRespuestaController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('clientes/{cliente}/campos/{campo}/reveal', [CampoClienteController::class, 'reveal'])
         ->middleware([RequirePassword::class, 'throttle:10,1'])
         ->name('clientes.campos.reveal');
+
+    // F2.9: la entrevista del cliente vista por el preparador.
+    Route::put('clientes/{cliente}/entrevista/respuestas/{respuesta}', [EntrevistaRespuestaController::class, 'update'])
+        ->name('clientes.entrevista.respuestas.update');
+    Route::get('clientes/{cliente}/entrevista/respuestas/{respuesta}/historial', [EntrevistaRespuestaController::class, 'historial'])
+        ->name('clientes.entrevista.respuestas.historial');
+    Route::post('clientes/{cliente}/entrevista/respuestas/{respuesta}/revelar', [EntrevistaRespuestaController::class, 'reveal'])
+        ->middleware([RequirePassword::class, 'throttle:10,1'])
+        ->name('clientes.entrevista.respuestas.revelar');
 
     Route::get('documentos/{documento}', [DocumentoController::class, 'show'])
         ->middleware('signed')

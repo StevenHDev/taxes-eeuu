@@ -21,6 +21,7 @@ use App\Models\WhatsappMensaje;
 use App\Notifications\BienvenidaClientePortal;
 use App\Services\ClienteExportService;
 use App\Services\DocumentoDuplicadoService;
+use App\Services\Entrevista\VistaEntrevistaPreparador;
 use App\Services\RiesgoCasoService;
 use App\Services\UsuarioRetencionService;
 use App\Services\Whatsapp\WhatsappChannel;
@@ -46,6 +47,7 @@ class ClienteController extends Controller
         private readonly RiesgoCasoService $riesgo,
         private readonly WhatsappChannel $canal,
         private readonly UsuarioRetencionService $retencion,
+        private readonly VistaEntrevistaPreparador $vistaEntrevista,
     ) {}
 
     public function index(Request $request): Response
@@ -205,8 +207,14 @@ class ClienteController extends Controller
                 'email' => $cliente->email,
                 'phone' => $cliente->phone,
                 'es_prueba' => $cliente->es_prueba,
+                'entrevista_catalogo' => $cliente->entrevista_catalogo,
             ],
             'taxYearActual' => $taxYear,
+            // F2.9: la entrevista nueva, solo para clientes con la bandera.
+            // Diferida para no frenar el resto de la ficha.
+            'entrevista' => $cliente->entrevista_catalogo
+                ? Inertia::defer(fn () => $this->vistaEntrevista->para($cliente, $taxYear, app()->getLocale() === 'en'), rescue: true)
+                : null,
             'nivelRiesgo' => $this->riesgo->nivelEfectivo($cliente, $taxYear),
             'catalogoDisponible' => $disponiblePorForma
                 ->concat($disponibleUnicos)

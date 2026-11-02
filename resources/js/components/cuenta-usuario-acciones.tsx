@@ -116,6 +116,85 @@ export function EntrevistaCatalogoButton({
 }
 
 /**
+ * La misma bandera desde la ficha del cliente (F2.9), con confirmación:
+ * ahí el cambio es menos evidente que en la tabla de Usuarios.
+ */
+export function EntrevistaCatalogoDialog({
+    usuario,
+}: {
+    usuario: { id: number; name: string; entrevista_catalogo: boolean };
+}) {
+    const { t } = useTranslation();
+    const [abierto, setAbierto] = useState(false);
+    const [enviando, setEnviando] = useState(false);
+    const activa = usuario.entrevista_catalogo;
+
+    return (
+        <Dialog open={abierto} onOpenChange={setAbierto}>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    {activa
+                        ? t('cuentaUsuario.entrevistaCatalogo.quitar')
+                        : t('cuentaUsuario.entrevistaCatalogo.activar')}
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>
+                    {activa
+                        ? t('cuentaUsuario.entrevistaCatalogo.tituloQuitar', {
+                              name: usuario.name,
+                          })
+                        : t('cuentaUsuario.entrevistaCatalogo.tituloActivar', {
+                              name: usuario.name,
+                          })}
+                </DialogTitle>
+                <DialogDescription>
+                    {activa
+                        ? t(
+                              'cuentaUsuario.entrevistaCatalogo.descripcionQuitar',
+                          )
+                        : t(
+                              'cuentaUsuario.entrevistaCatalogo.descripcionActivar',
+                          )}
+                </DialogDescription>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setAbierto(false)}>
+                        {t('cuentaUsuario.entrevistaCatalogo.cancelar')}
+                    </Button>
+                    <Button
+                        disabled={enviando}
+                        onClick={() =>
+                            router.patch(
+                                usuarioEntrevistaCatalogo(usuario.id).url,
+                                { entrevista_catalogo: !activa },
+                                {
+                                    preserveScroll: true,
+                                    onStart: () => setEnviando(true),
+                                    onFinish: () => setEnviando(false),
+                                    onSuccess: () => setAbierto(false),
+                                    onError: (errores) => {
+                                        if (errores.entrevista_catalogo) {
+                                            toast.error(
+                                                errores.entrevista_catalogo,
+                                            );
+                                        }
+                                    },
+                                },
+                            )
+                        }
+                    >
+                        {enviando ? <Spinner aria-hidden="true" /> : null}
+                        {activa
+                            ? t('cuentaUsuario.entrevistaCatalogo.quitar')
+                            : t('cuentaUsuario.entrevistaCatalogo.activar')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+/**
  * `url` permite archivar desde la ficha del cliente (clientes.destroy, que
  * vuelve a la lista) o desde Usuarios (usuarios.destroy, que se queda ahí).
  */

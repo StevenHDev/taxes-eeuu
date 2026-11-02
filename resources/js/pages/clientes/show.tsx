@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Deferred, Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Check,
@@ -10,7 +10,15 @@ import {
 import { Fragment, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
-import { ClienteCuentaAcciones } from '@/components/cuenta-usuario-acciones';
+import {
+    EntrevistaCliente,
+    EntrevistaClienteError,
+    EntrevistaClienteSkeleton,
+} from '@/components/cliente/entrevista-cliente';
+import {
+    ClienteCuentaAcciones,
+    EntrevistaCatalogoDialog,
+} from '@/components/cuenta-usuario-acciones';
 import { DerivationLogsPanel } from '@/components/derivation-logs-panel';
 import type { DerivationLog } from '@/components/derivation-logs-panel';
 import { DeterminacionFiscalPanel } from '@/components/determinacion-fiscal-panel';
@@ -78,6 +86,7 @@ import type {
     NivelRiesgo,
     NivelRiesgoEfectivo,
 } from '@/types';
+import type { VistaEntrevista } from '@/types/entrevista';
 
 type PageProps = {
     auth: { user: { role: 'client' | 'preparer' | 'administrator' } };
@@ -2143,6 +2152,7 @@ export default function ClienteShow({
     determinaciones,
     derivationLogs,
     nivelRiesgo,
+    entrevista,
 }: {
     cliente: {
         id: number;
@@ -2150,6 +2160,7 @@ export default function ClienteShow({
         email: string;
         phone: string | null;
         es_prueba: boolean;
+        entrevista_catalogo: boolean;
     };
     formas: ClienteForma[];
     campos: CampoCliente[];
@@ -2158,6 +2169,8 @@ export default function ClienteShow({
     determinaciones: Determinacion[];
     derivationLogs: DerivationLog[];
     nivelRiesgo: NivelRiesgoEfectivo;
+    /** Diferida; null si el cliente no tiene la bandera (F2.9). */
+    entrevista?: VistaEntrevista | null;
 }) {
     const { t } = useTranslation();
     const { auth } = usePage<PageProps>().props;
@@ -2235,13 +2248,20 @@ export default function ClienteShow({
             <Head title={cliente.name} />
 
             <div className="space-y-8 p-4">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0">
-                        <h1 className="flex items-center gap-2 font-display text-display text-foreground">
+                        <h1 className="flex flex-wrap items-center gap-2 font-display text-display text-foreground">
                             {cliente.name}
                             {cliente.es_prueba ? (
                                 <Badge variant="outline">
                                     {t('cuentaUsuario.badgePrueba')}
+                                </Badge>
+                            ) : null}
+                            {cliente.entrevista_catalogo ? (
+                                <Badge variant="secondary">
+                                    {t(
+                                        'cuentaUsuario.entrevistaCatalogo.badge',
+                                    )}
                                 </Badge>
                             ) : null}
                         </h1>
@@ -2251,7 +2271,7 @@ export default function ClienteShow({
                             {cliente.phone ? ` · ${cliente.phone}` : ''}
                         </p>
                     </div>
-                    <div className="flex items-end gap-2">
+                    <div className="flex flex-wrap items-end gap-2">
                         <div className="grid gap-2">
                             <Label htmlFor="tax_year_selector">
                                 {t('catalogo.form.taxYear')}
@@ -2288,10 +2308,27 @@ export default function ClienteShow({
                             />
                         )}
                         {esAdministrador ? (
-                            <ClienteCuentaAcciones cliente={cliente} />
+                            <>
+                                <EntrevistaCatalogoDialog usuario={cliente} />
+                                <ClienteCuentaAcciones cliente={cliente} />
+                            </>
                         ) : null}
                     </div>
                 </div>
+
+                {cliente.entrevista_catalogo ? (
+                    <Deferred
+                        data="entrevista"
+                        fallback={<EntrevistaClienteSkeleton />}
+                        rescue={<EntrevistaClienteError />}
+                    >
+                        <EntrevistaCliente
+                            clienteId={cliente.id}
+                            taxYear={taxYearActual}
+                            entrevista={entrevista ?? null}
+                        />
+                    </Deferred>
+                ) : null}
 
                 <NivelRiesgoControl
                     clienteId={cliente.id}
