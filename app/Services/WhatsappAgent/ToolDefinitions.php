@@ -146,7 +146,7 @@ class ToolDefinitions
             'type' => 'function',
             'function' => [
                 'name' => 'consultar_entrevista',
-                'description' => 'Estado de la entrevista del cliente: las próximas preguntas que se pueden hacer por WhatsApp (código, texto, tipo, opciones y persona), el avance por pantalla, cuántas preguntas sensibles y documentos faltan en el portal, y los enlaces exactos al portal. Úsala al empezar cada turno de entrevista y cuando el cliente pregunte cómo va lo suyo. Copia los enlaces tal cual; nunca los inventes.',
+                'description' => 'Estado de la entrevista del cliente: las próximas preguntas que se pueden hacer por WhatsApp (código, texto, tipo, opciones y persona), el avance por pantalla, cuántas preguntas sensibles faltan en el portal, los documentos que faltan (nombre sencillo, por qué se piden, quién los envía, cuándo llegan, qué hacer si no llegan y lo que pidió corregir el preparador) y los enlaces exactos al portal. Úsala al empezar cada turno de entrevista y cuando el cliente pregunte cómo va lo suyo o qué documentos le faltan. Copia los enlaces tal cual; nunca los inventes.',
                 'parameters' => ['type' => 'object', 'properties' => (object) []],
             ],
         ];

@@ -3,7 +3,9 @@
 namespace App\Services\WhatsappAgent;
 
 use App\Enums\Entrevista\CanalRespuesta;
+use App\Enums\Entrevista\EstadoDocumento;
 use App\Models\Entrevista\Entrevista;
+use App\Models\Entrevista\EntrevistaPersona;
 use App\Models\User;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Services\Entrevista\DocumentosEntrevista;
@@ -12,6 +14,7 @@ use App\Services\Entrevista\PasosEntrevista;
 use App\Services\Entrevista\RespuestaData;
 use App\Services\Entrevista\RespuestaGuardador;
 use App\Services\Entrevista\RespuestaRechazada;
+use Illuminate\Support\Collection;
 
 /**
  * Las tools del agente sobre la entrevista nueva (F2.8): todas leen el
@@ -71,6 +74,7 @@ class HerramientasEntrevista
                 'documentos_pendientes' => collect($documentos)->where('resuelto', false)->count(),
                 'identidad_pendiente' => collect($situacion->pantallas[1]['preguntas'] ?? [])->contains('respondida', false),
             ],
+            'documentos' => $this->resumenDocumentos($documentos, $personas),
             'enlaces' => [
                 'entrevista' => route('portal.entrevista.inicio'),
                 'documentos' => route('portal.entrevista.documentos'),
@@ -156,6 +160,46 @@ class HerramientasEntrevista
         }
 
         return $resultado;
+    }
+
+    /**
+     * Lo que el agente necesita para explicar qué documentos faltan (F3.5):
+     * nombre sencillo, por qué se pide, quién lo manda, cuándo llega y qué
+     * hacer si no llega, más lo que dijo el preparador si lo devolvió. Nunca
+     * archivos, nombres de archivo ni enlaces a ellos.
+     *
+     * @param  list<array<string, mixed>>  $documentos  filas de DocumentosEntrevista::lista()
+     * @param  Collection<int, EntrevistaPersona>  $personas
+     * @return array<string, mixed>
+     */
+    private function resumenDocumentos(array $documentos, Collection $personas): array
+    {
+        $faltan = collect($documentos)->where('resuelto', false);
+        $devueltos = [EstadoDocumento::ConObservacion->value, EstadoDocumento::NoAplicaRechazado->value];
+
+        return [
+            'total' => count($documentos),
+            'faltan' => $faltan->count(),
+            'devueltos_por_el_preparador' => $faltan->whereIn('estado', $devueltos)->count(),
+            'en_revision' => collect($documentos)->where('resuelto', true)->whereIn('estado', [EstadoDocumento::Subido->value, EstadoDocumento::Leido->value, EstadoDocumento::NoSePudoLeer->value])->count(),
+            'todo_listo' => $documentos !== [] && $faltan->isEmpty(),
+            'pendientes' => $faltan->map(function (array $d) use ($personas, $devueltos) {
+                $persona = $d['persona_id'] === null ? null : $personas->get($d['persona_id']);
+
+                return [
+                    'nombre' => $d['nombre'],
+                    'nombre_oficial' => $d['nombre_oficial'],
+                    'numero' => $d['numero'],
+                    'persona' => $persona?->etiqueta,
+                    'por_que' => $d['por_que'],
+                    'quien_lo_envia' => $d['emisor'],
+                    'fecha_llegada' => $d['fecha_llegada'],
+                    'si_no_llega' => $d['si_no_llega'],
+                    'devuelto_por_el_preparador' => in_array($d['estado'], $devueltos, true),
+                    'comentario_del_preparador' => in_array($d['estado'], $devueltos, true) ? $d['observacion'] : null,
+                ];
+            })->values()->all(),
+        ];
     }
 
     private function entrevista(User $cliente): Entrevista

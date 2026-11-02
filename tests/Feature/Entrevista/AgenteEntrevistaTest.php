@@ -7,12 +7,16 @@ use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\FaseConversacion;
 use App\Enums\UserRole;
 use App\Jobs\ProcesarMensajeWhatsappJob;
+use App\Models\Documento;
+use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaRespuesta;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Services\Consentimiento\Consentimientos;
 use App\Services\Consentimiento\ConsentimientosCargador;
+use App\Services\Entrevista\ChecklistDocumentos;
+use App\Services\Entrevista\DocumentosEntrevista;
 use App\Services\Entrevista\MotorEntrevista;
 use App\Services\Entrevista\RespuestaData;
 use App\Services\Entrevista\RespuestaGuardador;
@@ -26,7 +30,9 @@ use App\Support\RedactorDatosSensibles;
 use Database\Seeders\AgentePromptsSeeder;
 use Database\Seeders\CatalogoFiscalSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Mockery;
 use Tests\TestCase;
 
@@ -147,6 +153,67 @@ class AgenteEntrevistaTest extends TestCase
 
         $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'B1', 'valor' => 'casado']]]);
         $this->assertTrue($this->tool('consultar_entrevista')['con_conyuge']);
+    }
+
+    public function test_consultar_entrevista_explica_los_documentos_que_faltan_sin_archivos(): void
+    {
+        Storage::fake(Documento::disco());
+        $this->firmar();
+        $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'D1', 'valor' => 'si']]]);
+
+        $documentos = $this->tool('consultar_entrevista')['documentos'];
+        $w2 = collect($documentos['pendientes'])->firstWhere('nombre_oficial', 'Form W-2');
+
+        $this->assertNotNull($w2);
+        $this->assertNotEmpty($w2['quien_lo_envia']);
+        $this->assertNotEmpty($w2['fecha_llegada']);
+        $this->assertNotEmpty($w2['si_no_llega']);
+        $this->assertNotEmpty($w2['por_que']);
+        $this->assertFalse($w2['devuelto_por_el_preparador']);
+        $this->assertFalse($documentos['todo_listo']);
+
+        // El preparador lo devuelve: el agente sabe qué pidió, pero nunca ve el archivo.
+        $entrevista = Entrevista::query()->where('user_id', $this->cliente->id)->firstOrFail();
+        $item = $entrevista->documentos()->where('documento_codigo', 'w2')->firstOrFail();
+        app(DocumentosEntrevista::class)->subir($item, UploadedFile::fake()->create('w2-secreto.pdf', 10, 'application/pdf'));
+        app(ChecklistDocumentos::class)->observar($item->fresh(), 'Falta la segunda página.', User::factory()->create(['role' => UserRole::Preparer]));
+
+        $resultado = $this->tool('consultar_entrevista');
+        $w2 = collect($resultado['documentos']['pendientes'])->firstWhere('nombre_oficial', 'Form W-2');
+
+        $this->assertTrue($w2['devuelto_por_el_preparador']);
+        $this->assertSame('Falta la segunda página.', $w2['comentario_del_preparador']);
+        $this->assertSame(1, $resultado['documentos']['devueltos_por_el_preparador']);
+        $this->assertStringNotContainsString('w2-secreto', json_encode($resultado));
+        $this->assertStringNotContainsString('archivos', json_encode($resultado['documentos']));
+    }
+
+    public function test_con_todo_validado_o_en_no_aplica_no_falta_ningun_documento(): void
+    {
+        Storage::fake(Documento::disco());
+        $this->firmar();
+        $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'D1', 'valor' => 'si']]]);
+        $this->tool('consultar_entrevista');
+
+        $checklist = app(ChecklistDocumentos::class);
+        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
+        $entrevista = Entrevista::query()->where('user_id', $this->cliente->id)->firstOrFail();
+
+        foreach ($checklist->vigentes($entrevista) as $item) {
+            if ($item->documento_codigo === 'w2') {
+                app(DocumentosEntrevista::class)->subir($item, UploadedFile::fake()->create('a.pdf', 10, 'application/pdf'));
+                $checklist->validar($item->fresh(), $preparador);
+            } else {
+                $checklist->marcarNoAplica($item, 'No me aplica.');
+            }
+        }
+
+        $resultado = $this->tool('consultar_entrevista');
+
+        $this->assertTrue($resultado['documentos']['todo_listo']);
+        $this->assertSame(0, $resultado['documentos']['faltan']);
+        $this->assertSame([], $resultado['documentos']['pendientes']);
+        $this->assertSame(0, $resultado['falta_en_el_portal']['documentos_pendientes']);
     }
 
     public function test_con_la_entrevista_por_whatsapp_apagada_nunca_se_ofrece_guardar_respuestas(): void
