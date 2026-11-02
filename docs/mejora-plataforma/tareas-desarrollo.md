@@ -23,8 +23,8 @@
 | F0.5 | Eliminar código muerto (Supabase, n8n, Meta, prompts viejos) | Media | ✅ | — |
 | F0.6 | Ocultar formas de empresas y 1040-NR | Media | ✅ | — |
 | F1 | Catálogo fiscal del año | Alta | ✅ | F0 |
-| F2 | Entrevista por WhatsApp y por el portal | Media | 🔄 | F1, L1, L3 |
-| F3 | Checklist de documentos | Media | ⏳ | F2 |
+| F2 | Entrevista por WhatsApp y por el portal | Media | ✅ | F1 (L1 y L3 en la tarea de pendientes legales) |
+| F3 | Checklist de documentos | Media | 🔄 | F2 |
 | F4 | Lectura y validación de documentos | Media | ⏳ | F1, F3 |
 | F5 | Expediente, revisión del preparador y hoja para TaxWise | Media | ⏳ | F4 |
 | F6 | Cálculo validado y borrador del 1040 | Media | ⏳ | F1, F4 (la validación puede empezar desde F1) |
@@ -115,7 +115,7 @@ Wiplitask: `cmvskovkw006x1420a9v9fxo5` · ✅ (30 oct.; F1.1–F1.5 en producci�
 ### F2 — Entrevista por WhatsApp y por el portal
 Plan técnico: [`fases/fase-2-entrevista.md`](fases/fase-2-entrevista.md) · ✅ Aprobado (30 oct.)
 
-Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
+Wiplitask: `cmvskovqv0072142046gi5vuk` · ✅ Cerrada el 2 nov. (2.1 a 2.11 en producción). L1 y L3 siguen en la tarea "Pendientes legales de F2" (`cmvzdosz104cm1420tiuvcorh`, bloqueada hasta que responda el abogado)
 - [x] Plan técnico de la fase 2 escrito y aprobado
 - [x] 2.1 Los preparadores también validan piezas del catálogo
 - [x] 2.2 Respuestas de la entrevista y motor único (+ bandera por cliente, contenido nuevo del catálogo). En producción y catálogo cargado el 30 oct. (`9da755d`, `d8e7487`): 79 preguntas y 42 documentos en 2025 y 2026, verificar sin problemas
@@ -128,19 +128,21 @@ Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
 - [x] 2.8 Agente de WhatsApp reescrito sobre el catálogo (entrevista por WhatsApp apagada para clientes reales hasta L3). En producción el 30 oct. (`8fed54c`, `71bc020`); borrador 3 de prompts creado en producción con `agente:borrador-prompts --fases=portal_dudas`. Steven lo publicó (versión 4) y lo probó por WhatsApp el 1 nov. con el cliente de prueba #27. De esa prueba salieron 4 ajustes al prompt de la entrevista y a `consultar_entrevista`; borrador 5 creado en producción el 1 nov. con `agente:borrador-prompts --fases=entrevista` y publicado por Steven (versión vigente 5). D17.1 agregado en 2.10
 - [x] 2.9 Vista del preparador: entrevista en la ficha y chat del portal en Mensajes. En producción el 1 nov. (`a5e1e7e`, `e42b4ee`, `70de914`, `25708d5`); migración de revelados aplicada, sin errores en el log
 - [x] 2.10 Cambio de flujo y migración de `campos_cliente` (ya no espera L1: los clientes reales firman el texto provisional, decisión del 1 nov.; incluye D17.1). En producción el 1 nov. (`34067ef`, `1f25f69`, `8439a5f`, `2bd8454`); catálogo recargado (94 preguntas, verificar sin problemas). La migración no tuvo nada que pasar: `campos_cliente` está vacía en producción
-- [ ] 2.11 Retiro del flujo anterior (E5, E6, E12, tool y menú viejos) 🔄 (programada el 2 nov.; la API externa queda igual y la ficha vieja en solo lectura, decisiones 14 y 15)
-- [ ] Consentimiento §7216 en el portal (requiere L1)
-- [ ] Entrevista en tres niveles en el portal
-- [ ] Agente de WhatsApp reescrito sobre el catálogo (requiere L3)
-- [ ] Confirmación del cliente en el portal; reemplazar E5 y E6
-- [ ] Prueba: María empieza por WhatsApp y termina en el portal sin repetir
-- [ ] Migrar `campos_cliente` a las respuestas nuevas con ese mapa y eliminar las pseudoformas `transversal` y `documentos_extra` (E12), la tool `consultar_documentos_extra` y el menú "Campos del formulario actual" (decisión de Steven, 29 oct.)
-- [ ] Ingresos en selección múltiple en un solo paso (hoy el árbol pregunta la fuente principal y luego "¿algo más?" una por una)
-- [ ] Socio de LLC o S-corp: la empresa no se atiende, pero su K-1 personal sí (1040 + Schedule E). Hoy el prompt le dice "no lo atendemos" (visto al cerrar F0.6)
+- [x] 2.11 Retiro del flujo anterior (E5, E6, E12, tool y menú viejos). En producción el 2 nov. (`9dbb11c`, `f1eaa39`, `95e85df`, `ec8cdb8`); Steven confirmó el deploy. La API externa queda igual y la ficha vieja en solo lectura (decisiones 14 y 15)
+- [x] Consentimiento §7216 en el portal, con texto provisional. El texto definitivo (L1) pasó a la tarea "Pendientes legales de F2" (Wiplitask `cmvzdosz104cm1420tiuvcorh`)
+- [x] Entrevista en tres niveles en el portal (2.5)
+- [x] Agente de WhatsApp reescrito sobre el catálogo (2.8). Encenderlo para clientes reales (L3) pasó a la tarea "Pendientes legales de F2" (Wiplitask `cmvzdosz104cm1420tiuvcorh`)
+- [x] Confirmación del cliente en el portal; reemplazar E5 y E6 (2.7 y 2.11)
+- [x] Prueba: María empieza por WhatsApp y termina en el portal sin repetir (`MariaTest` en 2.8 y prueba manual por WhatsApp el 1 nov.)
+- [x] Migrar `campos_cliente` a las respuestas nuevas con ese mapa y eliminar las pseudoformas `transversal` y `documentos_extra` (E12), la tool `consultar_documentos_extra` y el menú "Campos del formulario actual" (decisión de Steven, 29 oct.). Hecho en 2.10 y 2.11; las pseudoformas quedan solo para la API externa hasta decidir E3 (decisión 14)
+- [x] Ingresos en selección múltiple en un solo paso (hoy el árbol pregunta la fuente principal y luego "¿algo más?" una por una)
+- [x] Socio de LLC o S-corp: la empresa no se atiende, pero su K-1 personal sí (1040 + Schedule E). Hoy el prompt le dice "no lo atendemos" (visto al cerrar F0.6). D18 + K-1 → Schedule E en el catálogo (2.2) y el prompt viejo se retiró en 2.11
 
 ### F3 — Checklist de documentos
-Wiplitask: `cmvskovx900771420nj5xy1du` · ⏳
-- [ ] Plan técnico de la fase 3 escrito y aprobado
+Plan técnico: [`fases/fase-3-documentos.md`](fases/fase-3-documentos.md) · ✅ Aprobado (2 nov.)
+
+Wiplitask: `cmvskovx900771420nj5xy1du` · 🔄
+- [x] Plan técnico de la fase 3 escrito y aprobado (2 nov.)
 - [ ] Checklist según respuestas, con estados por documento
 - [ ] "No aplica" con motivo, varios archivos por tipo y "otro documento"
 - [ ] Recordatorios del agente con plantillas; el agente no acepta documentos
