@@ -22,9 +22,10 @@
 | 3.4 | Documentos en la ficha del preparador: validar, observación, aceptar o rechazar "no aplica" | 5.3, 9.7 | Mediano | Medio | Opus 5.5 (reglas) + Sonnet 5.5 (pantalla) |
 | 3.5 | El agente sabe qué falta y lo explica | 9.6 | Pequeño | Medio: prompt | Opus 5.5 |
 | 3.6 | Recordatorios de documentos pendientes (correo y WhatsApp con plantilla) | 5.4, 7.5 | Mediano | Medio: §7216 y envío a clientes reales | Opus 5.5 |
-| 3.7 | Plantilla de registros propios (efectivo, apps sin 1099-K, alquileres, gastos) | 5.1.6, P5 | Pequeño | Bajo; ver pregunta 2 | Sonnet 5.5 |
+| 3.7 | Qué subir en registros propios (efectivo, apps sin 1099-K, alquileres, gastos), con plantilla opcional | 5.1.6, P5 | Pequeño | Bajo; ver pregunta 2 | Sonnet 5.5 |
+| 3.8 | Por qué no tiene la declaración del año pasado (seguimiento de la G5) | 5.1, P10 | Pequeño | Medio: catálogo fiscal | Opus 5.5 |
 
-Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7. 3.1 y 3.7 no dependen de nada y se pueden adelantar. Cada una se despliega y se revisa en producción antes de la siguiente.
+Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7 → 3.8 (agregado el 2 nov.). 3.1 y 3.7 no dependen de nada y se pueden adelantar. Cada una se despliega y se revisa en producción antes de la siguiente.
 
 ---
 
@@ -200,15 +201,45 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7. 3.1 y 3.7 n
 
 ---
 
-## 3.7 Plantilla de registros propios
+## 3.7 Qué subir en registros propios
 
 **Modelo: Sonnet 5.5** (contenido y descarga, sin reglas nuevas).
 
-**Hoy:** cuando no hay formulario (efectivo, apps sin 1099-K, alquileres, gastos del negocio) el catálogo pide `registros-ingresos-gastos` o `registros-alquiler`, pero no hay una plantilla.
+**Hoy:** cuando no hay formulario (efectivo, apps sin 1099-K, alquileres, gastos del negocio) el catálogo pide `registros-ingresos-gastos` o `registros-alquiler`, pero no le dice al cliente qué subir.
 
-**Enfoque:** una plantilla descargable (Excel y PDF) con totales por categoría del Schedule C y del Schedule E, enlazada desde la fila del documento ("Descargar plantilla"). Depende de la pregunta 2 (P5).
+**Decisión de Steven (2 nov.):** no se le piden totales al cliente. Sumar la renta del año o los gastos es trabajo del preparador. Ejemplo: con dos casas alquiladas todo el año, el cliente sube los dos contratos y el preparador calcula la renta de los 12 meses.
 
-**Pruebas:** el enlace aparece solo en esos documentos y descarga el archivo.
+**Enfoque:**
+- El documento se cumple subiendo lo que el cliente ya tiene: contratos, extractos del banco y de tarjetas, recibos de gastos, el extracto de la hipoteca, el registro de millaje. Ya se pueden subir varios archivos por documento (3.3).
+- Un texto "Qué subir" en la fila de esos dos documentos, en el catálogo (es/en), con lo que se espera en cada caso y lo que solo el cliente sabe: meses que una propiedad estuvo vacía, inquilinos que no pagaron, cobros o gastos en efectivo sin recibo. Eso lo cuenta en una nota al subir.
+- Plantilla **opcional** (Excel y PDF) con las categorías del Schedule C y del Schedule E, para el cliente que lleva sus cuentas y prefiere mandar un resumen. Enlace "Descargar plantilla (opcional)" en esas dos filas. Nunca es obligatoria.
+- P5, respuesta parcial (2 nov.): GTS arma el Schedule C con los extractos del banco, los recibos y lo que el cliente le cuenta; confirma este enfoque. Lo que falte se ajusta cuando GTS responda el resto de P5 (tarea de Wipli "Preguntas pendientes para GTS (P1–P10)", `cmvzotuc104e31420br272h7y`).
+
+**Pruebas:** el texto y el enlace aparecen solo en esos dos documentos; la plantilla se descarga; el documento se puede subir sin la plantilla.
+
+---
+
+## 3.8 Por qué no tiene la declaración del año pasado
+
+**Modelo: Opus 5.5** (catálogo fiscal: preguntas, condiciones y lo que activan).
+
+**Hoy:** la G5 pregunta "¿Tienes la declaración del año pasado?". Con "sí" pide la copia (`declaracion-anterior`). Con "no" no sabemos por qué, y cada motivo significa algo distinto para el preparador. Los datos que salen de esa declaración ya se preguntan aparte (D8, D10, D15, G1, F8), así que la entrevista funciona sin ella.
+
+**Decisión de Steven (2 nov.):** no se crea un "tipo de cliente". Se agrega un seguimiento de la G5, porque lo que responde el cliente es lo que activa preguntas y documentos. Va en F3.
+
+**Enfoque:**
+- **G5.1** (condición G5 = "no"), "¿Por qué no la tienes?", con opciones en palabras sencillas:
+  - `presente_sin_copia`: "La presenté, pero no tengo la copia (o la hizo otro preparador)". El preparador puede pedir la transcripción al IRS. No se le pide nada al cliente.
+  - `primera_vez`: "Es la primera vez que declaro". No hay año anterior para comparar. Para el e-file, el AGI del año anterior es 0.
+  - `no_presente_algunos`: "No presenté algunos años". Abre la G5.2.
+  - `no_se`: "No sé o no me acuerdo". El preparador lo confirma.
+- **G5.2** (condición G5.1 = `no_presente_algunos`), "¿Qué años no presentaste?", texto corto. No es sensible.
+- `efecto_es` y `fuente_texto` de cada una, con la fuente del IRS (13614-C, e-file y el AGI del año anterior).
+- En la ficha del preparador, si G5.1 es `no_presente_algunos`, un aviso visible en la sección de la entrevista ("Tiene años sin declarar: …"). Es solo un aviso: la cola de excepciones es de F5.
+- Recargar el catálogo de 2025 y 2026 en producción (con autorización) y ajustar el conteo esperado de preguntas en las pruebas.
+- Se ajusta cuando GTS responda **P10** (si presenta esos años o los refiere): la G5.2 puede pasar a pedir cartas del IRS o documentos de esos años.
+
+**Pruebas:** G5 = "no" abre G5.1; solo `no_presente_algunos` abre G5.2; G5 = "sí" sigue pidiendo la copia y no abre nada más; el aviso aparece en la ficha solo con `no_presente_algunos`.
 
 ---
 
@@ -266,7 +297,7 @@ Como en F2: push a `main`, revisar las migraciones en el contenedor, recargar el
 ## Decisiones de Steven (2 nov.)
 
 1. **Recordatorios:** el primero 3 días después de terminar la entrevista, después cada 7 días, máximo 4, y se detienen si el cliente sube algo. Solo por correo hasta que la plantilla de WhatsApp esté aprobada en Twilio.
-2. **Registros propios:** plantilla genérica de totales por categoría (Schedule C y E) ahora; se ajusta con la respuesta de GTS a P5.
+2. **Registros propios:** plantilla genérica de totales por categoría (Schedule C y E) ahora; se ajusta con la respuesta de GTS a P5. **Cambio (2 nov.):** no se le piden totales al cliente, porque sumar es trabajo del preparador. El cliente sube lo que ya tiene (contratos, extractos, recibos) y cuenta lo que los papeles no dicen; la plantilla queda opcional. Ver 3.7.
 3. **Imagen de ejemplo:** pasa a la fase 4.
 4. **"No aplica":** cuenta como resuelto apenas el cliente lo marca; el preparador lo puede rechazar.
 5. **Cliente que vuelve:** pasa a la fase 7.

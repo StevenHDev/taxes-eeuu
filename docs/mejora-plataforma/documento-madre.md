@@ -1130,7 +1130,7 @@ Cada fase deja la plataforma **funcionando** y se cierra con pruebas y commit. E
 
 Ordenadas por **lo que bloquean**. Las preguntas legales L1–L20 están completas en [`revision-documento-analisis-diseno.md`](revision-documento-analisis-diseno.md), sección 4; aquí solo aparecen las que frenan alguna fase.
 
-**Con GTS**
+**Con GTS** (seguimiento en Wipli: tarea "Preguntas pendientes para GTS (P1–P10)", `cmvzotuc104e31420br272h7y`)
 
 | # | Decisión | Por qué importa | Bloquea |
 | --- | --- | --- | --- |
@@ -1138,11 +1138,12 @@ Ordenadas por **lo que bloquean**. Las preguntas legales L1–L20 están complet
 | P2 | ¿Atiende no residentes (1040-NR)? | Si sí, la pregunta A7 deja de ser solo una alerta | Alcance (1.1) |
 | P3 | ¿Tiene clientes agrícolas (Schedule F)? | Define si se borra (E11) | Fase 0 |
 | P4 | ¿Maneja sales tax (DR-15), bienes muebles (DR-405) o tourist tax de sus independientes? | Si sí, se agregan preguntas de alerta | Fase 1 (catálogo) |
-| P5 | ¿Cómo arma hoy el Schedule C de un independiente sin contabilidad? ¿Cuántos usan QuickBooks? ¿Tiene clientes con K-1? | Define los registros propios que se piden (5.1) y si hace falta otro conector | Fase 3 |
+| P5 | ¿Cómo arma hoy el Schedule C de un independiente sin contabilidad? ¿Cuántos usan QuickBooks? ¿Tiene clientes con K-1? **Respuesta parcial (2 nov.):** lo arma con los extractos del banco, los recibos y lo que el cliente le cuenta. Sigue abierto: QuickBooks y K-1 | Define los registros propios que se piden (5.1) y si hace falta otro conector | Fase 3 |
 | P6 | Orden de las pantallas de TaxWise | La hoja para TaxWise (7.3) se ordena igual | Fase 5 |
 | P7 | ¿Tiene asistentes? ¿Quiere que el cliente firme el 8879 en el portal? | Rol "asistente" (9.7) y firma en el portal (7.4, L14) | Fase 5 |
 | P8 | **Línea base:** horas por declaración hoy, por tipo de cliente | Sin ella no se puede medir el ahorro (7.6) | Medición |
 | P9 | Declaraciones reales anonimizadas para los casos de prueba, y un preparador que valide el ejemplo de recolección | Validar el motor de cálculo contra TaxWise (7.3) | Fase 6 |
+| P10 | ¿Atiende clientes con años sin declarar? ¿Presenta también esos años o los refiere? ¿Qué le pide al cliente? | Define si el seguimiento de la G5 ("no presenté algunos años") solo avisa al preparador o pide más cosas | Fase 3 (3.8) |
 
 **Con un abogado o CPA (preguntas legales que frenan fases)**
 
