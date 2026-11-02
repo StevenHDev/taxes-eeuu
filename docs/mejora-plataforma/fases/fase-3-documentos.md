@@ -217,6 +217,14 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7 → 3.8 (agr
 
 **Pruebas:** el texto y el enlace aparecen solo en esos dos documentos; la plantilla se descarga; el documento se puede subir sin la plantilla.
 
+**Cómo quedó (2 nov., subagente Sonnet 5.5 + revisión con Opus 5.5):**
+- Catálogo: columnas `que_subir_es`, `que_subir_en` y `plantilla` en `catalogo_documentos` (migración `2026_11_02_160000`), llenas solo en `registros-ingresos-gastos` (plantilla `registros-negocio`) y `registros-alquiler`. 2026 las hereda de 2025. El editor del catálogo edita el texto en español y la plantilla.
+- Nota del cliente: columna `nota_cliente` en `entrevista_documentos` (migración `2026_11_02_160100`), ruta `PATCH portal/entrevista/documentos/{item}/nota` (`NotaDocumentoRequest`, máximo 1000 caracteres). Vacía la borra y nunca cambia el estado. El preparador la ve en la ficha ("Nota del cliente: …").
+- Plantillas opcionales estáticas en `public/plantillas/` (Excel y PDF, español e inglés): Schedule C con Parte I, Parte II y una tabla de cantidades (millas del negocio y pies cuadrados de la casa y de la oficina); Schedule E con tres propiedades. Solo hay filas de total que se calculan solas. Se armaron con un script fuera del repositorio (openpyxl y Chrome sin pantalla).
+- Fila del documento en el portal: texto "Qué subir", campo de nota y enlaces "Descargar plantilla (opcional): Excel · PDF". La acción principal sigue siendo subir.
+- Agente: `consultar_entrevista` trae `que_subir` en cada pendiente (sin la nota ni enlaces) y los prompts `portal_dudas` y `seguimiento` dicen que el cliente no tiene que sumar nada.
+- Pruebas: 10 nuevas en `DocumentosTest`, `AgenteEntrevistaTest` y `CatalogoRealTest`. Suite: 648 pruebas, 646 pasan y 2 se saltan.
+
 ---
 
 ## 3.8 Por qué no tiene la declaración del año pasado
