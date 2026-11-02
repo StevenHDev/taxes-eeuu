@@ -37,7 +37,6 @@ use App\Policies\AgenteToolPolicy;
 use App\Policies\BaseConocimientoPolicy;
 use App\Policies\BitacoraPolicy;
 use App\Policies\CatalogoFiscalPolicy;
-use App\Policies\CatalogoPolicy;
 use App\Policies\ClientePolicy;
 use App\Policies\WhatsappMensajePolicy;
 use App\Services\Whatsapp\Twilio\TwilioChannel;
@@ -83,7 +82,6 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         Gate::policy(User::class, ClientePolicy::class);
-        Gate::policy(CampoCatalogo::class, CatalogoPolicy::class);
         Gate::policy(BitacoraActividad::class, BitacoraPolicy::class);
         Gate::policy(CatalogoAnio::class, CatalogoFiscalPolicy::class);
         Gate::policy(WhatsappMensaje::class, WhatsappMensajePolicy::class);

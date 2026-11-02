@@ -9,14 +9,13 @@ use App\Models\CampoDerivationLog;
 use App\Models\CampoReveal;
 use App\Models\Documento;
 use App\Models\FormaCliente;
-use App\Models\HistorialCambio;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Notifications\BienvenidaClientePortal;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -128,192 +127,6 @@ class ClientePanelTest extends TestCase
         $this->assertNotNull($estadoCivil);
         $this->assertContains('casado_al_31_dic', $estadoCivil['subcampos']);
         $this->assertSame('object', $estadoCivil['tipo_dato']);
-    }
-
-    public function test_un_preparador_puede_corregir_un_campo_manualmente_y_queda_en_el_historial(): void
-    {
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-        $this->crearCampo($cliente);
-
-        $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025', [
-                'forma' => 'form_1040',
-                'modo' => 'texto',
-                'tipo_dato' => 'number',
-                'contenido' => 9999,
-            ])
-            ->assertRedirect();
-
-        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
-        $this->assertSame(9999, $campo->valor);
-        $this->assertSame('preparador', $campo->source->value);
-
-        $historial = HistorialCambio::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
-        $this->assertNotNull($historial);
-        $this->assertSame('preparador', $historial->source->value);
-    }
-
-    public function test_un_preparador_puede_corregir_ingresos_con_su_shape_de_objeto(): void
-    {
-        // ingresos pasó de number a object desglosado en la Fase 2 — la
-        // corrección manual del preparador debe aceptar (y validar) ese shape.
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-
-        $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
-                'forma' => 'form_1040',
-                'modo' => 'texto',
-                'tipo_dato' => 'object',
-                'contenido' => [
-                    'salarios' => 60000,
-                    'intereses_dividendos' => 500,
-                    'ganancias_capital' => 0,
-                    'ingresos_jubilacion' => 0,
-                    'otros_ingresos' => 0,
-                    'ajustes_ingreso' => 1000,
-                    'seguridad_social' => 0,
-                ],
-            ])
-            ->assertRedirect();
-
-        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'ingresos')->first();
-        $this->assertSame('recibido', $campo->estado->value);
-        $this->assertSame(60000, $campo->valor['salarios']);
-    }
-
-    public function test_corregir_ingresos_con_el_shape_viejo_number_falla_la_validacion(): void
-    {
-        // Regresión: una integración desactualizada que siga mandando el shape
-        // number viejo debe rechazarse, no corromper el AGI calculado en silencio.
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-
-        $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'ingresos']).'?forma=form_1040&tax_year=2025', [
-                'forma' => 'form_1040',
-                'modo' => 'texto',
-                'tipo_dato' => 'number',
-                'contenido' => 52000,
-            ])
-            ->assertSessionHasErrors('tipo_dato');
-    }
-
-    public function test_un_preparador_puede_marcar_un_campo_opcional_como_no_aplica(): void
-    {
-        // form_1098_t es documento y obligatorio: false — el único que queda
-        // bajo documentos_extra desde la Fase 2 del plan de cierre de brecha
-        // GTS (declaracion_anio_anterior se promovió a transversal — ver
-        // CatalogoCamposSeeder). El preparador puede registrar que el
-        // cliente no lo tiene sin subir nada.
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-
-        $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'form_1098_t']).'?forma=documentos_extra&tax_year=2025', [
-                'forma' => 'documentos_extra',
-                'modo' => 'no_aplica',
-            ])
-            ->assertRedirect();
-
-        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'form_1098_t')->first();
-        $this->assertNotNull($campo);
-        $this->assertSame('no_aplica', $campo->estado->value);
-        $this->assertSame('preparador', $campo->source->value);
-    }
-
-    public function test_no_aplica_es_rechazado_en_correccion_manual_para_un_campo_obligatorio(): void
-    {
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-
-        $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025', [
-                'forma' => 'form_1040',
-                'modo' => 'no_aplica',
-            ])
-            ->assertSessionHasErrors('modo');
-
-        $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'impuestos_retenidos']);
-    }
-
-    public function test_un_preparador_no_puede_corregir_campos_de_un_cliente_ajeno(): void
-    {
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $ajeno = User::factory()->create(['role' => UserRole::Client]);
-        $this->crearCampo($ajeno);
-
-        $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $ajeno, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025', [
-                'forma' => 'form_1040',
-                'modo' => 'texto',
-                'tipo_dato' => 'number',
-                'contenido' => 1,
-            ])
-            ->assertForbidden();
-    }
-
-    public function test_un_preparador_carga_un_documento_via_web(): void
-    {
-        Storage::fake('s3');
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-
-        // Subida real del navegador: POST con _method=patch (method spoofing) para
-        // que PHP parsee el multipart; un PATCH multipart directo no expone $_FILES.
-        $this->actingAs($preparador)
-            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040&tax_year=2025', [
-                '_method' => 'patch',
-                'forma' => 'form_1040',
-                'modo' => 'archivo',
-                'file' => UploadedFile::fake()->create('w2.pdf', 200, 'application/pdf'),
-            ])
-            ->assertRedirect();
-
-        $documento = Documento::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first();
-        $this->assertNotNull($documento);
-        $this->assertSame('w2.pdf', $documento->file_original_name);
-        Storage::disk('s3')->assertExists($documento->file_path);
-    }
-
-    public function test_rechaza_un_documento_de_mas_de_10mb(): void
-    {
-        Storage::fake('s3');
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-
-        $this->actingAs($preparador)
-            ->from(route('clientes.show', $cliente))
-            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040&tax_year=2025', [
-                '_method' => 'patch',
-                'forma' => 'form_1040',
-                'modo' => 'archivo',
-                'file' => UploadedFile::fake()->create('grande.pdf', 11 * 1024, 'application/pdf'),
-            ])
-            ->assertSessionHasErrors('file');
-
-        $this->assertDatabaseCount('documentos', 0);
-    }
-
-    public function test_rechaza_un_formato_de_archivo_no_permitido(): void
-    {
-        Storage::fake('s3');
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-
-        // w2 solo acepta pdf/jpg/png/heic; un .txt debe rechazarse.
-        $this->actingAs($preparador)
-            ->from(route('clientes.show', $cliente))
-            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040&tax_year=2025', [
-                '_method' => 'patch',
-                'forma' => 'form_1040',
-                'modo' => 'archivo',
-                'file' => UploadedFile::fake()->create('w2.txt', 100, 'text/plain'),
-            ])
-            ->assertSessionHasErrors('file');
-
-        $this->assertDatabaseCount('documentos', 0);
     }
 
     public function test_marcar_una_forma_como_revisada(): void
@@ -443,48 +256,6 @@ class ClientePanelTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_agregar_un_campo_que_nunca_envio_el_agente(): void
-    {
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-
-        $this->actingAs($preparador)
-            ->patch(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025', [
-                'forma' => 'form_1040',
-                'modo' => 'texto',
-                'tipo_dato' => 'number',
-                'contenido' => 4500,
-            ])
-            ->assertRedirect();
-
-        $campo = CampoCliente::query()->where('user_id', $cliente->id)->where('campo', 'impuestos_retenidos')->first();
-        $this->assertNotNull($campo);
-        $this->assertSame(4500, $campo->valor);
-    }
-
-    public function test_eliminar_un_campo_lo_borra_pero_conserva_el_historial(): void
-    {
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-        $this->crearCampo($cliente);
-
-        $this->actingAs($preparador)
-            ->delete(route('clientes.campos.destroy', ['cliente' => $cliente, 'campo' => 'impuestos_retenidos']).'?forma=form_1040&tax_year=2025')
-            ->assertRedirect();
-
-        $this->assertDatabaseMissing('campos_cliente', ['user_id' => $cliente->id, 'campo' => 'impuestos_retenidos']);
-
-        $historial = HistorialCambio::query()
-            ->where('user_id', $cliente->id)
-            ->where('campo', 'impuestos_retenidos')
-            ->latest('id')
-            ->first();
-
-        $this->assertNotNull($historial);
-        $this->assertNull($historial->valor_nuevo);
-        $this->assertSame(1000, $historial->valor_anterior);
-    }
-
     /**
      * El buscador es client-side (DataTable de TanStack en el navegador, ver
      * resources/js/pages/clientes/index.tsx) — el servidor siempre entrega la
@@ -576,5 +347,15 @@ class ClientePanelTest extends TestCase
                 ->where('clientes.0.formas.0.forma', 'form_1065'));
 
         $this->actingAs($admin)->get(route('clientes.show', ['cliente' => $cliente, 'tax_year' => 2025]))->assertOk();
+    }
+
+    public function test_los_datos_del_formulario_anterior_son_de_solo_lectura_en_la_ficha(): void
+    {
+        // F2.11: se corrigen en la sección Entrevista; las rutas web de
+        // edición ya no existen (la API externa sigue con las suyas).
+        $this->assertFalse(Route::has('clientes.campos.update'));
+        $this->assertFalse(Route::has('clientes.campos.destroy'));
+        $this->assertTrue(Route::has('clientes.campos.historial'));
+        $this->assertTrue(Route::has('clientes.campos.reveal'));
     }
 }

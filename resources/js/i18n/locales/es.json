@@ -28,10 +28,8 @@
     "nav": {
         "dashboard": "Panel",
         "portalChat": "Chat",
-        "portalFormulario": "Mi formulario",
         "clients": "Clientes",
         "proceso": "Proceso",
-        "catalog": "Catálogo",
         "users": "Usuarios",
         "auditLog": "Bitácora",
         "agente": "Agente IA",
@@ -221,17 +219,11 @@
             "empty": "Todavía no hay clientes."
         }
     },
-    "miInformacion": {
-        "pageTitle": "Mi información",
-        "subtitle": "Todo lo que compartiste con tu asesor, organizado por formulario.",
-        "empty": "Todavía no hay información cargada para este año fiscal."
-    },
     "portalChat": {
         "pageTitle": "Chat con tu asesor",
         "subtitle": "Resuelve tus dudas y adjunta tus documentos de forma segura.",
         "empty": "Todavía no hay mensajes. Escribe tu primera pregunta abajo.",
         "placeholder": "Escribe tu mensaje...",
-        "attach": "Adjuntar archivo",
         "send": "Enviar",
         "sending": "Enviando...",
         "you": "Tú",
@@ -916,61 +908,8 @@
         }
     },
     "catalogo": {
-        "title": "Catálogo de campos",
-        "subtitle": "Qué campos pide cada formulario. Eliminar una definición no borra los datos ya cargados de clientes — solo deja de pedirse y de contar para la completitud.",
-        "searchPlaceholder": "Buscar por clave…",
-        "empty": "Sin campos definidos.",
-        "columns": {
-            "key": "Clave",
-            "form": "Forma",
-            "type": "Tipo",
-            "required": "Obligatorio",
-            "sensitive": "Sensible"
-        },
-        "badges": {
-            "yes": "Sí",
-            "no": "No",
-            "sensitive": "Sensible",
-            "notSensitive": "No sensible"
-        },
-        "fieldTypes": {
-            "documentoOption": "documento (solo archivo)",
-            "datoOption": "dato (solo texto/número)",
-            "mixtoOption": "mixto (archivo o texto)"
-        },
         "form": {
-            "key": "Clave del campo",
-            "keyPlaceholder": "ej. ingresos_negocio",
-            "fieldType": "Tipo de campo",
-            "dataType": "Tipo de dato",
-            "acceptedFormats": "Formatos aceptados (separados por coma)",
-            "subfields": "Subcampos (opcional, para object/array_object)",
-            "required": "Obligatorio para completar la forma",
-            "sensitive": "Sensible (se cifra y se enmascara)",
             "taxYear": "Año fiscal"
-        },
-        "actions": {
-            "new": "Nuevo campo",
-            "editTitle": "Editar «{{key}}»",
-            "deleteConfirm": "¿Eliminar «{{key}}»? Los datos ya cargados de clientes no se borran.",
-            "addField": "Agregar campo",
-            "addFieldTo": "Agregar campo a {{form}}"
-        },
-        "fieldCount_one": "{{count}} campo",
-        "fieldCount_other": "{{count}} campos",
-        "relations": {
-            "viewButton": "Ver relaciones ({{count}})",
-            "dialogTitle": "Qué revela «{{key}}»",
-            "dialogDescription": "Estos son los campos que este documento resuelve automáticamente cuando el agente lo procesa — el mismo texto y datos que recibe el agente al subirlo, sin que tenga que volver a preguntarlos.",
-            "target": "→ {{forma}}.{{campo}}",
-            "accumulable": "Acumulable (varios documentos pueden aportar)",
-            "empty": "Este documento no tiene ninguna relación declarada — el agente solo lo guarda como archivo, sin resolver otros campos automáticamente.",
-            "statsTitle": "En producción",
-            "stats_one": "{{count}} documento procesado",
-            "stats_other": "{{count}} documentos procesados",
-            "statsMissing_one": "{{count}} con alguna relación sin cubrir",
-            "statsMissing_other": "{{count}} con alguna relación sin cubrir",
-            "statsNone": "Sin datos de uso todavía para este año fiscal."
         }
     },
     "settings": {
@@ -1159,16 +1098,6 @@
             "description": "Es un usuario de prueba: se borran todos sus datos, documentos y archivos. Esta acción no se puede deshacer.",
             "alsoDeleteConversation": "También eliminar su conversación de WhatsApp (mensajes y estado de control).",
             "confirm": "Eliminar definitivamente"
-        },
-        "entrevistaCatalogo": {
-            "badge": "Entrevista nueva",
-            "activar": "Usar entrevista nueva",
-            "quitar": "Volver al formulario actual",
-            "tituloActivar": "¿Pasar a {{name}} a la entrevista nueva?",
-            "descripcionActivar": "El cliente responde la entrevista nueva en el portal (y por WhatsApp si es de prueba). Lo que ya tiene en el formulario actual no se borra.",
-            "tituloQuitar": "¿Devolver a {{name}} al formulario actual?",
-            "descripcionQuitar": "Deja de ver la entrevista nueva. Sus respuestas se conservan y vuelven a aparecer si se activa de nuevo.",
-            "cancelar": "Cancelar"
         }
     },
     "catalogoFiscal": {

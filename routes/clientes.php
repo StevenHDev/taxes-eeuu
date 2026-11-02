@@ -32,10 +32,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('clientes/{cliente}/nivel-riesgo', [ClienteController::class, 'limpiarNivelRiesgo'])
         ->name('clientes.nivel-riesgo.destroy');
 
-    Route::patch('clientes/{cliente}/campos/{campo}', [CampoClienteController::class, 'update'])
-        ->name('clientes.campos.update');
-    Route::delete('clientes/{cliente}/campos/{campo}', [CampoClienteController::class, 'destroy'])
-        ->name('clientes.campos.destroy');
     Route::get('clientes/{cliente}/campos/{campo}/historial', [CampoClienteController::class, 'historial'])
         ->name('clientes.campos.historial');
     Route::post('clientes/{cliente}/campos/{campo}/reveal', [CampoClienteController::class, 'reveal'])

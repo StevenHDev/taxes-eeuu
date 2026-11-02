@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 use ZipArchive;
 
@@ -34,14 +35,17 @@ class DocumentoCifradoTest extends TestCase
 
     private function subirW2(User $preparador, User $cliente, string $nombre = 'w2.pdf'): Documento
     {
-        $this->actingAs($preparador)
-            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040&tax_year=2025', [
-                '_method' => 'patch',
-                'forma' => 'form_1040',
-                'modo' => 'archivo',
-                'file' => UploadedFile::fake()->createWithContent($nombre, self::CONTENIDO),
-            ])
-            ->assertRedirect();
+        // Desde F2.11 la ficha no sube documentos del formulario anterior:
+        // se suben por la API externa (E3), que sigue escribiendo ahí.
+        Sanctum::actingAs($preparador, ['*']);
+
+        $this->post(route('api.clientes.campos.update', ['cliente' => $cliente, 'campo' => 'w2']).'?forma=form_1040&tax_year=2025', [
+            '_method' => 'patch',
+            'forma' => 'form_1040',
+            'modo' => 'archivo',
+            'file' => UploadedFile::fake()->createWithContent($nombre, self::CONTENIDO),
+        ])
+            ->assertOk();
 
         return Documento::query()->where('user_id', $cliente->id)->where('campo', 'w2')->latest('id')->firstOrFail();
     }

@@ -1,13 +1,12 @@
-import { Deferred, Head, router, useForm, usePage } from '@inertiajs/react';
+import { Deferred, Head, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Check,
     ChevronRight,
     Circle,
     MinusCircle,
-    Upload,
 } from 'lucide-react';
-import { Fragment, useCallback, useEffect, useId, useState } from 'react';
+import { Fragment, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { show as confirmPasswordShow } from '@/actions/Laravel/Fortify/Http/Controllers/ConfirmablePasswordController';
 import {
@@ -15,26 +14,20 @@ import {
     EntrevistaClienteError,
     EntrevistaClienteSkeleton,
 } from '@/components/cliente/entrevista-cliente';
-import {
-    ClienteCuentaAcciones,
-    EntrevistaCatalogoDialog,
-} from '@/components/cuenta-usuario-acciones';
+import { ClienteCuentaAcciones } from '@/components/cuenta-usuario-acciones';
 import { DerivationLogsPanel } from '@/components/derivation-logs-panel';
 import type { DerivationLog } from '@/components/derivation-logs-panel';
 import { DeterminacionFiscalPanel } from '@/components/determinacion-fiscal-panel';
 import { DocumentoViewerDialog } from '@/components/documento-viewer-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -51,7 +44,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Tooltip,
     TooltipContent,
@@ -67,10 +59,8 @@ import {
     show as clienteShowRoute,
 } from '@/routes/clientes';
 import {
-    destroy as campoDestroy,
     historial as campoHistorial,
     reveal as campoReveal,
-    update as campoUpdate,
 } from '@/routes/clientes/campos';
 import {
     destroy as limpiarNivelRiesgo,
@@ -293,26 +283,6 @@ function descriptorForma(label: string): string {
     return label.match(/\(([^)]+)\)\s*$/)?.[1] ?? label;
 }
 
-function guessTipoDato(valor: unknown): string {
-    if (typeof valor === 'number') {
-        return 'number';
-    }
-
-    if (Array.isArray(valor)) {
-        return valor.every((v) => typeof v === 'string')
-            ? 'array_string'
-            : 'array_object';
-    }
-
-    if (valor !== null && typeof valor === 'object') {
-        return 'object';
-    }
-
-    return 'string';
-}
-
-type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
-
 // Renderiza cualquier valor recolectado de forma amigable para un usuario no
 // técnico: sin corchetes ni llaves. Strings/números tal cual, listas como
 // etiquetas, objetos como pares "campo: valor", y listas de objetos como fichas.
@@ -439,592 +409,6 @@ function esComplejo(value: unknown): boolean {
     return true;
 }
 
-function esObjetoPlano(v: unknown): boolean {
-    return (
-        !!v &&
-        typeof v === 'object' &&
-        !Array.isArray(v) &&
-        Object.values(v).every((x) => x === null || typeof x !== 'object')
-    );
-}
-
-type EditorKind =
-    'scalar' | 'stringList' | 'object' | 'objectList' | 'advanced';
-
-// Elige el editor más amigable. Prioriza el `tipo_dato` del catálogo (siempre
-// que se conozca) por sobre la forma del valor actual — un objeto/array vacío
-// o recién creado no tiene forma de la que inferir nada, así que confiar solo
-// en la forma del valor dejaba sin editor utilizable a un campo nuevo o a uno
-// cuyo único dato cargado hasta ahora fuera una lista vacía.
-function editorKindFor(v: unknown, tipoDato?: string | null): EditorKind {
-    if (tipoDato === 'object') {
-        return 'object';
-    }
-
-    if (tipoDato === 'array_object') {
-        return 'objectList';
-    }
-
-    if (tipoDato === 'array_string') {
-        return 'stringList';
-    }
-
-    if (tipoDato === 'number' || tipoDato === 'string') {
-        return 'scalar';
-    }
-
-    // Sin tipo_dato conocido: se infiere de la forma del valor (comportamiento
-    // anterior, como red de seguridad).
-    if (v === null || v === undefined || typeof v !== 'object') {
-        return 'scalar';
-    }
-
-    if (Array.isArray(v)) {
-        if (v.every((x) => x === null || typeof x !== 'object')) {
-            return 'stringList';
-        }
-
-        return v.every((x) => esObjetoPlano(x)) ? 'objectList' : 'advanced';
-    }
-
-    return esObjetoPlano(v) ? 'object' : 'advanced';
-}
-
-function scalarToString(v: unknown): string {
-    if (v === null || v === undefined || typeof v === 'object') {
-        return '';
-    }
-
-    return String(v);
-}
-
-// Algunos subcampos (estado_civil, info_dependientes) son booleanos o
-// numéricos, no texto — el catálogo hoy no trae el tipo de cada subcampo
-// (solo su nombre), así que se resuelve por nombre conocido, con el tipo del
-// valor ya cargado como respaldo para cualquier subcampo futuro no listado acá.
-const SUBCAMPO_TIPO_CONOCIDO: Record<string, 'boolean' | 'number'> = {
-    casado_al_31_dic: 'boolean',
-    convivio_conyuge_ultimos_6_meses: 'boolean',
-    costeo_mas_mitad_hogar: 'boolean',
-    existe_persona_calificable: 'boolean',
-    conyuge_fallecio_en_anio: 'boolean',
-    anio_fallecimiento_conyuge: 'number',
-    meses_en_hogar: 'number',
-    estudiante_tiempo_completo: 'boolean',
-    discapacitado: 'boolean',
-    provee_mas_50_soporte_propio: 'boolean',
-    ingreso_bruto_anual: 'number',
-};
-
-type FieldPrimitive = string | number | boolean;
-type FieldRecord = Record<string, FieldPrimitive>;
-
-function tipoDeSubcampo(
-    clave: string,
-    actual: unknown,
-): 'boolean' | 'number' | 'string' {
-    if (SUBCAMPO_TIPO_CONOCIDO[clave]) {
-        return SUBCAMPO_TIPO_CONOCIDO[clave];
-    }
-
-    if (typeof actual === 'boolean') {
-        return 'boolean';
-    }
-
-    if (typeof actual === 'number') {
-        return 'number';
-    }
-
-    return 'string';
-}
-
-function valorPorDefecto(
-    tipo: 'boolean' | 'number' | 'string',
-): FieldPrimitive {
-    return tipo === 'boolean' ? false : '';
-}
-
-// Construye un registro con TODAS las claves de la plantilla (el catálogo),
-// tomando el valor ya cargado cuando existe y un default por tipo cuando no
-// — así un subcampo agregado al catálogo después de que el cliente ya tenía
-// datos cargados aparece igual, en vez de quedar invisible.
-function objToRecord(v: unknown, plantilla: string[]): FieldRecord {
-    const existente = (
-        v && typeof v === 'object' && !Array.isArray(v) ? v : {}
-    ) as Record<string, unknown>;
-    const claves = plantilla.length > 0 ? plantilla : Object.keys(existente);
-    const out: FieldRecord = {};
-
-    for (const k of claves) {
-        const val = existente[k];
-
-        if (val === undefined || val === null) {
-            out[k] = valorPorDefecto(tipoDeSubcampo(k, val));
-        } else if (typeof val === 'boolean' || typeof val === 'number') {
-            out[k] = val;
-        } else {
-            out[k] = String(val);
-        }
-    }
-
-    return out;
-}
-
-// Campo booleano o numérico dentro de un editor de objeto/lista de objetos.
-function CampoSubcampo({
-    id,
-    clave,
-    valor,
-    onChange,
-}: {
-    id: string;
-    clave: string;
-    valor: FieldPrimitive;
-    onChange: (v: FieldPrimitive) => void;
-}) {
-    const tipo = tipoDeSubcampo(clave, valor);
-
-    if (tipo === 'boolean') {
-        return (
-            <div className="flex items-center gap-2">
-                <Checkbox
-                    id={id}
-                    checked={valor === true}
-                    onCheckedChange={(checked) => onChange(checked === true)}
-                />
-                <Label htmlFor={id}>{humanizarClave(clave)}</Label>
-            </div>
-        );
-    }
-
-    return (
-        <div className="grid gap-1.5">
-            <Label htmlFor={id}>{humanizarClave(clave)}</Label>
-            <Input
-                id={id}
-                type={tipo === 'number' ? 'number' : 'text'}
-                value={String(valor)}
-                onChange={(e) =>
-                    onChange(
-                        tipo === 'number'
-                            ? e.target.value === ''
-                                ? ''
-                                : Number(e.target.value)
-                            : e.target.value,
-                    )
-                }
-            />
-        </div>
-    );
-}
-
-// Editor de valores que reporta el contenido editado (y su validez) al padre.
-// Evita exponer JSON al usuario salvo en datos anidados (caso "advanced").
-function ValueEditor({
-    initial,
-    tipoDato,
-    subcampos,
-    onChange,
-    onValidityChange,
-}: {
-    initial: unknown;
-    tipoDato?: string | null;
-    subcampos?: string[] | null;
-    onChange: (v: Json) => void;
-    onValidityChange: (ok: boolean) => void;
-}) {
-    const { t } = useTranslation();
-    const [kind] = useState<EditorKind>(() => editorKindFor(initial, tipoDato));
-    const [scalar, setScalar] = useState(() => scalarToString(initial));
-    const [list, setList] = useState(() =>
-        Array.isArray(initial) ? initial.map((x) => String(x)).join('\n') : '',
-    );
-    // Plantilla de claves: el catálogo (`subcampos`) manda siempre que se
-    // conozca; solo se infiere del valor actual cuando no hay catálogo que
-    // consultar (fallback defensivo, no el camino normal).
-    const [plantilla] = useState<string[]>(() => {
-        if (subcampos && subcampos.length > 0) {
-            return subcampos;
-        }
-
-        if (Array.isArray(initial)) {
-            const claves = new Set<string>();
-
-            initial.forEach((x) => {
-                if (x && typeof x === 'object' && !Array.isArray(x)) {
-                    Object.keys(x).forEach((k) => claves.add(k));
-                }
-            });
-
-            return [...claves];
-        }
-
-        if (initial && typeof initial === 'object') {
-            return Object.keys(initial);
-        }
-
-        return [];
-    });
-    const [obj, setObj] = useState<FieldRecord>(() =>
-        objToRecord(initial, plantilla),
-    );
-    const [items, setItems] = useState<FieldRecord[]>(() =>
-        Array.isArray(initial)
-            ? initial.map((x) => objToRecord(x, plantilla))
-            : [],
-    );
-    const [raw, setRaw] = useState(() =>
-        initial === null || initial === undefined
-            ? ''
-            : JSON.stringify(initial, null, 2),
-    );
-
-    useEffect(() => {
-        if (kind !== 'scalar') {
-            return;
-        }
-
-        onChange(scalar);
-        onValidityChange(true);
-    }, [kind, scalar, onChange, onValidityChange]);
-
-    useEffect(() => {
-        if (kind !== 'stringList') {
-            return;
-        }
-
-        onChange(
-            list
-                .split('\n')
-                .map((s) => s.trim())
-                .filter((s) => s.length > 0),
-        );
-        onValidityChange(true);
-    }, [kind, list, onChange, onValidityChange]);
-
-    useEffect(() => {
-        if (kind !== 'object') {
-            return;
-        }
-
-        onChange(obj as Json);
-        onValidityChange(true);
-    }, [kind, obj, onChange, onValidityChange]);
-
-    useEffect(() => {
-        if (kind !== 'objectList') {
-            return;
-        }
-
-        onChange(items as Json);
-        onValidityChange(true);
-    }, [kind, items, onChange, onValidityChange]);
-
-    useEffect(() => {
-        if (kind !== 'advanced') {
-            return;
-        }
-
-        try {
-            onChange(JSON.parse(raw) as Json);
-            onValidityChange(true);
-        } catch {
-            onValidityChange(false);
-        }
-    }, [kind, raw, onChange, onValidityChange]);
-
-    if (kind === 'scalar') {
-        return (
-            <Input
-                value={scalar}
-                onChange={(e) => setScalar(e.target.value)}
-                placeholder={t('clienteShow.edit.valuePlaceholder')}
-            />
-        );
-    }
-
-    if (kind === 'stringList') {
-        return (
-            <div className="grid gap-1.5">
-                <Textarea
-                    value={list}
-                    onChange={(e) => setList(e.target.value)}
-                    rows={4}
-                    placeholder={t('clienteShow.edit.listPlaceholder')}
-                />
-                <p className="text-xs text-muted-foreground">
-                    {t('clienteShow.edit.listHint')}
-                </p>
-            </div>
-        );
-    }
-
-    if (kind === 'object') {
-        return (
-            <div className="grid gap-3">
-                {plantilla.map((k) => (
-                    <CampoSubcampo
-                        key={k}
-                        id={`campo-${k}`}
-                        clave={k}
-                        valor={obj[k]}
-                        onChange={(v) =>
-                            setObj((prev) => ({ ...prev, [k]: v }))
-                        }
-                    />
-                ))}
-            </div>
-        );
-    }
-
-    if (kind === 'objectList') {
-        const actualizar = (
-            idx: number,
-            clave: string,
-            valor: FieldPrimitive,
-        ) =>
-            setItems((prev) =>
-                prev.map((registro, i) =>
-                    i === idx ? { ...registro, [clave]: valor } : registro,
-                ),
-            );
-        const eliminar = (idx: number) =>
-            setItems((prev) => prev.filter((_, i) => i !== idx));
-        const agregar = () =>
-            setItems((prev) => [...prev, objToRecord({}, plantilla)]);
-
-        return (
-            <div className="grid gap-3">
-                {items.map((registro, idx) => (
-                    <div key={idx} className="space-y-3 rounded-lg border p-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">
-                                {t('clienteShow.value.record', { n: idx + 1 })}
-                            </span>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => eliminar(idx)}
-                            >
-                                {t('common.delete')}
-                            </Button>
-                        </div>
-                        {plantilla.map((k) => (
-                            <CampoSubcampo
-                                key={k}
-                                id={`item-${idx}-${k}`}
-                                clave={k}
-                                valor={registro[k]}
-                                onChange={(v) => actualizar(idx, k, v)}
-                            />
-                        ))}
-                    </div>
-                ))}
-
-                {items.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                        {t('clienteShow.value.emptyList')}
-                    </p>
-                )}
-
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    className="justify-self-start"
-                    onClick={agregar}
-                >
-                    {t('clienteShow.edit.addRecord')}
-                </Button>
-            </div>
-        );
-    }
-
-    return (
-        <div className="grid gap-1.5">
-            <Textarea
-                value={raw}
-                onChange={(e) => setRaw(e.target.value)}
-                rows={8}
-                className="font-mono text-xs"
-            />
-            <p className="text-xs text-muted-foreground">
-                {t('clienteShow.edit.advancedHint')}
-            </p>
-        </div>
-    );
-}
-
-const MAX_UPLOAD_MB = 10;
-const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
-
-function formatBytes(bytes: number): string {
-    if (bytes < 1024) {
-        return `${bytes} B`;
-    }
-
-    if (bytes < 1024 * 1024) {
-        return `${Math.round(bytes / 1024)} KB`;
-    }
-
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-// Formulario de subida de archivo reutilizable (cargar/reemplazar documento y
-// agregar campo tipo archivo). Usa useForm de Inertia para:
-//  - method spoofing (POST + _method=patch): sin esto PHP no parsea el archivo
-//    en un PATCH multipart y la subida "no hace nada".
-//  - barra de progreso (form.progress.percentage).
-// Valida en el cliente el peso (<=10MB) y el formato antes de subir.
-function DocumentoUploadForm({
-    url,
-    formatos,
-    submitLabel,
-    onDone,
-}: {
-    url: string;
-    formatos: string[] | null;
-    submitLabel: string;
-    onDone: () => void;
-}) {
-    const { t } = useTranslation();
-    const inputId = useId();
-    const [error, setError] = useState<string | null>(null);
-    const form = useForm<{
-        _method: string;
-        modo: string;
-        file: File | null;
-    }>({
-        _method: 'patch',
-        modo: 'archivo',
-        file: null,
-    });
-
-    const validar = (file: File): string | null => {
-        if (file.size > MAX_UPLOAD_BYTES) {
-            return t('clienteShow.upload.errorSize', { max: MAX_UPLOAD_MB });
-        }
-
-        const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
-
-        if (formatos && formatos.length > 0 && !formatos.includes(extension)) {
-            return t('clienteShow.upload.errorFormat', {
-                formats: formatos.join(', '),
-            });
-        }
-
-        return null;
-    };
-
-    const seleccionar = (file: File | null) => {
-        setError(null);
-
-        if (!file) {
-            form.setData('file', null);
-
-            return;
-        }
-
-        const problema = validar(file);
-
-        if (problema) {
-            setError(problema);
-            form.setData('file', null);
-
-            return;
-        }
-
-        form.setData('file', file);
-    };
-
-    const submit = () => {
-        if (!form.data.file) {
-            return;
-        }
-
-        form.post(url, {
-            forceFormData: true,
-            preserveScroll: true,
-            onSuccess: () => {
-                form.reset();
-                onDone();
-            },
-        });
-    };
-
-    const accept =
-        formatos && formatos.length > 0
-            ? formatos.map((f) => `.${f}`).join(',')
-            : undefined;
-    const subiendo = form.progress !== null && form.progress !== undefined;
-
-    return (
-        <div className="grid gap-3">
-            <label
-                htmlFor={inputId}
-                className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-input bg-secondary/30 px-4 py-6 text-center transition-colors hover:bg-secondary/60"
-            >
-                <Upload className="size-6 text-muted-foreground" />
-                <span className="text-sm font-medium">
-                    {form.data.file
-                        ? form.data.file.name
-                        : t('clienteShow.upload.selectFile')}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                    {form.data.file
-                        ? formatBytes(form.data.file.size)
-                        : t('clienteShow.upload.hint', {
-                              max: MAX_UPLOAD_MB,
-                              formats:
-                                  formatos && formatos.length > 0
-                                      ? formatos.join(', ').toUpperCase()
-                                      : t('clienteShow.upload.anyFormat'),
-                          })}
-                </span>
-                <input
-                    id={inputId}
-                    type="file"
-                    accept={accept}
-                    className="sr-only"
-                    onChange={(e) => seleccionar(e.target.files?.[0] ?? null)}
-                />
-            </label>
-
-            {(error || form.errors.file) && (
-                <p className="text-sm text-destructive">
-                    {error ?? form.errors.file}
-                </p>
-            )}
-
-            {subiendo && (
-                <div
-                    className="h-2 w-full overflow-hidden rounded-full bg-secondary"
-                    role="progressbar"
-                    aria-valuenow={form.progress?.percentage ?? 0}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                >
-                    <div
-                        className="h-full bg-primary transition-all"
-                        style={{ width: `${form.progress?.percentage ?? 0}%` }}
-                    />
-                </div>
-            )}
-
-            <DialogFooter>
-                <Button
-                    onClick={submit}
-                    disabled={!form.data.file || form.processing}
-                >
-                    {form.processing
-                        ? t('clienteShow.upload.uploading')
-                        : submitLabel}
-                </Button>
-            </DialogFooter>
-        </div>
-    );
-}
-
 function DuplicadoBadge({ duplicado }: { duplicado?: DocumentoDuplicado }) {
     const { t } = useTranslation();
 
@@ -1051,389 +435,6 @@ function DuplicadoBadge({ duplicado }: { duplicado?: DocumentoDuplicado }) {
         <Badge variant="destructive" title={detalle}>
             {t('clienteShow.duplicado.badge')}
         </Badge>
-    );
-}
-
-// Carga (o reemplazo) de un documento directamente desde el dashboard. Reutiliza
-// el mismo endpoint de corrección manual en modo "archivo".
-function SubirDocumentoDialog({
-    clienteId,
-    taxYear,
-    campo,
-}: {
-    clienteId: number;
-    taxYear: number;
-    campo: CampoCliente;
-}) {
-    const { t } = useTranslation();
-    const [open, setOpen] = useState(false);
-    const yaHayArchivo = campo.documento !== null;
-    const url =
-        campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
-        `?forma=${campo.forma}&tax_year=${taxYear}`;
-
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="sm">
-                    {yaHayArchivo ? t('common.replace') : t('common.upload')}
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogTitle>
-                    {yaHayArchivo
-                        ? t('clienteShow.upload.replaceTitle', {
-                              campo: campo.campo,
-                          })
-                        : t('clienteShow.upload.uploadTitle', {
-                              campo: campo.campo,
-                          })}
-                </DialogTitle>
-                <DialogDescription>
-                    {t('clienteShow.upload.description', {
-                        forma: campo.forma,
-                    })}
-                </DialogDescription>
-
-                <DocumentoUploadForm
-                    url={url}
-                    formatos={campo.formatos_aceptados}
-                    submitLabel={
-                        yaHayArchivo ? t('common.replace') : t('common.upload')
-                    }
-                    onDone={() => setOpen(false)}
-                />
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function EditCampoDialog({
-    clienteId,
-    taxYear,
-    campo,
-    formaLabel,
-}: {
-    clienteId: number;
-    taxYear: number;
-    campo: CampoCliente;
-    formaLabel: string;
-}) {
-    const { t } = useTranslation();
-    const [open, setOpen] = useState(false);
-    const [contenido, setContenido] = useState<Json>(
-        () => (campo.valor ?? '') as Json,
-    );
-    const [valido, setValido] = useState(true);
-    const onChange = useCallback((v: Json) => setContenido(v), []);
-    const onValidityChange = useCallback((ok: boolean) => setValido(ok), []);
-
-    // Edición del valor de texto. Los archivos se cargan/reemplazan con
-    // SubirDocumentoDialog (subida multipart con progreso y validación).
-    const submit = () => {
-        router.patch(
-            campoUpdate({ cliente: clienteId, campo: campo.campo }).url +
-                `?forma=${campo.forma}&tax_year=${taxYear}`,
-            {
-                modo: 'texto',
-                // El tipo_dato del catálogo manda siempre que se conozca — el
-                // backend ahora rechaza (422) un tipo_dato que no coincida
-                // exactamente con el catálogo (ver Fase 2).
-                tipo_dato: campo.tipo_dato ?? guessTipoDato(contenido),
-                contenido,
-            },
-            { preserveScroll: true, onSuccess: () => setOpen(false) },
-        );
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="sm">
-                    {t('clienteShow.edit.trigger')}
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogTitle>
-                    {t('clienteShow.edit.title', {
-                        campo: humanizarClave(campo.campo),
-                    })}
-                </DialogTitle>
-                <DialogDescription>
-                    {t('clienteShow.edit.description', { forma: formaLabel })}
-                </DialogDescription>
-
-                {/* key: al reabrir, reinicia el editor con el valor actual */}
-                <div className="max-h-[65vh] overflow-y-auto pr-1">
-                    <ValueEditor
-                        key={open ? 'abierto' : 'cerrado'}
-                        initial={campo.valor}
-                        tipoDato={campo.tipo_dato}
-                        subcampos={campo.subcampos}
-                        onChange={onChange}
-                        onValidityChange={onValidityChange}
-                    />
-                </div>
-
-                <DialogFooter>
-                    <Button onClick={submit} disabled={!valido}>
-                        {t('clienteShow.edit.save')}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function AgregarCampoDialog({
-    clienteId,
-    taxYear,
-    disponibles,
-}: {
-    clienteId: number;
-    taxYear: number;
-    disponibles: CatalogoDisponibleItem[];
-}) {
-    const { t } = useTranslation();
-    const [open, setOpen] = useState(false);
-    const [forma, setForma] = useState<string>(disponibles[0]?.forma ?? '');
-    const camposDeForma = disponibles.filter((d) => d.forma === forma);
-    const [campo, setCampo] = useState(camposDeForma[0]?.campo ?? '');
-    const [contenido, setContenido] = useState<Json>('');
-    const [valido, setValido] = useState(true);
-    const onChangeContenido = useCallback((v: Json) => setContenido(v), []);
-    const onValidityChange = useCallback((ok: boolean) => setValido(ok), []);
-
-    if (disponibles.length === 0) {
-        return null;
-    }
-
-    const seleccionado = disponibles.find(
-        (d) => d.forma === forma && d.campo === campo,
-    );
-    const esArchivo = seleccionado?.tipo_campo === 'documento';
-    const url =
-        campoUpdate({ cliente: clienteId, campo }).url +
-        `?forma=${forma}&tax_year=${taxYear}`;
-
-    const cambiarForma = (nuevaForma: string) => {
-        setForma(nuevaForma);
-        const primero = disponibles.find((d) => d.forma === nuevaForma);
-        setCampo(primero?.campo ?? '');
-    };
-
-    const submitTexto = () => {
-        router.patch(
-            url,
-            {
-                modo: 'texto',
-                tipo_dato: seleccionado?.tipo_dato ?? guessTipoDato(contenido),
-                contenido,
-            },
-            { preserveScroll: true, onSuccess: () => setOpen(false) },
-        );
-    };
-
-    // Solo disponible para campos opcionales (ver App\Enums\FieldState::NoAplica)
-    // — no requiere archivo ni contenido, es una respuesta del cliente, no un dato.
-    const submitNoAplica = () => {
-        router.patch(
-            url,
-            { modo: 'no_aplica' },
-            { preserveScroll: true, onSuccess: () => setOpen(false) },
-        );
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="secondary">
-                    {t('clienteShow.addField.trigger')}
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogTitle>{t('clienteShow.addField.title')}</DialogTitle>
-                <DialogDescription>
-                    {t('clienteShow.addField.description')}
-                </DialogDescription>
-
-                <div className="grid gap-2">
-                    <label className="text-sm font-medium" htmlFor="forma">
-                        {t('common.form')}
-                    </label>
-                    <select
-                        id="forma"
-                        className="rounded border bg-background p-2 text-sm"
-                        value={forma}
-                        onChange={(e) => cambiarForma(e.target.value)}
-                    >
-                        {[...new Set(disponibles.map((d) => d.forma))].map(
-                            (f) => (
-                                <option key={f} value={f}>
-                                    {f === TRANSVERSAL
-                                        ? t('clienteShow.transversalLabel')
-                                        : f === DOCUMENTOS_EXTRA
-                                          ? t(
-                                                'clienteShow.documentosExtraLabel',
-                                            )
-                                          : f}
-                                </option>
-                            ),
-                        )}
-                    </select>
-                </div>
-
-                <div className="mt-2 grid gap-2">
-                    <label className="text-sm font-medium" htmlFor="campo">
-                        {t('clienteShow.addField.fieldLabel')}
-                    </label>
-                    <select
-                        id="campo"
-                        className="rounded border bg-background p-2 text-sm"
-                        value={campo}
-                        onChange={(e) => setCampo(e.target.value)}
-                    >
-                        {camposDeForma.map((d) => (
-                            <option key={d.campo} value={d.campo}>
-                                {d.campo}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="mt-4">
-                    {esArchivo ? (
-                        <DocumentoUploadForm
-                            url={url}
-                            formatos={seleccionado?.formatos_aceptados ?? null}
-                            submitLabel={t('common.save')}
-                            onDone={() => setOpen(false)}
-                        />
-                    ) : (
-                        <>
-                            {/* key: al cambiar de campo, reinicia el editor en blanco */}
-                            <ValueEditor
-                                key={`${forma}:${campo}`}
-                                initial={
-                                    seleccionado?.tipo_dato ===
-                                        'array_string' ||
-                                    seleccionado?.tipo_dato === 'array_object'
-                                        ? []
-                                        : seleccionado?.tipo_dato === 'object'
-                                          ? {}
-                                          : ''
-                                }
-                                tipoDato={seleccionado?.tipo_dato}
-                                subcampos={seleccionado?.subcampos}
-                                onChange={onChangeContenido}
-                                onValidityChange={onValidityChange}
-                            />
-
-                            <DialogFooter className="mt-4">
-                                <Button
-                                    onClick={submitTexto}
-                                    disabled={!valido}
-                                >
-                                    {t('common.save')}
-                                </Button>
-                            </DialogFooter>
-                        </>
-                    )}
-                </div>
-
-                {seleccionado?.obligatorio === false && (
-                    <div className="flex justify-end border-t pt-3">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={submitNoAplica}
-                        >
-                            {t('clienteShow.noAplica.trigger')}
-                        </Button>
-                    </div>
-                )}
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-// Solo para campos opcionales (el backend rechaza esto en un obligatorio —
-// ver App\Enums\FieldState::NoAplica). Registra que el cliente ya fue
-// consultado y respondió que no lo tiene / no aplica en su caso, para que
-// deje de aparecer como pendiente sin depender de que alguien se acuerde.
-function MarcarNoAplicaButton({
-    clienteId,
-    taxYear,
-    campo,
-}: {
-    clienteId: number;
-    taxYear: number;
-    campo: CampoCliente;
-}) {
-    const { t } = useTranslation();
-
-    return (
-        <Button
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-                router.patch(
-                    campoUpdate({ cliente: clienteId, campo: campo.campo })
-                        .url + `?forma=${campo.forma}&tax_year=${taxYear}`,
-                    { modo: 'no_aplica' },
-                    { preserveScroll: true },
-                )
-            }
-        >
-            {t('clienteShow.noAplica.trigger')}
-        </Button>
-    );
-}
-
-function EliminarCampoButton({
-    clienteId,
-    taxYear,
-    campo,
-}: {
-    clienteId: number;
-    taxYear: number;
-    campo: CampoCliente;
-}) {
-    const { t } = useTranslation();
-
-    return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-red-600">
-                    {t('common.delete')}
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogTitle>
-                    {t('clienteShow.deleteField.title', { campo: campo.campo })}
-                </DialogTitle>
-                <DialogDescription>
-                    {t('clienteShow.deleteField.description')}
-                </DialogDescription>
-                <DialogFooter>
-                    <Button
-                        variant="destructive"
-                        onClick={() =>
-                            router.delete(
-                                campoDestroy({
-                                    cliente: clienteId,
-                                    campo: campo.campo,
-                                }).url +
-                                    `?forma=${campo.forma}&tax_year=${taxYear}`,
-                                { preserveScroll: true },
-                            )
-                        }
-                    >
-                        {t('common.delete')}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
     );
 }
 
@@ -1718,35 +719,6 @@ function CampoRow({
             </TableCell>
             <TableCell className="text-right align-top">
                 <HistorialDialog
-                    clienteId={clienteId}
-                    taxYear={taxYear}
-                    campo={campo}
-                />
-                {(campo.tipo_campo === 'documento' ||
-                    campo.tipo_campo === 'mixto') && (
-                    <SubirDocumentoDialog
-                        clienteId={clienteId}
-                        taxYear={taxYear}
-                        campo={campo}
-                    />
-                )}
-                {(campo.tipo_campo === 'dato' ||
-                    campo.tipo_campo === 'mixto') && (
-                    <EditCampoDialog
-                        clienteId={clienteId}
-                        taxYear={taxYear}
-                        campo={campo}
-                        formaLabel={formaLabel}
-                    />
-                )}
-                {!campo.obligatorio && campo.estado !== 'no_aplica' && (
-                    <MarcarNoAplicaButton
-                        clienteId={clienteId}
-                        taxYear={taxYear}
-                        campo={campo}
-                    />
-                )}
-                <EliminarCampoButton
                     clienteId={clienteId}
                     taxYear={taxYear}
                     campo={campo}
@@ -2160,7 +1132,6 @@ export default function ClienteShow({
         email: string;
         phone: string | null;
         es_prueba: boolean;
-        entrevista_catalogo: boolean;
     };
     formas: ClienteForma[];
     campos: CampoCliente[];
@@ -2169,7 +1140,7 @@ export default function ClienteShow({
     determinaciones: Determinacion[];
     derivationLogs: DerivationLog[];
     nivelRiesgo: NivelRiesgoEfectivo;
-    /** Diferida; null si el cliente no tiene la bandera (F2.9). */
+    /** Diferida (F2.9); null si el cliente no empezó la entrevista. */
     entrevista?: VistaEntrevista | null;
 }) {
     const { t } = useTranslation();
@@ -2257,13 +1228,6 @@ export default function ClienteShow({
                                     {t('cuentaUsuario.badgePrueba')}
                                 </Badge>
                             ) : null}
-                            {cliente.entrevista_catalogo ? (
-                                <Badge variant="secondary">
-                                    {t(
-                                        'cuentaUsuario.entrevistaCatalogo.badge',
-                                    )}
-                                </Badge>
-                            ) : null}
                         </h1>
                         {/* Correo y teléfono son identificadores, no prosa. */}
                         <p className="mt-1.5 font-mono text-xs text-muted-foreground">
@@ -2308,27 +1272,22 @@ export default function ClienteShow({
                             />
                         )}
                         {esAdministrador ? (
-                            <>
-                                <EntrevistaCatalogoDialog usuario={cliente} />
-                                <ClienteCuentaAcciones cliente={cliente} />
-                            </>
+                            <ClienteCuentaAcciones cliente={cliente} />
                         ) : null}
                     </div>
                 </div>
 
-                {cliente.entrevista_catalogo ? (
-                    <Deferred
-                        data="entrevista"
-                        fallback={<EntrevistaClienteSkeleton />}
-                        rescue={<EntrevistaClienteError />}
-                    >
-                        <EntrevistaCliente
-                            clienteId={cliente.id}
-                            taxYear={taxYearActual}
-                            entrevista={entrevista ?? null}
-                        />
-                    </Deferred>
-                ) : null}
+                <Deferred
+                    data="entrevista"
+                    fallback={<EntrevistaClienteSkeleton />}
+                    rescue={<EntrevistaClienteError />}
+                >
+                    <EntrevistaCliente
+                        clienteId={cliente.id}
+                        taxYear={taxYearActual}
+                        entrevista={entrevista ?? null}
+                    />
+                </Deferred>
 
                 <NivelRiesgoControl
                     clienteId={cliente.id}
@@ -2343,14 +1302,6 @@ export default function ClienteShow({
                 />
 
                 <DerivationLogsPanel logs={derivationLogs} />
-
-                <div className="flex justify-end">
-                    <AgregarCampoDialog
-                        clienteId={cliente.id}
-                        taxYear={taxYearActual}
-                        disponibles={catalogoDisponible}
-                    />
-                </div>
 
                 {secciones.length === 0 ? (
                     <p className="border-t pt-6 text-sm text-muted-foreground">

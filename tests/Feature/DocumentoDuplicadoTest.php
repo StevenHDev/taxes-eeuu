@@ -9,6 +9,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class DocumentoDuplicadoTest extends TestCase
@@ -17,14 +18,17 @@ class DocumentoDuplicadoTest extends TestCase
 
     private function subirDocumento(User $preparador, User $cliente, string $campo, UploadedFile $file): void
     {
-        $this->actingAs($preparador)
-            ->post(route('clientes.campos.update', ['cliente' => $cliente, 'campo' => $campo]).'?forma=form_1040&tax_year=2025', [
-                '_method' => 'patch',
-                'forma' => 'form_1040',
-                'modo' => 'archivo',
-                'file' => $file,
-            ])
-            ->assertRedirect();
+        // Desde F2.11 la ficha no sube documentos del formulario anterior:
+        // se suben por la API externa (E3), que sigue escribiendo ahí.
+        Sanctum::actingAs($preparador, ['*']);
+
+        $this->post(route('api.clientes.campos.update', ['cliente' => $cliente, 'campo' => $campo]).'?forma=form_1040&tax_year=2025', [
+            '_method' => 'patch',
+            'forma' => 'form_1040',
+            'modo' => 'archivo',
+            'file' => $file,
+        ])
+            ->assertOk();
     }
 
     public function test_mismo_archivo_subido_dos_veces_para_el_mismo_cliente_se_marca_como_duplicado(): void
