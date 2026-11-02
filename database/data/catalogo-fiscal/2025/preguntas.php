@@ -811,6 +811,18 @@ return [
         ],
     ],
     [
+        // F2.10: el preparador necesita saber qué fue para pedir el documento
+        // correcto (prueba por WhatsApp del 1 nov.).
+        'codigo' => 'D17.1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 17,
+        'texto_es' => '¿Qué tipo de dinero fue y de dónde vino?', 'texto_en' => 'What kind of money was it and where did it come from?', 'ayuda_es' => 'Por ejemplo: "premio de una rifa", "regalías de un libro", "servicio de jurado".', 'ayuda_en' => 'For example: "raffle prize", "book royalties", "jury duty".',
+        'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'D17', 'es' => 'si'],
+        'efecto_es' => 'Decide qué documento pide el preparador y en qué línea va (8h, 8i, 8v, 8z o Schedule C/E)',
+        'fuente_texto' => 'Schedule 1, parte I, línea 8: cada tipo de "otro ingreso" va en su propia línea',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040s1.pdf',
+        'activa' => [],
+    ],
+    [
         // F2.2: socio con K-1 (visto al cerrar F0.6). La declaración de la empresa no se atiende; su K-1 personal sí.
         'codigo' => 'D18', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 18,
         'texto_es' => '¿Eres socio o accionista de una LLC, sociedad o S-corp y recibiste un Schedule K-1 por {anio}?', 'texto_en' => 'Are you a partner or shareholder in an LLC, partnership or S corporation, and did you receive a Schedule K-1 for {anio}?', 'ayuda_es' => 'Nosotros preparamos tu declaración personal con tu K-1. La declaración de la empresa la hace otra firma.', 'ayuda_en' => 'We prepare your personal return with your K-1. The business return is prepared by another firm.',
