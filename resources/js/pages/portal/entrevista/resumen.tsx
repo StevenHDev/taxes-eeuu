@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFormatearValor } from '@/components/entrevista/formatear-valor';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,41 +45,6 @@ type Props = {
         archivos: number;
     }[];
 };
-
-/** Un valor guardado, en palabras del idioma del cliente. */
-function useFormatearValor() {
-    const { t, i18n } = useTranslation();
-
-    return (p: PreguntaResumen): string => {
-        const v = p.valor;
-        const opcion = (valor: string) =>
-            p.opciones.find((o) => o.valor === valor)?.texto ?? valor;
-
-        if (v === null || v === '') {
-            return t('entrevista.resumen.sinResponder');
-        }
-
-        switch (p.tipo) {
-            case 'si_no':
-                return v === 'si' ? t('entrevista.si') : t('entrevista.no');
-            case 'usted_conyuge_no':
-                return Array.isArray(v)
-                    ? v.map((q) => t(`entrevista.quien.${q}`)).join(' · ')
-                    : t('entrevista.no');
-            case 'opciones':
-                return opcion(String(v));
-            case 'casillas':
-                return Array.isArray(v) ? v.map(opcion).join(' · ') : String(v);
-            case 'fecha':
-                return new Intl.DateTimeFormat(i18n.language, {
-                    dateStyle: 'long',
-                    timeZone: 'UTC',
-                }).format(new Date(`${v}T00:00:00Z`));
-            default:
-                return String(v);
-        }
-    };
-}
 
 function Respuesta({ pregunta }: { pregunta: PreguntaResumen }) {
     const { t } = useTranslation();

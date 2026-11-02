@@ -5,10 +5,7 @@ import AlertError from '@/components/alert-error';
 import { DocumentoFila } from '@/components/entrevista/documento-fila';
 import { ListaCasillas } from '@/components/entrevista/lista-casillas';
 import { MarcoEntrevista } from '@/components/entrevista/marco-entrevista';
-import { PreguntaDato } from '@/components/entrevista/pregunta-dato';
-import { PreguntaOpciones } from '@/components/entrevista/pregunta-opciones';
-import { PreguntaSiNo } from '@/components/entrevista/pregunta-si-no';
-import { PreguntaUstedConyuge } from '@/components/entrevista/pregunta-usted-conyuge';
+import { Pregunta } from '@/components/entrevista/pregunta';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import type { PortalMensaje } from '@/types/agente';
@@ -231,58 +228,4 @@ function FormularioPaso({
             </MarcoEntrevista>
         </>
     );
-}
-
-function Pregunta({
-    pregunta,
-    valor,
-    conConyuge,
-    error,
-    onCambiar,
-}: {
-    pregunta: PreguntaPaso;
-    valor: ValorEntrevista;
-    conConyuge: boolean;
-    error?: string;
-    onCambiar: (valor: ValorEntrevista) => void;
-}) {
-    switch (pregunta.tipo) {
-        case 'si_no':
-            return (
-                <PreguntaSiNo
-                    pregunta={pregunta}
-                    valor={valor}
-                    error={error}
-                    onCambiar={onCambiar}
-                />
-            );
-        case 'usted_conyuge_no':
-            return (
-                <PreguntaUstedConyuge
-                    pregunta={pregunta}
-                    valor={valor}
-                    conConyuge={conConyuge}
-                    error={error}
-                    onCambiar={onCambiar}
-                />
-            );
-        case 'opciones':
-            return (
-                <PreguntaOpciones
-                    pregunta={pregunta}
-                    valor={valor}
-                    error={error}
-                    onCambiar={onCambiar}
-                />
-            );
-        default:
-            return (
-                <PreguntaDato
-                    pregunta={pregunta}
-                    valor={valor}
-                    error={error}
-                    onCambiar={onCambiar}
-                />
-            );
-    }
 }
