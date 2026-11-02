@@ -440,6 +440,17 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 
 **Pruebas:** el preparador ve la entrevista de sus clientes y no la de otros; las sensibles van enmascaradas y revelar exige contraseña y queda registrado; corregir guarda con canal `preparador` y reabre; Mensajes lista las conversaciones del portal y filtra por canal.
 
+**Resultado (1 nov.):**
+- **Ficha:** prop diferida `entrevista` (`VistaEntrevistaPreparador`), solo con la bandera. Muestra estado, inicio y canal, confirmación, consentimiento (versión, fecha y si es provisional), formularios activados, respuestas por pantalla con código, canal, fecha y cantidad de cambios, y los documentos con sus archivos. Las sensibles llegan siempre en `null`.
+- **Rutas:** `PUT clientes/{cliente}/entrevista/respuestas/{respuesta}` (corregir, `CorregirRespuestaRequest` + `update`), `GET …/historial` (JSON, sin valores si es sensible) y `POST …/revelar` (`RequirePassword`, `throttle:10,1`, fila en `entrevista_respuesta_reveals`). Una respuesta de otro cliente da 404/403.
+- **Historial:** la primera respuesta no deja fila (RespuestaEntrevistaObserver); el historial muestra los cambios desde ahí, con canal y quién.
+- **Bandera:** el administrador la cambia desde la ficha con `EntrevistaCatalogoDialog` (confirmación); usa la misma ruta de Usuarios.
+- **Mensajes:** `AgenteMensajesController` mezcla WhatsApp y `PortalMensaje` por fecha (500 filas, 30 días), con columna y filtro "Canal". Los ids van como `whatsapp-12` / `portal-7`.
+- **Reuso:** `components/entrevista/pregunta.tsx` (el control por tipo, usado en el paso del portal y al corregir) y `formatear-valor.ts` (resumen del cliente y ficha; en la ficha dice "Cliente" / "Cónyuge" en vez de "Yo" / "Mi cónyuge").
+- **Consentimiento:** `entrevistas.consentimiento_id` nunca se llena (la firma va por cliente y año en `consentimientos`), así que la vista busca la última firma del uso 7216 de ese año.
+- **Revisión en el navegador (1 nov., cliente local #14):** carga diferida con skeleton, revelar pide contraseña, historial en panel lateral, corregir A1.2 dejó canal "Preparador" y la entrevista reabierta, celular con acciones al lado de la respuesta, documentos con archivos o "Pendiente" y filtro de canal en Mensajes.
+- **Pruebas:** `Entrevista/EntrevistaPreparadorTest` (10) y `AgenteMensajesTest` (+1).
+
 ---
 
 ## 2.10 Cambio de flujo y migración de `campos_cliente`
