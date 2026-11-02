@@ -5,7 +5,7 @@ namespace App\Services\Entrevista;
 use App\Enums\FieldState;
 use App\Models\Documento;
 use App\Models\Entrevista\Entrevista;
-use App\Models\Entrevista\EntrevistaPersona;
+use App\Models\Entrevista\EntrevistaDocumento;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Services\DocumentoAlmacen;
 use Illuminate\Http\UploadedFile;
@@ -29,6 +29,7 @@ class DocumentosEntrevista
     public function __construct(
         private readonly CatalogoFiscal $catalogo,
         private readonly DocumentoAlmacen $almacen,
+        private readonly ChecklistDocumentos $checklist,
     ) {}
 
     /**
@@ -97,18 +98,20 @@ class DocumentosEntrevista
      * archivo original sirve para detectar el mismo documento en otra cuenta
      * (DocumentoDuplicadoService).
      */
-    public function subir(Entrevista $entrevista, string $codigo, ?EntrevistaPersona $persona, UploadedFile $archivo): Documento
+    public function subir(EntrevistaDocumento $item, UploadedFile $archivo): Documento
     {
+        $entrevista = $item->entrevista;
         $extension = strtolower((string) $archivo->getClientOriginalExtension());
         $ruta = $archivo->getRealPath();
         $hash = $ruta !== false ? hash_file('sha256', $ruta) : false;
 
-        return Documento::query()->create([
+        $documento = Documento::query()->create([
             'user_id' => $entrevista->user_id,
             'tax_year' => $entrevista->tax_year,
-            'documento_codigo' => $codigo,
+            'documento_codigo' => $item->documento_codigo,
             'entrevista_id' => $entrevista->id,
-            'persona_id' => $persona?->id,
+            'persona_id' => $item->persona_id,
+            'entrevista_documento_id' => $item->id,
             'file_path' => $this->almacen->guardar($archivo, "documentos/{$entrevista->user_id}", Str::uuid().'.'.$extension),
             'file_original_name' => $archivo->getClientOriginalName(),
             'file_mime_type' => $archivo->getMimeType() ?? 'application/octet-stream',
@@ -118,6 +121,10 @@ class DocumentosEntrevista
             'cifrado' => true,
             'estado_validacion' => FieldState::Recibido,
         ]);
+
+        $this->checklist->archivoSubido($item);
+
+        return $documento;
     }
 
     /**

@@ -21,6 +21,7 @@ use App\Models\CatalogoFiscal\CatalogoRegla;
 use App\Models\DeterminacionFiscal;
 use App\Models\Documento;
 use App\Models\Entrevista\Entrevista;
+use App\Models\Entrevista\EntrevistaDocumento;
 use App\Models\Entrevista\EntrevistaPersona;
 use App\Models\Entrevista\EntrevistaRespuesta;
 use App\Models\FormaCliente;
@@ -108,7 +109,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Entrevista (F2.2): a la bitácora solo van los nombres de atributo;
         // el historial con valores cifrados lo lleva RespuestaEntrevistaObserver.
-        foreach ([Entrevista::class, EntrevistaPersona::class, EntrevistaRespuesta::class] as $modelo) {
+        foreach ([Entrevista::class, EntrevistaPersona::class, EntrevistaRespuesta::class, EntrevistaDocumento::class] as $modelo) {
             $modelo::observe(AuditoriaObserver::class);
         }
         EntrevistaRespuesta::observe(RespuestaEntrevistaObserver::class);

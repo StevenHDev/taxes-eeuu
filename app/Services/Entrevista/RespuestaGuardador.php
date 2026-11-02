@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\DB;
  * agente, el preparador y la migración. Valida contra el catálogo del año
  * y el motor, guarda cifrado, reabre una entrevista confirmada y mantiene
  * `FormaCliente` al día para las pantallas que todavía leen las formas
- * declaradas (lista de clientes, dashboard, cálculo) hasta la fase 5.
+ * declaradas (lista de clientes, dashboard, cálculo) hasta la fase 5, y
+ * el checklist de documentos (F3.2) al día con lo que activan las respuestas.
  *
  * Un canal `whatsapp` nunca guarda una pregunta sensible: la regla vive
  * aquí, no solo en el prompt.
@@ -38,6 +39,7 @@ class RespuestaGuardador
     public function __construct(
         private readonly CatalogoFiscal $catalogo,
         private readonly MotorEntrevista $motor,
+        private readonly ChecklistDocumentos $checklist,
     ) {}
 
     /**
@@ -78,7 +80,7 @@ class RespuestaGuardador
 
             $entrevista = $persona->entrevista;
             $entrevista->unsetRelation('personas');
-            $this->sincronizarFormas($entrevista, $this->motor->situacion($entrevista));
+            $this->sincronizarActivados($entrevista);
         });
     }
 
@@ -127,7 +129,7 @@ class RespuestaGuardador
             }
 
             $entrevista->unsetRelation('respuestas');
-            $this->sincronizarFormas($entrevista, $this->motor->situacion($entrevista));
+            $this->sincronizarActivados($entrevista);
 
             return $respuesta;
         });
@@ -151,6 +153,18 @@ class RespuestaGuardador
         if ($personaId === null || ! $entrevista->personas()->whereKey($personaId)->exists()) {
             throw new RespuestaRechazada($codigo, __('La pregunta :codigo necesita una persona de esta entrevista.', ['codigo' => $codigo]));
         }
+    }
+
+    /**
+     * Pone al día lo que activan las respuestas: las formas declaradas y el
+     * checklist de documentos (F3.2).
+     */
+    private function sincronizarActivados(Entrevista $entrevista): void
+    {
+        $situacion = $this->motor->situacion($entrevista);
+
+        $this->sincronizarFormas($entrevista, $situacion);
+        $this->checklist->sincronizar($entrevista, $situacion);
     }
 
     /**

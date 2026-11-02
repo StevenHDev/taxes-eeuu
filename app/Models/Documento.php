@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\URL;
  * @property string|null $documento_codigo
  * @property int|null $entrevista_id
  * @property int|null $persona_id
+ * @property int|null $entrevista_documento_id
  * @property string $file_path
  * @property string $file_original_name
  * @property string $file_mime_type
@@ -44,6 +45,7 @@ use Illuminate\Support\Facades\URL;
     'documento_codigo',
     'entrevista_id',
     'persona_id',
+    'entrevista_documento_id',
     'file_path',
     'file_original_name',
     'file_mime_type',

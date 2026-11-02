@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Portal;
 use App\Enums\Entrevista\CanalRespuesta;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\SubirDocumentoRequest;
+use App\Services\Entrevista\ChecklistDocumentos;
 use App\Services\Entrevista\DocumentosEntrevista;
 use App\Services\Entrevista\PasosEntrevista;
 use App\Services\Entrevista\RespuestaGuardador;
@@ -24,12 +25,14 @@ class DocumentoEntrevistaController extends Controller
         private readonly DocumentosEntrevista $documentos,
         private readonly PasosEntrevista $pasos,
         private readonly RespuestaGuardador $guardador,
+        private readonly ChecklistDocumentos $checklist,
     ) {}
 
     public function index(Request $request): Response
     {
         $entrevista = $this->guardador->entrevistaDe($request->user(), CanalRespuesta::Portal);
         $situacion = $this->pasos->situacion($entrevista);
+        $this->checklist->sincronizar($entrevista, $situacion);
 
         return Inertia::render('portal/entrevista/documentos', [
             'taxYear' => $entrevista->tax_year,
@@ -40,13 +43,13 @@ class DocumentoEntrevistaController extends Controller
 
     public function store(SubirDocumentoRequest $request): RedirectResponse
     {
-        $entrevista = $request->entrevista();
-        $persona = $request->persona();
+        $item = $this->checklist->primero($request->entrevista(), $request->codigo(), $request->persona()?->id);
+        abort_if($item === null, 404);
         $archivos = $request->file('archivos');
 
-        DB::transaction(function () use ($entrevista, $request, $persona, $archivos) {
+        DB::transaction(function () use ($item, $archivos) {
             foreach ($archivos as $archivo) {
-                $this->documentos->subir($entrevista, $request->codigo(), $persona, $archivo);
+                $this->documentos->subir($item, $archivo);
             }
         });
 

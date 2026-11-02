@@ -30,6 +30,7 @@ use Illuminate\Support\Carbon;
  * @property-read User $user
  * @property-read Collection<int, EntrevistaPersona> $personas
  * @property-read Collection<int, EntrevistaRespuesta> $respuestas
+ * @property-read Collection<int, EntrevistaDocumento> $documentos
  */
 #[Fillable(['user_id', 'tax_year', 'estado', 'canal_inicio', 'iniciada_en', 'confirmada_en', 'migrada_en', 'consentimiento_id'])]
 class Entrevista extends Model
@@ -74,5 +75,15 @@ class Entrevista extends Model
     public function respuestas(): HasMany
     {
         return $this->hasMany(EntrevistaRespuesta::class);
+    }
+
+    /**
+     * El checklist de documentos (F3.2), incluidos los ítems retirados.
+     *
+     * @return HasMany<EntrevistaDocumento, $this>
+     */
+    public function documentos(): HasMany
+    {
+        return $this->hasMany(EntrevistaDocumento::class);
     }
 }
