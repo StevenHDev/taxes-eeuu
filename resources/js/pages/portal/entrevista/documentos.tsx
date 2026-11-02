@@ -2,13 +2,14 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { DocumentoFila } from '@/components/entrevista/documento-fila';
+import { OtroDocumento } from '@/components/entrevista/otro-documento';
 import { Button } from '@/components/ui/button';
 import { inicio } from '@/routes/portal/entrevista';
 import type { DocumentoEntrevista } from '@/types/entrevista';
 
 /**
- * Documentos que pide la entrevista (F2.6): los de siempre y los que activan
- * las respuestas, con su estado y la carga. Solo por el portal.
+ * Checklist de documentos del cliente (F3.3): uno por fuente, con su estado,
+ * la carga, "no aplica" y "otro documento". Solo por el portal.
  */
 export default function DocumentosEntrevista({
     documentos,
@@ -18,7 +19,7 @@ export default function DocumentosEntrevista({
     entrevistaCompleta: boolean;
 }) {
     const { t } = useTranslation();
-    const faltan = documentos.filter((d) => d.archivos.length === 0).length;
+    const faltan = documentos.filter((d) => !d.resuelto).length;
 
     return (
         <>
@@ -43,15 +44,14 @@ export default function DocumentosEntrevista({
                 {documentos.length > 0 ? (
                     <ul className="space-y-3">
                         {documentos.map((d) => (
-                            <DocumentoFila
-                                key={`${d.codigo}-${d.persona_id ?? ''}`}
-                                documento={d}
-                            />
+                            <DocumentoFila key={d.id} documento={d} />
                         ))}
                     </ul>
                 ) : null}
 
-                <Button asChild variant="ghost">
+                <OtroDocumento />
+
+                <Button asChild>
                     <Link href={inicio()} prefetch>
                         <ArrowLeft aria-hidden="true" />
                         {t('entrevista.documentos.volver')}

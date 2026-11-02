@@ -68,7 +68,7 @@ class HerramientasEntrevista
             'avance' => $this->pasos->avance($situacion),
             'falta_en_el_portal' => [
                 'preguntas_sensibles' => count($situacion->faltaEnPortal()),
-                'documentos_pendientes' => collect($documentos)->where('archivos', [])->count(),
+                'documentos_pendientes' => collect($documentos)->where('resuelto', false)->count(),
                 'identidad_pendiente' => collect($situacion->pantallas[1]['preguntas'] ?? [])->contains('respondida', false),
             ],
             'enlaces' => [

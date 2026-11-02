@@ -30,10 +30,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('resumen', [EntrevistaController::class, 'resumen'])->name('resumen');
             Route::post('confirmar', ConfirmarEntrevistaController::class)->name('confirmar');
             Route::get('documentos', [DocumentoEntrevistaController::class, 'index'])->name('documentos');
-            Route::post('documentos/{codigo}', [DocumentoEntrevistaController::class, 'store'])
-                ->where('codigo', '[a-z0-9-]+')
-                ->middleware('throttle:30,1')
-                ->name('documentos.store');
+            Route::middleware('throttle:30,1')->group(function () {
+                Route::post('documentos/otro', [DocumentoEntrevistaController::class, 'otroDocumento'])->name('documentos.otro.store');
+                Route::post('documentos/{item}/archivos', [DocumentoEntrevistaController::class, 'store'])
+                    ->whereNumber('item')
+                    ->name('documentos.archivos.store');
+                Route::post('documentos/{item}/no-aplica', [DocumentoEntrevistaController::class, 'noAplica'])
+                    ->whereNumber('item')
+                    ->name('documentos.no-aplica');
+                Route::post('documentos/{item}/otro', [DocumentoEntrevistaController::class, 'agregarOtro'])
+                    ->whereNumber('item')
+                    ->name('documentos.otro.agregar');
+            });
             Route::get('personas', [PersonaController::class, 'index'])->name('personas');
             Route::post('personas', [PersonaController::class, 'store'])->name('personas.store');
             Route::delete('personas/{persona}', [PersonaController::class, 'destroy'])->name('personas.destroy');

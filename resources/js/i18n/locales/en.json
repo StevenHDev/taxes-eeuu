@@ -481,7 +481,8 @@
             "client": "Client",
             "status": "Status",
             "forms": "Forms",
-            "risk": "Risk"
+            "risk": "Risk",
+            "documents": "Documents"
         },
         "estado": {
             "sinIniciar": "Not started",
@@ -508,6 +509,14 @@
         },
         "whatsapp": {
             "trigger": "View WhatsApp conversation"
+        },
+        "documentos": {
+            "sin": "No interview yet",
+            "completo": "Complete",
+            "faltan_one": "{{count}} missing",
+            "faltan_other": "{{count}} missing",
+            "porRevisar_one": "{{count}} to review",
+            "porRevisar_other": "{{count}} to review"
         }
     },
     "determinacionFiscal": {
@@ -611,7 +620,27 @@
             "documentos": "Documents requested by the interview",
             "documentoPendiente": "Pending",
             "verArchivo": "View {{nombre}}",
-            "sinDocumentos": "No documents activated yet."
+            "sinDocumentos": "No documents activated yet.",
+            "docsCompleto": "Complete",
+            "docsResumen": "Missing {{faltan}} · To review {{porRevisar}} · Validated {{validados}} · Not applicable {{noAplica}}",
+            "motivoNoAplica": "The client says it does not apply: {{motivo}}",
+            "observacionActual": "Note: {{texto}}",
+            "revisadoPor": "Reviewed by {{nombre}} on {{fecha}}",
+            "validarDoc": "Validate {{nombre}}",
+            "observarDoc": "Leave a note on {{nombre}}",
+            "rechazarNoAplica": "Reject \"not applicable\" for {{nombre}}",
+            "observarDialog": {
+                "titulo": "Note on {{nombre}}",
+                "descripcion": "The client will see this note in their portal and will need to upload the document again.",
+                "campo": "Note for the client",
+                "enviar": "Send note"
+            },
+            "rechazarDialog": {
+                "titulo": "Reject \"not applicable\" for {{nombre}}",
+                "descripcion": "The client will see your explanation and will need to upload the document.",
+                "campo": "Why it does apply",
+                "enviar": "Reject"
+            }
         },
         "viewer": {
             "viewTitle": "View {{name}}",
@@ -1439,7 +1468,42 @@
             "verTodos": "Your documents",
             "resumen_one": "1 of {{total}} missing",
             "resumen_other": "{{count}} of {{total}} missing",
-            "resumenCompleto": "All received"
+            "resumenCompleto": "All received",
+            "estado": {
+                "pendiente": "Missing",
+                "subido": "Received",
+                "leido": "Under review",
+                "no_se_pudo_leer": "Under review",
+                "con_observacion": "Needs a fix",
+                "validado": "Approved",
+                "no_aplica": "Does not apply",
+                "no_aplica_rechazado": "Still needed"
+            },
+            "porQueTitulo": "Why we ask for it",
+            "quienLoEnvia": "Who sends it to you",
+            "cuandoLlega": "When it should arrive",
+            "siNoLlega": "If it does not arrive",
+            "archivosDe": "Files for {{nombre}}",
+            "subirDeNuevo": "Upload again",
+            "agregarArchivo": "Add another file",
+            "agregarOtroDe": "Add another of this document",
+            "observacion": "Your preparer asks you to review this document",
+            "noAplicaRechazado": "Your preparer says it is still needed",
+            "tuMotivo": "You said it does not apply: {{motivo}}",
+            "noAplica": "Does not apply",
+            "noAplicaTitulo": "This document does not apply",
+            "noAplicaDescripcion": "Tell us why you do not have or need \"{{nombre}}\". Your preparer will review it.",
+            "motivo": "Why it does not apply",
+            "motivoEjemplo": "For example: that bank no longer paid me interest.",
+            "marcarNoAplica": "Mark as not applicable",
+            "cancelar": "Cancel",
+            "otroTitulo": "Other document",
+            "otroDescripcion": "Is there anything else you want us to review that is not on the list? Upload it here.",
+            "otroQueEs": "What document is it?",
+            "otroEjemplo": "For example: letter from the IRS",
+            "elegirArchivos": "Choose files",
+            "sinArchivos": "No file chosen",
+            "otroSubir": "Upload other document"
         },
         "resumen": {
             "titulo": "Review your information",

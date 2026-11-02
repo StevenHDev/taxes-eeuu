@@ -52,8 +52,8 @@ class EntrevistaController extends Controller
             'conPersonas' => $this->pasos->conPersonas($situacion),
             'estado' => $entrevista->estado->value,
             'documentos' => [
-                'total' => count($situacion->documentos),
-                'faltan' => collect($this->documentos->lista($entrevista, $situacion, false))->where('archivos', [])->count(),
+                'total' => count($lista = $this->documentos->lista($entrevista, $situacion, false)),
+                'faltan' => collect($lista)->where('resuelto', false)->count(),
             ],
         ]);
     }

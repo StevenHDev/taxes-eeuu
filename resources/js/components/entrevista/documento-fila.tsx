@@ -1,106 +1,180 @@
 import { useForm } from '@inertiajs/react';
-import { CircleAlert, CircleCheck, FileText, Upload } from 'lucide-react';
-import { useId, useRef } from 'react';
+import { FileText, MessageSquareWarning, Plus } from 'lucide-react';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DocumentoEstado } from '@/components/entrevista/documento-estado';
+import { DocumentoNoAplica } from '@/components/entrevista/documento-no-aplica';
+import { DocumentoSubir } from '@/components/entrevista/documento-subir';
 import InputError from '@/components/input-error';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { store } from '@/routes/portal/entrevista/documentos';
+import { agregar } from '@/routes/portal/entrevista/documentos/otro';
 import type { DocumentoEntrevista } from '@/types/entrevista';
 
-const FORMATOS_MIME: Record<string, string> = {
-    pdf: '.pdf,application/pdf',
-    jpg: '.jpg,.jpeg,image/jpeg',
-    png: '.png,image/png',
-    heic: '.heic,image/heic',
-};
+/**
+ * Una fecha ISO (AAAA-MM-DD) escrita en el idioma del cliente, sin que la
+ * zona horaria la corra de día.
+ */
+function fechaLarga(iso: string, idioma: string): string {
+    return new Intl.DateTimeFormat(idioma, {
+        dateStyle: 'long',
+        timeZone: 'UTC',
+    }).format(new Date(`${iso}T00:00:00Z`));
+}
+
+function Dato({ titulo, texto }: { titulo: string; texto: string }) {
+    return (
+        <div className="space-y-0.5">
+            <dt className="text-xs font-medium text-muted-foreground">
+                {titulo}
+            </dt>
+            <dd className="text-sm text-foreground">{texto}</dd>
+        </div>
+    );
+}
 
 /**
- * Un documento de la lista (F2.6): nombre sencillo, por qué se pide, estado
- * con texto e ícono, los archivos ya subidos y el botón para subir uno o
- * varios. Se usa en la página de documentos y dentro de los pasos de la
- * entrevista (identidad y cada persona).
+ * Un documento de la lista (F3.3): nombre sencillo y oficial, persona o
+ * número, por qué se pide, quién lo envía, cuándo llega, qué hacer si no
+ * llega, formatos, archivos y estado, con las acciones del cliente. Se usa en
+ * la página de documentos y dentro de los pasos de la entrevista.
  */
 export function DocumentoFila({
     documento,
 }: {
     documento: DocumentoEntrevista;
 }) {
-    const { t } = useTranslation();
-    const inputRef = useRef<HTMLInputElement>(null);
+    const { t, i18n } = useTranslation();
     const ayudaId = useId();
-    const form = useForm<{ archivos: File[]; persona_id: number | null }>({
-        archivos: [],
-        persona_id: documento.persona_id,
-    });
+    const otro = useForm({ agregar: '' });
 
-    const recibido = documento.archivos.length > 0;
-    const error =
-        form.errors.archivos ??
-        Object.entries(form.errors).find(([clave]) =>
-            clave.startsWith('archivos.'),
-        )?.[1];
+    const {
+        estado,
+        archivos,
+        observacion,
+        motivo_no_aplica: motivoNoAplica,
+    } = documento;
+    const recibido = archivos.length > 0;
+    const devuelto =
+        estado === 'con_observacion' || estado === 'no_aplica_rechazado';
+    const cerradoSinArchivos = estado === 'no_aplica';
 
-    const subir = (archivos: FileList | null) => {
-        if (!archivos || archivos.length === 0) {
-            return;
-        }
+    const titulo = [
+        documento.nombre,
+        documento.numero !== null ? `#${documento.numero}` : null,
+        documento.persona_orden !== null
+            ? `· ${t('entrevista.personas.nombre', { orden: documento.persona_orden })}`
+            : null,
+    ]
+        .filter(Boolean)
+        .join(' ');
 
-        form.transform((d) => ({ ...d, archivos: Array.from(archivos) }));
-        form.post(store({ codigo: documento.codigo }).url, {
-            forceFormData: true,
-            preserveScroll: true,
-            onFinish: () => {
-                if (inputRef.current) {
-                    inputRef.current.value = '';
-                }
-            },
-        });
+    const porQue = documento.siempre
+        ? t('entrevista.documentos.siempre')
+        : documento.por_que.length > 0
+          ? t('entrevista.documentos.porQue', {
+                pregunta: documento.por_que[0],
+            })
+          : null;
+
+    const accionSubir = devuelto
+        ? t('entrevista.documentos.subirDeNuevo')
+        : documento.archivos.length > 0
+          ? t('entrevista.documentos.agregarArchivo')
+          : t('entrevista.documentos.subir');
+
+    const agregarOtro = () => {
+        otro.post(agregar(documento.id).url, { preserveScroll: true });
     };
 
-    const nombre =
-        documento.persona_orden !== null
-            ? `${documento.nombre} · ${t('entrevista.personas.nombre', { orden: documento.persona_orden })}`
-            : documento.nombre;
-
     return (
-        <li className="space-y-3 rounded-lg border border-border bg-card p-4">
+        <li
+            className={`space-y-3 rounded-lg border bg-card p-4 ${devuelto ? 'border-destructive/60' : 'border-border'}`}
+        >
             <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0 space-y-1">
+                <div className="min-w-0 space-y-0.5">
                     <p className="text-sm font-medium text-foreground">
-                        {nombre}
+                        {titulo}
                     </p>
-                    <p id={ayudaId} className="text-xs text-muted-foreground">
-                        {documento.siempre
-                            ? t('entrevista.documentos.siempre')
-                            : documento.por_que.length > 0
-                              ? t('entrevista.documentos.porQue', {
-                                    pregunta: documento.por_que[0],
-                                })
-                              : null}
-                    </p>
+                    {documento.nombre_oficial ? (
+                        <p className="text-xs text-muted-foreground">
+                            {documento.nombre_oficial}
+                        </p>
+                    ) : null}
                 </div>
-                <Badge
-                    variant={recibido ? 'secondary' : 'outline'}
-                    className="shrink-0"
-                >
-                    {recibido ? (
-                        <CircleCheck aria-hidden="true" />
-                    ) : (
-                        <CircleAlert aria-hidden="true" />
-                    )}
-                    {recibido
-                        ? t('entrevista.documentos.recibido', {
-                              count: documento.archivos.length,
-                          })
-                        : t('entrevista.documentos.falta')}
-                </Badge>
+                <DocumentoEstado estado={estado} />
             </div>
 
+            {devuelto && observacion ? (
+                <div
+                    role="note"
+                    className="flex gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-foreground"
+                >
+                    <MessageSquareWarning
+                        className="mt-0.5 size-4 shrink-0 text-destructive"
+                        aria-hidden="true"
+                    />
+                    <div className="space-y-0.5">
+                        <p className="font-medium">
+                            {estado === 'con_observacion'
+                                ? t('entrevista.documentos.observacion')
+                                : t('entrevista.documentos.noAplicaRechazado')}
+                        </p>
+                        <p className="whitespace-pre-line">{observacion}</p>
+                    </div>
+                </div>
+            ) : null}
+
+            {cerradoSinArchivos && motivoNoAplica ? (
+                <p className="text-sm text-muted-foreground">
+                    {t('entrevista.documentos.tuMotivo', {
+                        motivo: motivoNoAplica,
+                    })}
+                </p>
+            ) : null}
+
+            <dl id={ayudaId} className="grid gap-2 sm:grid-cols-2">
+                {porQue ? (
+                    <div className="sm:col-span-2">
+                        <Dato
+                            titulo={t('entrevista.documentos.porQueTitulo')}
+                            texto={porQue}
+                        />
+                    </div>
+                ) : null}
+                {documento.emisor ? (
+                    <Dato
+                        titulo={t('entrevista.documentos.quienLoEnvia')}
+                        texto={documento.emisor}
+                    />
+                ) : null}
+                {documento.fecha_llegada ? (
+                    <Dato
+                        titulo={t('entrevista.documentos.cuandoLlega')}
+                        texto={fechaLarga(
+                            documento.fecha_llegada,
+                            i18n.language,
+                        )}
+                    />
+                ) : null}
+                {documento.si_no_llega ? (
+                    <div className="sm:col-span-2">
+                        <Dato
+                            titulo={t('entrevista.documentos.siNoLlega')}
+                            texto={documento.si_no_llega}
+                        />
+                    </div>
+                ) : null}
+            </dl>
+
             {recibido ? (
-                <ul className="space-y-1">
-                    {documento.archivos.map((a) => (
+                <ul
+                    className="space-y-1"
+                    aria-label={t('entrevista.documentos.archivosDe', {
+                        nombre: titulo,
+                    })}
+                >
+                    {archivos.map((a) => (
                         <li
                             key={a.id}
                             className="flex items-center gap-2 text-sm"
@@ -122,48 +196,40 @@ export function DocumentoFila({
                 </ul>
             ) : null}
 
-            <div className="space-y-2">
-                <input
-                    ref={inputRef}
-                    type="file"
-                    multiple
-                    className="sr-only"
-                    tabIndex={-1}
-                    aria-hidden="true"
-                    accept={documento.formatos
-                        .map((f) => FORMATOS_MIME[f] ?? `.${f}`)
-                        .join(',')}
-                    onChange={(e) => subir(e.target.files)}
+            <div className="flex flex-wrap items-center gap-2">
+                <DocumentoSubir
+                    id={documento.id}
+                    nombre={titulo}
+                    formatos={documento.formatos}
+                    etiqueta={accionSubir}
+                    descripcionId={ayudaId}
                 />
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={form.processing}
-                    aria-describedby={ayudaId}
-                    aria-label={`${recibido ? t('entrevista.documentos.agregarOtro') : t('entrevista.documentos.subir')}: ${nombre}`}
-                    onClick={() => inputRef.current?.click()}
-                >
-                    {form.processing ? (
-                        <Spinner aria-hidden="true" />
-                    ) : (
-                        <Upload aria-hidden="true" />
-                    )}
-                    {form.processing
-                        ? form.progress
-                            ? t('entrevista.documentos.subiendoPorcentaje', {
-                                  porcentaje: form.progress.percentage ?? 0,
-                              })
-                            : t('entrevista.documentos.subiendo')
-                        : recibido
-                          ? t('entrevista.documentos.agregarOtro')
-                          : t('entrevista.documentos.subir')}
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                    {t('entrevista.documentos.formatos')}
-                </p>
-                <InputError message={error as string | undefined} />
+                {estado === 'pendiente' || estado === 'con_observacion' ? (
+                    <DocumentoNoAplica id={documento.id} nombre={titulo} />
+                ) : null}
+                {documento.puede_agregar_otro ? (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={otro.processing}
+                        aria-label={`${t('entrevista.documentos.agregarOtroDe')}: ${titulo}`}
+                        onClick={agregarOtro}
+                    >
+                        {otro.processing ? (
+                            <Spinner aria-hidden="true" />
+                        ) : (
+                            <Plus aria-hidden="true" />
+                        )}
+                        {t('entrevista.documentos.agregarOtroDe')}
+                    </Button>
+                ) : null}
             </div>
+            <InputError message={otro.errors.agregar} />
+
+            <p className="text-xs text-muted-foreground">
+                {t('entrevista.documentos.formatos')}
+            </p>
         </li>
     );
 }

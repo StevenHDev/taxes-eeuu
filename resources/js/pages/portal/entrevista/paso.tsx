@@ -217,10 +217,7 @@ function FormularioPaso({
                         </h2>
                         <ul className="space-y-3">
                             {documentos.map((d) => (
-                                <DocumentoFila
-                                    key={`${d.codigo}-${d.persona_id ?? ''}`}
-                                    documento={d}
-                                />
+                                <DocumentoFila key={d.id} documento={d} />
                             ))}
                         </ul>
                     </section>

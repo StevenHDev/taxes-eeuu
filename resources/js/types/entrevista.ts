@@ -42,16 +42,44 @@ export type ArchivoDocumento = {
     url: string;
 };
 
+export type EstadoDocumento =
+    | 'pendiente'
+    | 'subido'
+    | 'leido'
+    | 'no_se_pudo_leer'
+    | 'con_observacion'
+    | 'validado'
+    | 'no_aplica'
+    | 'no_aplica_rechazado';
+
+/** Un ítem del checklist de documentos del cliente (F3.3). */
 export type DocumentoEntrevista = {
+    id: number;
     codigo: string;
+    /** Solo si hay más de uno del mismo documento y persona ("W-2 #2"). */
+    numero: number | null;
     persona_id: number | null;
     persona_orden: number | null;
+    descripcion: string | null;
     grupo: string;
+    /** Nombre sencillo, en el idioma del cliente. */
     nombre: string;
+    nombre_oficial: string | null;
     siempre: boolean;
     /** Textos de las preguntas que lo pidieron ("por qué te lo pedimos"). */
     por_que: string[];
+    emisor: string | null;
+    /** Fecha ISO (AAAA-MM-DD) en que debe llegar, si el catálogo la tiene. */
+    fecha_llegada: string | null;
+    si_no_llega: string | null;
     formatos: string[];
+    estado: EstadoDocumento;
+    /** Al cliente ya no le falta nada por hacer. */
+    resuelto: boolean;
+    motivo_no_aplica: string | null;
+    /** Lo que escribió el preparador al devolverlo. */
+    observacion: string | null;
+    puede_agregar_otro: boolean;
     archivos: ArchivoDocumento[];
 };
 
@@ -77,6 +105,32 @@ export type RespuestaPreparador = {
     cambios: number;
 };
 
+/** Un documento del checklist, como lo ve el preparador (F3.4). */
+export type DocumentoRevision = {
+    id: number;
+    codigo: string;
+    numero: number | null;
+    persona_orden: number | null;
+    nombre: string;
+    nombre_oficial: string | null;
+    descripcion: string | null;
+    estado: EstadoDocumento;
+    motivo_no_aplica: string | null;
+    observacion: string | null;
+    archivos: ArchivoDocumento[];
+    revisado_por: string | null;
+    revisado_en: string | null;
+};
+
+export type ResumenDocumentos = {
+    faltan: number;
+    por_revisar: number;
+    validados: number;
+    no_aplica: number;
+    total: number;
+    completo: boolean;
+};
+
 /** La entrevista en la ficha del cliente (App\Services\Entrevista\VistaEntrevistaPreparador). */
 export type VistaEntrevista = {
     tax_year: number;
@@ -98,12 +152,8 @@ export type VistaEntrevista = {
         respondidas: number;
         preguntas: RespuestaPreparador[];
     }[];
-    documentos: {
-        codigo: string;
-        persona_orden: number | null;
-        nombre: string;
-        archivos: ArchivoDocumento[];
-    }[];
+    documentos: DocumentoRevision[];
+    documentos_resumen: ResumenDocumentos;
 };
 
 export type CambioRespuesta = {

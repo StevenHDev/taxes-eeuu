@@ -30,5 +30,14 @@
     "Subiste :n archivos.": "You uploaded :n files.",
     "Confirmo que la información y los documentos que entregué son correctos y completos.": "I confirm that the information and documents I provided are correct and complete.",
     "Recibimos tu información.": "We received your information.",
-    "Todavía faltan preguntas por responder.": "There are still questions to answer."
+    "Todavía faltan preguntas por responder.": "There are still questions to answer.",
+    "Cuéntanos por qué no aplica.": "Tell us why it does not apply.",
+    "El motivo puede tener hasta 500 caracteres.": "The reason can be up to 500 characters.",
+    "Cuéntanos qué documento es.": "Tell us what document it is.",
+    "La descripción puede tener hasta 120 caracteres.": "The description can be up to 120 characters.",
+    "De este documento solo hace falta uno.": "Only one of this document is needed.",
+    "Listo, lo marcamos como \"no aplica\".": "Done, we marked it as \"does not apply\".",
+    "Agregamos otro a tu lista.": "We added another one to your list.",
+    "Este documento ya no está en la lista.": "This document is no longer on the list.",
+    "Este documento no se puede cambiar en su estado actual.": "This document cannot be changed in its current state."
 }

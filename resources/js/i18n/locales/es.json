@@ -481,7 +481,8 @@
             "client": "Cliente",
             "status": "Estado",
             "forms": "Formas",
-            "risk": "Riesgo"
+            "risk": "Riesgo",
+            "documents": "Documentos"
         },
         "estado": {
             "sinIniciar": "Sin iniciar",
@@ -508,6 +509,14 @@
         },
         "whatsapp": {
             "trigger": "Ver conversación de WhatsApp"
+        },
+        "documentos": {
+            "sin": "Sin entrevista",
+            "completo": "Completo",
+            "faltan_one": "Falta {{count}}",
+            "faltan_other": "Faltan {{count}}",
+            "porRevisar_one": "{{count}} por revisar",
+            "porRevisar_other": "{{count}} por revisar"
         }
     },
     "determinacionFiscal": {
@@ -611,7 +620,27 @@
             "documentos": "Documentos que pide la entrevista",
             "documentoPendiente": "Pendiente",
             "verArchivo": "Ver {{nombre}}",
-            "sinDocumentos": "Todavía no se activó ningún documento."
+            "sinDocumentos": "Todavía no se activó ningún documento.",
+            "docsCompleto": "Completo",
+            "docsResumen": "Faltan {{faltan}} · Por revisar {{porRevisar}} · Validados {{validados}} · No aplica {{noAplica}}",
+            "motivoNoAplica": "El cliente dice que no aplica: {{motivo}}",
+            "observacionActual": "Observación: {{texto}}",
+            "revisadoPor": "Revisado por {{nombre}} el {{fecha}}",
+            "validarDoc": "Validar {{nombre}}",
+            "observarDoc": "Dejar una observación en {{nombre}}",
+            "rechazarNoAplica": "Rechazar que {{nombre}} no aplica",
+            "observarDialog": {
+                "titulo": "Observación sobre {{nombre}}",
+                "descripcion": "El cliente verá esta observación en su portal y deberá subir el documento de nuevo.",
+                "campo": "Observación para el cliente",
+                "enviar": "Enviar observación"
+            },
+            "rechazarDialog": {
+                "titulo": "Rechazar «no aplica» de {{nombre}}",
+                "descripcion": "El cliente verá tu explicación y tendrá que subir el documento.",
+                "campo": "Por qué sí aplica",
+                "enviar": "Rechazar"
+            }
         },
         "viewer": {
             "viewTitle": "Ver {{name}}",
@@ -1439,7 +1468,42 @@
             "verTodos": "Tus documentos",
             "resumen_one": "Falta 1 de {{total}}",
             "resumen_other": "Faltan {{count}} de {{total}}",
-            "resumenCompleto": "Todos recibidos"
+            "resumenCompleto": "Todos recibidos",
+            "estado": {
+                "pendiente": "Falta",
+                "subido": "Recibido",
+                "leido": "En revisión",
+                "no_se_pudo_leer": "En revisión",
+                "con_observacion": "Por corregir",
+                "validado": "Validado",
+                "no_aplica": "No aplica",
+                "no_aplica_rechazado": "Sí hace falta"
+            },
+            "porQueTitulo": "Por qué te lo pedimos",
+            "quienLoEnvia": "Quién te lo envía",
+            "cuandoLlega": "Cuándo debe llegar",
+            "siNoLlega": "Si no te llega",
+            "archivosDe": "Archivos de {{nombre}}",
+            "subirDeNuevo": "Subir de nuevo",
+            "agregarArchivo": "Agregar otro archivo",
+            "agregarOtroDe": "Agregar otro de este documento",
+            "observacion": "Tu preparador te pide revisar este documento",
+            "noAplicaRechazado": "Tu preparador dice que sí hace falta",
+            "tuMotivo": "Dijiste que no aplica: {{motivo}}",
+            "noAplica": "No aplica",
+            "noAplicaTitulo": "Este documento no aplica",
+            "noAplicaDescripcion": "Cuéntanos por qué no tienes o no necesitas «{{nombre}}». Tu preparador lo revisa.",
+            "motivo": "Por qué no aplica",
+            "motivoEjemplo": "Por ejemplo: ese banco ya no me pagó intereses.",
+            "marcarNoAplica": "Marcar como no aplica",
+            "cancelar": "Cancelar",
+            "otroTitulo": "Otro documento",
+            "otroDescripcion": "¿Tienes algo más que quieras que revisemos y no está en la lista? Súbelo aquí.",
+            "otroQueEs": "¿Qué documento es?",
+            "otroEjemplo": "Por ejemplo: carta del IRS",
+            "elegirArchivos": "Elegir archivos",
+            "sinArchivos": "Ningún archivo elegido",
+            "otroSubir": "Subir otro documento"
         },
         "resumen": {
             "titulo": "Revisa tu información",
