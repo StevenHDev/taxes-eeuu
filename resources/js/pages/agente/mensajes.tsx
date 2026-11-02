@@ -8,7 +8,21 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { dashboard } from '@/routes';
 import { index as mensajesIndex } from '@/routes/agente/mensajes';
 import { show as clienteShowRoute } from '@/routes/clientes';
-import type { MensajeAgenteLog, RolMensajeAgente } from '@/types';
+import type {
+    CanalMensajeAgente,
+    MensajeAgenteLog,
+    RolMensajeAgente,
+} from '@/types';
+
+const CANALES: CanalMensajeAgente[] = ['whatsapp', 'portal'];
+
+/**
+ * Agrupa los mensajes de una misma conversación para el filtro "origen":
+ * el teléfono, o el cliente cuando escribe por el portal sin teléfono.
+ */
+function claveOrigen(m: MensajeAgenteLog): string {
+    return m.telefono ?? `cliente-${m.cliente_id}`;
+}
 
 const ROL_BADGE_VARIANT: Record<
     RolMensajeAgente,
@@ -43,6 +57,22 @@ function useColumns(): ColumnDef<MensajeAgenteLog>[] {
 
     return [
         {
+            accessorKey: 'canal',
+            id: 'canal',
+            header: () => (
+                <span className="text-xs">
+                    {t('agente.mensajes.columns.channel')}
+                </span>
+            ),
+            cell: ({ row }) => (
+                <Badge variant="outline">
+                    {t(`agente.mensajes.canal.${row.original.canal}`)}
+                </Badge>
+            ),
+            filterFn: (row, id, value) =>
+                (value as string[]).includes(row.getValue<string>(id)),
+        },
+        {
             accessorKey: 'created_at',
             id: 'fecha',
             header: ({ column }) => (
@@ -59,7 +89,7 @@ function useColumns(): ColumnDef<MensajeAgenteLog>[] {
         },
         {
             id: 'origen',
-            accessorFn: (m) => `${m.telefono} ${m.cliente_nombre ?? ''}`,
+            accessorFn: (m) => `${m.telefono ?? ''} ${m.cliente_nombre ?? ''}`,
             header: ({ column }) => (
                 <DataTableColumnHeader
                     column={column}
@@ -69,7 +99,8 @@ function useColumns(): ColumnDef<MensajeAgenteLog>[] {
             cell: ({ row }) => (
                 <div>
                     <div className="text-sm text-foreground">
-                        {row.original.telefono}
+                        {row.original.telefono ??
+                            t('agente.mensajes.sinTelefono')}
                     </div>
                     {row.original.cliente_id && row.original.cliente_nombre ? (
                         <Link
@@ -94,7 +125,7 @@ function useColumns(): ColumnDef<MensajeAgenteLog>[] {
             // aislar todos los mensajes de una misma línea, sin importar si el
             // nombre del cliente cambió entre mensajes.
             filterFn: (row, _id, value) =>
-                (value as string[]).includes(row.original.telefono),
+                (value as string[]).includes(claveOrigen(row.original)),
         },
         {
             accessorKey: 'rol',
@@ -163,10 +194,9 @@ function useColumns(): ColumnDef<MensajeAgenteLog>[] {
 }
 
 /**
- * Una entrada por línea telefónica distinta, para el filtro de facetas
- * "origen" — deja aislar de un click todos los mensajes de una misma
- * conversación en esta bandeja general, sin depender de que cada mensaje
- * traiga cliente_id (agrupa por teléfono, que sí está siempre presente).
+ * Una entrada por conversación distinta (ver claveOrigen), para el filtro de
+ * facetas "origen" — deja aislar de un click todos los mensajes de una
+ * misma conversación en esta bandeja general.
  */
 function useTelefonoOptions(
     mensajes: MensajeAgenteLog[],
@@ -175,13 +205,11 @@ function useTelefonoOptions(
         const vistos = new Map<string, string>();
 
         for (const m of mensajes) {
-            if (!vistos.has(m.telefono)) {
-                vistos.set(
-                    m.telefono,
-                    m.cliente_nombre
-                        ? `${m.telefono} — ${m.cliente_nombre}`
-                        : m.telefono,
-                );
+            const clave = claveOrigen(m);
+
+            if (!vistos.has(clave)) {
+                const partes = [m.telefono, m.cliente_nombre].filter(Boolean);
+                vistos.set(clave, partes.join(' — ') || clave);
             }
         }
 
@@ -218,6 +246,14 @@ export default function AgenteMensajes({
                 searchPlaceholder={t('agente.mensajes.searchPlaceholder')}
                 emptyMessage={t('agente.mensajes.empty')}
                 facetedFilters={[
+                    {
+                        columnId: 'canal',
+                        title: t('agente.mensajes.columns.channel'),
+                        options: CANALES.map((canal) => ({
+                            label: t(`agente.mensajes.canal.${canal}`),
+                            value: canal,
+                        })),
+                    },
                     {
                         columnId: 'rol',
                         title: t('agente.mensajes.columns.role'),

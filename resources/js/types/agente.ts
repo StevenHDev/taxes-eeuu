@@ -1,9 +1,14 @@
 export type RolMensajeAgente = 'cliente' | 'agente' | 'preparador' | 'sistema';
 
+export type CanalMensajeAgente = 'whatsapp' | 'portal';
+
 export type MensajeAgenteLog = {
-    id: number;
+    /** "whatsapp-12" o "portal-7": los ids de las dos tablas se repiten. */
+    id: string;
+    canal: CanalMensajeAgente;
     created_at: string;
-    telefono: string;
+    /** En el portal es el teléfono de la cuenta, que puede no tener. */
+    telefono: string | null;
     cliente_id: number | null;
     cliente_nombre: string | null;
     rol: RolMensajeAgente;
