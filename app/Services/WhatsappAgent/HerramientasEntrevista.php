@@ -37,10 +37,6 @@ class HerramientasEntrevista
      */
     public function consultar(User $cliente): array
     {
-        if (! $cliente->usaEntrevistaCatalogo()) {
-            return ['error' => 'Este cliente todavía usa el formulario actual: usa consultar_pendientes_cliente.'];
-        }
-
         $entrevista = $this->entrevista($cliente);
         $situacion = $this->motor->situacion($entrevista);
         $preguntas = $this->catalogo->preguntas($entrevista->tax_year)->keyBy('codigo');
@@ -94,7 +90,7 @@ class HerramientasEntrevista
      */
     public function guardar(User $cliente, array $argumentos, User $actor): array
     {
-        if (! $cliente->usaEntrevistaCatalogo() || ! EstadoConversacionResolver::entrevistaPorWhatsapp($cliente)) {
+        if (! EstadoConversacionResolver::entrevistaPorWhatsapp($cliente)) {
             return ['error' => 'La entrevista por WhatsApp no está habilitada para este cliente: manda el enlace del portal.'];
         }
 
@@ -136,7 +132,7 @@ class HerramientasEntrevista
      */
     public function agregarPersona(User $cliente, array $argumentos, User $actor): array
     {
-        if (! $cliente->usaEntrevistaCatalogo() || ! EstadoConversacionResolver::entrevistaPorWhatsapp($cliente)) {
+        if (! EstadoConversacionResolver::entrevistaPorWhatsapp($cliente)) {
             return ['error' => 'La entrevista por WhatsApp no está habilitada para este cliente: manda el enlace del portal.'];
         }
 

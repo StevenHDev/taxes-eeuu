@@ -5,15 +5,12 @@ namespace Tests\Feature;
 use App\Enums\EstadoControlConversacion;
 use App\Enums\RolMensajeWhatsapp;
 use App\Enums\UserRole;
-use App\Models\Documento;
-use App\Models\FormaCliente;
 use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
 use Database\Seeders\AgentePromptsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use Twilio\AuthStrategy\AuthStrategy;
 use Twilio\Http\Client as TwilioHttpClient;
@@ -262,57 +259,6 @@ class TwilioWebhookTest extends TestCase
         $pdf .= "trailer\n<< /Size {$total} /Root 1 0 R >>\nstartxref\n{$xrefOffset}\n%%EOF";
 
         return $pdf;
-    }
-
-    public function test_un_mensaje_con_media_descarga_extrae_y_guarda_el_documento(): void
-    {
-        Storage::fake('s3');
-
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15551234567']);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        $mediaUrl = 'https://api.twilio.com/2010-04-01/Accounts/AC_test/Messages/MM_test/Media/ME_test';
-
-        Http::fake([
-            'api.openai.com/*' => Http::sequence()
-                ->push([
-                    'choices' => [['message' => [
-                        'role' => 'assistant',
-                        'content' => null,
-                        'tool_calls' => [
-                            ['id' => 'call_1', 'type' => 'function', 'function' => [
-                                'name' => 'guardar_campo_cliente',
-                                'arguments' => json_encode([
-                                    'forma' => 'form_1040',
-                                    'campo' => 'w2',
-                                    'tipo_campo' => 'documento',
-                                    'modo' => 'archivo',
-                                    'contenido' => $mediaUrl,
-                                ]),
-                            ]],
-                        ],
-                    ]]],
-                ])
-                ->push([
-                    'choices' => [['message' => ['role' => 'assistant', 'content' => 'Recibí tu W-2, gracias.']]],
-                ]),
-            $mediaUrl => Http::response($this->pdfConTexto('W-2 de prueba enviado por WhatsApp.'), 200, ['Content-Type' => 'application/pdf']),
-        ]);
-
-        $payload = $this->payload(['NumMedia' => '1', 'MediaUrl0' => $mediaUrl, 'Body' => '']);
-        $url = route('api.whatsapp.webhook');
-
-        $this->withHeaders(['X-Twilio-Signature' => $this->firmar($url, $payload)])
-            ->post($url, $payload)
-            ->assertOk();
-
-        $documento = Documento::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first();
-        $this->assertNotNull($documento);
-        $this->assertSame('texto_pdf', $documento->metodo_extraccion->value);
-
-        $mensaje = WhatsappMensaje::query()->where('mensaje_externo_id', $payload['MessageSid'])->first();
-        $this->assertStringContainsString("archivo_url: {$mediaUrl}", $mensaje->contenido);
-        $this->assertStringContainsString('W-2 de prueba enviado por WhatsApp.', $mensaje->contenido);
     }
 
     public function test_en_modo_humano_igual_guarda_el_mensaje_entrante(): void

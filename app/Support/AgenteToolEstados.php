@@ -33,10 +33,13 @@ class AgenteToolEstados
     {
         return Cache::rememberForever(
             self::CACHE_KEY,
+            // tryFrom: una fila de una fase retirada (F2.11) no rompe nada.
             fn () => AgenteToolEstado::query()
                 ->where('activo', false)
                 ->get()
+                ->filter(fn (AgenteToolEstado $e) => FaseConversacion::tryFrom($e->fase) !== null)
                 ->map(fn (AgenteToolEstado $e) => self::clave(FaseConversacion::from($e->fase), $e->tool_name))
+                ->values()
                 ->all(),
         );
     }

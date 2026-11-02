@@ -3,15 +3,12 @@
 namespace App\Services\WhatsappAgent;
 
 use App\Contracts\MensajeConversacion;
-use App\DataTransferObjects\AdjuntoWhatsapp;
 use App\Enums\FaseConversacion;
-use App\Enums\MetodoExtraccionDocumento;
 use App\Enums\RolMensajeWhatsapp;
 use App\Models\User;
 use App\Services\Consentimiento\EnlaceActivacion;
 use App\Support\AgentePromptVigente;
 use App\Support\TelefonoWhatsapp;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -21,26 +18,16 @@ use Illuminate\Support\Facades\Log;
  * para que ProcesarMensajeWhatsappJob lo persista/envíe.
  *
  * Recalcula la fase (y por tanto qué tools ve el modelo) al INICIO de cada
- * iteración del loop, no solo una vez al principio del turno — ver decisión
- * de arquitectura en docs/implementar_agente_n8n.md: sin esto,
- * declarar_formas_cliente no podría encadenar de inmediato con
- * consultar_pendientes_cliente dentro del mismo turno (la fase pasaría de
- * DeterminacionFormas a Recoleccion recién en el turno siguiente, perdiendo
- * el arranque inmediato de la recolección que sí lograba n8n).
+ * iteración del loop, no solo una vez al principio del turno: crear la
+ * cuenta o guardar la última respuesta pendiente cambian la fase dentro del
+ * mismo turno (VerificacionCuenta → Consentimiento, Entrevista → Seguimiento).
  */
 class AgenteConversacionalService
 {
     /**
      * Tope de vueltas de tool-calling dentro de un mismo turno — evita un
-     * loop infinito si el modelo nunca produce texto final. Subido de 8 a
-     * 20: encontrado en la conversación real con 3213445027 (2026-09-21,
-     * post-deploy de las Fases 0-4) que 8 ya no alcanza con ACTIVOS en 44
-     * pasos — un paso Grupo por sí solo puede necesitar hasta 5 guardados
-     * de no_aplica + 1 consulta de pendientes en el mismo turno, y agotar
-     * el límite a mitad de esa resolución fuerza un cierre prematuro
-     * (ver el bloque de abajo) que deja al agente confundido sobre qué ya
-     * se preguntó — contribuyendo a las repreguntas observadas en esa
-     * misma conversación.
+     * loop infinito si el modelo nunca produce texto final. Agotarlo fuerza
+     * un cierre en texto plano (ver el final de responder()).
      */
     private const MAX_ITERACIONES = 20;
 
@@ -54,65 +41,26 @@ class AgenteConversacionalService
     /**
      * @param  iterable<int, MensajeConversacion>  $historial  orden cronológico ascendente;
      *                                                         ya incluye el mensaje entrante de este turno
-     * @param  array<int, AdjuntoWhatsapp>  $adjuntos  ya descargados/extraídos por
-     *                                                 AdjuntosWhatsappService para el mensaje de este
-     *                                                 turno — el texto ya quedó anotado en el propio
-     *                                                 $historial (ver ProcesarMensajeWhatsappJob), esto
-     *                                                 solo sirve para resolver el archivo real si el
-     *                                                 modelo invoca guardar_campo_cliente sobre uno de
-     *                                                 ellos (ver resolverArchivo()).
      * @param  ?string  $telefono  de la conversación de WhatsApp, si el canal es ese — null
-     *                             para otros canales (ej. portal web). Se pasa explícito en vez
-     *                             de derivarse del historial, para que este método no dependa de
+     *                             para el chat del portal. Se pasa explícito en vez de derivarse
+     *                             del historial, para que este método no dependa de
      *                             WhatsappMensaje (ver App\Contracts\MensajeConversacion).
-     * @param  bool  $canalPortal  true cuando este turno viene del chat del portal web (ver
-     *                             PortalChatController), nunca de WhatsApp. Mientras el cliente
-     *                             ya tenga forma(s) declarada(s) (fase Recoleccion/Cierre según
-     *                             los datos), este chat NO es quien recolecta — el formulario del
-     *                             portal sí — así que se fuerza FaseConversacion::PortalDudas en
-     *                             vez de la fase real, para exponer un prompt/tools de solo-dudas
-     *                             (sin guardar_campo_cliente). Antes de que existan formas
-     *                             declaradas (VerificacionCuenta/DeterminacionFormas) el chat sigue
-     *                             siendo quien resuelve eso — ahí no se fuerza nada.
-     *
-     *                             El canal de WhatsApp (canalPortal=false) recibe el downgrade
-     *                             simétrico opuesto: fase Recoleccion se fuerza a HandoffPortal —
-     *                             el formulario del portal es quien recolecta ahora, este canal solo
-     *                             entrega el link (una vez, ver notaLinkPortal()) y responde dudas.
-     *                             Cierre NUNCA se fuerza a HandoffPortal, ni acá ni en canalPortal:
-     *                             la atestación final sigue ocurriendo por WhatsApp (ver cierre.md,
-     *                             pendiente Fase 6 del plan del portal seguro).
+     * @param  bool  $canalPortal  true cuando este turno viene del chat del portal (ver
+     *                             PortalChatController): el resolver da PortalDudas.
      * @return array{texto: string, prompt_version: ?int, cliente: ?User}
      */
-    public function responder(?User $cliente, iterable $historial, User $actor, array $adjuntos = [], ?string $telefono = null, bool $canalPortal = false): array
+    public function responder(?User $cliente, iterable $historial, User $actor, ?string $telefono = null, bool $canalPortal = false): array
     {
         $mensajes = $this->mensajesDesdeHistorial($historial);
         $promptVersion = AgentePromptVigente::version();
 
         for ($i = 0; $i < self::MAX_ITERACIONES; $i++) {
-            // F2.8: con la entrevista nueva el resolver ya decide según el
-            // canal; las fases forzadas de abajo son solo del flujo actual.
             $fase = $this->resolver->resolver($cliente, $canalPortal);
-
-            if ($cliente?->usaEntrevistaCatalogo() !== true) {
-                if ($canalPortal && in_array($fase, [FaseConversacion::Recoleccion, FaseConversacion::Cierre], true)) {
-                    $fase = FaseConversacion::PortalDudas;
-                } elseif (! $canalPortal && $fase === FaseConversacion::Recoleccion) {
-                    $fase = FaseConversacion::HandoffPortal;
-                }
-            }
 
             $mensajesDeEsteTurno = $mensajes;
 
             if ($fase === FaseConversacion::Consentimiento && $cliente !== null) {
                 $mensajesDeEsteTurno[] = ['role' => 'system', 'content' => $this->notaConsentimiento($mensajes, $cliente, $telefono)];
-            }
-
-            if ($fase === FaseConversacion::HandoffPortal) {
-                // Nota efímera, nunca persistida: solo para esta llamada puntual a
-                // la API, no se agrega a $mensajes (que sigue acumulando el resto
-                // del turno) — ver notaLinkPortal().
-                $mensajesDeEsteTurno[] = ['role' => 'system', 'content' => $this->notaLinkPortal($mensajes)];
             }
 
             $respuesta = $this->openAi->completarChat(
@@ -123,7 +71,7 @@ class AgenteConversacionalService
                 tools: ToolDefinitions::habilitadasParaFase($fase),
                 // Solo en la primera llamada del turno: sin esto, el modelo a
                 // veces respondía directo con texto sin invocar NINGUNA tool
-                // — ni siquiera think, mucho menos guardar_campo_cliente —
+                // — ni siquiera think, mucho menos la que guardaba —
                 // como si contestara "de memoria" en vez de seguir el
                 // protocolo. Encontrado en producción (2026-09-21,
                 // conversación real con 3213445027): una racha de 9 minutos
@@ -159,42 +107,17 @@ class AgenteConversacionalService
                 $argumentos = json_decode((string) ($toolCall['function']['arguments'] ?? '{}'), true);
                 $argumentos = is_array($argumentos) ? $argumentos : [];
 
-                [$archivo, $metodoExtraccion] = $this->resolverArchivo($nombre, $argumentos, $adjuntos);
+                $resultado = $this->toolExecutor->ejecutar($nombre, $argumentos, $cliente, $actor, telefono: $telefono);
 
-                $resultado = $this->toolExecutor->ejecutar(
-                    $nombre,
-                    $argumentos,
-                    $cliente,
-                    $actor,
-                    file: $archivo,
-                    metodoExtraccion: $metodoExtraccion,
-                    telefono: $telefono,
-                );
-
-                // Sin esto, un turno donde el modelo debía llamar a
-                // guardar_campo_cliente pero no lo hizo (o lo hizo con datos
-                // contradictorios — ej. modo="no_aplica" en el mismo turno
-                // en que el cliente acababa de confirmar lo contrario) no
-                // deja ningún rastro: ToolExecutor nunca lanza para un error
-                // de validación recuperable, así que el job siempre queda
-                // "DONE" en el log del worker, sin pista de qué pasó
-                // realmente. Encontrado en producción (2026-09-21,
-                // conversación real con 3213445027): un Form 1095-A y una
-                // respuesta a cuentas_extranjero se dieron por resueltos en
-                // el texto sin quedar guardados, y no hubo forma de
-                // confirmarlo sin desencriptar la base de datos a mano. Nunca
-                // se loguea `contenido` (puede traer SSN, fecha de
-                // nacimiento, etc.) — solo metadatos de qué se intentó
-                // guardar y con qué resultado.
+                // Sin esto, una tool que falló con un error recuperable no
+                // deja rastro: ToolExecutor nunca lanza para eso, así que el
+                // job siempre queda "DONE" en el log del worker. Nunca se
+                // loguean argumentos ni valores (pueden traer datos del
+                // cliente): solo qué tool y si falló.
                 Log::info('AgenteConversacionalService: tool call ejecutado.', [
                     'cliente_id' => $cliente?->id,
                     'tool' => $nombre,
-                    'forma' => $argumentos['forma'] ?? null,
-                    'campo' => $argumentos['campo'] ?? null,
-                    'modo' => $argumentos['modo'] ?? null,
-                    'tuvo_archivo' => $archivo !== null,
                     'resultado_error' => $resultado['error'] ?? null,
-                    'resultado_estado' => $resultado['estado'] ?? null,
                 ]);
 
                 // crear_cliente_taxes puede correr a mitad de este mismo turno
@@ -251,8 +174,8 @@ class AgenteConversacionalService
      * mensaje final — con el mismo shape que los argumentos de la tool
      * `think` (ver ToolDefinitions::think(), `{"razonamiento": "..."}) — en
      * vez de invocarla como tool call. El prompt ya instruye explícitamente
-     * que el razonamiento vive solo en `think` y nunca en el mensaje final
-     * (ver prompt_actuales/fases/recoleccion.md), pero esa instrucción sola
+     * que el razonamiento vive solo en `think` y nunca en el mensaje final,
+     * pero esa instrucción sola
      * no bastó para evitarlo: el razonamiento del agente NUNCA puede
      * llegarle al cliente por WhatsApp, así que acá se corta en código como
      * última línea de defensa, no solo se le pide al modelo que no lo haga.
@@ -306,62 +229,6 @@ class AgenteConversacionalService
     }
 
     /**
-     * Correlaciona un tool call de guardar_campo_cliente (modo="archivo") con
-     * el adjunto real que le corresponde: el modelo devuelve en `contenido`
-     * el mismo `archivo_url` que se le mostró (ver AdjuntoWhatsapp), así que
-     * alcanza con buscarlo por igualdad exacta — sin depender de posición ni
-     * de que solo llegue un adjunto por mensaje.
-     *
-     * @param  array<string, mixed>  $argumentos
-     * @param  array<int, AdjuntoWhatsapp>  $adjuntos
-     * @return array{0: ?UploadedFile, 1: ?MetodoExtraccionDocumento}
-     */
-    private function resolverArchivo(string $nombreTool, array $argumentos, array $adjuntos): array
-    {
-        if ($nombreTool !== 'guardar_campo_cliente' || ($argumentos['modo'] ?? null) !== 'archivo') {
-            return [null, null];
-        }
-
-        $referencia = (string) ($argumentos['contenido'] ?? '');
-        $adjunto = collect($adjuntos)->first(fn (AdjuntoWhatsapp $a) => $a->referencia === $referencia);
-
-        // Si no hubo match exacto pero este turno trajo un único adjunto, no
-        // existe ninguna otra opción a la que el modelo pudiera estar
-        // refiriéndose — usarlo igual evita depender de que reproduzca sin
-        // ningún error de un carácter una URL de media de Twilio larga
-        // dentro de los argumentos de la tool call. Encontrado en producción
-        // (2026-09-21, conversación real con 3213445027): un Form 1095-A que
-        // sí se subió y sí se extrajo bien no quedó guardado en el primer
-        // intento porque este match exacto falló — EventoValidator lo trató
-        // como "sin archivo" (error de validación recuperable, no un crash),
-        // y el cliente tuvo que preguntar explícitamente si se había
-        // guardado para que el agente se diera cuenta y pidiera reenviarlo.
-        if ($adjunto === null && count($adjuntos) === 1) {
-            $adjunto = $adjuntos[0];
-        }
-
-        if ($adjunto === null) {
-            return [null, null];
-        }
-
-        // La extensión decide qué acepta EventoValidator/EventoRecoleccionService
-        // (formatos_aceptados) — se deriva del mime_type real ya resuelto por el
-        // canal, nunca del nombre del archivo (WhatsApp no manda uno útil).
-        $extension = match ($adjunto->mimeType) {
-            'application/pdf' => 'pdf',
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/webp' => 'webp',
-            default => 'bin',
-        };
-
-        return [
-            new UploadedFile($adjunto->rutaLocal, "documento.{$extension}", $adjunto->mimeType, test: true),
-            $adjunto->metodo,
-        ];
-    }
-
-    /**
      * @param  iterable<int, MensajeConversacion>  $historial
      * @return array<int, array<string, mixed>>
      */
@@ -383,32 +250,6 @@ class AgenteConversacionalService
         }
 
         return $mensajes;
-    }
-
-    /**
-     * Decide, de forma determinística (nunca a criterio del modelo), si el
-     * link del portal ya se compartió antes en esta conversación — buscando
-     * el link literal entre los mensajes que el agente ya le envió al
-     * cliente. Encontrado el patrón útil en sinRazonamientoFiltrado(): una
-     * regla de negocio verificable en código es más confiable que una
-     * instrucción de prompt que dependa de que el modelo "recuerde" haberlo
-     * mandado antes.
-     *
-     * @param  array<int, array<string, mixed>>  $mensajes  ya construidos por mensajesDesdeHistorial(),
-     *                                                      antes de agregar la nota de este método
-     */
-    private function notaLinkPortal(array $mensajes): string
-    {
-        $link = self::linkPortal();
-
-        $yaCompartido = collect($mensajes)->contains(
-            fn (array $m) => ($m['role'] ?? null) === 'assistant'
-                && str_contains((string) ($m['content'] ?? ''), $link),
-        );
-
-        return $yaCompartido
-            ? 'Ya le compartiste el link del portal antes en esta conversación — no lo repitas de nuevo salvo que el cliente lo pida explícitamente.'
-            : "Todavía no le has compartido el link del portal seguro en esta conversación. Inclúyelo tal cual en tu respuesta de este turno, junto con una explicación breve y cálida de qué es y qué debe hacer ahí. Menciona también que le llegó (o le va a llegar en breve) un correo aparte para definir la contraseña de su cuenta — sin ese paso, este link solo lo va a mandar a una pantalla de inicio de sesión sin contraseña que usar: {$link}";
     }
 
     /**
@@ -437,7 +278,7 @@ class AgenteConversacionalService
     }
 
     /**
-     * F2.4: a un cliente con la entrevista nueva y sin contraseña, el primer
+     * F2.4: a un cliente sin contraseña, el primer
      * enlace crea la contraseña (EnlaceActivacion), lo deja con la sesión
      * iniciada y lo lleva al consentimiento. Se arma una sola vez por
      * conversación: si ya se mandó y venció, el modelo pide otro con la tool
@@ -466,19 +307,5 @@ class AgenteConversacionalService
     private function esSuTelefono(User $cliente, ?string $telefono): bool
     {
         return $telefono !== null && $cliente->phone !== null && TelefonoWhatsapp::normalizar($telefono) === $cliente->phone;
-    }
-
-    /**
-     * Punto de entrada único del portal seguro (ver routes/portal.php) —
-     * PortalFormularioController::index() ya redirige a portal.chat si el
-     * cliente todavía no tiene ninguna forma declarada, así que este mismo
-     * link sirve sin importar en qué punto del formulario esté. No requiere
-     * sesión iniciada: si el cliente no está logueado, el middleware `auth`
-     * lo manda a /login y, tras autenticarse, Laravel lo devuelve acá solo
-     * (redirect()->intended()) — nunca hace falta armar un link firmado.
-     */
-    private static function linkPortal(): string
-    {
-        return url('/portal');
     }
 }

@@ -22,16 +22,6 @@ use Inertia\Response;
  */
 class AgenteToolController extends Controller
 {
-    /**
-     * Recoleccion y Cierre usan siempre el mismo conjunto de tools por
-     * diseño (ver el comentario en ToolDefinitions::paraFase) — togglear una
-     * en cualquiera de las dos aplica a ambas, para que no puedan divergir
-     * por accidente desde este panel.
-     *
-     * @var array<int, FaseConversacion>
-     */
-    private const FASES_ACOPLADAS = [FaseConversacion::Recoleccion, FaseConversacion::Cierre];
-
     public function index(): Response
     {
         $this->authorize('viewAny', AgenteToolEstado::class);
@@ -71,14 +61,10 @@ class AgenteToolController extends Controller
         $nombresValidos = collect(ToolDefinitions::paraFase($fase))->pluck('function.name')->all();
         abort_unless(in_array($validado['tool_name'], $nombresValidos, true), 422, 'Esa tool no existe en esta fase.');
 
-        $fasesAAplicar = in_array($fase, self::FASES_ACOPLADAS, true) ? self::FASES_ACOPLADAS : [$fase];
-
-        foreach ($fasesAAplicar as $f) {
-            AgenteToolEstado::query()->updateOrCreate(
-                ['fase' => $f->value, 'tool_name' => $validado['tool_name']],
-                ['activo' => $validado['activo']],
-            );
-        }
+        AgenteToolEstado::query()->updateOrCreate(
+            ['fase' => $fase->value, 'tool_name' => $validado['tool_name']],
+            ['activo' => $validado['activo']],
+        );
 
         AgenteToolEstados::invalidate();
 

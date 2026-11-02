@@ -2,26 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\DataTransferObjects\AdjuntoWhatsapp;
-use App\Enums\MetodoExtraccionDocumento;
 use App\Enums\RolMensajeWhatsapp;
-use App\Enums\TaxForm;
 use App\Enums\UserRole;
-use App\Models\CampoCliente;
-use App\Models\Documento;
-use App\Models\FormaCliente;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Notifications\BienvenidaClientePortal;
 use App\Services\WhatsappAgent\AgenteConversacionalService;
 use App\Support\AgenteWhatsappUser;
-use App\Support\TaxFieldCatalog;
 use Database\Seeders\AgentePromptsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AgenteConversacionalServiceTest extends TestCase
@@ -129,7 +121,7 @@ class AgenteConversacionalServiceTest extends TestCase
                 ])),
         ]);
 
-        $resultado = $this->agente->responder(null, $this->historialCon('+15551234567', 'Jane Doe, jane@example.com'), $this->actor, [], '+15551234567');
+        $resultado = $this->agente->responder(null, $this->historialCon('+15551234567', 'Jane Doe, jane@example.com'), $this->actor, '+15551234567');
 
         $this->assertNotNull($resultado['cliente']);
         $this->assertSame('Jane Doe', $resultado['cliente']->name);
@@ -146,7 +138,7 @@ class AgenteConversacionalServiceTest extends TestCase
 
     public function test_recalcula_la_fase_entre_tool_calls_dentro_del_mismo_turno(): void
     {
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
+        Notification::fake();
 
         Http::fake([
             'api.openai.com/*' => Http::sequence()
@@ -155,24 +147,24 @@ class AgenteConversacionalServiceTest extends TestCase
                     'content' => null,
                     'tool_calls' => [
                         ['id' => 'call_1', 'type' => 'function', 'function' => [
-                            'name' => 'declarar_formas_cliente',
-                            'arguments' => json_encode(['tax_year' => 2025, 'formas_aplicables' => ['form_1040']]),
+                            'name' => 'crear_cliente_taxes',
+                            'arguments' => json_encode(['nombre' => 'Jane Doe', 'email' => 'jane@example.com']),
                         ]],
                     ],
                 ]))
-                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Ya casi, ¿me confirmas tu SSN o ITIN?'])),
+                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Listo, ya tienes cuenta.'])),
         ]);
 
-        $this->agente->responder($cliente, $this->historialCon('+15551234567', 'Soy empleado'), $this->actor);
+        $this->agente->responder(null, $this->historialCon('+15551234567', 'Jane Doe, jane@example.com'), $this->actor, '+15551234567');
 
         Http::assertSentCount(2);
 
-        // La 2da llamada a OpenAI (después de declarar_formas_cliente) ya debe
-        // exponer las tools de Recoleccion, no las de DeterminacionFormas.
+        // La 2da llamada (después de crear la cuenta) ya es de la fase
+        // Consentimiento, no de VerificacionCuenta.
         Http::assertSent(function ($request) {
             $nombres = collect($request['tools'] ?? [])->pluck('function.name')->all();
 
-            return in_array('consultar_pendientes_cliente', $nombres, true);
+            return in_array('enviar_enlace_activacion', $nombres, true);
         });
     }
 
@@ -268,143 +260,6 @@ class AgenteConversacionalServiceTest extends TestCase
         return $ruta;
     }
 
-    public function test_guardar_campo_cliente_con_modo_archivo_correlaciona_el_adjunto_por_referencia(): void
-    {
-        Storage::fake('s3');
-
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        $rutaPdf = $this->crearPdfConTexto('W-2 de prueba con texto legible y suficiente longitud.');
-        $adjunto = new AdjuntoWhatsapp(
-            referencia: 'https://api.twilio.com/media/ME123',
-            rutaLocal: $rutaPdf,
-            mimeType: 'application/pdf',
-            texto: 'W-2 de prueba con texto legible y suficiente longitud.',
-            metodo: MetodoExtraccionDocumento::TextoPdf,
-        );
-
-        Http::fake([
-            'api.openai.com/*' => Http::sequence()
-                ->push($this->respuestaOpenAi([
-                    'role' => 'assistant',
-                    'content' => null,
-                    'tool_calls' => [
-                        ['id' => 'call_1', 'type' => 'function', 'function' => [
-                            'name' => 'guardar_campo_cliente',
-                            'arguments' => json_encode([
-                                'forma' => 'form_1040',
-                                'campo' => 'w2',
-                                'tipo_campo' => 'documento',
-                                'modo' => 'archivo',
-                                'contenido' => $adjunto->referencia,
-                            ]),
-                        ]],
-                    ],
-                ]))
-                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Recibí tu W-2, gracias.'])),
-        ]);
-
-        $this->agente->responder($cliente, $this->historialCon('+15551234567', 'aquí está mi W-2'), $this->actor, [$adjunto]);
-
-        $documento = Documento::query()->where('user_id', $cliente->id)->where('campo', 'w2')->first();
-        $this->assertNotNull($documento);
-        $this->assertSame(MetodoExtraccionDocumento::TextoPdf, $documento->metodo_extraccion);
-
-        unlink($rutaPdf);
-    }
-
-    public function test_guardar_campo_cliente_con_modo_archivo_sin_adjunto_correspondiente_no_adjunta_nada(): void
-    {
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        Http::fake([
-            'api.openai.com/*' => Http::sequence()
-                ->push($this->respuestaOpenAi([
-                    'role' => 'assistant',
-                    'content' => null,
-                    'tool_calls' => [
-                        ['id' => 'call_1', 'type' => 'function', 'function' => [
-                            'name' => 'guardar_campo_cliente',
-                            'arguments' => json_encode([
-                                'forma' => 'form_1040',
-                                'campo' => 'w2',
-                                'tipo_campo' => 'documento',
-                                'modo' => 'archivo',
-                                'contenido' => 'referencia-que-no-existe',
-                            ]),
-                        ]],
-                    ],
-                ]))
-                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'ok'])),
-        ]);
-
-        // Sin $adjuntos, resolverArchivo() no encuentra ningún match: el tool
-        // call llega sin archivo, EventoValidator lo marca como error de
-        // validación (recuperable) en vez de tronar con un TypeError dentro
-        // de EventoRecoleccionService — ver App\Support\EventoValidator.
-        $this->agente->responder($cliente, $this->historialCon('+15551234567', 'aquí está mi W-2'), $this->actor, []);
-
-        $this->assertDatabaseCount('documentos', 0);
-    }
-
-    /**
-     * Regresión de un caso real (2026-09-21, conversación con 3213445027): el
-     * modelo no reprodujo la URL de media de Twilio carácter por carácter al
-     * armar los argumentos de la tool call, el match exacto en
-     * resolverArchivo() falló, y un Form 1095-A que sí se había subido y
-     * extraído bien no quedó guardado. Con un único adjunto en el turno no
-     * hay ambigüedad posible a la que recurrir — debe usarse igual.
-     */
-    public function test_guardar_campo_cliente_con_modo_archivo_usa_el_unico_adjunto_del_turno_aunque_la_referencia_no_coincida(): void
-    {
-        Storage::fake('s3');
-
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        $rutaPdf = $this->crearPdfConTexto('Form 1095-A de prueba con texto legible y suficiente longitud.');
-        $adjunto = new AdjuntoWhatsapp(
-            referencia: 'https://api.twilio.com/2010-04-01/Accounts/AC.../Messages/MM.../Media/ME123',
-            rutaLocal: $rutaPdf,
-            mimeType: 'application/pdf',
-            texto: 'Form 1095-A de prueba con texto legible y suficiente longitud.',
-            metodo: MetodoExtraccionDocumento::TextoPdf,
-        );
-
-        Http::fake([
-            'api.openai.com/*' => Http::sequence()
-                ->push($this->respuestaOpenAi([
-                    'role' => 'assistant',
-                    'content' => null,
-                    'tool_calls' => [
-                        ['id' => 'call_1', 'type' => 'function', 'function' => [
-                            'name' => 'guardar_campo_cliente',
-                            'arguments' => json_encode([
-                                'forma' => 'transversal',
-                                'campo' => 'form_1095_a',
-                                'tipo_campo' => 'documento',
-                                'modo' => 'archivo',
-                                // Referencia ligeramente distinta a la real —
-                                // simula al modelo reproduciendo la URL con un
-                                // error, como se vio en producción.
-                                'contenido' => 'https://api.twilio.com/2010-04-01/Accounts/AC.../Messages/MM.../Media/ME124',
-                            ]),
-                        ]],
-                    ],
-                ]))
-                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Recibí el formulario, gracias.'])),
-        ]);
-
-        $this->agente->responder($cliente, $this->historialCon('+15551234567', 'aquí está mi 1095-A'), $this->actor, [$adjunto]);
-
-        $documento = Documento::query()->where('user_id', $cliente->id)->where('campo', 'form_1095_a')->first();
-        $this->assertNotNull($documento);
-
-        unlink($rutaPdf);
-    }
-
     /**
      * Regresión de un caso real (2026-09-21, conversación con 3213445027): el
      * mensaje final del agente llegó a incluirle al cliente el razonamiento
@@ -473,148 +328,20 @@ class AgenteConversacionalServiceTest extends TestCase
     }
 
     /**
-     * Fase 4 del handoff completo (ver [[project_portal_seguro_documentos_sensibles]]):
-     * una vez que el cliente ya tiene forma(s) declarada(s) y todavía le
-     * falta algo obligatorio, WhatsApp (canalPortal=false) ya no debe
-     * recolectar él mismo — el formulario del portal es quien lo hace ahora.
+     * F2.4: a un cliente sin contraseña y sin consentimiento, el enlace que
+     * el código agrega en la fase Consentimiento es el de activación.
      */
-    public function test_recoleccion_por_whatsapp_se_redirige_a_handoff_portal_con_el_link(): void
-    {
-        $telefono = '+15559990001';
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => $telefono]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        Http::fake([
-            'api.openai.com/*' => Http::response($this->respuestaOpenAi([
-                'role' => 'assistant',
-                'content' => 'Ya tenemos todo para arrancar tu declaración — termina tu información en '.url('/portal'),
-            ])),
-        ]);
-
-        $this->agente->responder($cliente, $this->historialCon($telefono, 'Hola'), $this->actor, [], $telefono);
-
-        $cuerpo = Http::recorded()->first()[0]->data();
-
-        // Ni guardar_campo_cliente ni consultar_documentos_extra: en esta
-        // fase el formulario del portal es quien guarda, WhatsApp ya no.
-        $herramientas = collect($cuerpo['tools'])->pluck('function.name')->all();
-        $this->assertContains('declarar_formas_cliente', $herramientas);
-        $this->assertContains('consultar_pendientes_cliente', $herramientas);
-        $this->assertNotContains('guardar_campo_cliente', $herramientas);
-
-        // La nota efímera (ver notaLinkPortal()) es el ÚLTIMO mensaje system
-        // — el primero es siempre el prompt de la fase vigente.
-        $nota = collect($cuerpo['messages'])->last(fn (array $m) => $m['role'] === 'system');
-        $this->assertStringContainsString('Todavía no le has compartido el link', $nota['content']);
-        $this->assertStringContainsString(url('/portal'), $nota['content']);
-    }
-
-    public function test_handoff_portal_no_repite_el_link_si_ya_se_compartio_antes_en_la_conversacion(): void
-    {
-        $telefono = '+15559990002';
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => $telefono]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        WhatsappMensaje::query()->create([
-            'telefono' => $telefono,
-            'rol' => RolMensajeWhatsapp::Agente,
-            'contenido' => 'Ya tenemos todo para arrancar tu declaración — termina tu información en '.url('/portal'),
-            'mensaje_externo_id' => 'SM'.str_repeat('c', 32),
-        ]);
-        WhatsappMensaje::query()->create([
-            'telefono' => $telefono,
-            'rol' => RolMensajeWhatsapp::Cliente,
-            'contenido' => '¿qué me falta?',
-            'mensaje_externo_id' => 'SM'.str_repeat('d', 32),
-        ]);
-
-        Http::fake([
-            'api.openai.com/*' => Http::sequence()
-                ->push($this->respuestaOpenAi([
-                    'role' => 'assistant',
-                    'content' => null,
-                    'tool_calls' => [
-                        ['id' => 'call_1', 'type' => 'function', 'function' => ['name' => 'consultar_pendientes_cliente', 'arguments' => '{}']],
-                    ],
-                ]))
-                ->push($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Todavía te falta subir tu W-2.'])),
-        ]);
-
-        $historial = WhatsappMensaje::query()->where('telefono', $telefono)->orderBy('id')->get();
-
-        $this->agente->responder($cliente, $historial, $this->actor, [], $telefono);
-
-        $primeraPeticion = Http::recorded()->first()[0]->data();
-        $nota = collect($primeraPeticion['messages'])->last(fn (array $m) => $m['role'] === 'system');
-        $this->assertStringContainsString('Ya le compartiste el link del portal antes', $nota['content']);
-    }
-
-    /**
-     * Cierre (atestación final) nunca se reemplaza por HandoffPortal — sigue
-     * ocurriendo por WhatsApp (ver cierre.md), a diferencia de Recoleccion.
-     */
-    public function test_cierre_por_whatsapp_no_se_redirige_a_handoff_portal(): void
-    {
-        $telefono = '+15559990003';
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => $telefono]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        // Marca como recibidos todos los campos obligatorios transversales y
-        // de form_1040 para que EstadoConversacionResolver derive Cierre.
-        foreach (TaxFieldCatalog::pendientesPara(2025, [TaxForm::Form1040], $cliente->id) as $pendiente) {
-            if (! $pendiente['obligatorio']) {
-                continue;
-            }
-
-            CampoCliente::query()->create([
-                'user_id' => $cliente->id,
-                'forma' => $pendiente['forma'],
-                'tax_year' => 2025,
-                'campo' => $pendiente['campo'],
-                'tipo_campo' => $pendiente['tipo_campo'],
-                'modo' => 'texto',
-                'valor_texto' => 'dato de prueba',
-                'estado' => 'recibido',
-                'source' => 'preparador',
-            ]);
-        }
-
-        Http::fake([
-            'api.openai.com/*' => Http::response($this->respuestaOpenAi([
-                'role' => 'assistant',
-                'content' => null,
-                'tool_calls' => [
-                    ['id' => 'call_1', 'type' => 'function', 'function' => ['name' => 'think', 'arguments' => '{"razonamiento":"x"}']],
-                ],
-            ])),
-        ]);
-
-        $this->agente->responder($cliente, $this->historialCon($telefono, 'Hola'), $this->actor, [], $telefono);
-
-        $cuerpo = Http::recorded()->first()[0]->data();
-        $herramientas = collect($cuerpo['tools'])->pluck('function.name')->all();
-        $this->assertContains('registrar_atestacion_cliente', $herramientas);
-
-        $prompt = collect($cuerpo['messages'])->first()['content'];
-        $this->assertStringContainsString('FASE ACTUAL: CIERRE', $prompt);
-    }
-
-    /**
-     * F2.4: a un cliente con la entrevista nueva y sin contraseña, el enlace
-     * del handoff es el de activación (crea la contraseña), no /portal.
-     */
-    public function test_handoff_manda_el_enlace_de_activacion_a_un_cliente_de_la_entrevista_nueva(): void
+    public function test_consentimiento_manda_el_enlace_de_activacion_a_un_cliente_sin_contrasena(): void
     {
         $telefono = '+15559990002';
         $cliente = User::factory()->create(['role' => UserRole::Client, 'phone' => $telefono, 'es_prueba' => true]);
-        $cliente->forceFill(['entrevista_catalogo' => true, 'contrasena_definida_en' => null])->save();
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
+        $cliente->forceFill(['contrasena_definida_en' => null])->save();
 
         Http::fake([
             'api.openai.com/*' => Http::response($this->respuestaOpenAi(['role' => 'assistant', 'content' => 'Listo'])),
         ]);
 
-        $this->agente->responder($cliente, $this->historialCon($telefono, 'Hola'), $this->actor, [], $telefono);
+        $this->agente->responder($cliente, $this->historialCon($telefono, 'Hola'), $this->actor, $telefono);
 
         $cuerpo = Http::recorded()->first()[0]->data();
         $nota = collect($cuerpo['messages'])->last(fn (array $m) => $m['role'] === 'system');

@@ -3,23 +3,19 @@
 namespace App\Services\WhatsappAgent;
 
 use App\Enums\FaseConversacion;
-use App\Enums\TaxForm;
 use App\Support\AgenteToolEstados;
 
 /**
- * Esquema de las 5 tools del agente (más `think`) en formato function-calling
+ * Esquema de las tools del agente (más `think`) en formato function-calling
  * de OpenAI, filtrado por fase vigente vía paraFase() — así el modelo nunca
  * ve una tool que no le corresponde en ese momento (ver decisión de
  * arquitectura en docs/implementar_agente_n8n.md: "solo expone al modelo las
  * tools válidas para esa fase").
  *
- * A diferencia del diseño anterior de n8n, ninguna tool recibe `cliente_id`
- * ni (salvo `declarar_formas_cliente`, que es quien lo establece) `tax_year`
- * como parámetro — ToolExecutor ya conoce al cliente de la conversación
- * (resuelto por teléfono) y deriva el año fiscal vigente de las formas ya
- * declaradas, igual que EstadoConversacionResolver. Menos parámetros que el
- * modelo tiene que recordar y pasar correctamente turno a turno, mismo
- * principio de "el código deriva el estado, el modelo no lo carga en memoria".
+ * Ninguna tool recibe `cliente_id` ni el año fiscal: ToolExecutor ya conoce
+ * al cliente de la conversación (resuelto por teléfono) y la entrevista es
+ * siempre la del año fiscal actual (F2). "El código deriva el estado, el
+ * modelo no lo carga en memoria".
  */
 class ToolDefinitions
 {
@@ -34,56 +30,15 @@ class ToolDefinitions
     {
         return match ($fase) {
             FaseConversacion::VerificacionCuenta => [self::crearClienteTaxes(), self::think()],
-            FaseConversacion::DeterminacionFormas => [self::declararFormasCliente(), self::think()],
-            // Cierre usa exactamente las mismas tools que Recoleccion: la única
-            // diferencia entre ambas fases es el bloque de prompt (tono de
-            // cierre vs. seguir preguntando), nunca qué puede hacer el modelo
-            // — si el cliente escribe algo nuevo después de "ya terminamos"
-            // (otra forma, un dato adicional), el agente sigue pudiendo
-            // guardarlo con las mismas tools, sin quedar en un callejón sin
-            // salida solo por haber llegado a esta fase.
-            FaseConversacion::Recoleccion, FaseConversacion::Cierre => [
-                self::declararFormasCliente(),
-                self::consultarPendientesCliente(),
-                self::consultarDocumentosExtra(),
-                self::guardarCampoCliente(),
-                self::consultarBaseConocimiento(),
-                // Solo tiene sentido invocarla en Cierre (ver prompt_actuales/
-                // fases/cierre.md, ATESTACIÓN DE CIERRE) — se ofrece igual en
-                // Recoleccion porque ambas fases comparten siempre el mismo
-                // conjunto de tools por diseño (ver comentario de esta
-                // función); recoleccion.md nunca la menciona ni instruye
-                // usarla, así que el modelo no tiene motivo para invocarla ahí.
-                self::registrarAtestacionCliente(),
-                self::think(),
-            ],
-            // Nunca guardar_campo_cliente ni declarar_formas_cliente acá — a
-            // propósito: en esta fase el formulario del portal es quien
-            // recolecta y guarda, este chat solo responde dudas (ver
-            // prompt_actuales/fases/portal_dudas.md).
-            // consultar_entrevista solo responde para clientes con la
-            // entrevista nueva y consultar_pendientes_cliente para el resto:
-            // conviven hasta 2.11 (ver portal_dudas.md).
+            // El chat del portal solo responde dudas: la entrevista se
+            // responde en sus pantallas (ver prompt_actuales/fases/portal_dudas.md).
             FaseConversacion::PortalDudas => [
-                self::consultarPendientesCliente(),
                 self::consultarEntrevista(),
                 self::consultarBaseConocimiento(),
                 self::think(),
             ],
-            // Nunca guardar_campo_cliente acá — a propósito, mismo motivo que
-            // PortalDudas (el formulario del portal es quien guarda). SÍ
-            // incluye declarar_formas_cliente: portal_dudas.md le dice al
-            // cliente que un cambio de situación se avisa por WhatsApp, no
-            // por el chat del portal — este canal sigue siendo quien
-            // resuelve eso (ver prompt_actuales/fases/handoff_portal.md).
-            FaseConversacion::HandoffPortal => [
-                self::declararFormasCliente(),
-                self::consultarPendientesCliente(),
-                self::consultarBaseConocimiento(),
-                self::think(),
-            ],
-            // F2.8: fases de la entrevista nueva. Nunca reciben archivos ni
-            // datos sensibles: eso va por el portal.
+            // F2.8: nunca reciben archivos ni datos sensibles: eso va por el
+            // portal.
             FaseConversacion::Consentimiento => [
                 self::enviarEnlaceActivacion(),
                 self::consultarBaseConocimiento(),
@@ -159,131 +114,6 @@ class ToolDefinitions
                         'email' => ['type' => 'string', 'description' => 'Correo proporcionado por el cliente, tal cual.'],
                     ],
                     'required' => ['nombre', 'email'],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function declararFormasCliente(): array
-    {
-        return [
-            'type' => 'function',
-            'function' => [
-                'name' => 'declarar_formas_cliente',
-                'description' => 'Declara la(s) forma(s) del IRS aplicables al cliente para el año fiscal ya confirmado con él. Se invoca al cerrar la determinación de forma(s), y de nuevo cada vez que el cliente confirme una situación adicional más adelante en la conversación (con la lista actualizada — es seguro invocarla de nuevo, no borra el progreso ya guardado).',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'tax_year' => ['type' => 'integer', 'description' => 'Año fiscal ya confirmado explícitamente con el cliente (nunca asumido).'],
-                        'formas_aplicables' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'string', 'enum' => TaxForm::valoresEnAlcance()],
-                            'description' => 'Una o más formas del IRS aplicables, según el árbol de determinación.',
-                        ],
-                    ],
-                    'required' => ['tax_year', 'formas_aplicables'],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function consultarPendientesCliente(): array
-    {
-        return [
-            'type' => 'function',
-            'function' => [
-                'name' => 'consultar_pendientes_cliente',
-                'description' => 'Qué le falta al cliente por entregar. Úsala cada vez que necesites saber qué campo o documento pedir a continuación, incluyendo la primera vez que entras a la fase de recolección y después de cada guardar_campo_cliente exitoso.',
-                'parameters' => ['type' => 'object', 'properties' => new \stdClass, 'required' => []],
-            ],
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function consultarDocumentosExtra(): array
-    {
-        return [
-            'type' => 'function',
-            'function' => [
-                'name' => 'consultar_documentos_extra',
-                'description' => 'Catálogo de documentos opcionales que no forman parte de consultar_pendientes_cliente. Úsala únicamente cuando el cliente suba o mencione un documento/dato que no coincide con el campo actualmente pedido, Y ya haya confirmado que efectivamente quiso entregar algo distinto — nunca de forma preventiva.',
-                'parameters' => ['type' => 'object', 'properties' => new \stdClass, 'required' => []],
-            ],
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function guardarCampoCliente(): array
-    {
-        return [
-            'type' => 'function',
-            'function' => [
-                'name' => 'guardar_campo_cliente',
-                'description' => 'Guarda un campo o documento que el cliente entregó. Nunca la invoques para un dato que el cliente no haya proporcionado literalmente en su mensaje actual o en uno anterior de esta misma conversación (salvo por una relación documento→campo que ya trajo `revela`).',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'forma' => ['type' => 'string', 'description' => 'La `forma` exacta de la entrada correspondiente en consultar_pendientes_cliente/consultar_documentos_extra — nunca la infieras.'],
-                        'campo' => ['type' => 'string', 'description' => 'Clave del campo, tal cual la trae el catálogo.'],
-                        'tipo_campo' => ['type' => 'string', 'enum' => ['documento', 'dato', 'mixto'], 'description' => 'Tal cual lo trae el catálogo para ese campo.'],
-                        'modo' => ['type' => 'string', 'enum' => ['archivo', 'texto', 'no_aplica'], 'description' => '"archivo" para un documento, "texto" para un dato tecleado, "no_aplica" si el cliente confirmó que no lo tiene (solo campos opcionales).'],
-                        'tipo_dato' => ['type' => ['string', 'null'], 'enum' => ['string', 'number', 'object', 'array_string', 'array_object', null], 'description' => 'Requerido cuando modo="texto"; tal cual lo trae el catálogo.'],
-                        'contenido' => ['description' => 'El valor entregado por el cliente. Siempre como string, incluso para una estructura compleja (objeto/arreglo serializado).'],
-                        'acumular' => ['type' => 'boolean', 'description' => 'true si este documento debe sumarse a un valor ya guardado en vez de reemplazarlo (ver `revela.acumulable`).'],
-                        'subcampo' => ['type' => ['string', 'null'], 'description' => 'Solo junto con acumular=true sobre un campo tipo objeto: qué subcampo aporta este documento.'],
-                        'nombre_original' => ['type' => ['string', 'null'], 'description' => 'Nombre original del archivo, si aplica.'],
-                        'revelados' => [
-                            'type' => 'array',
-                            'description' => 'Campos que este mismo documento ya reveló (ver `revela` de la última consulta de pendientes), para guardarlos en la misma invocación.',
-                            'items' => [
-                                'type' => 'object',
-                                'properties' => [
-                                    'forma' => ['type' => 'string'],
-                                    'campo' => ['type' => 'string'],
-                                    'tipo_campo' => ['type' => 'string', 'enum' => ['documento', 'dato', 'mixto']],
-                                    'tipo_dato' => ['type' => 'string', 'enum' => ['string', 'number', 'object', 'array_string', 'array_object']],
-                                    'contenido' => ['description' => 'Siempre como string, igual que el campo raíz.'],
-                                    'acumular' => ['type' => 'boolean'],
-                                    'subcampo' => ['type' => ['string', 'null']],
-                                ],
-                                'required' => ['forma', 'campo', 'tipo_campo', 'tipo_dato', 'contenido'],
-                            ],
-                        ],
-                    ],
-                    'required' => ['forma', 'campo', 'tipo_campo', 'modo'],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * Fase 4 del plan de cierre de brecha GTS (atestación final de cierre).
-     *
-     * @return array<string, mixed>
-     */
-    private static function registrarAtestacionCliente(): array
-    {
-        return [
-            'type' => 'function',
-            'function' => [
-                'name' => 'registrar_atestacion_cliente',
-                'description' => 'Registra la confirmación explícita del cliente de que la información y los documentos entregados son completos y correctos. Invócala solo después de que el cliente haya respondido afirmativamente, sin ambigüedad, a la pregunta de atestación de la fase de cierre — nunca antes, nunca para una respuesta dudosa o negativa.',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'respuesta_cliente' => ['type' => 'string', 'description' => 'El texto literal que el cliente escribió confirmando — nunca una frase que tú inventes o resumas, es el registro exacto de su respuesta.'],
-                    ],
-                    'required' => ['respuesta_cliente'],
                 ],
             ],
         ];
@@ -383,7 +213,7 @@ class ToolDefinitions
             'type' => 'function',
             'function' => [
                 'name' => 'consultar_base_conocimiento',
-                'description' => 'Búsqueda de texto libre sobre la base de conocimiento cargada por un administrador (documentación general de impuestos). Úsala cuando el cliente pregunte algo general que no depende de sus datos puntuales — nunca para preguntas sobre el estado de SU declaración, que se resuelven con consultar_pendientes_cliente.',
+                'description' => 'Búsqueda de texto libre sobre la base de conocimiento cargada por un administrador (documentación general de impuestos). Úsala cuando el cliente pregunte algo general que no depende de sus datos puntuales — nunca para preguntas sobre el estado de SU declaración, que se resuelven con consultar_entrevista.',
                 'parameters' => [
                     'type' => 'object',
                     'properties' => [

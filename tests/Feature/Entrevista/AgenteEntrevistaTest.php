@@ -17,7 +17,6 @@ use App\Services\Entrevista\MotorEntrevista;
 use App\Services\Entrevista\RespuestaData;
 use App\Services\Entrevista\RespuestaGuardador;
 use App\Services\Whatsapp\WhatsappChannel;
-use App\Services\WhatsappAgent\AdjuntosWhatsappService;
 use App\Services\WhatsappAgent\AgenteConversacionalService;
 use App\Services\WhatsappAgent\EstadoConversacionResolver;
 use App\Services\WhatsappAgent\ToolDefinitions;
@@ -52,7 +51,6 @@ class AgenteEntrevistaTest extends TestCase
         app(ConsentimientosCargador::class)->cargar();
 
         $this->cliente = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true, 'phone' => self::TELEFONO]);
-        $this->cliente->forceFill(['entrevista_catalogo' => true])->save();
     }
 
     private function firmar(?User $cliente = null): void
@@ -82,15 +80,11 @@ class AgenteEntrevistaTest extends TestCase
         $this->assertSame(FaseConversacion::PortalDudas, $this->fase(portal: true));
 
         $real = User::factory()->create(['role' => UserRole::Client]);
-        $real->forceFill(['entrevista_catalogo' => true])->save();
         $this->firmar($real);
         $this->assertSame(FaseConversacion::Seguimiento, $this->fase($real), 'Cliente real: entrevista por WhatsApp apagada hasta L3.');
 
         config(['tax.entrevista_whatsapp' => true]);
         $this->assertSame(FaseConversacion::Entrevista, $this->fase($real));
-
-        $viejo = User::factory()->create(['role' => UserRole::Client]);
-        $this->assertSame(FaseConversacion::DeterminacionFormas, $this->fase($viejo), 'Sin la bandera sigue el flujo actual.');
     }
 
     public function test_sin_preguntas_no_sensibles_por_responder_la_fase_es_seguimiento(): void
@@ -158,7 +152,6 @@ class AgenteEntrevistaTest extends TestCase
     public function test_con_la_entrevista_por_whatsapp_apagada_nunca_se_ofrece_guardar_respuestas(): void
     {
         $real = User::factory()->create(['role' => UserRole::Client, 'phone' => '+15550005555']);
-        $real->forceFill(['entrevista_catalogo' => true])->save();
         $this->firmar($real);
 
         $fase = $this->fase($real);
@@ -178,16 +171,12 @@ class AgenteEntrevistaTest extends TestCase
         Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'Eso va en el portal.']]]])]);
 
         (new ProcesarMensajeWhatsappJob(new MensajeEntranteWhatsapp('twilio', 'SM'.uniqid(), self::TELEFONO, $texto, $media)))
-            ->handle(app(AgenteConversacionalService::class), $canal, app(AdjuntosWhatsappService::class));
+            ->handle(app(AgenteConversacionalService::class), $canal);
     }
 
     public function test_un_archivo_por_whatsapp_no_se_descarga_ni_se_guarda(): void
     {
         $this->firmar();
-        $adjuntos = Mockery::mock(AdjuntosWhatsappService::class);
-        $adjuntos->shouldNotReceive('resolver');
-        $this->app->instance(AdjuntosWhatsappService::class, $adjuntos);
-
         $this->procesar('aquí va mi W-2', ['https://api.twilio.com/media/123']);
 
         $guardado = WhatsappMensaje::query()->where('rol', 'cliente')->sole()->contenido;

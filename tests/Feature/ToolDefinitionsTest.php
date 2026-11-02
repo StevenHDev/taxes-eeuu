@@ -24,40 +24,6 @@ class ToolDefinitionsTest extends TestCase
         $this->assertEqualsCanonicalizing(['crear_cliente_taxes', 'think'], $nombres);
     }
 
-    public function test_determinacion_formas_solo_expone_declarar_formas_cliente_y_think(): void
-    {
-        $nombres = $this->nombres(ToolDefinitions::paraFase(FaseConversacion::DeterminacionFormas));
-
-        $this->assertEqualsCanonicalizing(['declarar_formas_cliente', 'think'], $nombres);
-    }
-
-    public function test_recoleccion_expone_las_tools_de_recoleccion_mas_declarar_formas_y_think(): void
-    {
-        $nombres = $this->nombres(ToolDefinitions::paraFase(FaseConversacion::Recoleccion));
-
-        $this->assertEqualsCanonicalizing([
-            'declarar_formas_cliente',
-            'consultar_pendientes_cliente',
-            'consultar_documentos_extra',
-            'guardar_campo_cliente',
-            'consultar_base_conocimiento',
-            // registrar_atestacion_cliente (Fase 4) se ofrece igual en
-            // Recoleccion porque ambas fases comparten siempre el mismo
-            // conjunto de tools por diseño — recoleccion.md nunca la
-            // menciona, así que el modelo no tiene motivo para invocarla ahí.
-            'registrar_atestacion_cliente',
-            'think',
-        ], $nombres);
-    }
-
-    public function test_cierre_expone_las_mismas_tools_que_recoleccion(): void
-    {
-        $deRecoleccion = $this->nombres(ToolDefinitions::paraFase(FaseConversacion::Recoleccion));
-        $deCierre = $this->nombres(ToolDefinitions::paraFase(FaseConversacion::Cierre));
-
-        $this->assertEqualsCanonicalizing($deRecoleccion, $deCierre);
-    }
-
     public function test_ninguna_tool_expone_cliente_id_como_parametro(): void
     {
         foreach (FaseConversacion::cases() as $fase) {
@@ -77,16 +43,5 @@ class ToolDefinitionsTest extends TestCase
                 );
             }
         }
-    }
-
-    public function test_declarar_formas_cliente_solo_ofrece_formas_de_persona_natural(): void
-    {
-        $declarar = collect(ToolDefinitions::paraFase(FaseConversacion::DeterminacionFormas))
-            ->firstWhere('function.name', 'declarar_formas_cliente');
-
-        $this->assertSame(
-            ['form_1040', 'schedule_c', 'schedule_e', 'schedule_f'],
-            $declarar['function']['parameters']['properties']['formas_aplicables']['items']['enum'],
-        );
     }
 }

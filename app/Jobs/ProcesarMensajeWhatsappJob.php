@@ -10,10 +10,8 @@ use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
 use App\Services\Whatsapp\WhatsappChannel;
-use App\Services\WhatsappAgent\AdjuntosWhatsappService;
 use App\Services\WhatsappAgent\AgenteConversacionalService;
 use App\Support\AgenteWhatsappUser;
-use App\Support\ContenidoMensajeConAdjuntos;
 use App\Support\RedactorDatosSensibles;
 use App\Support\TelefonoWhatsapp;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -42,15 +40,14 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
     use Queueable;
 
     /**
-     * Lo que queda en el historial cuando un cliente con la entrevista nueva
-     * manda un archivo: el agente lo ve y responde con el enlace a
+     * Lo que queda en el historial cuando el cliente manda un archivo: el agente lo ve y responde con el enlace a
      * documentos del portal (ver seguimiento.md y entrevista.md).
      */
     public const ARCHIVO_NO_GUARDADO = '[El cliente envió un archivo por WhatsApp; no se guardó. Los documentos se suben solo en el portal.]';
 
     public function __construct(private readonly MensajeEntranteWhatsapp $mensaje) {}
 
-    public function handle(AgenteConversacionalService $agente, WhatsappChannel $canal, AdjuntosWhatsappService $adjuntosService): void
+    public function handle(AgenteConversacionalService $agente, WhatsappChannel $canal): void
     {
         if ($this->mensaje->mensajeId === '') {
             return;
@@ -87,29 +84,15 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
                 ],
             );
 
-            // Se resuelven ANTES de guardar el mensaje: el texto extraído
-            // queda anotado en el propio `contenido` persistido (ver
-            // construirContenido), para que el historial re-leído en
-            // cualquier turno futuro —no solo este— siga viendo qué decía el
-            // documento, sin depender de que el agente lo procese ahora mismo.
             $clienteActual = $control->cliente_id ? User::query()->whereKey($control->cliente_id)->first() : null;
 
-            // F2.8 (9.6, T9): con la entrevista nueva, un archivo por WhatsApp
-            // no se descarga ni se lee (nada llega a OpenAI): los documentos
-            // van solo por el portal. Y lo sensible escrito en el chat se
-            // oculta antes de guardarlo. También antes de que exista la
-            // cuenta: todavía no se sabe qué flujo va a usar.
-            $entrevistaNueva = $clienteActual?->usaEntrevistaCatalogo() === true;
-            $protegido = $entrevistaNueva || $clienteActual === null;
-
-            $adjuntos = $this->mensaje->mediaReferencias !== [] && ! $entrevistaNueva
-                ? $adjuntosService->resolver($this->mensaje->mediaReferencias)
-                : [];
-
-            $texto = $protegido ? RedactorDatosSensibles::redactar($this->mensaje->texto) : $this->mensaje->texto;
-            $contenido = $entrevistaNueva && $this->mensaje->mediaReferencias !== []
+            // F2.8 (9.6, T9): un archivo por WhatsApp no se descarga ni se lee
+            // (nada llega a OpenAI): los documentos van solo por el portal.
+            // Y lo sensible escrito en el chat se oculta antes de guardarlo.
+            $texto = RedactorDatosSensibles::redactar($this->mensaje->texto);
+            $contenido = $this->mensaje->mediaReferencias !== []
                 ? trim($texto."\n".self::ARCHIVO_NO_GUARDADO)
-                : ContenidoMensajeConAdjuntos::construir($texto, $adjuntos);
+                : $texto;
 
             WhatsappMensaje::query()->create([
                 'telefono' => $telefono,
@@ -127,7 +110,7 @@ class ProcesarMensajeWhatsappJob implements ShouldQueue
             $cliente = $clienteActual;
             $historial = WhatsappMensaje::query()->where('telefono', $telefono)->orderBy('id')->get();
 
-            $resultado = $agente->responder($cliente, $historial, AgenteWhatsappUser::resolver(), $adjuntos, $telefono);
+            $resultado = $agente->responder($cliente, $historial, AgenteWhatsappUser::resolver(), $telefono);
 
             // crear_cliente_taxes puede haber corrido a mitad del turno — deja
             // el vínculo de la conversación con el cliente recién creado, en

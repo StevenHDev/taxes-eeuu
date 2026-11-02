@@ -40,30 +40,16 @@ class AgenteToolControllerTest extends TestCase
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
 
         $this->actingAs($admin)->patch(route('agente.tools.update'), [
-            'fase' => FaseConversacion::Recoleccion->value,
-            'tool_name' => 'consultar_documentos_extra',
+            'fase' => FaseConversacion::Entrevista->value,
+            'tool_name' => 'consultar_base_conocimiento',
             'activo' => false,
         ])->assertRedirect();
 
         $this->assertDatabaseHas('agente_tool_estados', [
-            'fase' => FaseConversacion::Recoleccion->value,
-            'tool_name' => 'consultar_documentos_extra',
+            'fase' => FaseConversacion::Entrevista->value,
+            'tool_name' => 'consultar_base_conocimiento',
             'activo' => false,
         ]);
-    }
-
-    public function test_desactivar_en_recoleccion_aplica_tambien_a_cierre(): void
-    {
-        $admin = User::factory()->create(['role' => UserRole::Administrator]);
-
-        $this->actingAs($admin)->patch(route('agente.tools.update'), [
-            'fase' => FaseConversacion::Recoleccion->value,
-            'tool_name' => 'guardar_campo_cliente',
-            'activo' => false,
-        ])->assertRedirect();
-
-        $this->assertFalse(AgenteToolEstados::activo(FaseConversacion::Recoleccion, 'guardar_campo_cliente'));
-        $this->assertFalse(AgenteToolEstados::activo(FaseConversacion::Cierre, 'guardar_campo_cliente'));
     }
 
     public function test_no_se_puede_desactivar_una_tool_que_no_existe_en_esa_fase(): void
@@ -72,7 +58,7 @@ class AgenteToolControllerTest extends TestCase
 
         $this->actingAs($admin)->patch(route('agente.tools.update'), [
             'fase' => FaseConversacion::VerificacionCuenta->value,
-            'tool_name' => 'guardar_campo_cliente',
+            'tool_name' => 'guardar_respuestas',
             'activo' => false,
         ])->assertStatus(422);
     }
@@ -82,8 +68,8 @@ class AgenteToolControllerTest extends TestCase
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
 
         $this->actingAs($preparador)->patch(route('agente.tools.update'), [
-            'fase' => FaseConversacion::Recoleccion->value,
-            'tool_name' => 'guardar_campo_cliente',
+            'fase' => FaseConversacion::Entrevista->value,
+            'tool_name' => 'guardar_respuestas',
             'activo' => false,
         ])->assertForbidden();
     }
@@ -93,18 +79,18 @@ class AgenteToolControllerTest extends TestCase
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
 
         AgenteToolEstado::query()->create([
-            'fase' => FaseConversacion::Recoleccion->value,
-            'tool_name' => 'consultar_documentos_extra',
+            'fase' => FaseConversacion::Entrevista->value,
+            'tool_name' => 'consultar_base_conocimiento',
             'activo' => false,
         ]);
         AgenteToolEstados::invalidate();
 
         $this->actingAs($admin)->patch(route('agente.tools.update'), [
-            'fase' => FaseConversacion::Recoleccion->value,
-            'tool_name' => 'consultar_documentos_extra',
+            'fase' => FaseConversacion::Entrevista->value,
+            'tool_name' => 'consultar_base_conocimiento',
             'activo' => true,
         ])->assertRedirect();
 
-        $this->assertTrue(AgenteToolEstados::activo(FaseConversacion::Recoleccion, 'consultar_documentos_extra'));
+        $this->assertTrue(AgenteToolEstados::activo(FaseConversacion::Entrevista, 'consultar_base_conocimiento'));
     }
 }

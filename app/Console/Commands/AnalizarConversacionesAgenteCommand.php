@@ -3,13 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Enums\Entrevista\EstadoEntrevista;
-use App\Enums\FaseConversacion;
 use App\Enums\OrigenAnalisisMetaAgente;
 use App\Models\MetaAgenteReporte;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Services\MetaAgente\ConversacionAnalizadorService;
-use App\Services\WhatsappAgent\EstadoConversacionResolver;
 use Carbon\CarbonInterface;
 use Illuminate\Console\Command;
 
@@ -29,7 +27,7 @@ class AnalizarConversacionesAgenteCommand extends Command
 
     protected $description = 'Corre el meta-agente sobre conversaciones puntuales, o —sin --telefono— sobre todas las que tuvieron actividad nueva desde su último análisis.';
 
-    public function handle(ConversacionAnalizadorService $analizador, EstadoConversacionResolver $resolver): int
+    public function handle(ConversacionAnalizadorService $analizador): int
     {
         $telefonosManual = array_values(array_filter((array) $this->option('telefono'), fn ($t) => $t !== ''));
 
@@ -46,7 +44,7 @@ class AnalizarConversacionesAgenteCommand extends Command
 
         $analizados = 0;
 
-        foreach ($this->telefonosParaCorridaDiaria($resolver) as $telefono => $desde) {
+        foreach ($this->telefonosParaCorridaDiaria() as $telefono => $desde) {
             $this->ejecutar($analizador, $telefono, OrigenAnalisisMetaAgente::Programado, null, $desde);
             $analizados++;
         }
@@ -59,7 +57,7 @@ class AnalizarConversacionesAgenteCommand extends Command
     /**
      * @return array<string, ?CarbonInterface> teléfono => fecha desde la que analizar (null = conversación completa, nunca antes analizada)
      */
-    private function telefonosParaCorridaDiaria(EstadoConversacionResolver $resolver): array
+    private function telefonosParaCorridaDiaria(): array
     {
         $alcance = config('meta_agente.alcance_diario');
         $resultado = [];
@@ -75,7 +73,7 @@ class AnalizarConversacionesAgenteCommand extends Command
             if ($alcance === 'cierre') {
                 $cliente = WhatsappMensaje::query()->where('telefono', $telefono)->latest('created_at')->first()?->cliente;
 
-                if ($cliente === null || ! $this->terminada($cliente, $resolver)) {
+                if ($cliente === null || ! $this->terminada($cliente)) {
                     continue;
                 }
             }
@@ -101,15 +99,10 @@ class AnalizarConversacionesAgenteCommand extends Command
     }
 
     /**
-     * Flujo actual: fase Cierre. Entrevista nueva (F2.8): la entrevista del
-     * año ya confirmada en el portal.
+     * Terminada: la entrevista del año ya confirmada en el portal (F2.8).
      */
-    private function terminada(User $cliente, EstadoConversacionResolver $resolver): bool
+    private function terminada(User $cliente): bool
     {
-        if (! $cliente->usaEntrevistaCatalogo()) {
-            return $resolver->resolver($cliente) === FaseConversacion::Cierre;
-        }
-
         return $cliente->entrevistas()
             ->where('tax_year', (int) config('tax.current_tax_year'))
             ->where('estado', EstadoEntrevista::Confirmada)

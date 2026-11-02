@@ -16,13 +16,13 @@ class AgentePromptVigenteTest extends TestCase
     {
         AgentePrompt::query()->create([
             'version' => 1,
-            'fase' => FaseConversacion::Recoleccion->value,
+            'fase' => FaseConversacion::Entrevista->value,
             'contenido' => 'borrador sin publicar',
             'publicada_en' => null,
         ]);
 
         $this->assertNull(AgentePromptVigente::version());
-        $this->assertNull(AgentePromptVigente::paraFase(FaseConversacion::Recoleccion));
+        $this->assertNull(AgentePromptVigente::paraFase(FaseConversacion::Entrevista));
     }
 
     public function test_resuelve_el_contenido_por_fase_de_la_version_publicada_mas_reciente(): void
@@ -47,8 +47,8 @@ class AgentePromptVigenteTest extends TestCase
 
         $this->assertSame(2, AgentePromptVigente::version());
         $this->assertSame(
-            'v2 '.FaseConversacion::Recoleccion->value,
-            AgentePromptVigente::paraFase(FaseConversacion::Recoleccion),
+            'v2 '.FaseConversacion::Entrevista->value,
+            AgentePromptVigente::paraFase(FaseConversacion::Entrevista),
         );
     }
 
@@ -56,27 +56,27 @@ class AgentePromptVigenteTest extends TestCase
     {
         AgentePrompt::query()->create([
             'version' => 1,
-            'fase' => FaseConversacion::Recoleccion->value,
+            'fase' => FaseConversacion::Entrevista->value,
             'contenido' => 'v1 vigente',
             'publicada_en' => now()->subHour(),
         ]);
 
         AgentePrompt::query()->create([
             'version' => 2,
-            'fase' => FaseConversacion::Recoleccion->value,
+            'fase' => FaseConversacion::Entrevista->value,
             'contenido' => 'v2 todavia no',
             'publicada_en' => now()->addDay(),
         ]);
 
         $this->assertSame(1, AgentePromptVigente::version());
-        $this->assertSame('v1 vigente', AgentePromptVigente::paraFase(FaseConversacion::Recoleccion));
+        $this->assertSame('v1 vigente', AgentePromptVigente::paraFase(FaseConversacion::Entrevista));
     }
 
     public function test_invalidate_limpia_la_cache(): void
     {
         AgentePrompt::query()->create([
             'version' => 1,
-            'fase' => FaseConversacion::Recoleccion->value,
+            'fase' => FaseConversacion::Entrevista->value,
             'contenido' => 'v1',
             'publicada_en' => now()->subHour(),
         ]);
@@ -85,7 +85,7 @@ class AgentePromptVigenteTest extends TestCase
 
         AgentePrompt::query()->create([
             'version' => 2,
-            'fase' => FaseConversacion::Recoleccion->value,
+            'fase' => FaseConversacion::Entrevista->value,
             'contenido' => 'v2',
             'publicada_en' => now()->subMinute(),
         ]);

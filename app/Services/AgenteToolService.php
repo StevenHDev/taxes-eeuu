@@ -11,28 +11,19 @@ use App\Models\FormaCliente;
 use App\Models\HistorialCambio;
 use App\Models\User;
 use App\Notifications\BienvenidaClientePortal;
-use App\Services\WhatsappAgent\ActivosResolver;
 use App\Support\TaxFieldCatalog;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 /**
- * Lógica compartida detrás de 4 de las 5 tools del agente conversacional
- * (`crear_cliente_taxes`, `declarar_formas_cliente`, `consultar_pendientes_cliente`,
- * `consultar_documentos_extra` — la quinta, `guardar_campo_cliente`, vive en
- * EventoRecoleccionService) — invocada tanto por los controladores HTTP en
- * `Api\ClienteController`/`Api\CatalogoController` (agente externo actual)
- * como por `ToolExecutor` (agente de WhatsApp, sin HTTP). Ver decisión de
- * arquitectura sobre EventoRecoleccionService en docs/implementar_agente_n8n.md
- * — mismo razonamiento aplicado acá.
+ * Crear clientes (tool `crear_cliente_taxes` del agente y API) y, para la
+ * API externa (E3, sobre el formulario anterior hasta que se decida su
+ * retiro), declarar formas, pendientes y documentos extra. Las tools del
+ * agente que usaban esto último se retiraron en F2.11.
  */
 class AgenteToolService
 {
-    public function __construct(
-        private readonly ActivosResolver $activosResolver,
-    ) {}
-
     /**
      * @param  array<string, mixed>  $datos  con name, email, phone y preparer_id opcionales — mismo shape que ClienteStoreRequest::validated()
      */
@@ -111,13 +102,7 @@ class AgenteToolService
             'completo' => $formas !== [] && ! $quedaObligatorioPendiente,
             'pendientes' => $pendientes,
             'siguiente' => $siguiente ? ['forma' => $siguiente['forma'], 'campo' => $siguiente['campo']] : null,
-            // Próximo campo ACTIVO transversal a preguntar, ya resuelto (orden
-            // fijo + condiciones aplicadas) — ver ActivosResolver. El agente
-            // conversacional debe leerlo tal cual en vez de recalcular el
-            // orden de ACTIVOS él mismo turno a turno.
-            'siguiente_activo' => $this->activosResolver->siguiente($taxYear, $cliente->id, $pendientes),
-            // Fase 4 del plan de cierre de brecha GTS (atestación final de
-            // cierre) — ver atestacionVigente() y prompt_actuales/fases/cierre.md.
+            // Si la última atestación sigue vigente (ver atestacionVigente()).
             'atestacion_vigente' => $this->atestacionVigente($cliente, $taxYear),
         ];
     }
@@ -148,27 +133,6 @@ class AgenteToolService
             ->where('tax_year', $taxYear)
             ->where('created_at', '>', $ultima->confirmado_en)
             ->exists();
-    }
-
-    /**
-     * Registra la confirmación explícita del cliente — ver
-     * ClienteAtestacion y prompt_actuales/fases/cierre.md (ATESTACIÓN DE
-     * CIERRE) para cuándo se invoca. `$respuesta` es el texto literal que
-     * el cliente escribió, nunca una frase canónica inventada por el agente
-     * — es el registro legal de lo que el cliente realmente confirmó.
-     *
-     * @return array<string, mixed>
-     */
-    public function registrarAtestacion(User $cliente, int $taxYear, string $respuesta): array
-    {
-        $atestacion = ClienteAtestacion::query()->create([
-            'user_id' => $cliente->id,
-            'tax_year' => $taxYear,
-            'respuesta_cliente' => $respuesta,
-            'confirmado_en' => now(),
-        ]);
-
-        return ['atestacion_id' => $atestacion->id, 'confirmado_en' => $atestacion->confirmado_en->toISOString()];
     }
 
     /**

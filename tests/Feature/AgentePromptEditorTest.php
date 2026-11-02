@@ -62,8 +62,8 @@ class AgentePromptEditorTest extends TestCase
         $this->assertCount(count(FaseConversacion::cases()), $filas);
         $this->assertTrue($filas->every(fn (AgentePrompt $p) => $p->publicada_en === null));
         $this->assertSame(
-            'contenido '.FaseConversacion::Recoleccion->value.' editado',
-            $filas->firstWhere('fase', FaseConversacion::Recoleccion->value)->contenido,
+            'contenido '.FaseConversacion::Entrevista->value.' editado',
+            $filas->firstWhere('fase', FaseConversacion::Entrevista->value)->contenido,
         );
     }
 
@@ -89,8 +89,8 @@ class AgentePromptEditorTest extends TestCase
 
         $this->assertSame(2, AgentePromptVigente::version());
         $this->assertSame(
-            'contenido '.FaseConversacion::Recoleccion->value.' nuevo',
-            AgentePromptVigente::paraFase(FaseConversacion::Recoleccion),
+            'contenido '.FaseConversacion::Entrevista->value.' nuevo',
+            AgentePromptVigente::paraFase(FaseConversacion::Entrevista),
         );
     }
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\ClienteAtestacion;
 use App\Models\HistorialCambio;
 use App\Models\User;
 use App\Services\AgenteToolService;
@@ -33,6 +34,20 @@ class ClienteAtestacionTest extends TestCase
         $this->cliente = User::factory()->create(['role' => UserRole::Client]);
     }
 
+    /**
+     * La atestación por WhatsApp (tool registrar_atestacion_cliente) se
+     * retiró en F2.11; las que quedan en la tabla se siguen leyendo.
+     */
+    private function atestar(int $taxYear, string $respuesta): void
+    {
+        ClienteAtestacion::query()->create([
+            'user_id' => $this->cliente->id,
+            'tax_year' => $taxYear,
+            'respuesta_cliente' => $respuesta,
+            'confirmado_en' => now(),
+        ]);
+    }
+
     public function test_no_hay_atestacion_vigente_si_el_cliente_nunca_confirmo(): void
     {
         $pendientes = $this->tools->pendientes($this->cliente, 2025);
@@ -42,7 +57,7 @@ class ClienteAtestacionTest extends TestCase
 
     public function test_queda_vigente_apenas_se_registra(): void
     {
-        $this->tools->registrarAtestacion($this->cliente, 2025, 'Sí, confirmo');
+        $this->atestar(2025, 'Sí, confirmo');
 
         $pendientes = $this->tools->pendientes($this->cliente, 2025);
 
@@ -51,7 +66,7 @@ class ClienteAtestacionTest extends TestCase
 
     public function test_una_atestacion_de_otro_ano_fiscal_no_cuenta(): void
     {
-        $this->tools->registrarAtestacion($this->cliente, 2024, 'Sí, confirmo');
+        $this->atestar(2024, 'Sí, confirmo');
 
         $pendientes = $this->tools->pendientes($this->cliente, 2025);
 
@@ -69,7 +84,7 @@ class ClienteAtestacionTest extends TestCase
     public function test_un_cambio_posterior_a_la_atestacion_la_invalida(): void
     {
         Carbon::setTestNow('2026-01-01 10:00:00');
-        $this->tools->registrarAtestacion($this->cliente, 2025, 'Sí, confirmo');
+        $this->atestar(2025, 'Sí, confirmo');
         $this->assertTrue($this->tools->pendientes($this->cliente, 2025)['atestacion_vigente']);
 
         Carbon::setTestNow('2026-01-01 10:05:00');
@@ -89,7 +104,7 @@ class ClienteAtestacionTest extends TestCase
     public function test_volver_a_confirmar_despues_de_invalidarse_la_deja_vigente_otra_vez(): void
     {
         Carbon::setTestNow('2026-01-01 10:00:00');
-        $this->tools->registrarAtestacion($this->cliente, 2025, 'Sí, confirmo');
+        $this->atestar(2025, 'Sí, confirmo');
 
         Carbon::setTestNow('2026-01-01 10:05:00');
         HistorialCambio::query()->create([
@@ -100,7 +115,7 @@ class ClienteAtestacionTest extends TestCase
         $this->assertFalse($this->tools->pendientes($this->cliente, 2025)['atestacion_vigente']);
 
         Carbon::setTestNow('2026-01-01 10:10:00');
-        $this->tools->registrarAtestacion($this->cliente, 2025, 'Sí, confirmo de nuevo');
+        $this->atestar(2025, 'Sí, confirmo de nuevo');
 
         $this->assertTrue($this->tools->pendientes($this->cliente, 2025)['atestacion_vigente']);
 
