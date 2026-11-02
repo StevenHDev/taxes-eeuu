@@ -169,6 +169,13 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7. 3.1 y 3.7 n
 
 **Pruebas:** `consultar_entrevista` trae los pendientes sin valores sensibles; con todo validado dice que no falta nada.
 
+**Cómo quedó (2 nov., Opus 5.5):**
+- `HerramientasEntrevista::consultar()` suma `documentos`: `total`, `faltan`, `devueltos_por_el_preparador`, `en_revision`, `todo_listo` y `pendientes`. Cada pendiente trae nombre sencillo y oficial, número, persona (la etiqueta), `por_que`, `quien_lo_envia`, `fecha_llegada`, `si_no_llega` y, si el preparador lo devolvió, su comentario. Nunca trae archivos, nombres de archivo ni URLs. Lo arma desde `DocumentosEntrevista::lista()`.
+- La descripción de la tool en `ToolDefinitions` dice que ahora trae los documentos.
+- Prompts: `portal_dudas.md` reescrito (todavía hablaba del formulario anterior y de tools retiradas en 2.11); `seguimiento.md` con la sección "Sus documentos"; `entrevista.md` con "Si pregunta por sus documentos".
+- Borrador de prompts: `agente:borrador-prompts --fases=entrevista,seguimiento,portal_dudas` después del deploy (escritura en producción, con autorización), y Steven lo publica.
+- Pruebas en `AgenteEntrevistaTest`: un W-2 pendiente con sus datos, devuelto con comentario y sin el nombre del archivo; con todo validado o en "no aplica", `todo_listo` y nada pendiente.
+
 ---
 
 ## 3.6 Recordatorios de documentos pendientes
