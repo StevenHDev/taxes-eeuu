@@ -145,9 +145,9 @@ Wiplitask: `cmvskovx900771420nj5xy1du` · 🔄
 - [x] Plan técnico de la fase 3 escrito y aprobado (2 nov.)
 - [x] Checklist según respuestas, con estados por documento (3.1–3.4 en producción el 2 nov.: contenido de cada documento, checklist guardado con estados, pantalla del cliente y revisión del preparador)
 - [x] "No aplica" con motivo, varios archivos por tipo y "otro documento" (3.3, en producción el 2 nov.)
-- [ ] Recordatorios del agente con plantillas; el agente no acepta documentos (3.5, el agente explica qué falta: subido el 2 nov., falta publicar el borrador de prompts; falta 3.6)
-- [ ] Qué subir en registros propios, con plantilla opcional (3.7). Se ajusta con la respuesta de GTS a P5: las preguntas P1–P10 están en la tarea "Preguntas pendientes para GTS (P1–P10)" (Wiplitask `cmvzotuc104e31420br272h7y`)
-- [ ] Por qué no tiene la declaración del año pasado: seguimiento de la G5 (3.8). Se ajusta con la respuesta de GTS a P10
+- [ ] Recordatorios del agente con plantillas; el agente no acepta documentos (3.5, el agente explica qué falta: en producción el 2 nov., borrador de prompts 6 creado y sin publicar; 3.6 pendiente)
+- [x] Qué subir en registros propios, con plantilla opcional (3.7, en producción el 2 nov.; catálogo recargado). Se ajusta con la respuesta de GTS a P5: las preguntas P1–P10 están en la tarea "Preguntas pendientes para GTS (P1–P10)" (Wiplitask `cmvzotuc104e31420br272h7y`)
+- [x] Por qué no tiene la declaración del año pasado: seguimiento de la G5 (3.8, hecho el 2 nov.). Se ajusta con la respuesta de GTS a P10
 
 ### F4 — Lectura y validación de documentos
 Wiplitask: `cmvskow2m007c142002rui266` · ⏳

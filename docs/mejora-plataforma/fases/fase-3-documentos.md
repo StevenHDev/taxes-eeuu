@@ -249,6 +249,12 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7 → 3.8 (agr
 
 **Pruebas:** G5 = "no" abre G5.1; solo `no_presente_algunos` abre G5.2; G5 = "sí" sigue pidiendo la copia y no abre nada más; el aviso aparece en la ficha solo con `no_presente_algunos`.
 
+**Cómo quedó (2 nov., Opus 5.5):**
+- Catálogo 2025 (2026 lo hereda): G5.1 (opciones, seguimiento de G5 = "no") y G5.2 (dato, seguimiento de G5.1 = `no_presente_algunos`, con ejemplo "2022 y 2023"). Fuentes: validación de la firma del e-file con el AGI del año anterior y la página del IRS de declaraciones atrasadas. Quedan 96 preguntas (bloque G: 7).
+- Ficha del preparador: `VistaEntrevistaPreparador` devuelve `avisos` (hoy solo `anios_sin_declarar`, con los años si los escribió) y la ficha lo muestra arriba de la entrevista ("Para revisar antes de empezar"). Sale de las respuestas visibles: si el cliente cambia G5 a "sí", el aviso se va.
+- Portal: G5.2 es el primer seguimiento que depende de otro seguimiento. `PasosEntrevista::siguiente()` ahora recibe las preguntas que tenía el paso: si al guardar un seguimiento se abre una pregunta nueva en ese mismo paso, el cliente se queda para responderla; si no, sigue de largo como antes.
+- Pruebas: `DeclaracionAnteriorTest` (3) y una en `ConfirmacionTest`; conteos del catálogo en `CatalogoRealTest` y `PantallaTest`. Suite: 652 pruebas, 650 pasan y 2 se saltan.
+
 ---
 
 ## Reglas de interfaz comunes
