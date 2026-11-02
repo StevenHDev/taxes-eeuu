@@ -145,6 +145,41 @@ class ChecklistDocumentos
     }
 
     /**
+     * Cuántos ítems vigentes hay en cada grupo (EstadoDocumento::grupo()),
+     * por cliente, para la ficha y la lista de clientes del preparador.
+     *
+     * @param  list<int>  $clienteIds
+     * @return array<int, array{faltan: int, por_revisar: int, validados: int, no_aplica: int, total: int, completo: bool}>
+     */
+    public function resumenPorCliente(array $clienteIds, int $taxYear): array
+    {
+        $filas = EntrevistaDocumento::query()
+            ->join('entrevistas', 'entrevistas.id', '=', 'entrevista_documentos.entrevista_id')
+            ->whereIn('entrevistas.user_id', $clienteIds)
+            ->where('entrevistas.tax_year', $taxYear)
+            ->whereNull('entrevista_documentos.retirado_en')
+            ->selectRaw('entrevistas.user_id as user_id, entrevista_documentos.estado as estado, count(*) as cuantos')
+            ->groupBy('entrevistas.user_id', 'entrevista_documentos.estado')
+            ->toBase()
+            ->get();
+
+        $resumen = [];
+
+        foreach ($filas as $fila) {
+            $grupo = EstadoDocumento::from($fila->estado)->grupo();
+            $resumen[$fila->user_id] ??= ['faltan' => 0, 'por_revisar' => 0, 'validados' => 0, 'no_aplica' => 0, 'total' => 0, 'completo' => false];
+            $resumen[$fila->user_id][$grupo] += (int) $fila->cuantos;
+            $resumen[$fila->user_id]['total'] += (int) $fila->cuantos;
+        }
+
+        foreach ($resumen as &$r) {
+            $r['completo'] = $r['total'] > 0 && $r['faltan'] === 0 && $r['por_revisar'] === 0;
+        }
+
+        return $resumen;
+    }
+
+    /**
      * Otro del mismo documento ("otro banco", "otro empleo"), o un "otro
      * documento" fuera de la lista con su descripción.
      *

@@ -134,6 +134,44 @@ function useColumns(): ColumnDef<Cliente>[] {
                 (value as string[]).includes(row.getValue<string>(id)),
         },
         {
+            id: 'documentos',
+            accessorFn: (c) => c.documentos?.faltan ?? -1,
+            header: ({ column }) => (
+                <DataTableColumnHeader
+                    column={column}
+                    title={t('clientesIndex.columns.documents')}
+                />
+            ),
+            cell: ({ row }) => {
+                const resumen = row.original.documentos;
+
+                if (resumen === null) {
+                    return (
+                        <span aria-label={t('clientesIndex.documentos.sin')}>
+                            —
+                        </span>
+                    );
+                }
+
+                if (resumen.completo) {
+                    return (
+                        <Badge>{t('clientesIndex.documentos.completo')}</Badge>
+                    );
+                }
+
+                return (
+                    <span className="text-sm">
+                        {t('clientesIndex.documentos.faltan', {
+                            count: resumen.faltan,
+                        })}
+                        {resumen.por_revisar > 0
+                            ? ` · ${t('clientesIndex.documentos.porRevisar', { count: resumen.por_revisar })}`
+                            : ''}
+                    </span>
+                );
+            },
+        },
+        {
             id: 'formas',
             accessorFn: (c) => (c.formas ?? []).map((f) => f.forma),
             header: () => (

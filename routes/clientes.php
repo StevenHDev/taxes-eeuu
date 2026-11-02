@@ -5,6 +5,7 @@ use App\Http\Controllers\CampoClienteController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\DeterminacionFiscalController;
 use App\Http\Controllers\DocumentoController;
+use App\Http\Controllers\EntrevistaDocumentoController;
 use App\Http\Controllers\EntrevistaRespuestaController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('clientes/{cliente}/entrevista/respuestas/{respuesta}/revelar', [EntrevistaRespuestaController::class, 'reveal'])
         ->middleware([RequirePassword::class, 'throttle:10,1'])
         ->name('clientes.entrevista.respuestas.revelar');
+
+    // F3.4: el preparador revisa los documentos del checklist.
+    Route::patch('clientes/{cliente}/entrevista/documentos/{item}', [EntrevistaDocumentoController::class, 'update'])
+        ->whereNumber('item')
+        ->name('clientes.entrevista.documentos.update');
 
     Route::get('documentos/{documento}', [DocumentoController::class, 'show'])
         ->middleware('signed')

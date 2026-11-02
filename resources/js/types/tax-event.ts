@@ -1,3 +1,5 @@
+import type { ResumenDocumentos } from '@/types/entrevista';
+
 export type TaxForm =
     | 'form_1040'
     | 'schedule_c'
@@ -47,6 +49,7 @@ export type Cliente = {
     es_prueba: boolean;
     estado_general: EstadoGeneral;
     formas: ClienteFormaResumen[];
+    documentos: ResumenDocumentos | null;
     nivel_riesgo: NivelRiesgo;
     nivel_riesgo_label: string;
     nivel_riesgo_fuente: NivelRiesgoFuente;

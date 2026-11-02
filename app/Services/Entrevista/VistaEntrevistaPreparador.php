@@ -24,6 +24,7 @@ class VistaEntrevistaPreparador
         private readonly CatalogoFiscal $catalogo,
         private readonly PasosEntrevista $pasos,
         private readonly DocumentosEntrevista $documentos,
+        private readonly ChecklistDocumentos $checklist,
     ) {}
 
     /**
@@ -107,14 +108,32 @@ class VistaEntrevistaPreparador
                     ];
                 })->values()->all(),
             ])->values()->all(),
-            'documentos' => collect($this->documentos->lista($entrevista, $situacion, $ingles))
-                ->map(fn (array $d) => [
-                    'codigo' => $d['codigo'],
-                    'persona_orden' => $d['persona_orden'],
-                    'nombre' => $d['nombre'],
-                    'archivos' => $d['archivos'],
-                ])->all(),
+            'documentos' => $this->documentos($entrevista, $situacion, $ingles),
+            'documentos_resumen' => $this->checklist->resumenPorCliente([$cliente->id], $taxYear)[$cliente->id]
+                ?? ['faltan' => 0, 'por_revisar' => 0, 'validados' => 0, 'no_aplica' => 0, 'total' => 0, 'completo' => false],
         ];
+    }
+
+    /**
+     * El checklist como lo ve el preparador (F3.4): lo mismo que ve el
+     * cliente más quién lo revisó y cuándo.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function documentos(Entrevista $entrevista, SituacionEntrevista $situacion, bool $ingles): array
+    {
+        $filas = $this->documentos->lista($entrevista, $situacion, $ingles);
+        $revisiones = $entrevista->documentos()->with('revisor:id,name')->whereIn('id', array_column($filas, 'id'))->get()->keyBy('id');
+
+        return array_map(function (array $d) use ($revisiones) {
+            $item = $revisiones->get($d['id']);
+
+            return [
+                ...array_intersect_key($d, array_flip(['id', 'codigo', 'numero', 'persona_orden', 'nombre', 'nombre_oficial', 'descripcion', 'estado', 'motivo_no_aplica', 'observacion', 'archivos'])),
+                'revisado_por' => $item?->revisor?->name,
+                'revisado_en' => $item?->revisado_en?->toIso8601String(),
+            ];
+        }, $filas);
     }
 
     /**

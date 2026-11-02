@@ -21,6 +21,7 @@ use App\Models\WhatsappMensaje;
 use App\Notifications\BienvenidaClientePortal;
 use App\Services\ClienteExportService;
 use App\Services\DocumentoDuplicadoService;
+use App\Services\Entrevista\ChecklistDocumentos;
 use App\Services\Entrevista\VistaEntrevistaPreparador;
 use App\Services\RiesgoCasoService;
 use App\Services\UsuarioRetencionService;
@@ -48,6 +49,7 @@ class ClienteController extends Controller
         private readonly WhatsappChannel $canal,
         private readonly UsuarioRetencionService $retencion,
         private readonly VistaEntrevistaPreparador $vistaEntrevista,
+        private readonly ChecklistDocumentos $checklist,
     ) {}
 
     public function index(Request $request): Response
@@ -61,8 +63,13 @@ class ClienteController extends Controller
         $clientes = $this->clientesVisiblesPara($request->user())
             ->with(['formasCliente' => fn ($query) => $query->where('tax_year', $taxYear)])
             ->orderByDesc('created_at')
-            ->get()
-            ->map(function (User $cliente) use ($taxYear) {
+            ->get();
+
+        // F3.4: qué le falta a cada uno, en una sola consulta.
+        $documentos = $this->checklist->resumenPorCliente($clientes->modelKeys(), $taxYear);
+
+        $clientes = $clientes
+            ->map(function (User $cliente) use ($taxYear, $documentos) {
                 $riesgo = $this->riesgo->nivelEfectivo($cliente, $taxYear);
 
                 return [
@@ -80,6 +87,7 @@ class ClienteController extends Controller
                     'nivel_riesgo' => $riesgo['nivel']->value,
                     'nivel_riesgo_label' => $riesgo['nivel']->label(),
                     'nivel_riesgo_fuente' => $riesgo['fuente'],
+                    'documentos' => $documentos[$cliente->id] ?? null,
                     'created_at' => $cliente->created_at,
                 ];
             });

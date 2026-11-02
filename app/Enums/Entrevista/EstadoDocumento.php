@@ -33,4 +33,18 @@ enum EstadoDocumento: string
     {
         return in_array($this, [self::Validado, self::NoAplica], true);
     }
+
+    /**
+     * Cómo lo cuenta el preparador (F3.4): `faltan` (el cliente tiene algo
+     * que hacer), `por_revisar`, `validados` o `no_aplica`.
+     */
+    public function grupo(): string
+    {
+        return match ($this) {
+            self::Pendiente, self::ConObservacion, self::NoAplicaRechazado => 'faltan',
+            self::Subido, self::Leido, self::NoSePudoLeer => 'por_revisar',
+            self::Validado => 'validados',
+            self::NoAplica => 'no_aplica',
+        };
+    }
 }
