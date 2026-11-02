@@ -24,13 +24,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $fecha_llegada
  * @property string|null $si_no_llega_es
  * @property string|null $si_no_llega_en
+ * @property string|null $que_subir_es
+ * @property string|null $que_subir_en
+ * @property string|null $plantilla
  * @property array<int, string>|null $formatos
  * @property string $uno_por
  * @property int $orden
  */
 #[Fillable([
     'tax_year', 'codigo', 'grupo', 'nombre_oficial', 'nombre_sencillo_es', 'nombre_sencillo_en',
-    'emisor_es', 'emisor_en', 'fecha_llegada', 'si_no_llega_es', 'si_no_llega_en', 'formatos',
+    'emisor_es', 'emisor_en', 'fecha_llegada', 'si_no_llega_es', 'si_no_llega_en', 'que_subir_es', 'que_subir_en', 'plantilla', 'formatos',
     'uno_por', 'siempre', 'orden', 'fuente_texto', 'fuente_url', 'activo',
 ])]
 class CatalogoDocumento extends Model

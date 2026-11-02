@@ -65,6 +65,8 @@ export type DocumentoCatalogo = FuenteIrs &
         emisor: string | null;
         fecha_llegada: string | null;
         si_no_llega: string | null;
+        que_subir: string | null;
+        plantilla: string | null;
         formatos: string[];
         uno_por: string;
         casillas: {

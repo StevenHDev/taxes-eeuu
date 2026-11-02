@@ -257,6 +257,14 @@ function DetalleDocumento({ documento }: { documento: DocumentoCatalogo }) {
                 >
                     {documento.si_no_llega}
                 </DatoDetalle>
+                <DatoDetalle etiqueta={t('catalogoFiscal.documentos.queSubir')}>
+                    {documento.que_subir}
+                </DatoDetalle>
+                <DatoDetalle
+                    etiqueta={t('catalogoFiscal.documentos.plantilla')}
+                >
+                    {documento.plantilla}
+                </DatoDetalle>
                 <DatoDetalle etiqueta={t('catalogoFiscal.documentos.unoPor')}>
                     {t(`catalogoFiscal.unoPor.${documento.uno_por}`)}
                 </DatoDetalle>

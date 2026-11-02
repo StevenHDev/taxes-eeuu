@@ -58,6 +58,8 @@ export function FormularioDocumento({
         emisor_es: documento?.emisor ?? '',
         fecha_llegada: documento?.fecha_llegada ?? '',
         si_no_llega_es: documento?.si_no_llega ?? '',
+        que_subir_es: documento?.que_subir ?? '',
+        plantilla: documento?.plantilla ?? '',
         formatos: documento?.formatos ?? ['pdf', 'jpg', 'png', 'heic'],
         uno_por: documento?.uno_por ?? 'unico',
         casillas: (documento?.casillas ?? []).map((c) => ({
@@ -77,6 +79,8 @@ export function FormularioDocumento({
             emisor_es: d.emisor_es || null,
             fecha_llegada: d.fecha_llegada || null,
             si_no_llega_es: d.si_no_llega_es || null,
+            que_subir_es: d.que_subir_es || null,
+            plantilla: d.plantilla || null,
             formatos: d.formatos,
             uno_por: d.uno_por,
             casillas: d.casillas.map((c) => ({
@@ -194,6 +198,21 @@ export function FormularioDocumento({
                 onCambio={(v) => form.setData('si_no_llega_es', v)}
                 error={form.errors.si_no_llega_es}
                 multilinea
+            />
+            <CampoTexto
+                id="d-que-subir"
+                etiqueta={t('catalogoFiscal.documentos.queSubir')}
+                valor={form.data.que_subir_es}
+                onCambio={(v) => form.setData('que_subir_es', v)}
+                error={form.errors.que_subir_es}
+                multilinea
+            />
+            <CampoTexto
+                id="d-plantilla"
+                etiqueta={t('catalogoFiscal.documentos.plantilla')}
+                valor={form.data.plantilla}
+                onCambio={(v) => form.setData('plantilla', v)}
+                error={form.errors.plantilla}
             />
 
             <fieldset className="grid gap-2">

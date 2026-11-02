@@ -133,6 +133,23 @@ class CatalogoRealTest extends TestCase
         }
     }
 
+    public function test_solo_los_registros_propios_traen_que_subir_y_plantilla(): void
+    {
+        foreach ([2025, 2026] as $anio) {
+            $documentos = $this->lector->documentos($anio);
+            $conTexto = $documentos->filter(fn (array $d) => ! empty($d['que_subir_es']) || ! empty($d['que_subir_en']) || ! empty($d['plantilla']));
+
+            $this->assertEqualsCanonicalizing(['registros-ingresos-gastos', 'registros-alquiler'], $conTexto->pluck('codigo')->all());
+
+            foreach ($conTexto as $d) {
+                $this->assertNotEmpty($d['que_subir_es'], "{$d['codigo']}: falta qué subir.");
+                $this->assertNotEmpty($d['que_subir_en'], "{$d['codigo']}: falta qué subir (inglés).");
+                $this->assertFileExists(public_path("plantillas/{$d['plantilla']}-es.xlsx"));
+                $this->assertFileExists(public_path("plantillas/{$d['plantilla']}-en.pdf"));
+            }
+        }
+    }
+
     public function test_las_preguntas_sensibles_quedan_marcadas(): void
     {
         $sensibles = CatalogoPregunta::query()->delAnio(2025)->where('sensible', true)->pluck('codigo')->sort()->values()->all();

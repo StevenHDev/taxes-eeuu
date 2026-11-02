@@ -50,6 +50,8 @@ class DocumentoController extends Controller
                 'emisor' => $d['emisor_es'],
                 'fecha_llegada' => $d['fecha_llegada'],
                 'si_no_llega' => $d['si_no_llega_es'],
+                'que_subir' => $d['que_subir_es'],
+                'plantilla' => $d['plantilla'],
                 'formatos' => $d['formatos'] ?? [],
                 'uno_por' => $d['uno_por'],
                 'casillas' => collect($d['casillas'])->map(fn (array $c) => [
