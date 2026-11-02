@@ -113,6 +113,26 @@ class CatalogoRealTest extends TestCase
         $this->assertSame(['1a'], collect($nec2026['casillas'])->pluck('casilla')->all());
     }
 
+    public function test_los_documentos_con_fecha_dicen_quien_los_envia_que_hacer_y_de_donde_sale_la_fecha(): void
+    {
+        // F3.1: lo que ve el cliente en cada fila del checklist (5.2).
+        $documentos = app(CatalogoFiscal::class)->documentos(2025);
+        $conFecha = $documentos->filter(fn (array $d) => $d['fecha_llegada'] !== null);
+
+        $this->assertGreaterThanOrEqual(20, $conFecha->count());
+
+        foreach ($conFecha as $d) {
+            $this->assertNotEmpty($d['emisor_es'], "{$d['codigo']}: falta quién lo envía.");
+            $this->assertNotEmpty($d['emisor_en'], "{$d['codigo']}: falta quién lo envía (inglés).");
+            $this->assertStringContainsString('a más tardar', (string) $d['fuente_texto'], "{$d['codigo']}: la fecha no dice su fuente.");
+        }
+
+        foreach ($documentos as $d) {
+            $this->assertNotEmpty($d['si_no_llega_es'], "{$d['codigo']}: falta qué hacer si no llega.");
+            $this->assertNotEmpty($d['si_no_llega_en'], "{$d['codigo']}: falta qué hacer si no llega (inglés).");
+        }
+    }
+
     public function test_las_preguntas_sensibles_quedan_marcadas(): void
     {
         $sensibles = CatalogoPregunta::query()->delAnio(2025)->where('sensible', true)->pluck('codigo')->sort()->values()->all();
