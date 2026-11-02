@@ -126,8 +126,8 @@ Wiplitask: `cmvskovqv0072142046gi5vuk` · 🔄
 - [x] 2.6 Documentos que pide la entrevista: lista mínima y carga (solo por el portal). En producción el 30 oct. (`fb25854`, `a7f00c9`), catálogo recargado: 93 preguntas, verificar sin problemas
 - [x] 2.7 Revisión y confirmación del cliente en el portal (`41d5b6e`)
 - [x] 2.8 Agente de WhatsApp reescrito sobre el catálogo (entrevista por WhatsApp apagada para clientes reales hasta L3). En producción el 30 oct. (`8fed54c`, `71bc020`); borrador 3 de prompts creado en producción con `agente:borrador-prompts --fases=portal_dudas`. Steven lo publicó (versión 4) y lo probó por WhatsApp el 1 nov. con el cliente de prueba #27. De esa prueba salieron 4 ajustes al prompt de la entrevista y a `consultar_entrevista`; borrador 5 creado en producción el 1 nov. con `agente:borrador-prompts --fases=entrevista` y publicado por Steven (versión vigente 5). Pendiente de decidir: seguimiento "¿de qué tipo?" para D17
-- [ ] 2.9 Vista del preparador: entrevista en la ficha y chat del portal en Mensajes 🔄 (código, pruebas y revisión en el navegador listos el 1 nov.; falta commit y deploy)
-- [ ] 2.10 Cambio de flujo y migración de `campos_cliente` (espera L1)
+- [x] 2.9 Vista del preparador: entrevista en la ficha y chat del portal en Mensajes. En producción el 1 nov. (`a5e1e7e`, `e42b4ee`, `70de914`, `25708d5`); migración de revelados aplicada, sin errores en el log
+- [ ] 2.10 Cambio de flujo y migración de `campos_cliente` 🔄 (ya no espera L1: los clientes reales firman el texto provisional, decisión del 1 nov.; incluye D17.1)
 - [ ] 2.11 Retiro del flujo anterior (E5, E6, E12, tool y menú viejos)
 - [ ] Consentimiento §7216 en el portal (requiere L1)
 - [ ] Entrevista en tres niveles en el portal

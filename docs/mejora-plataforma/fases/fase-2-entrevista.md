@@ -468,6 +468,16 @@ Todo vive en `App\Services\Entrevista\`. **El portal, el agente y la vista del p
 
 **Pruebas:** con datos de prueba de los tres tipos (empleado con dependiente, independiente, con Marketplace), la migración crea las respuestas, personas y documentos esperados; correrla dos veces no duplica; `--dry-run` no escribe; un cliente migrado ve sus respuestas en el portal con canal "migración" y su ficha conserva el histórico.
 
+**Resultado (1 nov.):**
+- **Requisito cambiado:** no espera L1 (decisión 12). Se quitó el freno del consentimiento provisional (`Consentimientos::soloPruebas()` y sus dos usos).
+- **Comando:** `catalogo-fiscal:equivalencias --migrar [--dry-run] [--cliente=]`, solo del año fiscal actual y solo si el archivo de equivalencias no tiene problemas. `--dry-run` hace todo dentro de una transacción y la deshace, así los conteos son los reales. Muestra por cliente: respuestas, personas, documentos, campos sin equivalente, fuera de alcance y los códigos que no aplicaron; nunca valores.
+- **`MigradorCamposCliente`:** respuestas con canal `migracion` vía `RespuestaGuardador`, en varias vueltas (una respuesta puede depender de otra: B2 de B1, C12 de C3). Nunca pisa lo que el cliente ya respondió. Si varios campos van a la misma pregunta: en sí o no gana "si", en "usted o cónyuge" se juntan. Un campo en "no aplica", vacío o con un monto en 0 no responde nada: se pregunta. Parentesco reconocido por palabra (hija → `hijo`, stepson → `hijastro`…); lo que no se reconoce no se adivina. C13 compara con `limite_ingreso_bruto_pariente_calificado` del año.
+- **Marca:** columna nueva `entrevistas.migrada_en`; la entrevista migrada se salta en la siguiente corrida. Queda `en_curso`; el cliente firma y confirma en el portal.
+- **Bandera por defecto:** `tax.entrevista_catalogo_por_defecto` pasa a verdadero (los clientes nuevos entran a la entrevista). `phpunit.xml` la deja en falso hasta 2.11 para las pruebas del flujo viejo.
+- **Catálogo:** D17.1 (94 preguntas). Hay que recargar 2025 y 2026 en producción.
+- **No se hizo:** el aviso a los clientes migrados: en producción todos son usuarios de prueba.
+- **Pruebas:** `Entrevista/MigracionCamposClienteTest` (6: empleada con dependiente, independiente con Marketplace, dos corridas sin duplicar ni pisar, `--dry-run`, `--cliente`, el portal muestra "migración"); `ConsentimientoTest` cambia la prueba del freno por "un cliente real firma el provisional".
+
 ---
 
 ## 2.11 Retiro del flujo anterior (E5, E6, E12, tool y menú viejos)
@@ -562,3 +572,8 @@ Para 2.10, además: `consentimientos:cargar` con el texto de L1; `equivalencias 
 9. **Contenido nuevo del catálogo:** sí a C0, D1.1, F4.1, D18 con el documento `k-1` y el operador `hasta`, cargados como "sin validar".
 10. **Primera entrada:** el primer enlace del agente por WhatsApp sirve para crear la contraseña (sin pasar por el correo, que queda de respaldo); después, cambiar la contraseña solo por correo. Va en 2.4.
 11. **Verificación en dos pasos para clientes:** opcional (la pueden activar en Ajustes → Seguridad), no obligatoria. Sujeta a la respuesta del abogado sobre L9.
+
+## Decisiones de Steven (1 nov.)
+
+12. **2.10 y 2.11 sin esperar L1:** el texto definitivo del consentimiento llega después. Los clientes reales **firman el texto provisional** (versión 1, registrada con texto, versión, fecha, IP y navegador). Cuando llegue el texto de L1 se carga como versión 2 y el portal les pide firmar de nuevo (eso ya funciona: `firmado()` compara con la versión vigente). El aviso "texto provisional, solo para pruebas" se ve solo en usuarios de prueba.
+13. **D17.1:** "¿Qué tipo de dinero fue y de dónde vino?" (texto, seguimiento de D17 = sí), para que el preparador sepa qué documento pedir.
