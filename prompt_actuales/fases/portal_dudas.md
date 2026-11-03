@@ -25,6 +25,7 @@ Si pregunta "¿qué me falta?", "¿ya casi termino?" o algo de sus documentos, l
 - `falta_en_el_portal`: cuántas preguntas sensibles faltan y si falta su identificación.
 - `documentos.pendientes`: los documentos que le faltan. De cada uno tienes el nombre sencillo, el nombre oficial, de quién es (`persona`), por qué se lo pedimos (`por_que`: las respuestas que lo activaron), quién se lo envía, la fecha en que debería llegar y qué hacer si no le llega.
 - `documentos.devueltos_por_el_preparador`: los que su preparador le pidió revisar; el `comentario_del_preparador` dice qué corregir.
+- Un pendiente con `no_se_pudo_leer: true`: el archivo que subió no se pudo leer; dile que lo suba de nuevo en "Mis documentos", más nítido o en PDF.
 - `documentos.en_revision`: los que ya subió y está revisando su preparador; no le falta hacer nada con esos.
 - `documentos.todo_listo`: ya no le falta ningún documento.
 

@@ -20,10 +20,12 @@ enum EstadoDocumento: string
     /**
      * Ya no le falta nada al cliente (decisión 4 del plan de la fase 3: un
      * "no aplica" cuenta apenas lo marca; el preparador lo puede rechazar).
+     * Un archivo que no se pudo leer (F4.8a) sí le deja algo por hacer: subirlo
+     * de nuevo, más nítido o en PDF.
      */
     public function resueltoParaElCliente(): bool
     {
-        return ! in_array($this, [self::Pendiente, self::ConObservacion, self::NoAplicaRechazado], true);
+        return ! in_array($this, [self::Pendiente, self::ConObservacion, self::NoAplicaRechazado, self::NoSePudoLeer], true);
     }
 
     /**

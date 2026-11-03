@@ -4,10 +4,15 @@ namespace Tests\Feature\Portal;
 
 use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\Entrevista\EstadoDocumento;
+use App\Enums\Lectura\EstadoLectura;
+use App\Enums\Lectura\Legibilidad;
+use App\Enums\Lectura\MotivoConfianza;
+use App\Enums\Lectura\OrigenDato;
 use App\Enums\UserRole;
 use App\Models\Documento;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaDocumento;
+use App\Models\Lectura\DocumentoLectura;
 use App\Models\User;
 use App\Services\Consentimiento\Consentimientos;
 use App\Services\Consentimiento\ConsentimientosCargador;
@@ -180,6 +185,64 @@ class DocumentosTest extends TestCase
         $this->assertStringNotContainsString('carta ITIN', Storage::disk(Documento::disco())->get($documento->file_path));
         $this->assertSame(EstadoDocumento::Subido, $item->fresh()->estado);
         $this->assertTrue($this->fila($item->id)['resuelto']);
+    }
+
+    public function test_un_archivo_que_no_se_pudo_leer_le_falta_al_cliente_y_uno_leido_no(): void
+    {
+        $this->responder('D1', 'si');
+        $item = $this->item('w2');
+        $this->subir($item)->assertSessionHasNoErrors();
+
+        $item->update(['estado' => EstadoDocumento::Leido]);
+        $this->assertTrue($this->fila($item->id)['resuelto']);
+
+        $item->update(['estado' => EstadoDocumento::NoSePudoLeer]);
+        $fila = $this->fila($item->id);
+        $this->assertFalse($fila['resuelto']);
+        $this->assertSame('no_se_pudo_leer', $fila['estado']);
+    }
+
+    public function test_las_props_del_portal_nunca_traen_lo_leido_de_los_documentos(): void
+    {
+        $this->responder('D1', 'si');
+        $item = $this->item('w2');
+        $archivo = app(DocumentosEntrevista::class)->subir($item, UploadedFile::fake()->create('w2.pdf', 10, 'application/pdf'));
+        $item->update(['estado' => EstadoDocumento::Leido]);
+
+        $lectura = DocumentoLectura::query()->create([
+            'documento_id' => $archivo->id,
+            'entrevista_documento_id' => $item->id,
+            'lector' => 'openai',
+            'modelo' => 'modelo-de-prueba',
+            'estado' => EstadoLectura::Leida,
+            'paginas' => 1,
+            'terminada_en' => now(),
+        ]);
+        $lectura->datos()->create([
+            'entrevista_documento_id' => $item->id,
+            'casilla' => 'a',
+            'valor' => '987-65-4321',
+            'valor_leido' => '987-65-4321',
+            'confianza' => 0.9137,
+            'motivo_confianza' => MotivoConfianza::EnTextoDelPdf,
+            'legibilidad' => Legibilidad::Claro,
+            'pagina' => 1,
+            'recuadro' => ['x' => 0.1, 'y' => 0.2, 'ancho' => 0.3, 'alto' => 0.05],
+            'evidencia' => 'Employee SSN 987-65-4321',
+            'origen' => OrigenDato::Lector,
+        ]);
+
+        $props = [];
+        $this->actingAs($this->cliente)->get(route('portal.entrevista.documentos'))->assertOk()
+            ->assertInertia(function (AssertableInertia $page) use (&$props) {
+                $props = $page->toArray()['props'];
+            });
+
+        $json = json_encode($props);
+        foreach (['documento_datos', 'valor_leido', 'confianza', 'motivo_confianza', 'legibilidad', 'recuadro', 'evidencia', '987-65-4321', '987654321', '0.9137'] as $prohibido) {
+            $this->assertStringNotContainsString($prohibido, $json, "Las props del portal no deben traer: {$prohibido}");
+        }
+        $this->assertSame('leido', $this->fila($item->id)['estado']);
     }
 
     public function test_un_formato_no_permitido_o_un_item_inexistente_falla(): void

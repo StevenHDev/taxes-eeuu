@@ -109,6 +109,7 @@ export function DocumentoFila({
     const recibido = archivos.length > 0;
     const devuelto =
         estado === 'con_observacion' || estado === 'no_aplica_rechazado';
+    const noSePudoLeer = estado === 'no_se_pudo_leer';
     const cerradoSinArchivos = estado === 'no_aplica';
 
     const titulo = [
@@ -129,11 +130,12 @@ export function DocumentoFila({
             })
           : null;
 
-    const accionSubir = devuelto
-        ? t('entrevista.documentos.subirDeNuevo')
-        : documento.archivos.length > 0
-          ? t('entrevista.documentos.agregarArchivo')
-          : t('entrevista.documentos.subir');
+    const accionSubir =
+        devuelto || noSePudoLeer
+            ? t('entrevista.documentos.subirDeNuevo')
+            : documento.archivos.length > 0
+              ? t('entrevista.documentos.agregarArchivo')
+              : t('entrevista.documentos.subir');
 
     const agregarOtro = () => {
         otro.post(agregar(documento.id).url, { preserveScroll: true });
@@ -174,6 +176,19 @@ export function DocumentoFila({
                         </p>
                         <p className="whitespace-pre-line">{observacion}</p>
                     </div>
+                </div>
+            ) : null}
+
+            {noSePudoLeer ? (
+                <div
+                    role="note"
+                    className="flex gap-2 rounded-md border border-border bg-muted/40 p-3 text-sm text-foreground"
+                >
+                    <MessageSquareWarning
+                        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                        aria-hidden="true"
+                    />
+                    <p>{t('entrevista.documentos.noSePudoLeerAviso')}</p>
                 </div>
             ) : null}
 

@@ -4,6 +4,7 @@ namespace Tests\Feature\Entrevista;
 
 use App\DataTransferObjects\MensajeEntranteWhatsapp;
 use App\Enums\Entrevista\CanalRespuesta;
+use App\Enums\Entrevista\EstadoDocumento;
 use App\Enums\FaseConversacion;
 use App\Enums\UserRole;
 use App\Jobs\ProcesarMensajeWhatsappJob;
@@ -170,6 +171,25 @@ class AgenteEntrevistaTest extends TestCase
         $this->assertArrayNotHasKey('nota_cliente', $alquiler);
         $this->assertStringNotContainsString('Vacía en marzo.', json_encode($pendientes));
         $this->assertStringNotContainsString('plantillas/', json_encode($pendientes));
+    }
+
+    public function test_consultar_entrevista_marca_el_documento_que_no_se_pudo_leer_sin_datos_leidos(): void
+    {
+        $this->firmar();
+        $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'D1', 'valor' => 'si']]]);
+        $entrevista = Entrevista::query()->where('user_id', $this->cliente->id)->firstOrFail();
+        $entrevista->documentos()->where('documento_codigo', 'w2')->firstOrFail()->update(['estado' => EstadoDocumento::NoSePudoLeer]);
+
+        $documentos = $this->tool('consultar_entrevista')['documentos'];
+        $w2 = collect($documentos['pendientes'])->firstWhere('nombre_oficial', 'Form W-2');
+
+        $this->assertNotNull($w2);
+        $this->assertTrue($w2['no_se_pudo_leer']);
+        $this->assertStringContainsString('más nítido o en PDF', $w2['aviso_no_se_pudo_leer']);
+        $this->assertSame(1, $documentos['no_se_pudo_leer']);
+        $this->assertSame(0, $documentos['en_revision']);
+        $this->assertFalse($documentos['todo_listo']);
+        $this->assertNull(collect($documentos['pendientes'])->firstWhere('nombre_oficial', 'Form W-2')['comentario_del_preparador']);
     }
 
     public function test_consultar_entrevista_explica_los_documentos_que_faltan_sin_archivos(): void

@@ -181,6 +181,7 @@ class HerramientasEntrevista
             'total' => count($documentos),
             'faltan' => $faltan->count(),
             'devueltos_por_el_preparador' => $faltan->whereIn('estado', $devueltos)->count(),
+            'no_se_pudo_leer' => $faltan->where('estado', EstadoDocumento::NoSePudoLeer->value)->count(),
             'en_revision' => collect($documentos)->where('resuelto', true)->whereIn('estado', [EstadoDocumento::Subido->value, EstadoDocumento::Leido->value, EstadoDocumento::NoSePudoLeer->value])->count(),
             'todo_listo' => $documentos !== [] && $faltan->isEmpty(),
             'pendientes' => $faltan->map(function (array $d) use ($personas, $devueltos) {
@@ -198,6 +199,11 @@ class HerramientasEntrevista
                     'que_subir' => $d['que_subir'],
                     'devuelto_por_el_preparador' => in_array($d['estado'], $devueltos, true),
                     'comentario_del_preparador' => in_array($d['estado'], $devueltos, true) ? $d['observacion'] : null,
+                    // F4.8a: el archivo no se pudo leer; nunca llega lo leído, solo el aviso.
+                    'no_se_pudo_leer' => $d['estado'] === EstadoDocumento::NoSePudoLeer->value,
+                    'aviso_no_se_pudo_leer' => $d['estado'] === EstadoDocumento::NoSePudoLeer->value
+                        ? 'No pudimos leer el archivo que subió: dile que lo suba de nuevo en "Mis documentos", más nítido o en PDF, y mándale el enlace de documentos.'
+                        : null,
                 ];
             })->values()->all(),
         ];
