@@ -223,6 +223,33 @@ class ChecklistDocumentos
     }
 
     /**
+     * La lectura terminó bien (F4.4). Solo cambia lo que está recién subido o
+     * no se había podido leer: si el preparador ya lo validó u observó, se
+     * queda como está.
+     */
+    public function leido(EntrevistaDocumento $item): void
+    {
+        $item->refresh();
+
+        if (in_array($item->estado, [EstadoDocumento::Subido, EstadoDocumento::NoSePudoLeer], true)) {
+            $item->update(['estado' => EstadoDocumento::Leido]);
+        }
+    }
+
+    /**
+     * La lectura falló en todos sus intentos (F4.4): el preparador lo ve
+     * "por revisar" y escribe los datos a mano. Solo desde `subido`.
+     */
+    public function noSePudoLeer(EntrevistaDocumento $item): void
+    {
+        $item->refresh();
+
+        if ($item->estado === EstadoDocumento::Subido) {
+            $item->update(['estado' => EstadoDocumento::NoSePudoLeer]);
+        }
+    }
+
+    /**
      * @throws TransicionNoPermitida
      */
     public function marcarNoAplica(EntrevistaDocumento $item, string $motivo): void

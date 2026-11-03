@@ -4,6 +4,7 @@ namespace App\Services\Entrevista;
 
 use App\Enums\Entrevista\EstadoDocumento;
 use App\Enums\FieldState;
+use App\Events\ArchivoDocumentoSubido;
 use App\Models\Documento;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaDocumento;
@@ -172,6 +173,8 @@ class DocumentosEntrevista
         ]);
 
         $this->checklist->archivoSubido($item);
+
+        ArchivoDocumentoSubido::dispatch($documento);
 
         return $documento;
     }
