@@ -281,6 +281,27 @@ class CatalogoRealTest extends TestCase
         }
     }
 
+    public function test_las_imagenes_de_ejemplo_son_de_formularios_del_irs_y_existen(): void
+    {
+        $sinImagen = ['tarjeta-ssn', 'ssa-1099', 'id-foto', 'registros-ingresos-gastos', 'registros-alquiler'];
+
+        foreach ([2025, 2026] as $anio) {
+            $documentos = $this->lector->documentos($anio);
+            $conImagen = $documentos->filter(fn (array $d) => ! empty($d['imagen_ejemplo']));
+
+            $this->assertNotEmpty($conImagen);
+
+            foreach ($conImagen as $d) {
+                $this->assertFileExists(public_path($d['imagen_ejemplo']), "{$d['codigo']}: falta la imagen de ejemplo.");
+                $this->assertNotEmpty($d['nombre_oficial'], "{$d['codigo']}: la imagen es solo de formularios del IRS.");
+            }
+
+            foreach ($sinImagen as $codigo) {
+                $this->assertEmpty($documentos->firstWhere('codigo', $codigo)['imagen_ejemplo'] ?? null, "{$codigo}: no es un formulario del IRS.");
+            }
+        }
+    }
+
     public function test_las_preguntas_sensibles_quedan_marcadas(): void
     {
         $sensibles = CatalogoPregunta::query()->delAnio(2025)->where('sensible', true)->pluck('codigo')->sort()->values()->all();
