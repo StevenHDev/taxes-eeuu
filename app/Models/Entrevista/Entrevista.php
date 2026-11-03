@@ -4,6 +4,7 @@ namespace App\Models\Entrevista;
 
 use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\Entrevista\EstadoEntrevista;
+use App\Models\Lectura\Excepcion;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -85,5 +86,15 @@ class Entrevista extends Model
     public function documentos(): HasMany
     {
         return $this->hasMany(EntrevistaDocumento::class);
+    }
+
+    /**
+     * Las reglas que no se cumplen (F4.2).
+     *
+     * @return HasMany<Excepcion, $this>
+     */
+    public function excepciones(): HasMany
+    {
+        return $this->hasMany(Excepcion::class);
     }
 }

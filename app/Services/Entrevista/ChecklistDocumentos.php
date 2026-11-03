@@ -253,6 +253,17 @@ class ChecklistDocumentos
     }
 
     /**
+     * Un dato del documento cambió después de validarlo: la validación se
+     * reabre y el preparador lo vuelve a mirar (documento madre, 6.4.3).
+     */
+    public function reabrirValidacion(EntrevistaDocumento $item): void
+    {
+        if ($item->estado === EstadoDocumento::Validado) {
+            $item->update(['estado' => EstadoDocumento::Leido]);
+        }
+    }
+
+    /**
      * La observación vuelve al cliente como consulta (5.3).
      *
      * @throws TransicionNoPermitida

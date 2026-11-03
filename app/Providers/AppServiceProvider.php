@@ -25,6 +25,9 @@ use App\Models\Entrevista\EntrevistaDocumento;
 use App\Models\Entrevista\EntrevistaPersona;
 use App\Models\Entrevista\EntrevistaRespuesta;
 use App\Models\FormaCliente;
+use App\Models\Lectura\DocumentoDato;
+use App\Models\Lectura\DocumentoLectura;
+use App\Models\Lectura\Excepcion;
 use App\Models\NivelRiesgoManual;
 use App\Models\ParametroFiscal;
 use App\Models\User;
@@ -110,6 +113,12 @@ class AppServiceProvider extends ServiceProvider
         // Entrevista (F2.2): a la bitácora solo van los nombres de atributo;
         // el historial con valores cifrados lo lleva RespuestaEntrevistaObserver.
         foreach ([Entrevista::class, EntrevistaPersona::class, EntrevistaRespuesta::class, EntrevistaDocumento::class] as $modelo) {
+            $modelo::observe(AuditoriaObserver::class);
+        }
+
+        // Lectura de documentos (F4.2): los valores van cifrados y la
+        // bitácora solo guarda qué atributo cambió.
+        foreach ([DocumentoLectura::class, DocumentoDato::class, Excepcion::class] as $modelo) {
             $modelo::observe(AuditoriaObserver::class);
         }
         EntrevistaRespuesta::observe(RespuestaEntrevistaObserver::class);

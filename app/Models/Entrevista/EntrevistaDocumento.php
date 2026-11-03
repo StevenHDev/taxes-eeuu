@@ -4,6 +4,8 @@ namespace App\Models\Entrevista;
 
 use App\Enums\Entrevista\EstadoDocumento;
 use App\Models\Documento;
+use App\Models\Lectura\DocumentoDato;
+use App\Models\Lectura\DocumentoLectura;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -99,5 +101,23 @@ class EntrevistaDocumento extends Model
     public function archivos(): HasMany
     {
         return $this->hasMany(Documento::class, 'entrevista_documento_id')->orderBy('id');
+    }
+
+    /**
+     * Los datos leídos de sus archivos (F4.2).
+     *
+     * @return HasMany<DocumentoDato, $this>
+     */
+    public function datos(): HasMany
+    {
+        return $this->hasMany(DocumentoDato::class, 'entrevista_documento_id');
+    }
+
+    /**
+     * @return HasMany<DocumentoLectura, $this>
+     */
+    public function lecturas(): HasMany
+    {
+        return $this->hasMany(DocumentoLectura::class, 'entrevista_documento_id');
     }
 }

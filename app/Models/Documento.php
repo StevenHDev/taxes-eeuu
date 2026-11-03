@@ -6,12 +6,14 @@ use App\Enums\FieldState;
 use App\Enums\MetodoExtraccionDocumento;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaPersona;
+use App\Models\Lectura\DocumentoLectura;
 use App\Services\DocumentoAlmacen;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\URL;
@@ -169,5 +171,15 @@ class Documento extends Model
             'documento' => $this->id,
             'disposition' => 'inline',
         ]);
+    }
+
+    /**
+     * Las veces que se leyó este archivo (F4.2).
+     *
+     * @return HasMany<DocumentoLectura, $this>
+     */
+    public function lecturas(): HasMany
+    {
+        return $this->hasMany(DocumentoLectura::class);
     }
 }
