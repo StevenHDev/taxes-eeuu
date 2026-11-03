@@ -250,4 +250,164 @@ class CargaTest extends TestCase
 
         $this->assertDatabaseMissing('bitacora_actividad', ['auditable_type' => CatalogoPregunta::class]);
     }
+
+    /**
+     * Copia los archivos de prueba a una carpeta temporal para poder quitarles piezas.
+     */
+    private function copiaDeArchivos(): string
+    {
+        $base = sys_get_temp_dir().'/catalogo-'.uniqid();
+        mkdir("{$base}/2025", recursive: true);
+        mkdir("{$base}/2026", recursive: true);
+
+        foreach ([...glob("{$this->fixtures}/2025/*.php"), ...glob("{$this->fixtures}/2026/*.php")] as $archivo) {
+            copy($archivo, $base.'/'.basename(dirname($archivo)).'/'.basename($archivo));
+        }
+
+        return $base;
+    }
+
+    private function borrarCopia(string $base): void
+    {
+        array_map('unlink', [...glob("{$base}/2025/*"), ...glob("{$base}/2026/*")]);
+        rmdir("{$base}/2025");
+        rmdir("{$base}/2026");
+        rmdir($base);
+    }
+
+    /**
+     * Quita la casilla `w2:2` y la línea `sch-8812:4` de los archivos de 2025.
+     */
+    private function quitarCasillaYLinea(string $base): void
+    {
+        $documentos = require "{$base}/2025/documentos.php";
+        $documentos[0]['casillas'] = array_values(array_filter($documentos[0]['casillas'], fn (array $c) => $c['casilla'] !== '2'));
+        file_put_contents("{$base}/2025/documentos.php", '<?php return '.var_export($documentos, true).';');
+
+        $formularios = require "{$base}/2025/formularios.php";
+        $formularios[1]['lineas'] = array_values(array_filter($formularios[1]['lineas'], fn (array $l) => $l['linea'] !== '4'));
+        file_put_contents("{$base}/2025/formularios.php", '<?php return '.var_export($formularios, true).';');
+    }
+
+    private function casillaW2(int $anio, string $casilla): CatalogoCasilla
+    {
+        return CatalogoCasilla::query()->delAnio($anio)->where('casilla', $casilla)->whereHas('documento', fn ($q) => $q->where('codigo', 'w2'))->sole();
+    }
+
+    private function lineaSch8812(int $anio, string $linea): CatalogoLinea
+    {
+        return CatalogoLinea::query()->delAnio($anio)->where('linea', $linea)->whereHas('formulario', fn ($q) => $q->where('codigo', 'sch-8812'))->sole();
+    }
+
+    public function test_una_casilla_o_linea_que_sale_del_archivo_se_desactiva_en_2025_y_en_2026(): void
+    {
+        $base = $this->copiaDeArchivos();
+
+        try {
+            $importador = new CatalogoFiscalImportador($base);
+            $importador->cargar(2025);
+            $this->artisan('catalogo-fiscal:copiar', ['desde' => 2025, 'hasta' => 2026])->assertSuccessful();
+            $importador->cargar(2026);
+            $this->assertTrue($this->casillaW2(2026, '2')->activo);
+
+            $this->quitarCasillaYLinea($base);
+
+            $resultado = $importador->cargar(2025);
+            $this->assertFalse($this->casillaW2(2025, '2')->activo);
+            $this->assertFalse($this->lineaSch8812(2025, '4')->activo);
+            $this->assertTrue($this->casillaW2(2025, '1')->activo);
+            // Cuenta como actualizadas: la casilla y la línea desactivadas, más la línea 14 que sube de orden.
+            $this->assertSame(1, $resultado->actualizados['casilla']);
+            $this->assertSame(2, $resultado->actualizados['linea']);
+
+            // 2026 se deriva de los archivos de 2025 con sus ajustes (1099-NEC 1 → 1a).
+            $importador->cargar(2026);
+            $this->assertFalse($this->casillaW2(2026, '2')->activo);
+            $this->assertFalse($this->lineaSch8812(2026, '4')->activo);
+            $this->assertTrue(CatalogoCasilla::query()->delAnio(2026)->where('casilla', '1a')->where('activo', true)->exists());
+            $this->assertFalse(CatalogoCasilla::query()->delAnio(2026)->where('casilla', '1')->whereHas('documento', fn ($q) => $q->where('codigo', '1099-nec'))->exists());
+            $this->assertSame($this->conteos(2025)['casillas'], $this->conteos(2026)['casillas']);
+
+            // No se borran: la fila sigue, solo inactiva; y una segunda carga no cambia nada.
+            $this->assertSame(2, CatalogoCasilla::query()->delAnio(2025)->whereHas('documento', fn ($q) => $q->where('codigo', 'w2'))->count());
+            $otra = $importador->cargar(2026);
+            $this->assertSame([], $otra->actualizados);
+        } finally {
+            $this->borrarCopia($base);
+        }
+    }
+
+    public function test_una_casilla_o_linea_que_vuelve_al_archivo_se_reactiva(): void
+    {
+        $base = $this->copiaDeArchivos();
+        $documentos = file_get_contents("{$base}/2025/documentos.php");
+        $formularios = file_get_contents("{$base}/2025/formularios.php");
+
+        try {
+            $importador = new CatalogoFiscalImportador($base);
+            $importador->cargar(2025);
+
+            $this->quitarCasillaYLinea($base);
+            $importador->cargar(2025);
+            $this->assertFalse($this->casillaW2(2025, '2')->activo);
+
+            file_put_contents("{$base}/2025/documentos.php", $documentos);
+            file_put_contents("{$base}/2025/formularios.php", $formularios);
+            $importador->cargar(2025);
+
+            $this->assertTrue($this->casillaW2(2025, '2')->activo);
+            $this->assertTrue($this->lineaSch8812(2025, '4')->activo);
+        } finally {
+            $this->borrarCopia($base);
+        }
+    }
+
+    public function test_una_casilla_editada_en_pantalla_no_se_desactiva_salvo_con_forzar(): void
+    {
+        $base = $this->copiaDeArchivos();
+
+        try {
+            $importador = new CatalogoFiscalImportador($base);
+            $importador->cargar(2025);
+
+            $this->actingAs(User::factory()->create(['role' => UserRole::Administrator]));
+            $this->casillaW2(2025, '2')->update(['descripcion' => 'Editada por GTS']);
+            $this->lineaSch8812(2025, '4')->update(['descripcion' => 'Editada por GTS']);
+            auth()->logout();
+
+            $this->quitarCasillaYLinea($base);
+
+            $resultado = $importador->cargar(2025);
+            $this->assertTrue($this->casillaW2(2025, '2')->activo);
+            $this->assertTrue($this->lineaSch8812(2025, '4')->activo);
+            $this->assertCount(2, array_filter($resultado->saltados, fn (string $s) => str_contains($s, 'editado desde la pantalla')));
+
+            $importador->cargar(2025, forzar: true);
+            $this->assertFalse($this->casillaW2(2025, '2')->activo);
+            $this->assertFalse($this->lineaSch8812(2025, '4')->activo);
+        } finally {
+            $this->borrarCopia($base);
+        }
+    }
+
+    public function test_verificar_detecta_un_tipo_de_dato_fuera_del_conjunto_y_un_ssn_no_sensible(): void
+    {
+        app(CatalogoFiscalImportador::class)->cargar(2025);
+        $this->assertSame([], app(CatalogoFiscalVerificador::class)->verificar(2025));
+
+        $this->casillaW2(2025, '1')->update(['tipo_dato' => 'dinero']);
+        $this->casillaW2(2025, '2')->update(['tipo_dato' => 'ssn', 'sensible' => false]);
+
+        $errores = app(CatalogoFiscalVerificador::class)->verificar(2025);
+        $this->assertTrue(collect($errores)->contains(fn (string $e) => str_contains($e, 'Casilla w2:1: tipo de dato "dinero"')));
+        $this->assertContains('Casilla w2:2: trae un ssn y debe estar marcada como sensible.', $errores);
+    }
+
+    public function test_verificar_detecta_una_linea_que_apunta_a_una_casilla_desactivada(): void
+    {
+        app(CatalogoFiscalImportador::class)->cargar(2025);
+        $this->casillaW2(2025, '1')->update(['activo' => false]);
+
+        $this->assertContains('1040 línea 1a: el origen "w2:1" no existe en 2025.', app(CatalogoFiscalVerificador::class)->verificar(2025));
+    }
 }

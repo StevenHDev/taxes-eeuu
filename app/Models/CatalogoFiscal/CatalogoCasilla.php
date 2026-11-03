@@ -17,9 +17,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $descripcion
  * @property string|null $tipo_dato
  * @property bool $clave
+ * @property bool $sensible
  * @property int $orden
  */
-#[Fillable(['tax_year', 'documento_id', 'casilla', 'descripcion', 'tipo_dato', 'clave', 'orden', 'activo'])]
+#[Fillable(['tax_year', 'documento_id', 'casilla', 'descripcion', 'tipo_dato', 'clave', 'sensible', 'orden', 'activo'])]
 class CatalogoCasilla extends Model
 {
     use EsDelCatalogoFiscal;
@@ -33,6 +34,7 @@ class CatalogoCasilla extends Model
     {
         return [
             'clave' => 'boolean',
+            'sensible' => 'boolean',
             'orden' => 'integer',
         ];
     }

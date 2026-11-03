@@ -4,6 +4,7 @@ namespace App\Services\CatalogoFiscal;
 
 use App\Enums\CatalogoFiscal\ObjetivoActivacion;
 use App\Enums\CatalogoFiscal\OrigenLinea;
+use App\Http\Requests\CatalogoFiscal\DocumentoRequest;
 use App\Models\CatalogoFiscal\CatalogoActivacion;
 use App\Models\CatalogoFiscal\CatalogoCasilla;
 use App\Models\CatalogoFiscal\CatalogoDocumento;
@@ -65,8 +66,24 @@ class CatalogoFiscalVerificador
             }
         }
 
-        $casillas = CatalogoCasilla::query()->delAnio($anio)->activos()->with('documento')->get()
-            ->map(fn (CatalogoCasilla $c) => "{$c->documento->codigo}:{$c->casilla}")->all();
+        // Solo casillas activas de documentos activos: una línea que apunta a
+        // una casilla desactivada (o de un documento desactivado) no se puede leer.
+        $casillasActivas = CatalogoCasilla::query()->delAnio($anio)->activos()
+            ->whereHas('documento', fn ($q) => $q->where('activo', true))
+            ->with('documento')->get();
+        $casillas = $casillasActivas->map(fn (CatalogoCasilla $c) => "{$c->documento->codigo}:{$c->casilla}")->all();
+
+        foreach ($casillasActivas as $casilla) {
+            $donde = "Casilla {$casilla->documento->codigo}:{$casilla->casilla}";
+
+            if (! in_array($casilla->tipo_dato, DocumentoRequest::TIPOS_DATO, true)) {
+                $errores[] = "{$donde}: tipo de dato \"{$casilla->tipo_dato}\" fuera del conjunto permitido (".implode(', ', DocumentoRequest::TIPOS_DATO).').';
+            }
+
+            if (in_array($casilla->tipo_dato, ['ssn', 'ein', 'tin'], true) && ! $casilla->sensible) {
+                $errores[] = "{$donde}: trae un {$casilla->tipo_dato} y debe estar marcada como sensible.";
+            }
+        }
         $lineas = CatalogoLinea::query()->delAnio($anio)->activos()->with('formulario')->get();
         $codigosLinea = $lineas->map(fn (CatalogoLinea $l) => "{$l->formulario->codigo}:{$l->linea}")->all();
 

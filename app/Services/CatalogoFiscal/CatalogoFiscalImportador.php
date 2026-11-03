@@ -27,7 +27,8 @@ use InvalidArgumentException;
  * - Idempotente: hace upsert por código; correrla dos veces no duplica.
  * - No pisa lo que un administrador editó desde la pantalla (hay un cambio
  *   con origen "pantalla" en `catalogo_cambios`), salvo con `$forzar`.
- * - Nunca desactiva ni borra lo que no está en los archivos.
+ * - Nunca borra. Desactiva (activo = false) las activaciones, casillas y líneas
+ *   que salieron del archivo (F2.5, F4.1), salvo las editadas desde la pantalla.
  * - `$dryRun` hace todo dentro de una transacción y la deshace.
  * - Un año copiado de otro (2026 de 2025) se carga con los archivos del año
  *   de origen y su `ajustes.php` aplicado en memoria: hereda lo nuevo del
@@ -39,7 +40,7 @@ class CatalogoFiscalImportador
         'preguntas' => ['codigo', 'bloque', 'pantalla', 'orden', 'texto_es', 'texto_en', 'ayuda_es', 'ayuda_en', 'tipo_respuesta', 'opciones', 'nivel', 'por_persona', 'sensible', 'condicion', 'efecto_es', 'fuente_texto', 'fuente_url', 'activa', 'activo'],
         'activa' => ['respuesta', 'objetivo', 'nota'],
         'documentos' => ['codigo', 'grupo', 'nombre_oficial', 'nombre_sencillo_es', 'nombre_sencillo_en', 'emisor_es', 'emisor_en', 'fecha_llegada', 'si_no_llega_es', 'si_no_llega_en', 'que_subir_es', 'que_subir_en', 'plantilla', 'formatos', 'uno_por', 'siempre', 'orden', 'fuente_texto', 'fuente_url', 'casillas'],
-        'casillas' => ['casilla', 'descripcion', 'tipo_dato', 'clave', 'orden'],
+        'casillas' => ['casilla', 'descripcion', 'tipo_dato', 'clave', 'sensible', 'orden'],
         'formularios' => ['codigo', 'nombre', 'para_que', 'siempre', 'ficha', 'orden', 'fuente_texto', 'fuente_url', 'lineas'],
         'lineas' => ['linea', 'descripcion', 'origen_tipo', 'origen_clave', 'campo_pdf', 'orden'],
         'reglas' => ['codigo', 'descripcion', 'severidad', 'implementada', 'orden', 'fuente_texto', 'fuente_url'],
@@ -197,16 +198,31 @@ class CatalogoFiscalImportador
         $documento = CatalogoDocumento::query()->firstOrNew(['tax_year' => $anio, 'codigo' => $fila['codigo']]);
         $this->guardar($documento, $fila, 'documento', $fila['codigo']);
 
+        $vigentes = [];
+
         foreach ($fila['casillas'] ?? [] as $i => $casilla) {
             $this->validarClaves('casillas', $casilla, "documento {$fila['codigo']}");
+            $vigentes[] = (string) $casilla['casilla'];
 
             $this->guardar(
                 CatalogoCasilla::query()->firstOrNew(['documento_id' => $documento->id, 'casilla' => $casilla['casilla']]),
-                ['orden' => $i + 1, ...$casilla],
+                // Si vuelve al archivo, vuelve a estar activa.
+                ['orden' => $i + 1, ...$casilla, 'activo' => true],
                 'casilla',
                 "{$fila['codigo']}:{$casilla['casilla']}",
                 $anio,
             );
+        }
+
+        // Una casilla que salió del archivo (la 1095-A pasó de resumida a una
+        // por línea, F4.1) se desactiva; no se borra, queda su historial.
+        if (array_key_exists('casillas', $fila)) {
+            CatalogoCasilla::query()
+                ->where('documento_id', $documento->id)
+                ->where('activo', true)
+                ->whereNotIn('casilla', $vigentes)
+                ->get()
+                ->each(fn (CatalogoCasilla $c) => $this->guardar($c, ['activo' => false], 'casilla', "{$fila['codigo']}:{$c->casilla}", $anio));
         }
     }
 
@@ -218,16 +234,28 @@ class CatalogoFiscalImportador
         $formulario = CatalogoFormulario::query()->firstOrNew(['tax_year' => $anio, 'codigo' => $fila['codigo']]);
         $this->guardar($formulario, $fila, 'formulario', $fila['codigo']);
 
+        $vigentes = [];
+
         foreach ($fila['lineas'] ?? [] as $i => $linea) {
             $this->validarClaves('lineas', $linea, "formulario {$fila['codigo']}");
+            $vigentes[] = (string) $linea['linea'];
 
             $this->guardar(
                 CatalogoLinea::query()->firstOrNew(['formulario_id' => $formulario->id, 'linea' => $linea['linea']]),
-                ['orden' => $i + 1, ...$linea],
+                ['orden' => $i + 1, ...$linea, 'activo' => true],
                 'linea',
                 "{$fila['codigo']}:{$linea['linea']}",
                 $anio,
             );
+        }
+
+        if (array_key_exists('lineas', $fila)) {
+            CatalogoLinea::query()
+                ->where('formulario_id', $formulario->id)
+                ->where('activo', true)
+                ->whereNotIn('linea', $vigentes)
+                ->get()
+                ->each(fn (CatalogoLinea $l) => $this->guardar($l, ['activo' => false], 'linea', "{$fila['codigo']}:{$l->linea}", $anio));
         }
     }
 
