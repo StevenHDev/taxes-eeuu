@@ -3,6 +3,7 @@
 namespace App\Models\Lectura;
 
 use App\Enums\Lectura\Legibilidad;
+use App\Enums\Lectura\MotivoConfianza;
 use App\Enums\Lectura\OrigenDato;
 use App\Models\Entrevista\EntrevistaDocumento;
 use App\Models\Entrevista\ValorCifrado;
@@ -27,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property string|int|float|list<string>|null $valor
  * @property string|int|float|list<string>|null $valor_leido
  * @property float|null $confianza
+ * @property MotivoConfianza|null $motivo_confianza
  * @property Legibilidad|null $legibilidad
  * @property int|null $pagina
  * @property array{x: float, y: float, ancho: float, alto: float}|null $recuadro
@@ -36,7 +38,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $corregido_en
  * @property string|null $motivo
  */
-#[Fillable(['lectura_id', 'entrevista_documento_id', 'casilla', 'valor', 'valor_leido', 'confianza', 'legibilidad', 'pagina', 'recuadro', 'evidencia', 'origen', 'corregido_por', 'corregido_en', 'motivo'])]
+#[Fillable(['lectura_id', 'entrevista_documento_id', 'casilla', 'valor', 'valor_leido', 'confianza', 'motivo_confianza', 'legibilidad', 'pagina', 'recuadro', 'evidencia', 'origen', 'corregido_por', 'corregido_en', 'motivo'])]
 class DocumentoDato extends Model
 {
     protected $table = 'documento_datos';
@@ -50,6 +52,7 @@ class DocumentoDato extends Model
             'valor' => ValorCifrado::class,
             'valor_leido' => ValorCifrado::class,
             'confianza' => 'float',
+            'motivo_confianza' => MotivoConfianza::class,
             'legibilidad' => Legibilidad::class,
             'pagina' => 'integer',
             'recuadro' => 'array',
