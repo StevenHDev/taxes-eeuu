@@ -58,7 +58,7 @@ class CatalogoRealTest extends TestCase
         $this->assertSame(46, $conteos['documentos']);
         $this->assertSame(29, $conteos['formularios']);
         $this->assertSame(13, $conteos['reglas']);
-        $this->assertSame(341, $conteos['casillas']);
+        $this->assertSame(344, $conteos['casillas']);
         $this->assertSame(98, $conteos['lineas']);
 
         // 2026 apaga F10 y F11: los créditos por vehículo limpio y de energía
@@ -142,6 +142,19 @@ class CatalogoRealTest extends TestCase
     private function casillasDe(int $anio, string $documento): Collection
     {
         return collect($this->lector->documentos($anio)->firstWhere('codigo', $documento)['casillas'] ?? []);
+    }
+
+    public function test_la_tarjeta_del_seguro_social_se_lee_con_su_nombre_y_su_numero_sensibles(): void
+    {
+        foreach ([2025, 2026] as $anio) {
+            $casillas = $this->casillasDe($anio, 'tarjeta-ssn')->keyBy('casilla');
+
+            $this->assertSame(['nombre', 'ssn', 'no-valido-para-trabajar'], $casillas->keys()->all(), "{$anio}: casillas de la tarjeta.");
+            $this->assertTrue($casillas['ssn']['sensible']);
+            $this->assertTrue($casillas['nombre']['sensible']);
+            $this->assertSame('ssn', $casillas['ssn']['tipo_dato']);
+            $this->assertFalse($casillas->has('anio'), 'La tarjeta no trae año impreso.');
+        }
     }
 
     public function test_los_20_documentos_que_lee_f4_traen_sus_casillas_con_el_anio(): void

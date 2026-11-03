@@ -9,7 +9,7 @@
  * y "si no te llega" del W-2 y del 1095-A; emisor del 1095-A según la sección 4.7).
  * Los documentos sin dato en el documento madre quedan con null (o []).
  *
- * Casillas (F4.1): los 20 documentos que la lectura de F4 extrae traen sus casillas del
+ * Casillas (F4.1): los 21 documentos que la lectura de F4 extrae (los 20 formularios más la tarjeta del Seguro Social) traen sus casillas del
  * formulario de 2025, en el orden impreso (encabezado primero). `casilla` es el número o letra
  * impresos, o un nombre de encabezado (`anio`, `pagador-tin`, `pagador-nombre`, `receptor-tin`,
  * `receptor-nombre`). En 1098, 1098-E y 1098-T el prestamista o la institución es `pagador-*`
@@ -42,7 +42,13 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'persona', 'orden' => 2,
         'fuente_texto' => 'Instrucciones del Schedule 8812 y Pub. 596 (SSN válido para trabajar)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040s8.pdf',
-        'casillas' => [],
+        // F4: se lee para tener el número de cada persona (la entrevista solo guarda el del
+        // cónyuge, B4.3). Es una tarjeta o carta, sin año impreso: no lleva `anio`.
+        'casillas' => [
+            ['casilla' => 'nombre', 'descripcion' => 'Nombre de la persona, como está impreso en la tarjeta o carta', 'tipo_dato' => 'nombre', 'clave' => true, 'sensible' => true, 'orden' => 1],
+            ['casilla' => 'ssn', 'descripcion' => 'Número de Seguro Social, ITIN o ATIN de la persona', 'tipo_dato' => 'ssn', 'clave' => true, 'sensible' => true, 'orden' => 2],
+            ['casilla' => 'no-valido-para-trabajar', 'descripcion' => 'La tarjeta dice "no válida para trabajar" o "válida solo con autorización del DHS"', 'tipo_dato' => 'si_no', 'clave' => true, 'sensible' => false, 'orden' => 3],
+        ],
     ],
     [
         'codigo' => 'ip-pin', 'grupo' => 'identidad', 'nombre_oficial' => 'IP PIN (protección de identidad)',
