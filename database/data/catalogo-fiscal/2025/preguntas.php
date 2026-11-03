@@ -504,7 +504,7 @@ return [
     // ── Bloque D — ¿De dónde recibiste dinero en {anio}? ──
     [
         'codigo' => 'D1', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 1,
-        'texto_es' => '¿Recibiste salario como empleado (tiempo parcial o completo) en {anio}?', 'texto_en' => 'Did you receive wages as an employee (part-time or full-time) in {anio}?', 'ayuda_es' => 'Te pediremos un W-2 por cada empleo.', 'ayuda_en' => 'We\'ll ask for a W-2 for each job.',
+        'texto_es' => '¿Recibiste salario como empleado (tiempo parcial o completo) en {anio}?', 'texto_en' => 'Did you receive wages as an employee (part-time or full-time) in {anio}?', 'ayuda_es' => 'Te pediremos un W-2 por cada empleo. Si tu empleador te paga, es salario aunque tengas un contrato o te hayan pagado en efectivo.', 'ayuda_en' => 'We\'ll ask for a W-2 for each job. If an employer pays you, it is wages even if you have a contract or were paid in cash.',
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => '1040 líneas 1a y 25a (retención)',
@@ -754,7 +754,7 @@ return [
     ],
     [
         'codigo' => 'D15', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 15,
-        'texto_es' => '¿Te pagaron por trabajos por contrato o por cuenta propia?', 'texto_en' => 'Were you paid for contract work or self-employment?', 'ayuda_es' => null,
+        'texto_es' => '¿Trabajaste por tu cuenta o como contratista independiente (freelance, servicios para clientes que no son tu empleador)?', 'texto_en' => 'Did you work for yourself or as an independent contractor (freelance, services for clients who are not your employer)?', 'ayuda_es' => 'No incluye el salario de un empleo, aunque tengas un contrato o te paguen en efectivo: eso va en la pregunta del salario.', 'ayuda_en' => 'It does not include wages from a job, even if you have a contract or are paid in cash: that goes in the wages question.',
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule C → Schedule 1 línea 3; Schedule SE',
@@ -797,7 +797,7 @@ return [
     ],
     [
         'codigo' => 'D17', 'bloque' => 'D', 'pantalla' => 5, 'orden' => 17,
-        'texto_es' => '¿Recibiste otro dinero? (pagos en efectivo, servicio de jurado, premios, activos digitales, regalías, beneficios por huelga)', 'texto_en' => 'Did you receive any other money? (cash payments, jury duty, prizes, digital assets, royalties, strike benefits)', 'ayuda_es' => 'Los montos salen de tus documentos o te los pide tu preparador.', 'ayuda_en' => 'The amounts come from your documents, or your preparer will ask you for them.',
+        'texto_es' => '¿Recibiste otro dinero? (pagos en efectivo, servicio de jurado, premios, activos digitales, regalías, beneficios por huelga)', 'texto_en' => 'Did you receive any other money? (cash payments, jury duty, prizes, digital assets, royalties, strike benefits)', 'ayuda_es' => 'No incluye tu salario, aunque te lo hayan pagado en efectivo. Los montos salen de tus documentos o te los pide tu preparador.', 'ayuda_en' => 'It does not include your wages, even if you were paid in cash. The amounts come from your documents, or your preparer will ask you for them.',
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
         'condicion' => null,
         'efecto_es' => 'Schedule 1 o Schedule C/E',
