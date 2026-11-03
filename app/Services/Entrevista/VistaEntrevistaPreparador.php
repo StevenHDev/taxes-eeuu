@@ -10,6 +10,7 @@ use App\Models\Entrevista\EntrevistaRespuesta;
 use App\Models\Entrevista\EntrevistaRespuestaCambio;
 use App\Models\User;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
+use App\Services\Lectura\ColaExcepciones;
 
 /**
  * La entrevista de un cliente como la ve el preparador en la ficha (F2.9):
@@ -25,6 +26,7 @@ class VistaEntrevistaPreparador
         private readonly PasosEntrevista $pasos,
         private readonly DocumentosEntrevista $documentos,
         private readonly ChecklistDocumentos $checklist,
+        private readonly ColaExcepciones $cola,
     ) {}
 
     /**
@@ -112,6 +114,8 @@ class VistaEntrevistaPreparador
             'documentos' => $this->documentos($entrevista, $situacion, $ingles),
             'documentos_resumen' => $this->checklist->resumenPorCliente([$cliente->id], $taxYear)[$cliente->id]
                 ?? ['faltan' => 0, 'por_revisar' => 0, 'validados' => 0, 'no_aplica' => 0, 'total' => 0, 'completo' => false],
+            // F4.7: lo que el motor de reglas dejó abierto para este cliente.
+            'excepciones_abiertas' => $this->cola->conteo($cliente, $taxYear),
         ];
     }
 
