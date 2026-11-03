@@ -57,17 +57,33 @@ class MariaTest extends TestCase
     }
 
     /**
-     * @param  list<string>  $si
-     * @return list<array{codigo: string, valor: string}>
+     * Contesta un bloque como lo haría el agente: cada consulta trae como máximo 8 preguntas, así que
+     * va consultando y guardando hasta que no quede nada del bloque. Devuelve lo que se rechazó.
+     *
+     * @param  list<string>  $si  las que se contestan "sí"; las demás de sí o no, "no"
+     * @param  array<string, mixed>  $valores  respuestas de otro tipo (un número) por código
+     * @return list<mixed>
      */
-    private function casillas(string $bloque, array $si, array $excepto = []): array
+    private function contestar(string $bloque, array $si, array $valores = []): array
     {
-        $codigos = collect($this->agente('consultar_entrevista')['proximas_preguntas'])
-            ->filter(fn (array $p) => str_starts_with($p['codigo'], $bloque) && $p['persona'] === null && in_array($p['tipo'], ['si_no', 'usted_conyuge_no'], true))
-            ->pluck('codigo')
-            ->reject(fn (string $c) => in_array($c, $excepto, true));
+        $rechazadas = [];
 
-        return $codigos->map(fn (string $c) => ['codigo' => $c, 'valor' => in_array($c, $si, true) ? 'si' : 'no'])->values()->all();
+        for ($vuelta = 0; $vuelta < 10; $vuelta++) {
+            $respuestas = collect($this->agente('consultar_entrevista')['proximas_preguntas'])
+                ->filter(fn (array $p) => str_starts_with($p['codigo'], $bloque) && $p['persona'] === null
+                    && (in_array($p['tipo'], ['si_no', 'usted_conyuge_no'], true) || array_key_exists($p['codigo'], $valores)))
+                ->map(fn (array $p) => ['codigo' => $p['codigo'], 'valor' => $valores[$p['codigo']] ?? (in_array($p['codigo'], $si, true) ? 'si' : 'no')])
+                ->values()
+                ->all();
+
+            if ($respuestas === []) {
+                break;
+            }
+
+            $rechazadas = [...$rechazadas, ...$this->agente('guardar_respuestas', ['respuestas' => $respuestas])['rechazadas']];
+        }
+
+        return $rechazadas;
     }
 
     public function test_maria_empieza_por_whatsapp_y_termina_en_el_portal_sin_repetir(): void
@@ -91,12 +107,9 @@ class MariaTest extends TestCase
             'C4' => 12, 'C5' => 'no', 'C6' => 'si', 'C7' => 'no', 'C8' => 'no', 'C11' => 'no',
         ])->map(fn ($v, $c) => ['codigo' => $c, 'persona_id' => $hijo['persona_id'], 'valor' => $v])->values()->all()])['rechazadas']);
 
-        $this->assertSame([], $this->agente('guardar_respuestas', ['respuestas' => [
-            ...$this->casillas('D', ['D1']),
-            ['codigo' => 'D1.1', 'valor' => 1],
-        ]])['rechazadas']);
-        $this->assertSame([], $this->agente('guardar_respuestas', ['respuestas' => $this->casillas('E', ['E6'])])['rechazadas']);
-        $this->assertSame([], $this->agente('guardar_respuestas', ['respuestas' => $this->casillas('F', [])])['rechazadas']);
+        $this->assertSame([], $this->contestar('D', ['D1'], ['D1.1' => 1]));
+        $this->assertSame([], $this->contestar('E', ['E6']));
+        $this->assertSame([], $this->contestar('F', []));
         $this->assertSame([], $this->agente('guardar_respuestas', ['respuestas' => [
             ['codigo' => 'G1', 'valor' => 'no'], ['codigo' => 'G2', 'valor' => 'no'], ['codigo' => 'G5', 'valor' => 'si'],
         ]])['rechazadas']);

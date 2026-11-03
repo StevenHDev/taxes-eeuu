@@ -156,6 +156,20 @@ class AgenteEntrevistaTest extends TestCase
         $this->assertTrue($this->tool('consultar_entrevista')['con_conyuge']);
     }
 
+    public function test_consultar_entrevista_da_como_maximo_8_preguntas_y_los_seguimientos_primero(): void
+    {
+        $this->firmar();
+
+        $resultado = $this->tool('consultar_entrevista');
+
+        $this->assertCount(8, $resultado['proximas_preguntas']);
+        $this->assertGreaterThan(0, $resultado['quedan_mas'], 'Quedan más preguntas para el siguiente mensaje.');
+
+        $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'D1', 'valor' => 'si']]]);
+
+        $this->assertSame('D1.1', $this->tool('consultar_entrevista')['proximas_preguntas'][0]['codigo'], 'Lo que abrió su "sí" va primero.');
+    }
+
     public function test_consultar_entrevista_trae_que_subir_pero_no_la_nota_del_cliente(): void
     {
         $this->firmar();

@@ -24,8 +24,8 @@ use Illuminate\Support\Collection;
  */
 class HerramientasEntrevista
 {
-    /** Cuántas preguntas devuelve por vez, para que el modelo agrupe sin perderse. */
-    private const PROXIMAS = 25;
+    /** Cuántas preguntas le llegan al agente por consulta: un mensaje con más se siente como un formulario. */
+    private const PROXIMAS = 8;
 
     public function __construct(
         private readonly CatalogoFiscal $catalogo,
@@ -45,6 +45,7 @@ class HerramientasEntrevista
         $preguntas = $this->catalogo->preguntas($entrevista->tax_year)->keyBy('codigo');
         $personas = $entrevista->personas()->get()->keyBy('id');
         $documentos = $this->documentos->lista($entrevista, $situacion, false);
+        $pendientes = $this->conSeguimientosPrimero($situacion->pendientesParaWhatsapp(), $preguntas);
 
         return [
             'estado' => $entrevista->estado->value,
@@ -52,7 +53,7 @@ class HerramientasEntrevista
             // Sin cónyuge (B1 distinto de "casado"), las preguntas "usted o
             // cónyuge" se hacen como sí o no y "sí" se guarda como ["usted"].
             'con_conyuge' => $this->pasos->conConyuge($situacion),
-            'proximas_preguntas' => collect($situacion->pendientesParaWhatsapp())
+            'proximas_preguntas' => collect($pendientes)
                 ->take(self::PROXIMAS)
                 ->map(function (array $p) use ($preguntas, $personas, $entrevista) {
                     $pregunta = $preguntas[$p['codigo']];
@@ -68,6 +69,8 @@ class HerramientasEntrevista
                         'persona' => $persona === null ? null : ['persona_id' => $persona->id, 'numero' => $persona->orden, 'etiqueta' => $persona->etiqueta],
                     ];
                 })->values()->all(),
+            // Cuántas preguntas más quedan después de estas, para que el agente sepa que sigue otro mensaje.
+            'quedan_mas' => max(0, count($pendientes) - self::PROXIMAS),
             'avance' => $this->pasos->avance($situacion),
             'falta_en_el_portal' => [
                 'preguntas_sensibles' => count($situacion->faltaEnPortal()),
@@ -80,6 +83,25 @@ class HerramientasEntrevista
                 'documentos' => route('portal.entrevista.documentos'),
                 'revisar_y_confirmar' => route('portal.entrevista.resumen'),
             ],
+        ];
+    }
+
+    /**
+     * Las preguntas que salen de un "sí" anterior (seguimientos) van antes que las
+     * de la pantalla siguiente: se pregunta lo que el cliente acaba de abrir y no se
+     * mezcla con otro tema. Dentro de cada grupo se mantiene el orden del catálogo.
+     *
+     * @param  list<array{codigo: string, persona_id: int|null, pantalla: int}>  $pendientes
+     * @param  Collection<string, array<string, mixed>>  $preguntas
+     * @return list<array{codigo: string, persona_id: int|null, pantalla: int}>
+     */
+    private function conSeguimientosPrimero(array $pendientes, Collection $preguntas): array
+    {
+        $esSeguimiento = fn (array $p) => ($preguntas[$p['codigo']]['nivel'] ?? null) === 'seguimiento';
+
+        return [
+            ...array_values(array_filter($pendientes, $esSeguimiento)),
+            ...array_values(array_filter($pendientes, fn (array $p) => ! $esSeguimiento($p))),
         ];
     }
 
