@@ -91,6 +91,35 @@ class MotorTest extends TestCase
         $this->assertSame('si', $this->situacion()->respuestas['B2']);
     }
 
+    public function test_la_pension_de_un_exconyuge_solo_se_pregunta_a_quien_estuvo_casado(): void
+    {
+        $this->assertFalse($this->situacion()->esVisible('D11'), 'Sin estado civil todavía no se sabe.');
+
+        $this->responder('B1', 'nunca_casado');
+        $this->assertFalse($this->situacion()->esVisible('D11'));
+        $this->assertFalse($this->situacion()->esVisible('E9'));
+
+        foreach (['casado', 'divorciado', 'separado', 'viudo'] as $estado) {
+            $this->responder('B1', $estado);
+            $this->assertTrue($this->situacion()->esVisible('D11'), "D11 con {$estado}");
+            $this->assertTrue($this->situacion()->esVisible('E9'), "E9 con {$estado}");
+        }
+    }
+
+    public function test_el_cuidado_de_dependientes_solo_se_pregunta_con_alguien_a_cargo_o_casado(): void
+    {
+        $this->responder('B1', 'nunca_casado');
+        $this->responder('C0', 'no');
+        $this->assertFalse($this->situacion()->esVisible('E6'));
+
+        $this->responder('C0', 'si');
+        $this->assertTrue($this->situacion()->esVisible('E6'));
+
+        $this->responder('C0', 'no');
+        $this->responder('B1', 'casado');
+        $this->assertTrue($this->situacion()->esVisible('E6'), 'Un cónyuge que no puede cuidarse solo también cuenta.');
+    }
+
     public function test_c0_no_salta_todo_el_bloque_c(): void
     {
         $persona = $this->guardador->agregarPersona($this->entrevista);

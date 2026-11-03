@@ -127,8 +127,9 @@ class EntrevistaTest extends TestCase
             ->assertRedirect(route('portal.entrevista.paso', ['pantalla' => 6]));
 
         $this->assertSame('no', $this->respuesta('D1'));
-        // Las 18 de entrada del bloque D (D1–D18), todas en "no".
-        $this->assertSame(18, $this->entrevista()->respuestas()->where('pregunta_codigo', 'like', 'D%')->count());
+        // Las de entrada del bloque D (D1–D18), todas en "no", menos D11 (la pensión de un excónyuge
+        // solo se pregunta a quien estuvo casado alguna vez).
+        $this->assertSame(17, $this->entrevista()->respuestas()->where('pregunta_codigo', 'like', 'D%')->count());
     }
 
     public function test_un_codigo_ajeno_al_paso_o_un_valor_invalido_devuelve_error_y_no_guarda_nada(): void

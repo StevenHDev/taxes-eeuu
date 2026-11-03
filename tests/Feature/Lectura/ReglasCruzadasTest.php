@@ -211,6 +211,8 @@ class ReglasCruzadasTest extends TestCase
 
     public function test_r08a_la_casilla_10_sin_cuidado_en_e6_abre_y_cambiar_e6_a_si_la_cierra(): void
     {
+        // E6 solo se pregunta si alguien vivió con el cliente o lo mantuvo (C0) o si está casado.
+        $this->responder('C0', 'si');
         $this->responder('E6', 'no');
         $w2 = $this->documento('w2', ['10' => '2500.00']);
 
