@@ -51,6 +51,16 @@ Orden: 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. 4.1 y la ima
 
 **Pruebas:** `CatalogoRealTest` cuenta las casillas por documento y verifica que las líneas del 1040 apunten a casillas que existen.
 
+**Cómo quedó (3 nov., subagente Sonnet 5.5 + revisión con Opus 5.5):**
+- Los 20 documentos tienen sus casillas, verificadas contra los formularios del IRS de 2025 (`pub/irs-prior/f…--2025.pdf`). Excepciones: 1099-INT y 1099-DIV (Rev. 1-2024, la vigente en 2025), 1099-K y W-2G (solo hay revisiones posteriores; se dejaron fuera las casillas que agregan) y SSA-1099 (Pub. 915). 341 casillas activas, 76 sensibles.
+- Encabezado en todos: `pagador-*`, `receptor-*` (o `a`, `b`, `c`, `e` en el W-2) y `anio`. W-2 casilla 12 como `12a-codigo` / `12a-monto` … `12d`. Sin casillas estatales (Florida no cobra renta), direcciones ni números de cuenta.
+- 1095-A: parte I, personas cubiertas `16-A` a `20-E`, meses `21-A` a `32-C` y totales `33-A` a `33-C`.
+- **Form 8962 corregido en la revisión:** el subagente había dejado la línea 11 como suma de `33-A;33-B;33-C` (en el catálogo `;` suma) y los meses sumados en `col-a`, `col-b` y `col-f`. Ahora cada columna sale de una sola casilla: `11a`, `11b`, `11f` (totales del año) y `12a` a `23f` (enero a diciembre = líneas 21 a 32 del 1095-A). 98 líneas activas.
+- Columna `sensible` en las casillas (migración `2026_11_03_100000`). `tipo_dato` limitado a `monto, numero, texto, si_no, codigo, fecha, anio, nombre, ssn, ein, tin`; el verificador lo revisa, igual que ssn/ein/tin sensibles y que cada línea apunte a una casilla activa.
+- Importador: desactiva casillas y líneas que salen del archivo (también en 2026 con sus ajustes) y, **corregido en la revisión**, las reactiva si vuelven. Respeta lo editado en pantalla salvo con `--forzar`. Resuelve el pendiente técnico de 2.5.
+- Editor del catálogo: selector de tipo de dato y casilla "Sensible". Revisado en el navegador: cada casilla va en una fila en pantalla ancha (grilla propia, diálogo más ancho) y en dos columnas en el celular; la marca "Se lee" pasó a llamarse "Clave", porque ahora se leen todas y la marca dice cuáles usan las reglas y las líneas.
+- Pruebas: `CatalogoRealTest`, `CargaTest` (desactivar, reactivar, editado en pantalla, verificador) y `EdicionTest`. Suite: 662 pruebas, 660 pasan y 2 se saltan.
+
 ## 4.2 Modelo de datos
 
 **Modelo: Opus 5.5** (datos de clientes; reglas `eloquent-casts`, `eloquent-relationships`, `arch-value-objects`).
