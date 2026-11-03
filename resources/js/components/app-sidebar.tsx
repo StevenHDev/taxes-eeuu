@@ -5,6 +5,7 @@ import {
     ClipboardCheck,
     ClipboardList,
     Code2,
+    TriangleAlert,
     FileText,
     History,
     LayoutGrid,
@@ -28,6 +29,7 @@ import { index as apiDocsIndex } from '@/routes/api-docs';
 import { index as bitacoraIndex } from '@/routes/bitacora';
 import { inicio as catalogoFiscalInicio } from '@/routes/catalogo-fiscal';
 import { index as clientesIndex } from '@/routes/clientes';
+import { index as excepcionesIndex } from '@/routes/clientes/excepciones';
 import { index as metaAgenteIndex } from '@/routes/meta-agente';
 import {
     documentos as entrevistaDocumentos,
@@ -76,6 +78,11 @@ export function AppSidebar() {
                       title: t('nav.clients'),
                       href: clientesIndex(),
                       icon: Users,
+                  },
+                  {
+                      title: t('nav.excepciones'),
+                      href: excepcionesIndex(),
+                      icon: TriangleAlert,
                   },
                   {
                       title: t('nav.proceso'),
