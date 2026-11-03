@@ -45,7 +45,8 @@ class HerramientasEntrevista
         $preguntas = $this->catalogo->preguntas($entrevista->tax_year)->keyBy('codigo');
         $personas = $entrevista->personas()->get()->keyBy('id');
         $documentos = $this->documentos->lista($entrevista, $situacion, false);
-        $pendientes = $this->conSeguimientosPrimero($situacion->pendientesParaWhatsapp(), $preguntas);
+        $todas = $situacion->pendientesParaWhatsapp();
+        $pendientes = $this->conSeguimientosPrimero($todas, $preguntas);
 
         return [
             'estado' => $entrevista->estado->value,
@@ -64,13 +65,15 @@ class HerramientasEntrevista
                         'pantalla' => $p['pantalla'],
                         'texto' => str_replace('{anio}', (string) $entrevista->tax_year, $pregunta['texto_es']),
                         'texto_en' => $pregunta['texto_en'] === null ? null : str_replace('{anio}', (string) $entrevista->tax_year, $pregunta['texto_en']),
+                        // Lo que aclara la pregunta (qué incluye y qué no): el agente la usa para no confundirse con el cliente.
+                        'ayuda' => empty($pregunta['ayuda_es']) ? null : str_replace('{anio}', (string) $entrevista->tax_year, $pregunta['ayuda_es']),
                         'tipo' => $pregunta['tipo_respuesta'],
                         'opciones' => collect($pregunta['opciones'] ?? [])->pluck('valor')->all(),
                         'persona' => $persona === null ? null : ['persona_id' => $persona->id, 'numero' => $persona->orden, 'etiqueta' => $persona->etiqueta],
                     ];
                 })->values()->all(),
-            // Cuántas preguntas más quedan después de estas, para que el agente sepa que sigue otro mensaje.
-            'quedan_mas' => max(0, count($pendientes) - self::PROXIMAS),
+            // Cuántas preguntas más quedan después de estas (de esta y de las otras pantallas), para que el agente sepa que sigue otro mensaje.
+            'quedan_mas' => count($todas) - min(count($pendientes), self::PROXIMAS),
             'avance' => $this->pasos->avance($situacion),
             'falta_en_el_portal' => [
                 'preguntas_sensibles' => count($situacion->faltaEnPortal()),
@@ -88,8 +91,11 @@ class HerramientasEntrevista
 
     /**
      * Las preguntas que salen de un "sí" anterior (seguimientos) van antes que las
-     * de la pantalla siguiente: se pregunta lo que el cliente acaba de abrir y no se
-     * mezcla con otro tema. Dentro de cada grupo se mantiene el orden del catálogo.
+     * de la pantalla siguiente: se pregunta lo que el cliente acaba de abrir. Y cada
+     * consulta trae preguntas de **una sola pantalla** (la de la primera pendiente),
+     * aunque sean menos de 8: así cada mensaje es de un tema y puede abrir con una
+     * frase natural, en vez de mezclar visa, criptomonedas e ingresos. Dentro de cada
+     * grupo se mantiene el orden del catálogo.
      *
      * @param  list<array{codigo: string, persona_id: int|null, pantalla: int}>  $pendientes
      * @param  Collection<string, array<string, mixed>>  $preguntas
@@ -99,10 +105,18 @@ class HerramientasEntrevista
     {
         $esSeguimiento = fn (array $p) => ($preguntas[$p['codigo']]['nivel'] ?? null) === 'seguimiento';
 
-        return [
+        $ordenadas = [
             ...array_values(array_filter($pendientes, $esSeguimiento)),
             ...array_values(array_filter($pendientes, fn (array $p) => ! $esSeguimiento($p))),
         ];
+
+        if ($ordenadas === []) {
+            return [];
+        }
+
+        $pantalla = $ordenadas[0]['pantalla'];
+
+        return array_values(array_filter($ordenadas, fn (array $p) => $p['pantalla'] === $pantalla));
     }
 
     /**

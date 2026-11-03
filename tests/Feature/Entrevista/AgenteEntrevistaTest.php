@@ -156,18 +156,46 @@ class AgenteEntrevistaTest extends TestCase
         $this->assertTrue($this->tool('consultar_entrevista')['con_conyuge']);
     }
 
-    public function test_consultar_entrevista_da_como_maximo_8_preguntas_y_los_seguimientos_primero(): void
+    public function test_consultar_entrevista_da_como_maximo_8_preguntas_de_una_sola_pantalla_y_los_seguimientos_primero(): void
     {
         $this->firmar();
 
         $resultado = $this->tool('consultar_entrevista');
 
-        $this->assertCount(8, $resultado['proximas_preguntas']);
-        $this->assertGreaterThan(0, $resultado['quedan_mas'], 'Quedan más preguntas para el siguiente mensaje.');
+        $this->assertLessThanOrEqual(8, count($resultado['proximas_preguntas']));
+        $this->assertCount(1, array_unique(array_column($resultado['proximas_preguntas'], 'pantalla')), 'Cada mensaje es de un solo tema.');
+        $this->assertGreaterThan(0, $resultado['quedan_mas'], 'Quedan más preguntas, de esta y de otras pantallas.');
 
         $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'D1', 'valor' => 'si']]]);
 
-        $this->assertSame('D1.1', $this->tool('consultar_entrevista')['proximas_preguntas'][0]['codigo'], 'Lo que abrió su "sí" va primero.');
+        $despues = $this->tool('consultar_entrevista')['proximas_preguntas'];
+
+        $this->assertSame('D1.1', $despues[0]['codigo'], 'Lo que abrió su "sí" va primero.');
+        $this->assertCount(1, array_unique(array_column($despues, 'pantalla')));
+    }
+
+    public function test_consultar_entrevista_trae_la_ayuda_de_cada_pregunta(): void
+    {
+        $this->firmar();
+        $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'B1', 'valor' => 'nunca_casado'], ['codigo' => 'B5', 'valor' => 'si']]]);
+
+        $ayudas = [];
+
+        for ($vuelta = 0; $vuelta < 8; $vuelta++) {
+            $preguntas = $this->tool('consultar_entrevista')['proximas_preguntas'];
+
+            foreach ($preguntas as $p) {
+                $ayudas[$p['codigo']] = $p['ayuda'];
+            }
+
+            if (isset($ayudas['D15'])) {
+                break;
+            }
+
+            $this->tool('guardar_respuestas', ['respuestas' => array_map(fn (array $p) => ['codigo' => $p['codigo'], 'valor' => $p['tipo'] === 'opciones' ? $p['opciones'][0] : 'no'], array_values(array_filter($preguntas, fn (array $p) => in_array($p['tipo'], ['si_no', 'usted_conyuge_no'], true))))]);
+        }
+
+        $this->assertStringContainsString('salario', (string) $ayudas['D15'], 'El trabajo por cuenta propia aclara que no incluye el salario.');
     }
 
     public function test_consultar_entrevista_trae_que_subir_pero_no_la_nota_del_cliente(): void
