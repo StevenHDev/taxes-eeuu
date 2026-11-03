@@ -8,6 +8,13 @@ import { DocumentoNota } from '@/components/entrevista/documento-nota';
 import { DocumentoSubir } from '@/components/entrevista/documento-subir';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { agregar } from '@/routes/portal/entrevista/documentos/otro';
 import type { DocumentoEntrevista } from '@/types/entrevista';
@@ -31,6 +38,50 @@ function Dato({ titulo, texto }: { titulo: string; texto: string }) {
             </dt>
             <dd className="text-sm text-foreground">{texto}</dd>
         </div>
+    );
+}
+
+/**
+ * La miniatura del formulario oficial del IRS vacío (F4.8b), para que el
+ * cliente sepa qué buscar; al tocarla se abre más grande. Tamaño fijo para que
+ * la lista no salte al cargar.
+ */
+function EjemploImagen({ url, nombre }: { url: string; nombre: string }) {
+    const { t } = useTranslation();
+    const alt = t('entrevista.documentos.ejemploAlt', { nombre });
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <button
+                    type="button"
+                    className="block h-24 w-36 shrink-0 overflow-hidden rounded-md border border-border bg-white outline-none hover:border-ring focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    aria-label={t('entrevista.documentos.ejemploAmpliar', {
+                        nombre,
+                    })}
+                >
+                    <img
+                        src={url}
+                        alt={alt}
+                        loading="lazy"
+                        className="size-full object-contain object-top"
+                    />
+                </button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+                <DialogTitle>
+                    {t('entrevista.documentos.ejemploTitulo')}
+                </DialogTitle>
+                <DialogDescription>
+                    {t('entrevista.documentos.ejemploDescripcion', { nombre })}
+                </DialogDescription>
+                <img
+                    src={url}
+                    alt={alt}
+                    className="w-full rounded-md border border-border bg-white"
+                />
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -134,40 +185,51 @@ export function DocumentoFila({
                 </p>
             ) : null}
 
-            <dl id={ayudaId} className="grid gap-2 sm:grid-cols-2">
-                {porQue ? (
-                    <div className="sm:col-span-2">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-start">
+                <dl
+                    id={ayudaId}
+                    className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2"
+                >
+                    {porQue ? (
+                        <div className="sm:col-span-2">
+                            <Dato
+                                titulo={t('entrevista.documentos.porQueTitulo')}
+                                texto={porQue}
+                            />
+                        </div>
+                    ) : null}
+                    {documento.emisor ? (
                         <Dato
-                            titulo={t('entrevista.documentos.porQueTitulo')}
-                            texto={porQue}
+                            titulo={t('entrevista.documentos.quienLoEnvia')}
+                            texto={documento.emisor}
                         />
-                    </div>
-                ) : null}
-                {documento.emisor ? (
-                    <Dato
-                        titulo={t('entrevista.documentos.quienLoEnvia')}
-                        texto={documento.emisor}
+                    ) : null}
+                    {documento.fecha_llegada ? (
+                        <Dato
+                            titulo={t('entrevista.documentos.cuandoLlega')}
+                            texto={fechaLarga(
+                                documento.fecha_llegada,
+                                i18n.language,
+                            )}
+                        />
+                    ) : null}
+                    {/* En los registros propios nadie los envía: "Qué subir" lo reemplaza. */}
+                    {documento.si_no_llega && !documento.que_subir ? (
+                        <div className="sm:col-span-2">
+                            <Dato
+                                titulo={t('entrevista.documentos.siNoLlega')}
+                                texto={documento.si_no_llega}
+                            />
+                        </div>
+                    ) : null}
+                </dl>
+                {documento.imagen_ejemplo ? (
+                    <EjemploImagen
+                        url={documento.imagen_ejemplo}
+                        nombre={documento.nombre}
                     />
                 ) : null}
-                {documento.fecha_llegada ? (
-                    <Dato
-                        titulo={t('entrevista.documentos.cuandoLlega')}
-                        texto={fechaLarga(
-                            documento.fecha_llegada,
-                            i18n.language,
-                        )}
-                    />
-                ) : null}
-                {/* En los registros propios nadie los envía: "Qué subir" lo reemplaza. */}
-                {documento.si_no_llega && !documento.que_subir ? (
-                    <div className="sm:col-span-2">
-                        <Dato
-                            titulo={t('entrevista.documentos.siNoLlega')}
-                            texto={documento.si_no_llega}
-                        />
-                    </div>
-                ) : null}
-            </dl>
+            </div>
 
             {documento.que_subir ? (
                 <div className="space-y-4 rounded-md border border-border bg-muted/40 p-3">

@@ -1157,7 +1157,7 @@
             "documentos": "The documents a client may be asked for, the boxes that matter and the questions that request them.",
             "formularios": "The forms that get filled in and where each line comes from, up to Form 1040.",
             "parametros": "The year's amounts, limits and tables. \"Pending\" means the IRS figure is not loaded yet.",
-            "reglas": "Rules to check documents and answers. They start running in the document reading phase."
+            "reglas": "Rules to check documents and answers. The ones marked as implemented already run after each document is read."
         },
         "buscar": "Search by code or text…",
         "sinResultados": "Nothing matches the search or filters. Try another text or clear the filters.",
@@ -1536,7 +1536,11 @@
             "otroEjemplo": "For example: letter from the IRS",
             "elegirArchivos": "Choose files",
             "sinArchivos": "No file chosen",
-            "otroSubir": "Upload other document"
+            "otroSubir": "Upload other document",
+            "ejemploTitulo": "What the form looks like",
+            "ejemploDescripcion": "Blank official IRS form, as an example of “{{nombre}}”. Your document may look a little different.",
+            "ejemploAlt": "Blank example of {{nombre}}",
+            "ejemploAmpliar": "View a larger example of {{nombre}}"
         },
         "resumen": {
             "titulo": "Review your information",

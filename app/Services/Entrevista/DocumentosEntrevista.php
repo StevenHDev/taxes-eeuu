@@ -89,6 +89,7 @@ class DocumentosEntrevista
                     'fecha_llegada' => $llegada === null ? null : substr((string) $llegada, 0, 10),
                     'si_no_llega' => $documento === null ? null : $texto($documento['si_no_llega_es'] ?? null, $documento['si_no_llega_en'] ?? null),
                     'que_subir' => $documento === null ? null : $texto($documento['que_subir_es'] ?? null, $documento['que_subir_en'] ?? null),
+                    'imagen_ejemplo' => ($documento['imagen_ejemplo'] ?? null) ? asset($documento['imagen_ejemplo']) : null,
                     'plantillas' => $this->plantillas($documento['plantilla'] ?? null, $ingles),
                     'nota_cliente' => $item->nota_cliente,
                     'formatos' => $otro ? ['pdf', 'jpg', 'png', 'heic'] : ($documento['formatos'] ?? []),

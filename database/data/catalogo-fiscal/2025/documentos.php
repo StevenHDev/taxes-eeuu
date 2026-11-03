@@ -80,6 +80,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'empleo', 'orden' => 1,
         'fuente_texto' => 'W-2 de 2025; instrucciones del 1040 de 2025 (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/fw2--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/w2.png',
         'casillas' => [
             ['casilla' => 'a', 'descripcion' => 'Número de Seguro Social del empleado', 'tipo_dato' => 'ssn', 'clave' => true, 'sensible' => true],
             ['casilla' => 'b', 'descripcion' => 'Número de identificación del empleador (EIN)', 'tipo_dato' => 'ein', 'clave' => true, 'sensible' => true],
@@ -128,6 +129,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
         'fuente_texto' => '1099-NEC de 2025 (en 2025 la compensación va en la casilla 1); Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1099nec--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-nec.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del pagador; puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del pagador', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -148,6 +150,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 2,
         'fuente_texto' => 'Form 1099-K (casilla 1a); en 2025 la app solo lo manda si pasaste de USD 20.000 y 200 transacciones; Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1099k.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-k.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del emisor (PSE o filer); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del emisor (PSE o filer)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -169,6 +172,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 3,
         'fuente_texto' => 'Schedule C: ingresos de trabajos por cuenta propia; Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026; el 17 de febrero de 2026 si solo trae montos en las casillas 8 o 10)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-misc.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del pagador; puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del pagador', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -212,6 +216,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
         'fuente_texto' => 'Instrucciones del 1040 de 2025: líneas 4a/4b, 5a/5b y 1h; Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1099r--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-r.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del pagador; puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del pagador', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -261,6 +266,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 3,
         'fuente_texto' => 'Schedule 1 línea 7 (desempleo) y línea 1 (reembolso estatal); Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1099g.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-g.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del pagador; puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del pagador', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -288,6 +294,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
         'fuente_texto' => 'Schedule B si el total pasa de USD 1.500 (instrucciones del 1040 de 2025); Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1099int.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-int.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del pagador; puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del pagador', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -318,6 +325,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 2,
         'fuente_texto' => 'Schedule B si el total pasa de USD 1.500 (instrucciones del 1040 de 2025); Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1099div.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-div.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del pagador; puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del pagador', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -363,6 +371,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 4,
         'fuente_texto' => 'Pub. 523: venta de la casa; Instrucciones generales de 2025 para los formularios de información (a más tardar el 17 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1099s--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-s.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del quien reporta (filer); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del quien reporta (filer)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -418,6 +427,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 3,
         'fuente_texto' => 'Schedule 1 línea 8b (juegos de azar y lotería); Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/fw2g.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/w2g.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del pagador; puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del pagador', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -439,6 +449,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 4,
         'fuente_texto' => 'Ingreso por deuda cancelada, Schedule 1 línea 8c; Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1099c--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-c.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del acreedor (creditor); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del acreedor (creditor)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -464,6 +475,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
         'fuente_texto' => 'Schedule A; Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1098--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1098.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del prestamista (recipient/lender); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del prestamista (recipient/lender)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -521,6 +533,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 5,
         'fuente_texto' => 'Deducción de intereses de préstamo estudiantil, Schedule 1 línea 21; Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1098e--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1098-e.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del prestamista (recipient/lender); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del prestamista (recipient/lender)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -549,6 +562,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 7,
         'fuente_texto' => 'Schedule 1 línea 20; Form 8880',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f5498--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/estado-cuenta-ira.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del fiduciario o emisor (trustee); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del fiduciario o emisor (trustee)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -590,6 +604,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 1,
         'fuente_texto' => 'Créditos educativos (Form 8863); Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1098t--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1098-t.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del institución (filer); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del institución (filer)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -614,6 +629,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 2,
         'fuente_texto' => 'Pub. 970 (529 y Coverdell); Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1099q--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-q.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del pagador o fiduciario (trustee); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del pagador o fiduciario (trustee)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -647,6 +663,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 4,
         'fuente_texto' => 'Form 8889 (cuenta de ahorros médicos); Instrucciones generales de 2025 para los formularios de información (a más tardar el 1 de junio de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f5498sa--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/5498-sa.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del fiduciario (trustee); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del fiduciario (trustee)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -669,6 +686,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'fuente', 'orden' => 5,
         'fuente_texto' => 'Form 8889 (cuenta de ahorros médicos); Instrucciones generales de 2025 para los formularios de información (a más tardar el 2 de febrero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1099sa--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1099-sa.png',
         'casillas' => [
             ['casilla' => 'pagador-tin', 'descripcion' => 'TIN del fiduciario (trustee); puede venir truncado', 'tipo_dato' => 'tin', 'clave' => true, 'sensible' => true],
             ['casilla' => 'pagador-nombre', 'descripcion' => 'Nombre del fiduciario (trustee)', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false],
@@ -690,6 +708,7 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'poliza', 'orden' => 6,
         'fuente_texto' => '1095-A de 2025; instrucciones del 1040 y del Form 8962 de 2025 (a más tardar el 31 de enero de 2026)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-prior/f1095a--2025.pdf',
+        'imagen_ejemplo' => 'ejemplos-documentos/1095-a.png',
         'casillas' => [
             ['casilla' => '1', 'descripcion' => 'Identificador del Mercado (Marketplace)', 'tipo_dato' => 'texto', 'clave' => false, 'sensible' => false],
             ['casilla' => '2', 'descripcion' => 'Número de póliza asignado por el Mercado', 'tipo_dato' => 'texto', 'clave' => false, 'sensible' => true],

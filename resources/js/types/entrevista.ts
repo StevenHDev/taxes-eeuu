@@ -74,6 +74,8 @@ export type DocumentoEntrevista = {
     si_no_llega: string | null;
     /** Qué subir cuando no hay formulario (registros propios); null en los demás. */
     que_subir: string | null;
+    /** URL de la miniatura del formulario oficial vacío; null si el documento no tiene. */
+    imagen_ejemplo: string | null;
     /** Plantilla opcional (Excel y PDF) en el idioma del cliente. */
     plantillas: { xlsx: string; pdf: string } | null;
     /** Lo que el cliente escribió que los papeles no dicen. */

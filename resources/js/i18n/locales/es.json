@@ -1157,7 +1157,7 @@
             "documentos": "Los documentos que se le pueden pedir al cliente, las casillas que importan y las preguntas que los piden.",
             "formularios": "Los formularios que se llenan y de dónde sale cada línea, hasta el Form 1040.",
             "parametros": "Montos, topes y tablas del año. \"Pendiente\" significa que todavía no tiene la cifra del IRS.",
-            "reglas": "Reglas para revisar documentos y respuestas. Se empiezan a ejecutar en la fase de lectura de documentos."
+            "reglas": "Reglas para revisar documentos y respuestas. Las marcadas como implementadas ya se ejecutan después de leer cada documento."
         },
         "buscar": "Buscar por código o texto…",
         "sinResultados": "Nada coincide con la búsqueda o los filtros. Prueba con otro texto o limpia los filtros.",
@@ -1536,7 +1536,11 @@
             "otroEjemplo": "Por ejemplo: carta del IRS",
             "elegirArchivos": "Elegir archivos",
             "sinArchivos": "Ningún archivo elegido",
-            "otroSubir": "Subir otro documento"
+            "otroSubir": "Subir otro documento",
+            "ejemploTitulo": "Así se ve el formulario",
+            "ejemploDescripcion": "Formulario oficial del IRS, vacío, como ejemplo de «{{nombre}}». Tu documento puede verse un poco distinto.",
+            "ejemploAlt": "Ejemplo en blanco de {{nombre}}",
+            "ejemploAmpliar": "Ver más grande el ejemplo de {{nombre}}"
         },
         "resumen": {
             "titulo": "Revisa tu información",
