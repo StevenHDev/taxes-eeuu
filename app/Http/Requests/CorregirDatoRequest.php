@@ -30,4 +30,17 @@ class CorregirDatoRequest extends FormRequest
             'motivo' => ['required', 'string', 'max:500'],
         ];
     }
+
+    /**
+     * El nombre del campo en los mensajes de error (sin esto salía "motive").
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'valor' => __('valor'),
+            'motivo' => __('motivo de la corrección'),
+        ];
+    }
 }

@@ -1,0 +1,294 @@
+import { Head, Link } from '@inertiajs/react';
+import { AlertTriangle, ArrowLeft, FileSearch } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { DocumentoEstado } from '@/components/entrevista/documento-estado';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { ConfianzaPanel } from '@/components/visor/confianza-panel';
+import { CorregirDatoDialog } from '@/components/visor/corregir-dato-dialog';
+import { ListaDatos } from '@/components/visor/lista-datos';
+import { PaginaDocumento } from '@/components/visor/pagina-documento';
+import { dashboard } from '@/routes';
+import { index as clientesIndex, show as clienteShow } from '@/routes/clientes';
+import type { EstadoDocumento } from '@/types/entrevista';
+import type {
+    ArchivoVisor,
+    DatoLeido,
+    FilaConfianza,
+    Hoja,
+    ItemVisor,
+    LecturaVisor,
+    ValorRevelado,
+} from '@/types/lectura';
+
+type Props = {
+    cliente: { id: number; name: string };
+    item: ItemVisor;
+    archivos: ArchivoVisor[];
+    lecturas: LecturaVisor[];
+    datos: DatoLeido[];
+    confianza_tabla: FilaConfianza[];
+    umbral: number;
+};
+
+/**
+ * El visor de un documento leído (F4.6): la imagen de cada hoja al lado de
+ * los datos que se leyeron (arriba y abajo en el celular). Al elegir un dato
+ * se resalta su recuadro; el preparador revela lo sensible y corrige.
+ */
+export default function VisorDocumento({
+    cliente,
+    item,
+    archivos,
+    lecturas,
+    datos,
+    confianza_tabla: tabla,
+    umbral,
+}: Props) {
+    const { t } = useTranslation();
+    const [seleccionadoId, setSeleccionadoId] = useState<number | null>(null);
+    const [indiceHoja, setIndiceHoja] = useState(0);
+    const [revelados, setRevelados] = useState<Record<number, ValorRevelado>>(
+        {},
+    );
+    const [corrigiendo, setCorrigiendo] = useState<DatoLeido | null>(null);
+
+    const hojas = useMemo<Hoja[]>(
+        () =>
+            lecturas.flatMap((l) => {
+                const archivo =
+                    archivos.find((a) => a.id === l.documento_id)?.nombre ??
+                    item.nombre;
+
+                return l.imagenes.map((url, i) => ({
+                    lecturaId: l.id,
+                    pagina: i + 1,
+                    url,
+                    archivo,
+                }));
+            }),
+        [lecturas, archivos, item.nombre],
+    );
+
+    const seleccionado = datos.find((d) => d.id === seleccionadoId) ?? null;
+    const revelado = seleccionado ? revelados[seleccionado.id] : undefined;
+    const evidencia = seleccionado
+        ? seleccionado.sensible
+            ? (revelado?.evidencia ?? null)
+            : seleccionado.evidencia
+        : null;
+    const valorVisible = seleccionado
+        ? seleccionado.sensible
+            ? (revelado?.valor ?? null)
+            : seleccionado.valor
+        : null;
+
+    const elegir = (id: number) => {
+        setSeleccionadoId(id);
+        const dato = datos.find((d) => d.id === id);
+
+        if (dato?.pagina) {
+            const i = hojas.findIndex(
+                (h) =>
+                    h.lecturaId === dato.lectura_id && h.pagina === dato.pagina,
+            );
+
+            if (i !== -1) {
+                setIndiceHoja(i);
+            }
+        }
+    };
+
+    // Solo se dibuja el recuadro si es de la hoja que se está viendo.
+    const hojaActual = hojas[indiceHoja];
+    const recuadro =
+        seleccionado?.recuadro &&
+        hojaActual &&
+        seleccionado.lectura_id === hojaActual.lecturaId &&
+        seleccionado.pagina === hojaActual.pagina
+            ? seleccionado.recuadro
+            : null;
+
+    const anuncio = seleccionado
+        ? [
+              t('visor.resaltado', {
+                  casilla: seleccionado.casilla,
+                  descripcion: seleccionado.descripcion,
+              }),
+              valorVisible,
+              seleccionado.recuadro
+                  ? t('visor.enPagina', { pagina: seleccionado.pagina ?? 1 })
+                  : t('visor.sinRecuadro'),
+          ]
+              .filter(Boolean)
+              .join('. ')
+        : '';
+
+    const sinLectura = lecturas.length === 0;
+    const fallo = item.estado === 'no_se_pudo_leer';
+
+    return (
+        <>
+            <Head title={t('visor.titulo', { nombre: item.nombre })} />
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4 md:p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 space-y-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="-ml-3"
+                        >
+                            <Link href={clienteShow(cliente.id).url}>
+                                <ArrowLeft aria-hidden="true" />
+                                {t('visor.volver', { nombre: cliente.name })}
+                            </Link>
+                        </Button>
+                        <h1 className="text-xl font-semibold">{item.nombre}</h1>
+                        <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                            {item.nombre_oficial ? (
+                                <span>{item.nombre_oficial}</span>
+                            ) : null}
+                            <span>{item.tax_year}</span>
+                            <DocumentoEstado
+                                estado={item.estado as EstadoDocumento}
+                                vista="preparador"
+                            />
+                        </p>
+                    </div>
+                    <ConfianzaPanel tabla={tabla} umbral={umbral} />
+                </div>
+
+                {fallo ? (
+                    <Alert variant="destructive">
+                        <AlertTriangle aria-hidden="true" />
+                        <AlertTitle>{t('visor.falloTitulo')}</AlertTitle>
+                        <AlertDescription>
+                            {item.observacion ?? t('visor.falloDescripcion')}
+                        </AlertDescription>
+                    </Alert>
+                ) : null}
+
+                {sinLectura ? (
+                    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-10 text-center">
+                        <FileSearch
+                            className="size-8 text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                        <h2 className="font-medium">
+                            {t('visor.vacioTitulo')}
+                        </h2>
+                        <p className="max-w-md text-sm text-muted-foreground">
+                            {t('visor.vacioDescripcion')}
+                        </p>
+                        {archivos.length > 0 ? (
+                            <div className="flex flex-wrap justify-center gap-1">
+                                {archivos.map((a) => (
+                                    <Button
+                                        key={a.id}
+                                        variant="outline"
+                                        size="sm"
+                                        asChild
+                                    >
+                                        <a
+                                            href={a.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            {t('visor.verArchivo', {
+                                                nombre: a.nombre,
+                                            })}
+                                        </a>
+                                    </Button>
+                                ))}
+                            </div>
+                        ) : null}
+                    </div>
+                ) : (
+                    <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+                        <div className="lg:sticky lg:top-4">
+                            <PaginaDocumento
+                                hojas={hojas}
+                                indice={indiceHoja}
+                                onCambiar={setIndiceHoja}
+                                recuadro={recuadro}
+                            />
+                            {seleccionado && !seleccionado.recuadro ? (
+                                <p className="mt-3 rounded-md bg-muted p-3 text-sm">
+                                    {evidencia
+                                        ? t('visor.seLeyo', {
+                                              texto: evidencia,
+                                          })
+                                        : t('visor.sinRecuadroTexto')}
+                                </p>
+                            ) : null}
+                        </div>
+                        <section
+                            aria-labelledby="visor-datos"
+                            className="space-y-2"
+                        >
+                            <h2
+                                id="visor-datos"
+                                className="text-sm font-medium"
+                            >
+                                {t('visor.datos', { count: datos.length })}
+                            </h2>
+                            {datos.length === 0 ? (
+                                <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                                    {t('visor.sinDatos')}
+                                </p>
+                            ) : (
+                                <>
+                                    <p className="text-xs text-muted-foreground">
+                                        {t('visor.ayudaTeclado')}
+                                    </p>
+                                    <ListaDatos
+                                        clienteId={cliente.id}
+                                        itemId={item.id}
+                                        datos={datos}
+                                        umbral={umbral}
+                                        seleccionadoId={seleccionadoId}
+                                        revelados={revelados}
+                                        onSeleccionar={elegir}
+                                        onRevelado={(id, r) =>
+                                            setRevelados((prev) => ({
+                                                ...prev,
+                                                [id]: r,
+                                            }))
+                                        }
+                                        onCorregir={setCorrigiendo}
+                                    />
+                                </>
+                            )}
+                        </section>
+                    </div>
+                )}
+                <p className="sr-only" aria-live="polite">
+                    {anuncio}
+                </p>
+            </div>
+            {corrigiendo ? (
+                <CorregirDatoDialog
+                    key={corrigiendo.id}
+                    clienteId={cliente.id}
+                    itemId={item.id}
+                    dato={corrigiendo}
+                    valorInicial={
+                        corrigiendo.sensible
+                            ? (revelados[corrigiendo.id]?.valor ?? '')
+                            : (corrigiendo.valor ?? '')
+                    }
+                    onCerrar={() => setCorrigiendo(null)}
+                />
+            ) : null}
+        </>
+    );
+}
+
+VisorDocumento.layout = {
+    breadcrumbs: [
+        { title: 'nav.dashboard', href: dashboard() },
+        { title: 'nav.clients', href: clientesIndex() },
+    ],
+};

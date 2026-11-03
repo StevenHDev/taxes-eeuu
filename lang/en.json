@@ -41,5 +41,7 @@
     "Listo, lo marcamos como \"no aplica\".": "Done, we marked it as \"does not apply\".",
     "Agregamos otro a tu lista.": "We added another one to your list.",
     "Este documento ya no está en la lista.": "This document is no longer on the list.",
-    "Este documento no se puede cambiar en su estado actual.": "This document cannot be changed in its current state."
+    "Este documento no se puede cambiar en su estado actual.": "This document cannot be changed in its current state.",
+    "valor": "value",
+    "motivo de la corrección": "reason for the correction"
 }
