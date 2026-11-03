@@ -20,6 +20,7 @@ use App\Services\Entrevista\RespuestaGuardador;
 use App\Services\Lectura\DatosDocumento;
 use App\Services\Lectura\EsquemaLectura;
 use App\Services\Lectura\LectorDocumentos;
+use App\Services\Lectura\Reglas\MotorReglas;
 use Database\Seeders\CatalogoFiscalSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -88,7 +89,7 @@ class LeerAlSubirTest extends TestCase
 
     private function correr(int $documentoId): void
     {
-        (new LeerDocumentoJob($documentoId))->handle(app(LectorDocumentos::class), app(DatosDocumento::class), app(ChecklistDocumentos::class), app(EsquemaLectura::class));
+        (new LeerDocumentoJob($documentoId))->handle(app(LectorDocumentos::class), app(DatosDocumento::class), app(ChecklistDocumentos::class), app(EsquemaLectura::class), app(MotorReglas::class));
     }
 
     public function test_subir_un_archivo_dispara_el_evento(): void
