@@ -53,10 +53,16 @@ FROM php:8.4.27-fpm AS runtime
 # documentado ahí). Mismo runtime que sirve web/worker/reverb (ver
 # docker/entrypoint.sh, CONTAINER_ROLE), así que instalarlo acá alcanza para
 # los tres servicios.
+#
+# F4.3a (lectura de documentos): las fotos del celular (JPG y HEIC) se pasan a
+# PNG con GD, así que GD necesita soporte de JPEG (libjpeg-dev y --with-jpeg), y
+# `heif-convert` (libheif-examples) convierte HEIC a JPG antes. Ver
+# App\Services\Lectura\PaginasDocumento.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         nginx supervisor \
-        libpng-dev libonig-dev libxml2-dev libzip-dev libpq-dev unzip \
-        poppler-utils \
+        libpng-dev libjpeg-dev libonig-dev libxml2-dev libzip-dev libpq-dev unzip \
+        poppler-utils libheif-examples \
+    && docker-php-ext-configure gd --with-jpeg \
     && docker-php-ext-install pdo pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
