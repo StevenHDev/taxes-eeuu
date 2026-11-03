@@ -131,6 +131,15 @@ Orden: 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. 4.1 y la ima
 - **Dockerfile:** el GD de producción no tenía soporte de JPEG (verificado). Se agregó `libjpeg-dev` con `docker-php-ext-configure gd --with-jpeg` y `libheif-examples` (`heif-convert`). **No se pudo construir la imagen en la máquina de desarrollo (sin Docker): revisar el primer despliegue.**
 - Pruebas (`PaginasDocumentoTest`, 11): PDF de 2 páginas, nada en claro en el disco, JPG y PNG, reducción, EXIF, PDF de 12 páginas, archivo dañado, HEIC sin `heif-convert`, releer y página inexistente. La conversión real de HEIC queda saltada hasta que haya `heif-convert` y un `tests/Fixtures/lectura/foto.heic`. Suite: 682 pruebas, 679 pasan y 3 se saltan.
 
+**Cómo quedó 4.3b, esquema y llamada a OpenAI (3 nov., Sonnet 5.5):**
+- `App\Services\Lectura\EsquemaLectura`: `casillas()`, `documentosLeibles()`, `para(codigo, anio)` (JSON Schema estricto) e `instrucciones(codigo, anio)`. Todo sale de las casillas del catálogo del año (2026 toma las suyas, por ejemplo la `1a` del 1099-NEC).
+- Por cada casilla el modelo contesta `valor` (texto o nulo), `legibilidad` (`claro`, `dudoso`, `no_se_ve`), `pagina` y `texto_cercano`. El formato del valor lo dice la descripción según el `tipo_dato` (montos sin símbolo ni separadores, fechas `AAAA-MM-DD`, SSN como está impreso).
+- `tipo_documento` es una **lista cerrada** con los códigos de los 21 documentos que se leen más `desconocido`, para que la R-06 compare códigos sin interpretar texto libre.
+- `OpenAiClient::leerConEsquema()` (método nuevo; los demás no cambian): modelo `OPENAI_VISION_MODEL`, instrucciones como mensaje de sistema, una imagen por página con `detail: high`, `response_format` estricto. Tiempo de espera `services.openai.vision_timeout` (90 s por defecto en el código; no está en `config/services.php`).
+- Los errores dicen el estado HTTP y el código de error, nunca el cuerpo ni la respuesta, que pueden traer datos del cliente. También falla con un mensaje claro si la respuesta se cortó, fue rechazada o no es JSON.
+- Detalle de PHP cubierto con una prueba: las casillas con nombre numérico (`1`, `2`) se vuelven enteros como llaves; `required` se fuerza a textos y se verifica que los 21 documentos se codifican como objeto.
+- Pruebas (`EsquemaLecturaTest`, 11). Suite: 693 pruebas, 690 pasan y 3 se saltan.
+
 ## 4.4 Leer al subir
 
 **Modelo: Opus 5.5** (colas y estados; reglas `arch-queue-routing`, `arch-event-driven`).
