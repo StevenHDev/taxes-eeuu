@@ -30,7 +30,7 @@
 | 4.3a | Páginas como imagen y HEIC | 4.2b | ✅ 3 nov. (sin commit) |
 | 4.3b | Esquema de lectura y llamada a OpenAI | 4.2b | ✅ 3 nov. (sin commit) |
 | 4.3c | Confianza y evidencia | 4.3b | ✅ 3 nov. (sin commit) |
-| 4.3d | Lector de OpenAI, lector manual y bandera | 4.3a, 4.3c | ⏳ |
+| 4.3d | Lector de OpenAI, lector manual y bandera | 4.3a, 4.3c | ✅ 3 nov. (sin commit) |
 | 4.4a | Leer al subir: evento, job, estados y comando | 4.3d | ⏳ |
 | 4.5a | Motor de reglas y reglas de un documento (R-03, R-04, R-06, R-07, R-09) | 4.4a | ⏳ |
 | 4.5b | Reglas que cruzan datos (R-01, R-05, R-08, R-11) | 4.5a | ⏳ |
