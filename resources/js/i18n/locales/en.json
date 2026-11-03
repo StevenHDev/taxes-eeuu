@@ -1,4 +1,57 @@
 {
+    "visor": {
+        "titulo": "Data for {{nombre}}",
+        "volver": "Back to {{nombre}}",
+        "verDatos": "View data",
+        "verDatosAria": "View the data read from {{nombre}}",
+        "anterior": "Previous",
+        "siguiente": "Next",
+        "hojaDe": "Page {{actual}} of {{total}}",
+        "cargandoImagen": "Loading the page",
+        "imagenAlt": "Page of {{archivo}}",
+        "imagenError": "The image of this page could not be loaded. Reload the page or open the original file.",
+        "datos_one": "{{count}} value read",
+        "datos_other": "{{count}} values read",
+        "ayudaTeclado": "With focus on the list, use the up and down arrow keys to move between values.",
+        "sinDatos": "The reading found no values in this document. You can open the file and review it by hand.",
+        "vacioTitulo": "This document has no values read yet",
+        "vacioDescripcion": "There is no finished reading yet. If it cannot be read, the preparer types the values in by hand from the client file.",
+        "verArchivo": "Open {{nombre}}",
+        "falloTitulo": "This document could not be read",
+        "falloDescripcion": "The reading failed. Type the values in by hand or ask the client for a clearer file.",
+        "oculto": "Sensitive value hidden",
+        "sinValor": "No value was read",
+        "reglaPendiente": "Rule {{regla}} is pending review.",
+        "revelar": "Reveal",
+        "revelarAria": "Reveal the value {{casilla}}",
+        "revelarError": "The value could not be revealed. Try again.",
+        "confirmarContrasena": "Confirm your password to reveal sensitive values",
+        "corregirBoton": "Correct",
+        "corregirAria": "Correct the value {{casilla}}",
+        "confianzaValor": "Confidence {{valor}}",
+        "corregido": "Corrected",
+        "corregidoPor": "Corrected by {{nombre}}",
+        "motivoCorreccion": "Reason for the correction: {{texto}}",
+        "seLeyo": "It read: {{texto}}",
+        "sinRecuadroTexto": "This value has no marked place on the page.",
+        "resaltado": "Chosen value: {{casilla}}, {{descripcion}}",
+        "enPagina": "Highlighted on page {{pagina}}",
+        "sinRecuadro": "No box on the page",
+        "confianza": {
+            "abrir": "How is confidence calculated?",
+            "titulo": "How is confidence calculated?",
+            "umbral": "Anything below {{umbral}} goes to review.",
+            "motivo": "Reason",
+            "numero": "Confidence"
+        },
+        "corregir": {
+            "titulo": "Correct the value {{casilla}}",
+            "valor": "Correct value",
+            "motivo": "Reason for the correction",
+            "cancelar": "Cancel",
+            "guardar": "Save correction"
+        }
+    },
     "common": {
         "actions": "Actions",
         "save": "Save",
@@ -42,7 +95,80 @@
         "searchClient": "Search client…",
         "catalogoFiscal": "Tax catalog",
         "portalEntrevista": "My interview",
-        "portalDocumentos": "My documents"
+        "portalDocumentos": "My documents",
+        "excepciones": "Exceptions"
+    },
+    "excepciones": {
+        "head": { "title": "Exceptions" },
+        "heading": "Exceptions",
+        "subheading": "What the rules found that needs your decision before moving on with each client.",
+        "buscar": "Search the queue…",
+        "cargando": "Loading exceptions",
+        "sinDocumento": "No document",
+        "casilla": "Box: {{casilla}}",
+        "columnas": {
+            "cliente": "Client",
+            "documento": "Document",
+            "regla": "Rule",
+            "severidad": "Severity",
+            "fecha": "Date",
+            "acciones": "Actions"
+        },
+        "severidad": {
+            "bloqueante": "Blocking",
+            "revision": "Review",
+            "informativa": "Informational"
+        },
+        "estado": {
+            "abierta": "Open",
+            "consultada": "Asked the client"
+        },
+        "filtros": {
+            "severidad": "Severity",
+            "estado": "Status",
+            "cliente": "Client",
+            "todas": "All",
+            "todos": "All",
+            "limpiar": "Clear filters"
+        },
+        "motivo": {
+            "porQue": "Why it was flagged",
+            "verCalculo": "See how confidence is calculated in the viewer"
+        },
+        "acciones": {
+            "corregir": "Fix",
+            "aceptar": "Accept with note",
+            "consultar": "Ask the client",
+            "sinDocumento": "No document to open",
+            "consultarNo": "This exception is not tied to a document, so there is no one to ask."
+        },
+        "aceptar": {
+            "titulo": "Accept with note",
+            "descripcion": "You are about to accept exception {{regla}} for {{cliente}}. Your note stays in the history.",
+            "etiqueta": "Note",
+            "placeholder": "Why you are accepting it…",
+            "enviar": "Accept exception"
+        },
+        "consultar": {
+            "titulo": "Ask the client",
+            "descripcion": "Your question goes to {{cliente}}. The exception is marked as asked.",
+            "etiqueta": "Your question",
+            "placeholder": "What do you need clarified…",
+            "enviar": "Send question"
+        },
+        "dialogo": { "cancelar": "Cancel" },
+        "vacio": {
+            "titulo": "There are no open exceptions",
+            "descripcion": "Everything the rules checked is in order. When something needs your decision, it will show up here.",
+            "conFiltros": "No exception matches those filters. Clear them to see the whole queue."
+        },
+        "ficha": {
+            "abiertas_one": "{{count}} open exception",
+            "abiertas_other": "{{count}} open exceptions",
+            "bloqueantes_one": "{{count}} blocking",
+            "bloqueantes_other": "{{count}} blocking",
+            "ver": "See exceptions"
+        }
     },
     "userMenu": {
         "settings": "Settings",
@@ -1493,11 +1619,15 @@
             "resumen_one": "1 of {{total}} missing",
             "resumen_other": "{{count}} of {{total}} missing",
             "resumenCompleto": "All received",
+            "estadoPreparador": {
+                "leido": "Read",
+                "no_se_pudo_leer": "Could not be read"
+            },
             "estado": {
                 "pendiente": "Missing",
                 "subido": "Received",
-                "leido": "Under review",
-                "no_se_pudo_leer": "Under review",
+                "leido": "We are reviewing it",
+                "no_se_pudo_leer": "We could not read it",
                 "con_observacion": "Needs a fix",
                 "validado": "Approved",
                 "no_aplica": "Does not apply",
@@ -1518,6 +1648,7 @@
             "descargarPlantilla": "Download {{formato}} template",
             "archivosDe": "Files for {{nombre}}",
             "subirDeNuevo": "Upload again",
+            "noSePudoLeerAviso": "We could not read your file. Please upload it again, sharper or as a PDF.",
             "agregarArchivo": "Add another file",
             "agregarOtroDe": "Add another of this document",
             "observacion": "Your preparer asks you to review this document",

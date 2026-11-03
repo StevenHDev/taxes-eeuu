@@ -1,4 +1,57 @@
 {
+    "visor": {
+        "titulo": "Datos de {{nombre}}",
+        "volver": "Volver a {{nombre}}",
+        "verDatos": "Ver datos",
+        "verDatosAria": "Ver los datos leídos de {{nombre}}",
+        "anterior": "Anterior",
+        "siguiente": "Siguiente",
+        "hojaDe": "Hoja {{actual}} de {{total}}",
+        "cargandoImagen": "Cargando la hoja",
+        "imagenAlt": "Hoja de {{archivo}}",
+        "imagenError": "No se pudo cargar la imagen de esta hoja. Recarga la página o abre el archivo original.",
+        "datos_one": "{{count}} dato leído",
+        "datos_other": "{{count}} datos leídos",
+        "ayudaTeclado": "Con el foco en la lista, usa las flechas arriba y abajo para pasar de un dato a otro.",
+        "sinDatos": "La lectura no encontró datos en este documento. Puedes abrir el archivo y revisarlo a mano.",
+        "vacioTitulo": "Este documento todavía no tiene datos leídos",
+        "vacioDescripcion": "Aún no hay una lectura terminada. Si no se puede leer, el preparador escribe los datos a mano desde la ficha del cliente.",
+        "verArchivo": "Abrir {{nombre}}",
+        "falloTitulo": "No se pudo leer este documento",
+        "falloDescripcion": "La lectura falló. Escribe los datos a mano o pide al cliente un archivo más claro.",
+        "oculto": "Dato sensible oculto",
+        "sinValor": "No se leyó un valor",
+        "reglaPendiente": "La regla {{regla}} está pendiente de revisar.",
+        "revelar": "Revelar",
+        "revelarAria": "Revelar el dato {{casilla}}",
+        "revelarError": "No se pudo revelar el dato. Inténtalo de nuevo.",
+        "confirmarContrasena": "Confirma tu contraseña para revelar datos sensibles",
+        "corregirBoton": "Corregir",
+        "corregirAria": "Corregir el dato {{casilla}}",
+        "confianzaValor": "Confianza {{valor}}",
+        "corregido": "Corregido",
+        "corregidoPor": "Corregido por {{nombre}}",
+        "motivoCorreccion": "Motivo de la corrección: {{texto}}",
+        "seLeyo": "Se leyó: {{texto}}",
+        "sinRecuadroTexto": "Este dato no tiene un lugar marcado en la hoja.",
+        "resaltado": "Dato elegido: {{casilla}}, {{descripcion}}",
+        "enPagina": "Resaltado en la hoja {{pagina}}",
+        "sinRecuadro": "Sin recuadro en la hoja",
+        "confianza": {
+            "abrir": "¿Cómo se calcula la confianza?",
+            "titulo": "¿Cómo se calcula la confianza?",
+            "umbral": "Va a revisión lo que tenga menos de {{umbral}}.",
+            "motivo": "Motivo",
+            "numero": "Confianza"
+        },
+        "corregir": {
+            "titulo": "Corregir el dato {{casilla}}",
+            "valor": "Valor correcto",
+            "motivo": "Motivo de la corrección",
+            "cancelar": "Cancelar",
+            "guardar": "Guardar corrección"
+        }
+    },
     "common": {
         "actions": "Acciones",
         "save": "Guardar",
@@ -42,7 +95,80 @@
         "searchClient": "Buscar cliente…",
         "catalogoFiscal": "Catálogo fiscal del año",
         "portalEntrevista": "Mi entrevista",
-        "portalDocumentos": "Mis documentos"
+        "portalDocumentos": "Mis documentos",
+        "excepciones": "Excepciones"
+    },
+    "excepciones": {
+        "head": { "title": "Excepciones" },
+        "heading": "Excepciones",
+        "subheading": "Lo que las reglas encontraron y necesita tu decisión antes de seguir con cada cliente.",
+        "buscar": "Buscar en la cola…",
+        "cargando": "Cargando excepciones",
+        "sinDocumento": "Sin documento",
+        "casilla": "Casilla: {{casilla}}",
+        "columnas": {
+            "cliente": "Cliente",
+            "documento": "Documento",
+            "regla": "Regla",
+            "severidad": "Severidad",
+            "fecha": "Fecha",
+            "acciones": "Acciones"
+        },
+        "severidad": {
+            "bloqueante": "Bloqueante",
+            "revision": "Revisión",
+            "informativa": "Informativa"
+        },
+        "estado": {
+            "abierta": "Abierta",
+            "consultada": "Consultada al cliente"
+        },
+        "filtros": {
+            "severidad": "Severidad",
+            "estado": "Estado",
+            "cliente": "Cliente",
+            "todas": "Todas",
+            "todos": "Todos",
+            "limpiar": "Quitar filtros"
+        },
+        "motivo": {
+            "porQue": "Por qué se marcó así",
+            "verCalculo": "Ver cómo se calcula la confianza en el visor"
+        },
+        "acciones": {
+            "corregir": "Corregir",
+            "aceptar": "Aceptar con nota",
+            "consultar": "Consultar al cliente",
+            "sinDocumento": "No tiene documento para abrir",
+            "consultarNo": "Esta excepción no está ligada a un documento, no hay a quién preguntarle."
+        },
+        "aceptar": {
+            "titulo": "Aceptar con nota",
+            "descripcion": "Vas a aceptar la excepción {{regla}} de {{cliente}}. Tu nota queda en el historial.",
+            "etiqueta": "Nota",
+            "placeholder": "Por qué la aceptas…",
+            "enviar": "Aceptar excepción"
+        },
+        "consultar": {
+            "titulo": "Consultar al cliente",
+            "descripcion": "Tu pregunta le llega a {{cliente}}. La excepción queda como consultada.",
+            "etiqueta": "Tu pregunta",
+            "placeholder": "Qué necesitas que te aclare…",
+            "enviar": "Enviar consulta"
+        },
+        "dialogo": { "cancelar": "Cancelar" },
+        "vacio": {
+            "titulo": "No hay excepciones abiertas",
+            "descripcion": "Todo lo que revisaron las reglas está en orden. Cuando algo necesite tu decisión, aparecerá aquí.",
+            "conFiltros": "Ninguna excepción coincide con esos filtros. Quítalos para ver toda la cola."
+        },
+        "ficha": {
+            "abiertas_one": "{{count}} excepción abierta",
+            "abiertas_other": "{{count}} excepciones abiertas",
+            "bloqueantes_one": "{{count}} bloqueante",
+            "bloqueantes_other": "{{count}} bloqueantes",
+            "ver": "Ver excepciones"
+        }
     },
     "userMenu": {
         "settings": "Ajustes",
@@ -1493,11 +1619,15 @@
             "resumen_one": "Falta 1 de {{total}}",
             "resumen_other": "Faltan {{count}} de {{total}}",
             "resumenCompleto": "Todos recibidos",
+            "estadoPreparador": {
+                "leido": "Leído",
+                "no_se_pudo_leer": "No se pudo leer"
+            },
             "estado": {
                 "pendiente": "Falta",
                 "subido": "Recibido",
-                "leido": "En revisión",
-                "no_se_pudo_leer": "En revisión",
+                "leido": "Lo estamos revisando",
+                "no_se_pudo_leer": "No pudimos leerlo",
                 "con_observacion": "Por corregir",
                 "validado": "Validado",
                 "no_aplica": "No aplica",
@@ -1518,6 +1648,7 @@
             "descargarPlantilla": "Descargar plantilla en {{formato}}",
             "archivosDe": "Archivos de {{nombre}}",
             "subirDeNuevo": "Subir de nuevo",
+            "noSePudoLeerAviso": "No pudimos leer tu archivo. Súbelo de nuevo, más nítido o en PDF.",
             "agregarArchivo": "Agregar otro archivo",
             "agregarOtroDe": "Agregar otro de este documento",
             "observacion": "Tu preparador te pide revisar este documento",

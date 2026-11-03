@@ -165,6 +165,8 @@ export type VistaEntrevista = {
     avisos: { tipo: 'anios_sin_declarar'; detalle: string | null }[];
     documentos: DocumentoRevision[];
     documentos_resumen: ResumenDocumentos;
+    /** Excepciones abiertas del cliente en la cola (F4.7). */
+    excepciones_abiertas: { total: number; bloqueantes: number };
 };
 
 export type CambioRespuesta = {

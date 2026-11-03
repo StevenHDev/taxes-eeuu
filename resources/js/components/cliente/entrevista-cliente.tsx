@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import {
     Check,
     CircleX,
@@ -51,6 +51,8 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { visor as rutaVisor } from '@/routes/clientes/documentos';
 import { update as rutaRevisar } from '@/routes/clientes/entrevista/documentos';
 import {
     historial as rutaHistorial,
@@ -332,6 +334,11 @@ export function EntrevistaCliente({
                         </dl>
                     </section>
                 ))}
+
+                <ExcepcionesAbiertasFila
+                    clienteId={clienteId}
+                    excepciones={entrevista.excepciones_abiertas}
+                />
 
                 <Documentos
                     clienteId={clienteId}
@@ -791,6 +798,47 @@ function accionesPermitidas(d: DocumentoRevision): AccionRevision[] {
     return acciones;
 }
 
+/** El conteo de excepciones abiertas, con enlace a la cola filtrada (F4.7b). */
+function ExcepcionesAbiertasFila({
+    clienteId,
+    excepciones,
+}: {
+    clienteId: number;
+    excepciones: { total: number; bloqueantes: number };
+}) {
+    const { t } = useTranslation();
+
+    if (excepciones.total === 0) {
+        return null;
+    }
+
+    return (
+        <Link
+            href={`/excepciones?cliente=${clienteId}`}
+            className={cn(
+                'flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border px-3 py-2 text-sm transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
+                excepciones.bloqueantes > 0
+                    ? 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/70'
+                    : 'hover:bg-accent',
+            )}
+        >
+            <span className="font-medium">
+                {t('excepciones.ficha.abiertas', { count: excepciones.total })}
+            </span>
+            {excepciones.bloqueantes > 0 ? (
+                <span>
+                    {t('excepciones.ficha.bloqueantes', {
+                        count: excepciones.bloqueantes,
+                    })}
+                </span>
+            ) : null}
+            <span className="ml-auto underline underline-offset-4">
+                {t('excepciones.ficha.ver')}
+            </span>
+        </Link>
+    );
+}
+
 function ResumenDocs({ resumen }: { resumen: ResumenDocumentos }) {
     const { t } = useTranslation();
 
@@ -982,7 +1030,18 @@ function DocumentoFilaPreparador({
                 ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-1">
-                <DocumentoEstado estado={d.estado} />
+                <DocumentoEstado estado={d.estado} vista="preparador" />
+                {['leido', 'no_se_pudo_leer', 'validado'].includes(d.estado) ? (
+                    <Button variant="outline" size="sm" asChild>
+                        <Link
+                            href={rutaVisor({ cliente: clienteId, item: d.id })}
+                            aria-label={t('visor.verDatosAria', { nombre })}
+                        >
+                            <Eye aria-hidden="true" />
+                            {t('visor.verDatos')}
+                        </Link>
+                    </Button>
+                ) : null}
                 {acciones.includes('validar') ? (
                     <AccionIcono
                         etiqueta={t('clienteShow.entrevista.validarDoc', {
