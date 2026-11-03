@@ -986,6 +986,19 @@ return [
         ],
     ],
     [
+        // F3.9: los retiros de un 529 o Coverdell llegan en el 1099-Q.
+        'codigo' => 'F1.1', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 1,
+        'texto_es' => '¿Sacaste dinero de un plan 529 o de una cuenta Coverdell para estudios en {anio}?', 'texto_en' => 'Did you take money out of a 529 plan or a Coverdell education savings account in {anio}?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'condicion' => ['pregunta' => 'F1', 'es' => 'si'],
+        'efecto_es' => '1099-Q: la parte de ganancias es ingreso si el retiro no se usó en gastos de estudio calificados (Schedule 1 y, si aplica, Form 5329)',
+        'fuente_texto' => 'Pub. 970 de 2025: programas de matrícula calificados (529) y cuentas Coverdell',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p970.pdf',
+        'activa' => [
+            ['respuesta' => 'si', 'objetivo' => 'documento:1099-q'],
+        ],
+    ],
+    [
         'codigo' => 'F2', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 2,
         'texto_es' => '¿Vendiste tu casa?', 'texto_en' => 'Did you sell your home?', 'ayuda_es' => null,
         'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
@@ -1111,6 +1124,51 @@ return [
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f13614c.pdf',
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'documento:carta-irs'],
+        ],
+    ],
+
+    [
+        // F3.9: el crédito por vehículo limpio termina con los adquiridos
+        // después del 30 de septiembre de 2025 (Ley 119-21). 2026 lo apaga.
+        'codigo' => 'F10', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 10,
+        'texto_es' => '¿Compraste un carro eléctrico o híbrido enchufable (nuevo o usado) antes del 1 de octubre de {anio}?', 'texto_en' => 'Did you buy an electric or plug-in hybrid car (new or used) before October 1, {anio}?',
+        'ayuda_es' => 'También cuenta si antes de esa fecha firmaste el contrato y diste un pago, aunque te lo entregaron después.', 'ayuda_en' => 'It also counts if you signed the contract and made a payment before that date, even if you got the car later.',
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
+        'condicion' => null,
+        'efecto_es' => 'Form 8936 → Schedule 3. Si el concesionario adelantó el crédito en la venta, igual se presenta el 8936',
+        'fuente_texto' => 'Crédito por vehículo limpio nuevo o usado: no aplica a vehículos adquiridos después del 30 de septiembre de 2025 (Ley 119-21). El vendedor entrega el informe de la venta',
+        'fuente_url' => 'https://www.irs.gov/clean-vehicle-tax-credits',
+        'activa' => [
+            ['respuesta' => 'si', 'objetivo' => 'documento:informe-vehiculo-limpio'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:f8936'],
+        ],
+    ],
+    [
+        // F3.9: 25C y 25D terminan con lo instalado o pagado después del
+        // 31 de diciembre de 2025 (Ley 119-21). 2026 lo apaga.
+        'codigo' => 'F11', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 11,
+        'texto_es' => '¿Instalaste en tu casa paneles solares, baterías o mejoras para ahorrar energía (ventanas, puertas, aislamiento, aire acondicionado o calentador eficiente) en {anio}?', 'texto_en' => 'Did you install solar panels, batteries or energy-saving improvements (windows, doors, insulation, efficient air conditioning or water heater) in your home in {anio}?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
+        'condicion' => null,
+        'efecto_es' => 'Form 5695 → Schedule 3 (energía limpia residencial y mejoras de eficiencia energética)',
+        'fuente_texto' => 'Créditos 25C y 25D: no aplican a lo instalado o pagado después del 31 de diciembre de 2025 (Ley 119-21)',
+        'fuente_url' => 'https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb',
+        'activa' => [
+            ['respuesta' => 'si', 'objetivo' => 'documento:facturas-energia'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:f5695'],
+        ],
+    ],
+    [
+        'codigo' => 'F12', 'bloque' => 'F', 'pantalla' => 7, 'orden' => 12,
+        'texto_es' => '¿Adoptaste a un niño o pagaste gastos de una adopción en {anio}?', 'texto_en' => 'Did you adopt a child or pay adoption expenses in {anio}?', 'ayuda_es' => null,
+        'tipo_respuesta' => 'si_no', 'opciones' => null, 'nivel' => 'entrada', 'por_persona' => false, 'sensible' => false,
+        'condicion' => null,
+        'efecto_es' => 'Form 8839 → Schedule 3 (crédito por adopción)',
+        'fuente_texto' => 'Form 8839: gastos de adopción calificados',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i8839.pdf',
+        'activa' => [
+            ['respuesta' => 'si', 'objetivo' => 'documento:documentos-adopcion'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:f8839'],
         ],
     ],
 

@@ -36,7 +36,7 @@ use InvalidArgumentException;
 class CatalogoFiscalImportador
 {
     private const CLAVES = [
-        'preguntas' => ['codigo', 'bloque', 'pantalla', 'orden', 'texto_es', 'texto_en', 'ayuda_es', 'ayuda_en', 'tipo_respuesta', 'opciones', 'nivel', 'por_persona', 'sensible', 'condicion', 'efecto_es', 'fuente_texto', 'fuente_url', 'activa'],
+        'preguntas' => ['codigo', 'bloque', 'pantalla', 'orden', 'texto_es', 'texto_en', 'ayuda_es', 'ayuda_en', 'tipo_respuesta', 'opciones', 'nivel', 'por_persona', 'sensible', 'condicion', 'efecto_es', 'fuente_texto', 'fuente_url', 'activa', 'activo'],
         'activa' => ['respuesta', 'objetivo', 'nota'],
         'documentos' => ['codigo', 'grupo', 'nombre_oficial', 'nombre_sencillo_es', 'nombre_sencillo_en', 'emisor_es', 'emisor_en', 'fecha_llegada', 'si_no_llega_es', 'si_no_llega_en', 'que_subir_es', 'que_subir_en', 'plantilla', 'formatos', 'uno_por', 'siempre', 'orden', 'fuente_texto', 'fuente_url', 'casillas'],
         'casillas' => ['casilla', 'descripcion', 'tipo_dato', 'clave', 'orden'],

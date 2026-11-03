@@ -246,4 +246,22 @@ return [
         'fuente_texto' => 'Form 8889 (instrucciones del 1040 de 2025)', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
         'lineas' => [],
     ],
+    [
+        'codigo' => 'f5695', 'nombre' => 'Form 5695', 'para_que' => 'Créditos de energía de la vivienda (último año: 2025)',
+        'siempre' => false, 'ficha' => 'pendiente', 'orden' => 27,
+        'fuente_texto' => 'Form 5695 (créditos 25C y 25D)', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i5695.pdf',
+        'lineas' => [],
+    ],
+    [
+        'codigo' => 'f8936', 'nombre' => 'Form 8936', 'para_que' => 'Crédito por vehículo limpio (adquiridos hasta el 30 de septiembre de 2025)',
+        'siempre' => false, 'ficha' => 'pendiente', 'orden' => 28,
+        'fuente_texto' => 'Form 8936', 'fuente_url' => 'https://www.irs.gov/clean-vehicle-tax-credits',
+        'lineas' => [],
+    ],
+    [
+        'codigo' => 'f8839', 'nombre' => 'Form 8839', 'para_que' => 'Crédito por adopción',
+        'siempre' => false, 'ficha' => 'pendiente', 'orden' => 29,
+        'fuente_texto' => 'Form 8839', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i8839.pdf',
+        'lineas' => [],
+    ],
 ];

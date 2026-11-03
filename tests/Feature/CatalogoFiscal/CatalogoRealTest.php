@@ -53,17 +53,36 @@ class CatalogoRealTest extends TestCase
         $this->assertSame([], $verificador->verificar(2026));
 
         $conteos = $verificador->conteos(2025);
-        $this->assertSame(96, $conteos['preguntas']);
-        $this->assertSame(26, $conteos['formularios']);
+        $this->assertSame(100, $conteos['preguntas']);
+        $this->assertSame(46, $conteos['documentos']);
+        $this->assertSame(29, $conteos['formularios']);
         $this->assertSame(13, $conteos['reglas']);
-        $this->assertSame($conteos, $verificador->conteos(2026));
+
+        // 2026 apaga F10 y F11: los créditos por vehículo limpio y de energía
+        // de la vivienda terminan en 2025 (F3.9).
+        $this->assertSame([...$conteos, 'preguntas' => 98], $verificador->conteos(2026));
+    }
+
+    public function test_los_creditos_que_terminan_en_2025_solo_se_preguntan_en_2025(): void
+    {
+        $codigos = fn (int $anio) => $this->lector->preguntas($anio)->pluck('codigo');
+
+        $this->assertTrue($codigos(2025)->contains('F10'));
+        $this->assertTrue($codigos(2025)->contains('F11'));
+        $this->assertFalse($codigos(2026)->contains('F10'));
+        $this->assertFalse($codigos(2026)->contains('F11'));
+        $this->assertTrue($codigos(2026)->contains('F12'), 'El crédito por adopción sigue en 2026.');
+        $this->assertTrue($codigos(2026)->contains('F1.1'));
+
+        $f11 = $this->lector->preguntas(2025)->firstWhere('codigo', 'F11');
+        $this->assertEqualsCanonicalizing(['documento:facturas-energia', 'formulario:f5695'], collect($f11['activaciones'])->map(fn ($a) => "{$a['objetivo_tipo']}:{$a['objetivo_codigo']}")->all());
     }
 
     public function test_preguntas_por_bloque_como_la_seccion_3(): void
     {
         $porBloque = CatalogoPregunta::query()->delAnio(2025)->get()->countBy('bloque')->sortKeys()->all();
 
-        $this->assertSame(['A' => 17, 'B' => 9, 'C' => 16, 'D' => 26, 'E' => 10, 'F' => 11, 'G' => 7], $porBloque);
+        $this->assertSame(['A' => 17, 'B' => 9, 'C' => 16, 'D' => 26, 'E' => 10, 'F' => 15, 'G' => 7], $porBloque);
         $this->assertSame(15, CatalogoPregunta::query()->delAnio(2025)->where('por_persona', true)->count());
     }
 

@@ -22,5 +22,9 @@ return [
         'A1' => ['fuente_texto' => 'Encabezado y firma del 1040 (la firma pide la ocupación). 1040 línea 12d: "nació antes del 2 de enero de 1962"'],
         // El límite del pariente calificado de 2026 (USD 5.300, tabla de la sección 3).
         'C13' => ['texto_es' => '¿Esta persona tuvo ingresos de menos de USD 5.300 en {anio}?'],
+        // F3.9: los créditos por vehículo limpio y de energía de la vivienda
+        // terminan en 2025 (Ley 119-21).
+        'F10' => ['activo' => false],
+        'F11' => ['activo' => false],
     ],
 ];
