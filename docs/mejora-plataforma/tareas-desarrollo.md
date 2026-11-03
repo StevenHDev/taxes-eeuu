@@ -151,7 +151,7 @@ Wiplitask: `cmvskovx900771420nj5xy1du` · 🔄
 - [x] Temas que faltaban en el catálogo: 529 (1099-Q), vehículo limpio, energía de la vivienda y adopción (3.9, hecho el 3 nov.; F10 y F11 solo en 2025)
 
 ### F4 — Lectura y validación de documentos
-Plan técnico: [`fases/fase-4-lectura-validacion.md`](fases/fase-4-lectura-validacion.md) · ✅ Aprobado (2 nov.)
+Plan técnico: [`fases/fase-4-lectura-validacion.md`](fases/fase-4-lectura-validacion.md) · ✅ Aprobado (2 nov.) · Subtareas para Sonnet 5.5: [`fases/fase-4-subtareas.md`](fases/fase-4-subtareas.md) (3 nov.)
 
 Wiplitask: `cmvskow2m007c142002rui266` · ⏳
 - [x] Plan técnico de la fase 4 escrito y aprobado (2 nov.)

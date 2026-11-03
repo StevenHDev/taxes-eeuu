@@ -46,7 +46,7 @@ Orden: 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. 4.1 y la ima
 - Encabezado de cada documento como casillas (`tipo_dato` nuevo: `ssn`, `ein`, `anio`, `nombre`), marcadas `sensible` cuando lo son (columna nueva en `catalogo_casillas`): W-2 a, b, c, e y el año; 1099 del pagador y del receptor; 1095-A parte I y parte II (personas cubiertas, con SSN).
 - W-2 casilla 12 con hasta cuatro pares código y monto (12a a 12d) y casilla 14 libre.
 - 1095-A por mes: líneas 21 a 32 con columnas A, B y C, y la línea 33. Reemplaza las cuatro casillas resumidas de hoy.
-- Las casillas de los 20 documentos que se leen (decisión 4): las que piden las reglas de 4.5 y las líneas del 1040.
+- Las casillas de los 21 documentos que se leen (decisión 4): las que piden las reglas de 4.5 y las líneas del 1040.
 - Cada casilla con su fuente (el formulario oficial de 2025). 2026 lo hereda.
 
 **Pruebas:** `CatalogoRealTest` cuenta las casillas por documento y verifica que las líneas del 1040 apunten a casillas que existen.
@@ -75,6 +75,15 @@ Orden: 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. 4.1 y la ima
 - Todo auditado (bitácora de F0). Lo leído nunca se muestra fuera del portal y de la ficha.
 
 **Pruebas:** el valor queda cifrado en la base; corregir guarda los dos valores y el motivo; un ítem retirado (F3.2) no borra sus datos.
+
+**Cómo quedó (3 nov., Opus 5.5 y Sonnet 5.5):**
+- Migración `2026_11_03_120000_crea_lectura_de_documentos`: `documento_lecturas`, `documento_datos`, `documento_dato_cambios` y `excepciones`.
+- Enums en `app/Enums/Lectura/` (`EstadoLectura`, `Legibilidad`, `OrigenDato`, `EstadoExcepcion`) y modelos en `app/Models/Lectura/`, con relaciones desde `Documento`, `Entrevista` y `EntrevistaDocumento`.
+- Cifrado: `valor`, `valor_leido` y los valores del historial con `ValorCifrado`; `evidencia` con `encrypted`. `valor_leido` no cambia nunca; el recuadro va como `{x, y, ancho, alto}` entre 0 y 1.
+- `App\Services\Lectura\DatosDocumento`: `vigentes()` (última lectura terminada de cada archivo) y `corregir()` (motivo obligatorio, historial, `origen = preparador`, y si el ítem estaba validado lo vuelve a `leido` con `ChecklistDocumentos::reabrirValidacion()`).
+- Bitácora: lecturas, datos y excepciones se registran con `AuditoriaObserver` (solo nombres de atributo).
+- Pruebas (`tests/Feature/Lectura/DatosDocumentoTest.php`, 8): cifrado en la base, historial, corregir sin motivo y al mismo valor, reapertura, `vigentes()`, bitácora sin valores y ítem retirado sin borrar nada. Suite: 671 pruebas, 669 pasan y 2 se saltan.
+- **Tarjeta del Seguro Social:** `tarjeta-ssn` ahora tiene casillas (`nombre`, `ssn`, `no-valido-para-trabajar`) y es el documento 21 que lee F4 (344 casillas activas por año).
 
 ## 4.3 Lector de documentos
 
@@ -242,5 +251,5 @@ Como en F3: push a `main`, revisar las migraciones, recargar el catálogo cuando
 1. **Lector:** OpenAI con el modelo que ya usa la plataforma (`OPENAI_VISION_MODEL`). Azure no se puede usar por ahora. La confianza y la evidencia se calculan como dice 4.3.
 2. **Todos los usuarios (3 nov., reemplaza la del 2 nov.):** la lectura automática corre para todos, no solo para los de prueba. Steven conoce el riesgo de L2 (mandar documentos de clientes reales a OpenAI sin la respuesta del abogado). La bandera `tax.lectura_automatica` queda prendida por defecto para apagarla sin deploy.
 3. **Umbral de confianza:** 0,90, guardado como parámetro del año.
-4. **Documentos que se leen en F4 (20; ampliado el 3 nov.):** W-2, 1095-A, 1099-NEC, 1099-K, 1099-MISC, 1099-INT, 1099-DIV, 1099-R, SSA-1099, 1099-G, 1098, 1098-E, 1098-T, 1099-S, 1099-C, 1099-SA, 5498-SA, W-2G, 5498 (estado de cuenta de la IRA) y 1099-Q. El preparador escribe a mano los largos (1099-B, 1099-DA, K-1, declaración anterior, cartas del IRS), los que no tienen formato del IRS (recibos y registros propios) y los de identidad.
+4. **Documentos que se leen en F4 (21; ampliado el 3 nov.):** W-2, 1095-A, 1099-NEC, 1099-K, 1099-MISC, 1099-INT, 1099-DIV, 1099-R, SSA-1099, 1099-G, 1098, 1098-E, 1098-T, 1099-S, 1099-C, 1099-SA, 5498-SA, W-2G, 5498 (estado de cuenta de la IRA) y 1099-Q, más la **tarjeta del Seguro Social** (`tarjeta-ssn`: nombre, número y si dice "no válida para trabajar"; la entrevista solo guarda el número del cónyuge, y la R-01 y el 1040 necesitan el de cada persona). El preparador escribe a mano los largos (1099-B, 1099-DA, K-1, declaración anterior, cartas del IRS), los que no tienen formato del IRS (recibos y registros propios) y los de identidad.
 5. **Reglas:** F4 corre R-01 y R-03 a R-09, y R-11 como aviso. R-02 va en F5; R-10, R-11 como bloqueante y R-12, en F6; R-13, en F7.
