@@ -123,6 +123,14 @@ Orden: 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. 4.1 y la ima
 - Un archivo ilegible devuelve error.
 - Con la bandera apagada no se llama a OpenAI.
 
+**Cómo quedó 4.3a, páginas como imagen (3 nov., Sonnet 5.5):**
+- `App\Services\Lectura\PaginasDocumento`: `generar(Documento, DocumentoLectura)` convierte el archivo en un PNG por página, cifrado en `lecturas/{lectura}/pagina-{n}.png` del mismo disco que los archivos, y anota las páginas en la lectura; `leer(lectura, pagina)` lo devuelve descifrado.
+- El tipo se decide por el contenido (`finfo`), no por la extensión. PDF con `pdftoppm` a 150 dpi (máximo 10 páginas; más es error); JPG y PNG por GD; HEIC con `heif-convert` y después como JPG.
+- Las imágenes se enderezan con el EXIF (las fotos de celular verticales) y se reducen a 2400 px el lado más largo.
+- Los errores son claros y no copian el contenido del archivo. Los temporales se borran siempre. Releer deja solo las páginas de la última vez.
+- **Dockerfile:** el GD de producción no tenía soporte de JPEG (verificado). Se agregó `libjpeg-dev` con `docker-php-ext-configure gd --with-jpeg` y `libheif-examples` (`heif-convert`). **No se pudo construir la imagen en la máquina de desarrollo (sin Docker): revisar el primer despliegue.**
+- Pruebas (`PaginasDocumentoTest`, 11): PDF de 2 páginas, nada en claro en el disco, JPG y PNG, reducción, EXIF, PDF de 12 páginas, archivo dañado, HEIC sin `heif-convert`, releer y página inexistente. La conversión real de HEIC queda saltada hasta que haya `heif-convert` y un `tests/Fixtures/lectura/foto.heic`. Suite: 682 pruebas, 679 pasan y 3 se saltan.
+
 ## 4.4 Leer al subir
 
 **Modelo: Opus 5.5** (colas y estados; reglas `arch-queue-routing`, `arch-event-driven`).

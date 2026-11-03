@@ -26,7 +26,7 @@
 | --- | --- | --- | --- |
 | 4.2a | Tablas, modelos y servicio de los datos leídos | ninguna | ✅ 3 nov. (sin commit) |
 | 4.2b | Pruebas del modelo de datos | 4.2a | ✅ 3 nov. (sin commit) |
-| 4.3a | Páginas como imagen y HEIC | 4.2b | ⏳ |
+| 4.3a | Páginas como imagen y HEIC | 4.2b | ✅ 3 nov. (sin commit) |
 | 4.3b | Esquema de lectura y llamada a OpenAI | 4.2b | ⏳ |
 | 4.3c | Confianza y evidencia | 4.3b | ⏳ |
 | 4.3d | Lector de OpenAI, lector manual y bandera | 4.3a, 4.3c | ⏳ |
