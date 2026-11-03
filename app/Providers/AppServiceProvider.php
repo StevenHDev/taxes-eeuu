@@ -43,6 +43,9 @@ use App\Policies\BitacoraPolicy;
 use App\Policies\CatalogoFiscalPolicy;
 use App\Policies\ClientePolicy;
 use App\Policies\WhatsappMensajePolicy;
+use App\Services\Lectura\LectorDocumentos;
+use App\Services\Lectura\LectorManual;
+use App\Services\Lectura\LectorOpenAi;
 use App\Services\Whatsapp\Twilio\TwilioChannel;
 use App\Services\Whatsapp\WhatsappChannel;
 use Carbon\CarbonImmutable;
@@ -76,6 +79,12 @@ class AppServiceProvider extends ServiceProvider
         // Twilio es el único proveedor de WhatsApp; el resto del sistema habla
         // contra la interfaz WhatsappChannel (y las pruebas la reemplazan).
         $this->app->bind(WhatsappChannel::class, TwilioChannel::class);
+
+        // La bandera se lee al resolver (no al arrancar) para poder apagar la
+        // lectura sin reiniciar y para las pruebas.
+        $this->app->bind(LectorDocumentos::class, fn ($app) => config('tax.lectura_automatica')
+            ? $app->make(LectorOpenAi::class)
+            : $app->make(LectorManual::class));
     }
 
     /**

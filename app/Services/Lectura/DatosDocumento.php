@@ -12,6 +12,8 @@ use App\Services\Entrevista\ChecklistDocumentos;
 use App\Services\Entrevista\TransicionNoPermitida;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
+use Throwable;
 
 /**
  * Los datos leídos de los documentos (F4.2). Es el único que los corrige:
@@ -43,6 +45,61 @@ class DatosDocumento
             ->orderBy('lectura_id')
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * Guarda lo que leyó un lector (F4.3d): un dato por casilla, con el valor
+     * leído (que no se pisa nunca) y su confianza con el motivo, y deja la
+     * lectura `leida`. Releer es otra lectura; la anterior no se toca.
+     *
+     * @throws RuntimeException si la lectura ya terminó
+     */
+    public function guardarLectura(DocumentoLectura $lectura, LecturaResultado $resultado): void
+    {
+        throw_if($lectura->estado !== EstadoLectura::EnCola, new RuntimeException('La lectura ya terminó: para volver a leer se crea otra.'));
+
+        DB::transaction(function () use ($lectura, $resultado) {
+            foreach ($resultado->casillas as $casilla => $dato) {
+                $lectura->datos()->create([
+                    'entrevista_documento_id' => $lectura->entrevista_documento_id,
+                    'casilla' => (string) $casilla,
+                    'valor' => $dato['valor'],
+                    'valor_leido' => $dato['valor'],
+                    'confianza' => $dato['confianza'],
+                    'motivo_confianza' => $dato['motivo'],
+                    'legibilidad' => $dato['legibilidad'],
+                    'pagina' => $dato['pagina'],
+                    'recuadro' => $dato['recuadro'],
+                    'evidencia' => $dato['evidencia'],
+                    'origen' => OrigenDato::Lector,
+                ]);
+            }
+
+            $lectura->update([
+                'lector' => $resultado->lector,
+                'modelo' => $resultado->modelo,
+                'estado' => EstadoLectura::Leida,
+                'tipo_detectado' => $resultado->tipoDetectado,
+                'anio_detectado' => $resultado->anioDetectado,
+                'paginas' => $resultado->paginas > 0 ? $resultado->paginas : (int) $lectura->paginas,
+                'error' => null,
+                'terminada_en' => now(),
+            ]);
+        });
+    }
+
+    /**
+     * Marca la lectura como fallida. El error guarda solo qué pasó, nunca lo
+     * leído: los mensajes de nuestros lectores no llevan datos del cliente
+     * (RuntimeException); de cualquier otra excepción solo se guarda su clase.
+     */
+    public function fallar(DocumentoLectura $lectura, Throwable $error): void
+    {
+        $lectura->update([
+            'estado' => EstadoLectura::Fallida,
+            'error' => $error instanceof RuntimeException ? mb_substr($error->getMessage(), 0, 500) : 'Error inesperado ('.class_basename($error).').',
+            'terminada_en' => now(),
+        ]);
     }
 
     /**

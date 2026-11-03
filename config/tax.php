@@ -31,4 +31,17 @@ return [
     */
     'entrevista_whatsapp' => (bool) env('ENTREVISTA_WHATSAPP', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Lectura automática de documentos (F4)
+    |--------------------------------------------------------------------------
+    |
+    | `lectura_automatica`: si la plataforma lee con OpenAI los documentos que
+    | suben los clientes (W-2, 1099…). Corre para todos los usuarios (decisión
+    | de Steven, 3 nov.). Apagada, no se llama a OpenAI y el preparador escribe
+    | los datos en el visor.
+    |
+    */
+    'lectura_automatica' => (bool) env('LECTURA_AUTOMATICA', true),
+
 ];
