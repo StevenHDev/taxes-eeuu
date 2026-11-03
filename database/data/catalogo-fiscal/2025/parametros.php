@@ -26,4 +26,13 @@ return [
         'fuente_texto' => 'Proceso (umbral propuesto, a calibrar)',
         'fuente_url' => null,
     ],
+    [
+        'categoria' => 'self_employment_tax', 'clave' => 'maximo_seguro_social_retenido_por_persona', 'valor' => 10918.2,
+        'grupo' => 'topes_umbrales', 'tipo' => 'monto',
+        'nombre_es' => 'Seguro Social retenido por persona con varios empleadores: máximo del año',
+        'formulario_linea' => 'Schedule 3, línea 11',
+        'condicion_es' => 'Si una persona tuvo dos o más empleadores y el Seguro Social retenido en sus W-2 (casilla 4) suma más que este monto (6,2 % del tope del Seguro Social), el exceso es un crédito en el Schedule 3 (regla R-05).',
+        'fuente_texto' => 'Instrucciones del 1040 de 2025; Schedule 3, línea 11',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
+    ],
 ];

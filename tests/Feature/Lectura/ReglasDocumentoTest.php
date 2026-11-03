@@ -372,10 +372,10 @@ class ReglasDocumentoTest extends TestCase
         $this->assertCount(0, $this->excepciones('R-04'));
     }
 
-    public function test_las_cinco_reglas_de_este_paso_quedan_implementadas_en_el_catalogo(): void
+    public function test_las_reglas_implementadas_quedan_implementadas_en_el_catalogo(): void
     {
         $implementadas = CatalogoRegla::query()->delAnio(2025)->where('implementada', true)->orderBy('codigo')->pluck('codigo')->all();
 
-        $this->assertSame(['R-03', 'R-04', 'R-06', 'R-07', 'R-09'], $implementadas);
+        $this->assertSame(['R-01', 'R-03', 'R-04', 'R-05', 'R-06', 'R-07', 'R-08', 'R-09', 'R-11'], $implementadas);
     }
 }

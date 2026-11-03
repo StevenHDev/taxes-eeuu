@@ -23,7 +23,7 @@ class PantallaTest extends TestCase
         'preguntas' => 100,
         'documentos' => 46,
         'formularios' => 29,
-        'parametros' => 33,
+        'parametros' => 34,
         'reglas' => 13,
     ];
 

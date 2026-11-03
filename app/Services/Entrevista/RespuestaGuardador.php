@@ -10,8 +10,10 @@ use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaPersona;
 use App\Models\Entrevista\EntrevistaRespuesta;
 use App\Models\FormaCliente;
+use App\Models\Lectura\DocumentoDato;
 use App\Models\User;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
+use App\Services\Lectura\Reglas\MotorReglas;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -130,9 +132,25 @@ class RespuestaGuardador
 
             $entrevista->unsetRelation('respuestas');
             $this->sincronizarActivados($entrevista);
+            $this->correrReglas($entrevista, $codigo);
 
             return $respuesta;
         });
+    }
+
+    /**
+     * Las reglas cruzan respuestas con documentos (F4.5): una respuesta nueva
+     * puede abrir o cerrar una excepción. Solo corren si hay datos leídos o la
+     * respuesta es de las que usa una regla sin documentos (R-11). El motor se
+     * pide al contenedor aquí para no cerrar un ciclo de dependencias.
+     */
+    private function correrReglas(Entrevista $entrevista, string $codigo): void
+    {
+        $hayDatos = DocumentoDato::query()->whereIn('entrevista_documento_id', $entrevista->documentos()->select('id'))->exists();
+
+        if ($hayDatos || in_array($codigo, ['C2', 'C3', 'C9'], true)) {
+            app(MotorReglas::class)->correr($entrevista);
+        }
     }
 
     /**

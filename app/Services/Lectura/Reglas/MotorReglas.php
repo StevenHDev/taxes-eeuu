@@ -25,11 +25,15 @@ class MotorReglas
 {
     /** @var list<class-string<Regla>> */
     private const REGLAS = [
+        R01Ssn::class,
         R03Confianza::class,
         R04TopesW2::class,
+        R05ExcesoSeguroSocial::class,
         R06AnioYTipo::class,
         R07Repetido::class,
+        R08RespuestasContraDocumentos::class,
         R09Adelanto8962::class,
+        R11HijoSinSsn::class,
     ];
 
     public function __construct(private readonly DatosDocumento $datos) {}
