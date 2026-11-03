@@ -2,9 +2,11 @@
 
 namespace App\Services\Entrevista;
 
+use App\Enums\CatalogoFiscal\SeveridadRegla;
 use App\Enums\Entrevista\EstadoDocumento;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaDocumento;
+use App\Models\Lectura\Excepcion;
 use App\Models\User;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use Illuminate\Support\Collection;
@@ -270,6 +272,10 @@ class ChecklistDocumentos
     {
         $this->exigir($item, [EstadoDocumento::Subido, EstadoDocumento::Leido, EstadoDocumento::ConObservacion]);
         $this->exigirArchivos($item);
+
+        if (Excepcion::query()->abiertas()->where('entrevista_documento_id', $item->id)->where('severidad', SeveridadRegla::Bloqueante)->exists()) {
+            throw new TransicionNoPermitida(__('Este documento tiene una regla bloqueante sin resolver: corrige el dato o acepta la excepción.'));
+        }
 
         $item->update([
             'estado' => EstadoDocumento::Validado,

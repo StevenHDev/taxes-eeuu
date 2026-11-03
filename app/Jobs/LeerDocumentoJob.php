@@ -10,13 +10,14 @@ use App\Services\Entrevista\ChecklistDocumentos;
 use App\Services\Lectura\DatosDocumento;
 use App\Services\Lectura\EsquemaLectura;
 use App\Services\Lectura\LectorDocumentos;
+use App\Services\Lectura\Reglas\MotorReglas;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
 /**
  * Lee un archivo subido (F4.4): crea la lectura, la hace el lector, guarda los
- * datos y deja el ítem en `leido`. Cada intento es una lectura; si lanza una
+ * datos, deja el ítem en `leido` y corre las reglas (MotorReglas). Cada intento es una lectura; si lanza una
  * excepción queda `fallida` y la cola reintenta (3 intentos, con espera). Si
  * se acaban, el ítem pasa a `no_se_pudo_leer`: nunca queda `subido` sin datos
  * ni aviso (documento madre 6.1.5).
@@ -48,7 +49,7 @@ class LeerDocumentoJob implements ShouldQueue
         return [60, 300];
     }
 
-    public function handle(LectorDocumentos $lector, DatosDocumento $datos, ChecklistDocumentos $checklist, EsquemaLectura $esquemas): void
+    public function handle(LectorDocumentos $lector, DatosDocumento $datos, ChecklistDocumentos $checklist, EsquemaLectura $esquemas, MotorReglas $reglas): void
     {
         $documento = Documento::query()->find($this->documentoId);
         $item = $documento?->entrevista_documento_id === null ? null : EntrevistaDocumento::query()->with('entrevista')->find($documento->entrevista_documento_id);
@@ -79,6 +80,7 @@ class LeerDocumentoJob implements ShouldQueue
         }
 
         $checklist->leido($item);
+        $reglas->correr($item->entrevista);
     }
 
     public function failed(?Throwable $error): void

@@ -10,6 +10,7 @@ use App\Models\Lectura\DocumentoLectura;
 use App\Models\User;
 use App\Services\Entrevista\ChecklistDocumentos;
 use App\Services\Entrevista\TransicionNoPermitida;
+use App\Services\Lectura\Reglas\MotorReglas;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -140,5 +141,13 @@ class DatosDocumento
                 $this->checklist->reabrirValidacion($dato->item);
             }
         });
+
+        // Lo corregido puede cerrar (o abrir) excepciones. El motor se pide aquí y no en el
+        // constructor porque él mismo lee los datos con esta clase.
+        $entrevista = $dato->item?->entrevista;
+
+        if ($entrevista !== null) {
+            app(MotorReglas::class)->correr($entrevista);
+        }
     }
 }

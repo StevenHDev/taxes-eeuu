@@ -299,6 +299,18 @@ function ValorParametro({
         );
     }
 
+    // Un número con decimales (el umbral de confianza, 0,90) se ve con dos; un entero, tal cual.
+    if (tipo === 'numero' && typeof valor === 'number') {
+        return (
+            <span className="tabular-nums">
+                {new Intl.NumberFormat(i18n.language, {
+                    minimumFractionDigits: Number.isInteger(valor) ? 0 : 2,
+                    maximumFractionDigits: 2,
+                }).format(valor)}
+            </span>
+        );
+    }
+
     if (tipo === 'fecha' && typeof valor === 'string') {
         return (
             <span>
