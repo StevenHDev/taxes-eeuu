@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\CatalogoFiscal;
 
+use App\Http\Requests\CatalogoFiscal\DocumentoRequest;
 use App\Models\CatalogoFiscal\CatalogoFormulario;
 use App\Models\CatalogoFiscal\CatalogoPregunta;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
@@ -57,6 +58,8 @@ class CatalogoRealTest extends TestCase
         $this->assertSame(46, $conteos['documentos']);
         $this->assertSame(29, $conteos['formularios']);
         $this->assertSame(13, $conteos['reglas']);
+        $this->assertSame(341, $conteos['casillas']);
+        $this->assertSame(98, $conteos['lineas']);
 
         // 2026 apaga F10 y F11: los créditos por vehículo limpio y de energía
         // de la vivienda terminan en 2025 (F3.9).
@@ -129,7 +132,103 @@ class CatalogoRealTest extends TestCase
         $this->assertSame('¿Esta persona tuvo ingresos de menos de USD 5.300 en 2026?', $c13(2026));
 
         $nec2026 = $this->lector->documentos(2026)->firstWhere('codigo', '1099-nec');
-        $this->assertSame(['1a'], collect($nec2026['casillas'])->pluck('casilla')->all());
+        $this->assertContains('1a', collect($nec2026['casillas'])->pluck('casilla')->all());
+        $this->assertNotContains('1', collect($nec2026['casillas'])->pluck('casilla')->all());
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function casillasDe(int $anio, string $documento): Collection
+    {
+        return collect($this->lector->documentos($anio)->firstWhere('codigo', $documento)['casillas'] ?? []);
+    }
+
+    public function test_los_20_documentos_que_lee_f4_traen_sus_casillas_con_el_anio(): void
+    {
+        $documentos = ['w2', '1095-a', '1099-nec', '1099-k', '1099-misc', '1099-int', '1099-div', '1099-r', 'ssa-1099', '1099-g', '1098', '1098-e', '1098-t', '1099-s', '1099-c', '1099-sa', '5498-sa', 'w2g', 'estado-cuenta-ira', '1099-q'];
+
+        foreach ([2025, 2026] as $anio) {
+            foreach ($documentos as $codigo) {
+                $casillas = $this->casillasDe($anio, $codigo)->pluck('casilla');
+                $this->assertTrue($casillas->contains('anio'), "{$anio} {$codigo}: falta el año.");
+                $this->assertGreaterThanOrEqual(6, $casillas->count(), "{$anio} {$codigo}: pocas casillas.");
+
+                if ($codigo !== 'w2' && $codigo !== '1095-a') {
+                    $this->assertTrue($casillas->contains('receptor-tin'), "{$anio} {$codigo}: falta el TIN del receptor.");
+                }
+            }
+        }
+
+        $w2 = $this->casillasDe(2025, 'w2')->pluck('casilla');
+        foreach (['a', 'b', 'c', 'e', 'anio', '1', '2', '3', '4', '7', '10', '12a-codigo', '12a-monto', '12d-codigo', '12d-monto'] as $casilla) {
+            $this->assertTrue($w2->contains($casilla), "W-2: falta {$casilla}.");
+        }
+        $this->assertFalse($w2->contains('12'));
+    }
+
+    public function test_la_1095_a_trae_una_casilla_por_linea_y_no_las_resumidas(): void
+    {
+        $casillas = $this->casillasDe(2025, '1095-a')->pluck('casilla');
+
+        $esperadas = [];
+        foreach (range(16, 20) as $fila) {
+            foreach (['A', 'B', 'C', 'D', 'E'] as $col) {
+                $esperadas[] = "{$fila}-{$col}";
+            }
+        }
+        foreach (range(21, 32) as $mes) {
+            foreach (['A', 'B', 'C'] as $col) {
+                $esperadas[] = "{$mes}-{$col}";
+            }
+        }
+        array_push($esperadas, '33-A', '33-B', '33-C');
+
+        foreach ($esperadas as $casilla) {
+            $this->assertTrue($casillas->contains($casilla), "1095-A: falta {$casilla}.");
+        }
+        foreach (['parte-I', 'parte-II', 'III-A', 'III-B', 'III-C', 'linea-33'] as $vieja) {
+            $this->assertFalse($casillas->contains($vieja), "1095-A: sobra {$vieja}.");
+        }
+
+        // Cada columna del 8962 sale de una sola casilla: ";" en el origen
+        // suma, y la prima, la de referencia y el adelanto no se suman.
+        $this->assertSame('1095-a:33-A', $this->origen('f8962', '11a'));
+        $this->assertSame('1095-a:33-B', $this->origen('f8962', '11b'));
+        $this->assertSame('1095-a:33-C', $this->origen('f8962', '11f'));
+        $this->assertSame('1095-a:21-A', $this->origen('f8962', '12a'), 'Línea 12 = enero = línea 21 del 1095-A.');
+        $this->assertSame('1095-a:32-C', $this->origen('f8962', '23f'), 'Línea 23 = diciembre = línea 32 del 1095-A.');
+        $this->assertNull($this->origen('f8962', 'col-a'));
+    }
+
+    public function test_toda_linea_de_origen_casilla_apunta_a_una_casilla_activa_y_lo_sensible_esta_marcado(): void
+    {
+        $permitidos = DocumentoRequest::TIPOS_DATO;
+
+        foreach ([2025, 2026] as $anio) {
+            $activas = [];
+            foreach ($this->lector->documentos($anio) as $documento) {
+                foreach ($documento['casillas'] as $c) {
+                    $activas["{$documento['codigo']}:{$c['casilla']}"] = true;
+                    $this->assertContains($c['tipo_dato'], $permitidos, "{$anio} {$documento['codigo']}:{$c['casilla']}: tipo de dato.");
+
+                    if (in_array($c['tipo_dato'], ['ssn', 'ein', 'tin'], true)) {
+                        $this->assertTrue($c['sensible'], "{$anio} {$documento['codigo']}:{$c['casilla']} debe ser sensible.");
+                    }
+                }
+            }
+
+            foreach ($this->lector->formularios($anio) as $formulario) {
+                foreach ($formulario['lineas'] as $linea) {
+                    if ($linea['origen_tipo'] !== 'casilla') {
+                        continue;
+                    }
+                    foreach (explode(';', $linea['origen_clave']) as $clave) {
+                        $this->assertArrayHasKey($clave, $activas, "{$anio} {$formulario['codigo']} línea {$linea['linea']}: {$clave}.");
+                    }
+                }
+            }
+        }
     }
 
     public function test_los_documentos_con_fecha_dicen_quien_los_envia_que_hacer_y_de_donde_sale_la_fecha(): void
