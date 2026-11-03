@@ -26,6 +26,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Tests\TestCase;
@@ -49,6 +50,8 @@ class LectorTest extends TestCase
     {
         parent::setUp();
 
+        // Subir un archivo encola su lectura; aquí el lector se prueba a mano.
+        Queue::fake();
         Storage::fake(Documento::disco());
         $this->seed(CatalogoFiscalSeeder::class);
         config([
