@@ -2,6 +2,7 @@
 
 namespace App\Services\Whatsapp;
 
+use App\Support\TextoWhatsapp;
 use Twilio\Rest\Client as TwilioClient;
 
 /**
@@ -18,16 +19,23 @@ class TwilioWhatsappClient
     public function __construct(private readonly TwilioClient $client) {}
 
     /**
-     * @return string el MessageSid asignado por Twilio al envío
+     * Un texto de más de 1500 caracteres sale en varios mensajes seguidos
+     * (Twilio rechaza más de 1600 y el cliente se quedaría sin respuesta).
+     *
+     * @return string el MessageSid del último mensaje enviado
      */
     public function enviarTexto(string $telefono, string $mensaje): string
     {
-        $creado = $this->client->messages->create($this->comoWhatsapp($telefono), [
-            'from' => $this->comoWhatsapp((string) config('services.twilio.whatsapp_from')),
-            'body' => $mensaje,
-        ]);
+        $sid = '';
 
-        return $creado->sid;
+        foreach (TextoWhatsapp::partir($mensaje) as $parte) {
+            $sid = $this->client->messages->create($this->comoWhatsapp($telefono), [
+                'from' => $this->comoWhatsapp((string) config('services.twilio.whatsapp_from')),
+                'body' => $parte,
+            ])->sid;
+        }
+
+        return $sid;
     }
 
     private function comoWhatsapp(string $telefono): string

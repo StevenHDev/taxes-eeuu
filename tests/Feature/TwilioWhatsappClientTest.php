@@ -25,6 +25,11 @@ class TwilioWhatsappClientTest extends TestCase
             /** @var array<string, mixed>|null */
             public ?array $ultimaPeticion = null;
 
+            public int $peticiones = 0;
+
+            /** @var list<string> */
+            public array $cuerpos = [];
+
             public function request(
                 string $method,
                 string $url,
@@ -37,6 +42,8 @@ class TwilioWhatsappClientTest extends TestCase
                 ?AuthStrategy $authStrategy = null,
             ): Response {
                 $this->ultimaPeticion = compact('method', 'url', 'params', 'data', 'headers');
+                $this->peticiones++;
+                $this->cuerpos[] = (string) ($data['Body'] ?? '');
 
                 return new Response(201, json_encode([
                     'sid' => 'SM_test_1234',
@@ -75,5 +82,22 @@ class TwilioWhatsappClientTest extends TestCase
 
         $this->assertSame('whatsapp:+15557654321', $fake->ultimaPeticion['data']['From']);
         $this->assertSame('whatsapp:+15551234567', $fake->ultimaPeticion['data']['To']);
+    }
+
+    public function test_un_texto_de_mas_de_1500_caracteres_sale_en_varios_mensajes(): void
+    {
+        config(['services.twilio.whatsapp_from' => '+15557654321']);
+
+        [$twilioClient, $fake] = $this->crearClienteConFake();
+
+        $mensaje = implode("\n\n", array_map(fn (int $i) => "{$i}. ".str_repeat('pregunta ', 40), range(1, 10)));
+
+        (new TwilioWhatsappClient($twilioClient))->enviarTexto('+15551234567', $mensaje);
+
+        $this->assertGreaterThan(1, $fake->peticiones);
+
+        foreach ($fake->cuerpos as $cuerpo) {
+            $this->assertLessThanOrEqual(1600, mb_strlen($cuerpo), 'Twilio rechaza más de 1600 caracteres (error 21617).');
+        }
     }
 }
