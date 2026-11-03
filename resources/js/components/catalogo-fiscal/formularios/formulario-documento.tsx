@@ -9,6 +9,13 @@ import {
 import { DialogoEdicion } from '@/components/catalogo-fiscal/dialogo-edicion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { store, update } from '@/routes/catalogo-fiscal/documentos';
 import type { DocumentoCatalogo } from '@/types';
 
@@ -24,6 +31,19 @@ const GRUPOS = [
     'pagos',
 ] as const;
 const UNO_POR = ['unico', 'empleo', 'poliza', 'persona', 'fuente'] as const;
+const TIPOS_DATO = [
+    'monto',
+    'numero',
+    'texto',
+    'si_no',
+    'codigo',
+    'fecha',
+    'anio',
+    'nombre',
+    'ssn',
+    'ein',
+    'tin',
+] as const;
 const FORMATOS = ['pdf', 'jpg', 'png', 'heic', 'xlsx', 'csv'] as const;
 
 type Casilla = {
@@ -31,6 +51,7 @@ type Casilla = {
     descripcion: string;
     tipo_dato: string;
     clave: boolean;
+    sensible: boolean;
 };
 
 export function FormularioDocumento({
@@ -242,13 +263,17 @@ export function FormularioDocumento({
                     descripcion: '',
                     tipo_dato: '',
                     clave: false,
+                    sensible: false,
                 })}
                 errores={form.errors as Record<string, string | undefined>}
                 textoAgregar={t('catalogoFiscal.edicion.agregarCasilla')}
+                // Una casilla por fila en pantalla ancha: el 1095-A tiene unas 90.
+                grilla="grid-cols-2 sm:grid-cols-[7rem_minmax(0,1fr)_9rem_auto_auto_auto]"
                 columnas={[
                     {
                         campo: 'casilla',
                         etiqueta: t('catalogoFiscal.documentos.casilla'),
+                        ancho: 'col-span-2 sm:col-span-1',
                         render: (v, c, id, inv) => (
                             <Input
                                 id={id}
@@ -262,7 +287,7 @@ export function FormularioDocumento({
                     {
                         campo: 'descripcion',
                         etiqueta: t('catalogoFiscal.documentos.descripcion'),
-                        ancho: 'sm:col-span-2',
+                        ancho: 'col-span-2 sm:col-span-1',
                         render: (v, c, id, inv) => (
                             <Input
                                 id={id}
@@ -273,14 +298,55 @@ export function FormularioDocumento({
                         ),
                     },
                     {
+                        campo: 'tipo_dato',
+                        etiqueta: t('catalogoFiscal.documentos.tipoDato'),
+                        render: (v, c, id, inv) => (
+                            <Select
+                                value={String(v ?? '')}
+                                onValueChange={(x) => c(x)}
+                            >
+                                <SelectTrigger
+                                    id={id}
+                                    aria-invalid={inv || undefined}
+                                >
+                                    <SelectValue placeholder="—" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {TIPOS_DATO.map((tipo) => (
+                                        <SelectItem key={tipo} value={tipo}>
+                                            {t(
+                                                `catalogoFiscal.tiposDato.${tipo}`,
+                                            )}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        ),
+                    },
+                    {
                         campo: 'clave',
                         etiqueta: t('catalogoFiscal.documentos.clave'),
                         render: (v, c, id) => (
-                            <Checkbox
-                                id={id}
-                                checked={v === true}
-                                onCheckedChange={(x) => c(x === true)}
-                            />
+                            <div className="flex h-9 items-center">
+                                <Checkbox
+                                    id={id}
+                                    checked={v === true}
+                                    onCheckedChange={(x) => c(x === true)}
+                                />
+                            </div>
+                        ),
+                    },
+                    {
+                        campo: 'sensible',
+                        etiqueta: t('catalogoFiscal.documentos.sensible'),
+                        render: (v, c, id) => (
+                            <div className="flex h-9 items-center">
+                                <Checkbox
+                                    id={id}
+                                    checked={v === true}
+                                    onCheckedChange={(x) => c(x === true)}
+                                />
+                            </div>
                         ),
                     },
                 ]}

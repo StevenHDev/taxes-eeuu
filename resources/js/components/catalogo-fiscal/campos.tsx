@@ -199,6 +199,7 @@ export function FilasEditables<T extends Record<string, unknown>>({
     columnas,
     errores,
     textoAgregar,
+    grilla = 'sm:grid-cols-[repeat(auto-fit,minmax(8rem,1fr))_auto]',
 }: {
     nombre: string;
     titulo: string;
@@ -218,6 +219,8 @@ export function FilasEditables<T extends Record<string, unknown>>({
     }[];
     errores: Record<string, string | undefined>;
     textoAgregar: string;
+    /** Columnas de la grilla en pantalla ancha; por defecto se reparten solas. */
+    grilla?: string;
 }) {
     const { t } = useTranslation();
     const errorGeneral = errores[nombre];
@@ -237,7 +240,7 @@ export function FilasEditables<T extends Record<string, unknown>>({
                 {filas.map((fila, i) => (
                     <li
                         key={i}
-                        className="grid gap-2 rounded-lg border border-border/60 p-3 sm:grid-cols-[repeat(auto-fit,minmax(8rem,1fr))_auto] sm:items-end"
+                        className={`grid gap-2 rounded-lg border border-border/60 p-3 sm:items-end ${grilla}`}
                     >
                         {columnas.map((c) => {
                             const id = `${nombre}-${i}-${c.campo}`;

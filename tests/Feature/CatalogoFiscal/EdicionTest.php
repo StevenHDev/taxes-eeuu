@@ -247,6 +247,25 @@ class EdicionTest extends TestCase
         $this->assertNull($w2->fresh()->validado_en);
     }
 
+    public function test_las_casillas_guardan_sensible_y_el_tipo_de_dato_sale_del_conjunto_permitido(): void
+    {
+        $w2 = CatalogoDocumento::query()->delAnio(2025)->where('codigo', 'w2')->sole();
+        $base = ['grupo' => $w2->grupo, 'nombre_sencillo_es' => $w2->nombre_sencillo_es, 'uno_por' => $w2->uno_por];
+        $url = route('catalogo-fiscal.documentos.update', ['anio' => 2025, 'documento' => $w2]);
+
+        $this->actingAs($this->admin)
+            ->patch($url, [...$base, 'casillas' => [['casilla' => 'a', 'descripcion' => 'SSN', 'tipo_dato' => 'dinero', 'clave' => true, 'sensible' => true]]])
+            ->assertSessionHasErrors('casillas.0.tipo_dato');
+
+        $this->actingAs($this->admin)
+            ->patch($url, [...$base, 'casillas' => [['casilla' => 'a', 'descripcion' => 'SSN', 'tipo_dato' => 'ssn', 'clave' => true, 'sensible' => true]]])
+            ->assertSessionHasNoErrors();
+
+        $casilla = CatalogoCasilla::query()->where('documento_id', $w2->id)->where('casilla', 'a')->sole();
+        $this->assertTrue($casilla->sensible);
+        $this->assertSame('ssn', $casilla->tipo_dato);
+    }
+
     public function test_desactivar_y_reactivar_sin_borrar_y_el_1040_no_se_desactiva(): void
     {
         $regla = CatalogoRegla::query()->delAnio(2025)->where('codigo', 'R-13')->sole();

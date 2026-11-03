@@ -52,7 +52,7 @@ export function DialogoEdicion({
             open={abierto}
             onOpenChange={(v) => (v || procesando ? null : onCerrar())}
         >
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
                 <form onSubmit={enviar} className="grid gap-5" noValidate>
                     <DialogHeader>
                         <DialogTitle>{titulo}</DialogTitle>

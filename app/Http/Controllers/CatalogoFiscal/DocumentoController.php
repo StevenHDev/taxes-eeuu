@@ -59,6 +59,7 @@ class DocumentoController extends Controller
                     'descripcion' => $c['descripcion'],
                     'tipo_dato' => $c['tipo_dato'],
                     'clave' => $c['clave'],
+                    'sensible' => $c['sensible'],
                 ])->values()->all(),
                 'activado_por' => $activadoPor->get($d['codigo'], []),
                 ...$this->fuente($d, $nombres),

@@ -1273,7 +1273,22 @@
             "casillas": "Boxes",
             "casilla": "Box",
             "descripcion": "Description",
-            "clave": "Read"
+            "clave": "Key",
+            "tipoDato": "Data type",
+            "sensible": "Sensitive"
+        },
+        "tiposDato": {
+            "monto": "Amount",
+            "numero": "Number",
+            "texto": "Text",
+            "si_no": "Yes or no",
+            "codigo": "Code",
+            "fecha": "Date",
+            "anio": "Year",
+            "nombre": "Name",
+            "ssn": "SSN",
+            "ein": "EIN",
+            "tin": "TIN (SSN, ITIN or EIN)"
         },
         "fichas": {
             "completa": "Complete",

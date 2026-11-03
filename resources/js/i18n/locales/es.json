@@ -1273,7 +1273,22 @@
             "casillas": "Casillas",
             "casilla": "Casilla",
             "descripcion": "Descripción",
-            "clave": "Se lee"
+            "clave": "Clave",
+            "tipoDato": "Tipo de dato",
+            "sensible": "Sensible"
+        },
+        "tiposDato": {
+            "monto": "Monto",
+            "numero": "Número",
+            "texto": "Texto",
+            "si_no": "Sí o no",
+            "codigo": "Código",
+            "fecha": "Fecha",
+            "anio": "Año",
+            "nombre": "Nombre",
+            "ssn": "SSN",
+            "ein": "EIN",
+            "tin": "TIN (SSN, ITIN o EIN)"
         },
         "fichas": {
             "completa": "Completa",

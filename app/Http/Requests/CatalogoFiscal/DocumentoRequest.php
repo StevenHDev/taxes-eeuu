@@ -10,6 +10,9 @@ class DocumentoRequest extends PiezaCatalogoRequest
 
     public const UNO_POR = ['unico', 'empleo', 'poliza', 'persona', 'fuente'];
 
+    /** Tipos de dato de una casilla (F4.1); `tin` es SSN, ITIN o EIN, tal vez truncado. */
+    public const TIPOS_DATO = ['monto', 'numero', 'texto', 'si_no', 'codigo', 'fecha', 'anio', 'nombre', 'ssn', 'ein', 'tin'];
+
     public const FORMATOS = ['pdf', 'jpg', 'png', 'heic', 'xlsx', 'csv'];
 
     /**
@@ -37,8 +40,9 @@ class DocumentoRequest extends PiezaCatalogoRequest
             'casillas' => ['nullable', 'array'],
             'casillas.*.casilla' => ['required', 'string', 'max:40', 'distinct'],
             'casillas.*.descripcion' => ['required', 'string', 'max:255'],
-            'casillas.*.tipo_dato' => ['nullable', 'string', 'max:40'],
+            'casillas.*.tipo_dato' => ['nullable', Rule::in(self::TIPOS_DATO)],
             'casillas.*.clave' => ['boolean'],
+            'casillas.*.sensible' => ['boolean'],
             ...$this->reglasFuente(),
         ];
     }

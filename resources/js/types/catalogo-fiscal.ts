@@ -74,6 +74,7 @@ export type DocumentoCatalogo = FuenteIrs &
             descripcion: string;
             tipo_dato: string | null;
             clave: boolean;
+            sensible: boolean;
         }[];
         activado_por: string[];
     };

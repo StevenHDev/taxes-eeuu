@@ -299,6 +299,9 @@ function DetalleDocumento({ documento }: { documento: DocumentoCatalogo }) {
                                 <TableHead>
                                     {t('catalogoFiscal.documentos.descripcion')}
                                 </TableHead>
+                                <TableHead>
+                                    {t('catalogoFiscal.documentos.tipoDato')}
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -319,6 +322,19 @@ function DetalleDocumento({ documento }: { documento: DocumentoCatalogo }) {
                                                 )}
                                             </Badge>
                                         ) : null}
+                                        {c.sensible ? (
+                                            <Badge
+                                                variant="outline"
+                                                className="ml-2"
+                                            >
+                                                {t(
+                                                    'catalogoFiscal.documentos.sensible',
+                                                )}
+                                            </Badge>
+                                        ) : null}
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs">
+                                        {c.tipo_dato ?? '—'}
                                     </TableCell>
                                 </TableRow>
                             ))}
