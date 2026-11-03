@@ -114,4 +114,77 @@ class OpenAiClient
 
         return (string) ($mensaje['content'] ?? '');
     }
+
+    /**
+     * Lee un documento con salida estructurada (F4.3b): manda las páginas
+     * como imágenes y obliga al modelo a contestar con el esquema JSON dado
+     * (`response_format` estricto), el mismo que arma EsquemaLectura desde las
+     * casillas del catálogo.
+     *
+     * La respuesta trae datos de la declaración de un cliente, así que nunca
+     * se copia a un mensaje de error ni a un log: las excepciones dicen qué
+     * pasó, no qué vino.
+     *
+     * @param  string  $instrucciones  mensaje de sistema con lo que hay que leer y cómo
+     * @param  list<string>  $imagenesDataUrl  una data URL (`data:image/png;base64,…`) por página
+     * @param  array<string, mixed>  $esquema  JSON Schema (modo estricto)
+     * @param  string  $nombreEsquema  solo letras, números, guiones y guiones bajos
+     * @return array<string, mixed> el JSON de la respuesta, decodificado
+     */
+    public function leerConEsquema(string $instrucciones, array $imagenesDataUrl, array $esquema, string $nombreEsquema = 'lectura'): array
+    {
+        if ($imagenesDataUrl === []) {
+            throw new \InvalidArgumentException('Falta al menos una imagen para leer.');
+        }
+
+        $contenido = [['type' => 'text', 'text' => 'Read this document.']];
+
+        foreach ($imagenesDataUrl as $imagen) {
+            // `high`: los formularios traen letra chica y un número mal leído es peor que un costo mayor.
+            $contenido[] = ['type' => 'image_url', 'image_url' => ['url' => $imagen, 'detail' => 'high']];
+        }
+
+        $respuesta = Http::withToken((string) config('services.openai.api_key'))
+            ->timeout((int) config('services.openai.vision_timeout', 90))
+            ->retry(
+                (int) config('services.openai.retries', 3),
+                (int) config('services.openai.retry_backoff_ms', 500),
+                throw: false,
+            )
+            ->post(self::URL_CHAT_COMPLETIONS, [
+                'model' => (string) config('services.openai.vision_model'),
+                'messages' => [
+                    ['role' => 'system', 'content' => $instrucciones],
+                    ['role' => 'user', 'content' => $contenido],
+                ],
+                'response_format' => [
+                    'type' => 'json_schema',
+                    'json_schema' => ['name' => $nombreEsquema, 'strict' => true, 'schema' => $esquema],
+                ],
+            ]);
+
+        if ($respuesta->failed()) {
+            // Solo el estado y el tipo de error de OpenAI: el cuerpo puede repetir parte de la entrada.
+            $tipo = $respuesta->json('error.code') ?? $respuesta->json('error.type') ?? 'sin código';
+
+            throw new RuntimeException("Fallo la lectura con OpenAI: HTTP {$respuesta->status()} ({$tipo}).");
+        }
+
+        if ($respuesta->json('choices.0.message.refusal') !== null) {
+            throw new RuntimeException('OpenAI se negó a leer el documento.');
+        }
+
+        if ($respuesta->json('choices.0.finish_reason') === 'length') {
+            throw new RuntimeException('La respuesta de OpenAI quedó cortada: el documento tiene más casillas de las que caben en una respuesta.');
+        }
+
+        $texto = $respuesta->json('choices.0.message.content');
+        $leido = is_string($texto) ? json_decode($texto, true) : null;
+
+        if (! is_array($leido)) {
+            throw new RuntimeException('OpenAI no devolvió un JSON válido para la lectura.');
+        }
+
+        return $leido;
+    }
 }
