@@ -214,6 +214,19 @@ Orden: 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. 4.1 y la ima
 
 **Pruebas:** un caso por regla con los "errores de prueba" de 9.5 (y el SSN recortado de R-01, y R-05 con dos cónyuges) (W-2 con casilla 2 mayor que la 1, W-2 de 2024, 1095-A con adelanto, casilla 10 sin guardería); corregir el dato cierra la excepción; cambiar la respuesta la vuelve a evaluar.
 
+**Cómo quedó 4.5a, motor y reglas de un documento (3 nov., Sonnet 5.5):**
+- `App\Services\Lectura\Reglas\`: `Regla` (interfaz: `codigo()` y `evaluar(Entrevista, datosPorItem)`), `Hallazgo` (clave única, ítem, dato y detalle sin valores en claro) y `MotorReglas::correr(Entrevista)`. Corre solo las reglas **activas e `implementada`** del catálogo del año, con la severidad del catálogo. Por hallazgo hay una sola excepción (`entrevista_id` + `clave`): nueva → abierta; corregida que vuelve a fallar → se reabre; aceptada → no se toca; abierta cuyo hallazgo ya no aparece → corregida. Corre en una transacción con la entrevista bloqueada.
+- Cuándo corre: `LeerDocumentoJob` después de `leido()`, y `DatosDocumento::corregir()` al terminar (el motor se pide con `app()` ahí porque él mismo usa `DatosDocumento`; inyectarlo en el constructor haría un ciclo).
+- **R-03** `R03Confianza`: casilla `clave` con confianza < parámetro `lectura.umbral_confianza` (0,90, grupo "Topes y umbrales", con su explicación; el administrador lo cambia en Catálogo fiscal → Parámetros). No cuenta lo que el preparador corrigió. El detalle lleva el `motivo_confianza`, la confianza y el umbral, nunca el valor. **Decisión mía:** una casilla **vacía que el lector vio con claridad** (sin valor y `claro`: la 7 y la 10 de casi todo W-2) no es una duda y no se marca; una que no pudo ver o que ni mencionó, sí. Sin esto, casi todo W-2 traería excepciones inútiles.
+- **R-04** `R04TopesW2`: en un W-2, casilla 2 ≤ casilla 1 y casilla 3 + casilla 7 ≤ tope (`self_employment_tax.tope_salario_social_security`; si el año no lo tiene, solo se revisa lo primero). Usa el valor vigente, el corregido. Texto de la regla actualizado.
+- **R-06** `R06AnioYTipo`: año o tipo detectados por el lector distintos del año de la entrevista o del ítem; lo leído se conserva. El detalle lleva solo los códigos y el año.
+- **R-07** `R07Repetido`: coincidencias de `DocumentoDuplicadoService`; el detalle dice cuántas y si alguna es de otro cliente, no de quién.
+- **R-09** `R09Adelanto8962`: 1095-A con alguna casilla `21-C` a `32-C` o `33-C` mayor que cero. **Cambio de severidad:** en el catálogo estaba como `bloqueante`; la dejé `informativa` porque la subtarea dice que "informa" (el 8962 ya lo activa la respuesta de F4) y una bloqueante impediría validar todo 1095-A con adelanto, que es lo normal. Steven puede volverla bloqueante en el catálogo.
+- `ChecklistDocumentos::validar()` no deja validar un ítem con una excepción **bloqueante abierta** (abierta o consultada): `TransicionNoPermitida`. Aceptarla con nota o corregir el dato la libera.
+- Catálogo: R-03, R-04, R-06, R-07 y R-09 con `implementada = true`; parámetro nuevo `lectura.umbral_confianza`. No hizo falta tocar `parametros-metadatos.php` (esos son los parámetros sembrados; el nuevo viene con sus metadatos en `parametros.php`).
+- Pruebas (`ReglasDocumentoTest`, 18): un caso por regla (casilla 2 sobre la 1, 3 + 7 sobre el tope, W-2 de 2024 y tipo distinto, archivo repetido de otro cliente, 1095-A con y sin adelanto, dato clave con 0,60), umbral editable, casilla vacía, correr dos veces no duplica, corregir cierra y reabre, aceptada intacta, validar bloqueado, detalle sin montos ni SSN y regla no implementada que no corre.
+- **Para producción:** recargar el catálogo (reglas `implementada`, R-04 y R-09 con su texto nuevo y el parámetro del umbral) con autorización.
+
 ## 4.6 Visor de documento
 
 **Modelo: Sonnet 5.5** (pantalla) **+ Opus 5.5** (corrección, reapertura y permisos).
@@ -253,6 +266,13 @@ Orden: 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. 4.1 y la ima
 **Pruebas:** el cliente no recibe datos leídos en las props; la imagen de ejemplo aparece solo donde existe.
 
 ---
+
+**Cómo quedó 4.8b, imagen de ejemplo (3 nov., Sonnet 5.5, en paralelo con la 4.5a):**
+- Columna `catalogo_documentos.imagen_ejemplo` (migración `2026_11_03_140000`), en `CLAVES` del importador y en `documentos.php` de 2025 (el copiador la lleva a 2026). 19 documentos con imagen: w2, 1095-a, 1099-nec, 1099-k, 1099-misc, 1099-int, 1099-div, 1099-r, 1099-g, 1098, 1098-e, 1098-t, 1099-s, 1099-c, 1099-sa, 5498-sa, w2g, estado-cuenta-ira (formulario 5498) y 1099-q. Sin imagen: `ssa-1099` y `tarjeta-ssn` (no son del IRS) y los que no son formularios. `1099-b`, `1099-da` y `k-1` son formularios pero no están en la lista de la fase 4.
+- Las imágenes salen de los PDF vacíos de irs.gov: la **Copia B** (la del contribuyente) recortada, 600 px de ancho y menos de 60 KB cada una (64 colores), en `public/ejemplos-documentos/{codigo}.png`. W-2, 1095-A y 1098-T muestran "2026" impreso porque es el único formulario vacío que publica el IRS; no cambia qué buscar.
+- `DocumentosEntrevista::lista()` devuelve la URL (`asset()`) o null. `documento-fila.tsx` muestra la miniatura solo si existe, como botón con foco visible, tamaño fijo y `loading="lazy"`; al tocarla abre el `Dialog` con la imagen grande. Textos en `es.json` y `en.json`.
+- **No se vio en el navegador:** el diseño de la miniatura está sin revisar visualmente.
+- Pruebas: cada ruta del catálogo existe en `public/`, solo documentos con formulario oficial la traen, y `lista()` la devuelve donde corresponde. Suite completa con 4.5a y 4.8b: 792 pruebas, 788 pasan y 4 se saltan; `tsc` y pint sin errores.
 
 ## Reglas de interfaz comunes
 

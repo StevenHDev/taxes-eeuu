@@ -42,13 +42,13 @@ La regla **R-03** dice: *un dato de una casilla clave con confianza **menor de 0
 | Leído con claridad | Nada, normalmente. Si el monto es alto o raro, vale la pena mirar el documento. |
 | Leído con dudas | Comparar con el documento y corregir si hace falta. |
 | Formato incorrecto | Mirar el documento: casi seguro hay que corregir el dato. |
-| No se ve / Sin valor | Si el documento trae la casilla, escribir el dato a mano. Si no la trae, dejarla vacía. |
+| No se ve / Sin valor | Si el documento trae la casilla, escribir el dato a mano. Si no la trae, dejarla vacía. (Una casilla que la plataforma vio con claridad y está vacía, como la 7 o la 10 de casi todo W-2, no se marca para revisión.) |
 
 Cada corrección queda registrada: quién, cuándo, de qué valor a cuál y por qué. El valor que leyó la inteligencia artificial nunca se borra.
 
 ## Dónde se ve esto
 
-- **Administrador:** en **Catálogo fiscal del año → Reglas**, la regla **R-03** tiene la explicación completa. El **umbral (0,90)** se guarda como un parámetro del año en **Catálogo fiscal del año → Parámetros**, y se puede cambiar ahí si después de las primeras semanas vemos que pide demasiado o muy poco. *(El parámetro y la pantalla llegan con la subtarea 4.5a.)*
+- **Administrador:** en **Catálogo fiscal del año → Reglas**, la regla **R-03** tiene la explicación completa. El **umbral (0,90)** se guarda como un parámetro del año en **Catálogo fiscal del año → Parámetros**, y se puede cambiar ahí si después de las primeras semanas vemos que pide demasiado o muy poco. El parámetro ya existe (`lectura.umbral_confianza`) y la regla lo lee de ahí.
 - **Preparador:** en el **visor del documento**, cada dato muestra su confianza y su **motivo** en palabras, y hay un botón "¿Cómo se calcula?" con esta misma tabla. *(Llega con la subtarea 4.6b.)*
 
 ## Para quien programa
