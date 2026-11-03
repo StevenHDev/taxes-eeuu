@@ -7,6 +7,7 @@ use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\Entrevista\EstadoDocumento;
 use App\Enums\Lectura\EstadoLectura;
 use App\Enums\Lectura\Legibilidad;
+use App\Enums\Lectura\MotivoConfianza;
 use App\Enums\Lectura\OrigenDato;
 use App\Enums\UserRole;
 use App\Models\BitacoraActividad;
@@ -92,6 +93,7 @@ class DatosDocumentoTest extends TestCase
             'valor' => $valor,
             'valor_leido' => $valor,
             'confianza' => 0.99,
+            'motivo_confianza' => MotivoConfianza::EnTextoDelPdf,
             'legibilidad' => Legibilidad::Claro,
             'pagina' => 1,
             'recuadro' => ['x' => 0.1, 'y' => 0.2, 'ancho' => 0.3, 'alto' => 0.05],
@@ -116,6 +118,7 @@ class DatosDocumentoTest extends TestCase
         $this->assertSame(self::SSN, $dato->valor_leido);
         $this->assertSame('1 Wages, tips, other compensation '.self::SSN, $dato->evidencia);
         $this->assertSame(0.99, $dato->confianza);
+        $this->assertSame(MotivoConfianza::EnTextoDelPdf, $dato->motivo_confianza);
         $this->assertSame(['x' => 0.1, 'y' => 0.2, 'ancho' => 0.3, 'alto' => 0.05], $dato->recuadro);
     }
 
