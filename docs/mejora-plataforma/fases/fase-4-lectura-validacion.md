@@ -173,6 +173,17 @@ Orden: 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. 4.1 y la ima
 
 **Pruebas:** subir encola la lectura; éxito → `leido` y reglas corridas; falla → `no_se_pudo_leer`; releer no duplica datos.
 
+**Cómo quedó 4.4a, leer al subir (3 nov., Sonnet 5.5):**
+- `DocumentosEntrevista::subir()` dispara `ArchivoDocumentoSubido`; el listener `EncolarLecturaDeDocumento` (Laravel lo registra solo por el tipo del evento: registrarlo a mano lo duplicaba y encolaba dos veces) encola `LeerDocumentoJob`. El contenedor web nunca llama a OpenAI.
+- `LeerDocumentoJob` (cola `default`, la que escucha el worker de producción; 3 intentos con espera de 60 y 300 s, tiempo máximo 240 s, `afterCommit`): crea la lectura, la hace `LectorDocumentos`, guarda con `DatosDocumento::guardarLectura` y llama a `ChecklistDocumentos::leido()`. Si lanza una excepción, esa lectura queda `fallida` (`fallar`) y la cola reintenta; cada intento es una lectura. Al agotar los intentos, `failed()` llama a `ChecklistDocumentos::noSePudoLeer()`.
+- Estados: `leido()` solo cambia un ítem `subido` o `no_se_pudo_leer` (una relectura buena lo recupera); `noSePudoLeer()` solo desde `subido`. Un ítem validado u observado no se toca, aunque igual se lean y se guarden los datos.
+- **No se lee lo que no se lee solo:** con la bandera apagada o con un documento sin casillas, el job no crea lectura ni llama a OpenAI y el ítem sigue `subido`: el preparador escribe los datos en el visor. Así no queda una lectura "terminada" vacía que impida leerlo después.
+- Comando `documentos:leer {--entrevista=} {--solo-prueba} {--dry-run}`: encola los archivos vigentes de documentos que se leen y que no tienen una lectura `leida`. Con la bandera apagada no encola nada. Solo muestra cantidades.
+- **Pruebas:** como las pruebas usan la cola `sync`, subir un archivo corría la lectura de verdad. Se agregó `LECTURA_AUTOMATICA=false` en `phpunit.xml` (como `QUEUE_CONNECTION`); las pruebas de lectura la prenden y simulan la cola o OpenAI.
+- Pruebas (`LeerAlSubirTest`, 11). Suite: 772 pruebas, 768 pasan y 4 se saltan.
+- Para el comando `php artisan test` con el filtro de salida `pao` a veces no imprime nada: `PAO_DISABLE=1 php artisan test` muestra el error real.
+- **Pendiente para la 4.5a:** el job no corre las reglas todavía (las pone el motor de la 4.5a al terminar la lectura).
+
 ## 4.5 Motor de reglas
 
 **Modelo: Opus 5.5** (lógica fiscal y referencias del IRS).
