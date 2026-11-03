@@ -153,12 +153,14 @@ Wiplitask: `cmvskovx900771420nj5xy1du` · 🔄
 ### F4 — Lectura y validación de documentos
 Plan técnico: [`fases/fase-4-lectura-validacion.md`](fases/fase-4-lectura-validacion.md) · ✅ Aprobado (2 nov.) · Subtareas para Sonnet 5.5: [`fases/fase-4-subtareas.md`](fases/fase-4-subtareas.md) (3 nov.)
 
-Wiplitask: `cmvskow2m007c142002rui266` · ⏳
+Wiplitask: `cmvskow2m007c142002rui266` · ✅ (3 nov.)
 - [x] Plan técnico de la fase 4 escrito y aprobado (2 nov.)
-- [ ] Extracción por casilla con confianza y evidencia (20 documentos; lectura para todos los usuarios, con bandera para apagarla)
-- [ ] Reglas R-01 y R-03 a R-09, y R-11 como aviso (R-02 en F5; R-10, R-11 bloqueante y R-12 en F6; R-13 en F7)
-- [ ] Cola de excepciones (menú nuevo) y consultas al cliente
-- [ ] Visor de documento con evidencia
+- [x] Extracción por casilla con confianza y evidencia (20 documentos más la tarjeta del Seguro Social; lectura para todos los usuarios, con bandera `tax.lectura_automatica` para apagarla)
+- [x] Reglas R-01, R-03 a R-09 y R-11 como aviso (R-02 en F5; R-10, R-11 bloqueante y R-12 en F6; R-13 en F7)
+- [x] Cola de excepciones (menú nuevo) y consultas al cliente
+- [x] Visor de documento con evidencia
+- [x] Lo que ve el cliente y el agente, e imagen de ejemplo de cada formulario
+- [ ] Pendientes menores: publicar el borrador de prompts 7 (Steven, desde Agente → Prompts); la hoja del visor no queda fija al bajar; probar "Revelar" en el navegador; una acción propia "Revelado" en la bitácora
 
 ### F5 — Expediente, revisión del preparador y hoja para TaxWise
 Wiplitask: `cmvskow9b007h1420if0ijyyu` · ⏳
