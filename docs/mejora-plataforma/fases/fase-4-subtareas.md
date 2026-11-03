@@ -18,6 +18,7 @@
 - **§7216 y datos sensibles:** ningún valor leído (montos, SSN, EIN, nombres) va en logs, en la bitácora, en `detalle` de una excepción, en mensajes de error ni en las props de una pantalla del cliente. En las del preparador, lo sensible (casillas con `sensible = true`) va enmascarado (`***-**-1234`) y se revela con contraseña, como en F2.9 (`EntrevistaRespuestaController@reveal`).
 - **Los datos leídos se escriben solo con** `App\Services\Lectura\DatosDocumento`; **los estados del checklist solo con** `App\Services\Entrevista\ChecklistDocumentos`.
 - **Los números fiscales** (topes, umbral de confianza) salen de los **parámetros del año** del catálogo (`ParametrosFiscales::valor($anio, $categoria, $clave)`), nunca escritos en el código.
+- **La confianza se explica, no solo se muestra (Steven, 3 nov.):** el administrador y el preparador tienen que entender cómo se evalúa. Cada dato leído guarda su `motivo_confianza` (`App\Enums\Lectura\MotivoConfianza`); toda pantalla que muestre una confianza muestra también el motivo en palabras y puede abrir la tabla explicada (`CalculadoraConfianza::tabla()`). Los textos salen siempre de ahí, nunca se escriben otra vez en el frontend. Guía para el equipo: `docs/mejora-plataforma/guia-confianza-de-lectura.md`.
 - **Pruebas:** clases Pest como las de `tests/Feature/Entrevista/`. OpenAI siempre simulado (`Http::fake`); nunca llamar a la red en pruebas.
 
 ## Estado
@@ -28,7 +29,7 @@
 | 4.2b | Pruebas del modelo de datos | 4.2a | ✅ 3 nov. (sin commit) |
 | 4.3a | Páginas como imagen y HEIC | 4.2b | ✅ 3 nov. (sin commit) |
 | 4.3b | Esquema de lectura y llamada a OpenAI | 4.2b | ✅ 3 nov. (sin commit) |
-| 4.3c | Confianza y evidencia | 4.3b | ⏳ |
+| 4.3c | Confianza y evidencia | 4.3b | ✅ 3 nov. (sin commit) |
 | 4.3d | Lector de OpenAI, lector manual y bandera | 4.3a, 4.3c | ⏳ |
 | 4.4a | Leer al subir: evento, job, estados y comando | 4.3d | ⏳ |
 | 4.5a | Motor de reglas y reglas de un documento (R-03, R-04, R-06, R-07, R-09) | 4.4a | ⏳ |
@@ -196,10 +197,11 @@ Unir 4.3a, 4.3b y 4.3c en un lector que devuelve un resultado listo para guardar
 - Decisión de Steven (3 nov.): la lectura automática corre para **todos** los usuarios; la bandera `tax.lectura_automatica` (prendida por defecto) permite apagarla sin deploy. Apagada → `LectorManual` (no lee nada; el preparador escribe los datos en el visor).
 - Documentos que se leen: los 21 de la decisión 4 del plan (incluye `tarjeta-ssn`). Los demás → `LectorManual`.
 - `LecturaResultado`: tipo y año detectados, páginas, y por casilla `valor`, `legibilidad`, `confianza`, `pagina`, `recuadro`, `evidencia` (`texto_cercano`).
-- `DatosDocumento::guardarLectura(DocumentoLectura, LecturaResultado)`: en una transacción, crea un `DocumentoDato` por casilla con `valor` = `valor_leido` = lo leído y `origen = lector`; marca la lectura `leida` con `terminada_en`. Releer crea otra lectura; no toca la anterior.
+- `DatosDocumento::guardarLectura(DocumentoLectura, LecturaResultado)`: en una transacción, crea un `DocumentoDato` por casilla con `valor` = `valor_leido` = lo leído y `origen = lector`; marca la lectura `leida` con `terminada_en`. La confianza **y el motivo** salen de `CalculadoraConfianza::evaluar()` y se guardan en `confianza` y `motivo_confianza`.
+- Para PDF con texto, usar **una sola instancia** de `UbicadorEnPdf` para todas las casillas del documento (corre `pdftotext` una vez por instancia); `estaEnTextoDelPdf` = el ubicador devolvió un recuadro. En fotos y escaneados es siempre falso. Releer crea otra lectura; no toca la anterior.
 
 **Criterio de terminado:**
-- Con OpenAI simulado, un W-2 de muestra queda con sus casillas, confianza y evidencia guardadas y cifradas.
+- Con OpenAI simulado, un W-2 de muestra queda con sus casillas, confianza, **motivo** y evidencia guardadas y cifradas.
 - Con la bandera apagada no se hace ninguna llamada HTTP (`Http::assertNothingSent()`).
 - Un documento fuera de la lista usa el lector manual.
 - Un error de OpenAI marca la lectura `fallida` con un error sin datos del cliente.
@@ -260,7 +262,7 @@ Correr las reglas del año después de cada lectura y corrección, abriendo y ce
 - `MotorReglas::correr(Entrevista)`: corre las reglas activas y `implementada` del año; por cada hallazgo hace `firstOrCreate` por (`entrevista_id`, `clave`) y lo deja `abierta` (si estaba `corregida`, la reabre; si está `aceptada`, no la toca); las excepciones abiertas cuyo hallazgo ya no aparece pasan a `corregida`.
 - Severidad: la del catálogo (`CatalogoRegla::severidad`).
 - Reglas:
-  - **R-03:** casilla con `clave = true` y confianza < umbral (parámetro, 0,90). Los datos corregidos por el preparador no cuentan.
+  - **R-03:** casilla con `clave = true` y confianza < umbral (parámetro, 0,90). Los datos corregidos por el preparador no cuentan. El `detalle` de la excepción lleva el `motivo_confianza` (no el valor). El umbral es el parámetro `lectura.umbral_confianza` (0,90) en `parametros.php` y `parametros-metadatos.php`, con `nombre_es` y `condicion_es` que expliquen en una frase qué hace y que remitan a la regla R-03, para que el administrador lo vea y lo pueda cambiar en **Catálogo fiscal del año → Parámetros**; la regla lo lee con `ParametrosFiscales::valor`, nunca fijo en el código. El texto de R-03 en `reglas.php` ya explica la confianza (hecho en la 4.3c).
   - **R-04:** W-2: casilla 2 ≤ casilla 1, y casilla 3 + casilla 7 ≤ tope del Seguro Social de 2025 (USD 176.100, parámetro).
   - **R-06:** `anio_detectado` ≠ año de la entrevista, o `tipo_detectado` ≠ código del ítem.
   - **R-07:** el archivo tiene coincidencias en `DocumentoDuplicadoService::buscarCoincidencias()`.
@@ -326,7 +328,7 @@ El backend del visor: página con los datos de un ítem, imágenes de sus págin
 **Contexto mínimo:**
 - Rutas bajo `clientes/{cliente}/documentos/{item}`: `GET visor` (página Inertia `clientes/visor`), `GET visor/paginas/{lectura}/{pagina}` (imagen PNG, sin caché pública), `POST visor/datos/{dato}/revelar` (con contraseña reciente, como `EntrevistaRespuestaController@reveal`) y `PATCH visor/datos/{dato}` (corrección).
 - Permiso: el preparador asignado al cliente o un administrador (mismo criterio que la ficha, `ClientePolicy`); el ítem, la lectura y el dato tienen que ser de ese cliente (si no, 404).
-- Props: el ítem, sus archivos, sus lecturas (páginas) y por dato: casilla, descripción del catálogo, `tipo_dato`, `clave`, valor (enmascarado si `sensible`), confianza, legibilidad, página, recuadro, evidencia (enmascarada si la casilla es sensible), origen, quién corrigió y las excepciones abiertas del dato.
+- Props: el ítem, sus archivos, sus lecturas (páginas) y por dato: casilla, descripción del catálogo, `tipo_dato`, `clave`, valor (enmascarado si `sensible`), confianza, **`motivo_confianza`** (con su título y explicación de `MotivoConfianza`), legibilidad, página, recuadro, evidencia (enmascarada si la casilla es sensible), origen, quién corrigió y las excepciones abiertas del dato. Además, una vez por página: `confianza_tabla` (`CalculadoraConfianza::tabla()`) y el `umbral` vigente del año (`lectura.umbral_confianza`).
 - Corregir: `CorregirDatoRequest` (valor nullable string máx. 255, motivo requerido máx. 500) → `DatosDocumento::corregir()`.
 
 **Criterio de terminado:**
@@ -357,7 +359,8 @@ La pantalla donde el preparador ve el documento y sus datos lado a lado y corrig
 **Contexto mínimo:**
 - Escritorio: imagen de la página a la izquierda (con selector de página si hay varias) y lista de datos a la derecha. Al tocar un dato con recuadro, se resalta con un `<rect>` SVG sobre la imagen (coordenadas 0–1); sin recuadro, se muestra la página y el texto leído ("Se leyó: …").
 - Celular: imagen arriba, datos abajo.
-- Cada dato: casilla, descripción, valor, confianza (baja en ámbar), excepciones, "Revelar" si es sensible y "Corregir" (diálogo con valor y motivo, ambos con su error).
+- Cada dato: casilla, descripción, valor, confianza (baja en ámbar) **con su motivo en palabras** (insignia: "Está en el texto del PDF", "Leído con dudas"…; al tocarla, su explicación y qué hacer), excepciones, "Revelar" si es sensible y "Corregir" (diálogo con valor y motivo, ambos con su error).
+- Botón **"¿Cómo se calcula la confianza?"** que abre un panel con la tabla explicada (`confianza_tabla`: motivo, número y explicación, de la más segura a la menos) y el umbral vigente ("va a revisión lo que tenga menos de 0,90"). Un panel, no un texto suelto en la página. Textos solo de las props, sin repetirlos en `es.json`.
 - Teclado: subir y bajar entre datos.
 - Reglas de interfaz de Steven: skeleton al cargar las imágenes, estados vacío (sin lectura todavía), error (no se pudo leer) y éxito, una acción principal, `components/ui`, accesibilidad (el resaltado también se anuncia con texto).
 
@@ -412,7 +415,7 @@ La lista de excepciones del preparador y el conteo en la ficha.
 - `resources/js/i18n/locales/es.json` y `en.json`
 
 **Contexto mínimo:**
-- Columnas: cliente, documento, regla (código y descripción), severidad (insignia), fecha y acciones (corregir → visor; aceptar con nota y consultar al cliente → diálogos).
+- Columnas: cliente, documento, regla (código y descripción), severidad (insignia), fecha y acciones (corregir → visor; aceptar con nota y consultar al cliente → diálogos). En las excepciones de la R-03, el **motivo de la confianza** en palabras ("Leído con dudas") en vez de solo "confianza baja", con el enlace al panel "¿Cómo se calcula?" del visor.
 - Filtros por severidad y por cliente; vacío: "No hay excepciones abiertas".
 - Seguir el patrón de tablas de `resources/js/pages/clientes/index.tsx` y las reglas de interfaz de Steven.
 
