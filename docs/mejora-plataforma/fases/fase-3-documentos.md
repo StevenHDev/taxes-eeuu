@@ -24,8 +24,9 @@
 | 3.6 | Recordatorios de documentos pendientes (correo y WhatsApp con plantilla) | 5.4, 7.5 | Mediano | Medio: §7216 y envío a clientes reales | Opus 5.5 |
 | 3.7 | Qué subir en registros propios (efectivo, apps sin 1099-K, alquileres, gastos), con plantilla opcional | 5.1.6, P5 | Pequeño | Bajo; ver pregunta 2 | Sonnet 5.5 |
 | 3.8 | Por qué no tiene la declaración del año pasado (seguimiento de la G5) | 5.1, P10 | Pequeño | Medio: catálogo fiscal | Opus 5.5 |
+| 3.9 | Temas que faltaban en el catálogo: 529 (1099-Q), vehículo limpio, energía de la vivienda y adopción | 3, 4.0 | Pequeño | Medio: catálogo fiscal | Opus 5.5 |
 
-Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7 → 3.8 (agregado el 2 nov.). 3.1 y 3.7 no dependen de nada y se pueden adelantar. Cada una se despliega y se revisa en producción antes de la siguiente.
+Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7 → 3.8 → 3.9 (agregados el 2 y 3 nov.). 3.1 y 3.7 no dependen de nada y se pueden adelantar. Cada una se despliega y se revisa en producción antes de la siguiente.
 
 ---
 
@@ -254,6 +255,26 @@ Orden sugerido: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7 → 3.8 (agr
 - Ficha del preparador: `VistaEntrevistaPreparador` devuelve `avisos` (hoy solo `anios_sin_declarar`, con los años si los escribió) y la ficha lo muestra arriba de la entrevista ("Para revisar antes de empezar"). Sale de las respuestas visibles: si el cliente cambia G5 a "sí", el aviso se va.
 - Portal: G5.2 es el primer seguimiento que depende de otro seguimiento. `PasosEntrevista::siguiente()` ahora recibe las preguntas que tenía el paso: si al guardar un seguimiento se abre una pregunta nueva en ese mismo paso, el cliente se queda para responderla; si no, sigue de largo como antes.
 - Pruebas: `DeclaracionAnteriorTest` (3) y una en `ConfirmacionTest`; conteos del catálogo en `CatalogoRealTest` y `PantallaTest`. Suite: 652 pruebas, 650 pasan y 2 se saltan.
+
+---
+
+## 3.9 Temas que faltaban en el catálogo
+
+**Modelo: Opus 5.5** (catálogo fiscal y fechas de la Ley 119-21).
+
+**Por qué (Steven, 3 nov.):** al revisar si el catálogo cubre lo que necesita una persona natural, faltaban cuatro temas. Dos de ellos tienen 2025 como último año.
+
+**Cómo quedó (3 nov., Opus 5.5):**
+- **F1.1** (seguimiento de F1 = "sí"): "¿Sacaste dinero de un plan 529 o de una cuenta Coverdell para estudios?" → documento `1099-q` (Pub. 970).
+- **F10:** "¿Compraste un carro eléctrico o híbrido enchufable (nuevo o usado) antes del 1 de octubre?" → documento `informe-vehiculo-limpio` y Form 8936. Aplica a vehículos adquiridos hasta el 30 de septiembre de 2025; cuenta si antes de esa fecha firmó el contrato y pagó algo.
+- **F11:** "¿Instalaste paneles solares, baterías o mejoras para ahorrar energía?" → documento `facturas-energia` y Form 5695. Los créditos 25C y 25D no aplican a lo instalado o pagado después del 31 de diciembre de 2025.
+- **F12:** "¿Adoptaste a un niño o pagaste gastos de una adopción?" → documento `documentos-adopcion` y Form 8839.
+- Formularios nuevos: f5695, f8936 y f8839 (ficha pendiente, como los demás de F7).
+- **2026:** `ajustes.php` apaga F10 y F11 (`activo = false`; el importador ahora acepta `activo` en las preguntas). F12 y F1.1 siguen.
+- Las tres de entrada van en la pantalla 7, que es de casillas: el cliente solo marca lo que le aplica, así que la entrevista casi no se alarga.
+- Quedan 100 preguntas en 2025 (98 activas en 2026), 46 documentos y 29 formularios.
+- Fuentes: [preguntas frecuentes del IRS sobre la Ley 119-21 (25C, 25D, 30D)](https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb) y [créditos por vehículo limpio](https://www.irs.gov/clean-vehicle-tax-credits).
+- Pruebas: `CatalogoRealTest` (conteos y que F10 y F11 solo existen en 2025) y `PantallaTest`. Suite: 653 pruebas, 651 pasan y 2 se saltan.
 
 ---
 

@@ -148,18 +148,22 @@ Wiplitask: `cmvskovx900771420nj5xy1du` · 🔄
 - [ ] Recordatorios del agente con plantillas; el agente no acepta documentos (3.5, el agente explica qué falta: en producción el 2 nov., borrador de prompts 6 creado y sin publicar; 3.6 pendiente)
 - [x] Qué subir en registros propios, con plantilla opcional (3.7, en producción el 2 nov.; catálogo recargado). Se ajusta con la respuesta de GTS a P5: las preguntas P1–P10 están en la tarea "Preguntas pendientes para GTS (P1–P10)" (Wiplitask `cmvzotuc104e31420br272h7y`)
 - [x] Por qué no tiene la declaración del año pasado: seguimiento de la G5 (3.8, hecho el 2 nov.). Se ajusta con la respuesta de GTS a P10
+- [x] Temas que faltaban en el catálogo: 529 (1099-Q), vehículo limpio, energía de la vivienda y adopción (3.9, hecho el 3 nov.; F10 y F11 solo en 2025)
 
 ### F4 — Lectura y validación de documentos
+Plan técnico: [`fases/fase-4-lectura-validacion.md`](fases/fase-4-lectura-validacion.md) · ✅ Aprobado (2 nov.)
+
 Wiplitask: `cmvskow2m007c142002rui266` · ⏳
-- [ ] Plan técnico de la fase 4 escrito y aprobado
-- [ ] Extracción por casilla con confianza y evidencia
-- [ ] Reglas R-01 a R-13 como datos
+- [x] Plan técnico de la fase 4 escrito y aprobado (2 nov.)
+- [ ] Extracción por casilla con confianza y evidencia (20 documentos; lectura para todos los usuarios, con bandera para apagarla)
+- [ ] Reglas R-01 y R-03 a R-09, y R-11 como aviso (R-02 en F5; R-10, R-11 bloqueante y R-12 en F6; R-13 en F7)
 - [ ] Cola de excepciones (menú nuevo) y consultas al cliente
 - [ ] Visor de documento con evidencia
 
 ### F5 — Expediente, revisión del preparador y hoja para TaxWise
 Wiplitask: `cmvskow9b007h1420if0ijyyu` · ⏳
 - [ ] Plan técnico de la fase 5 escrito y aprobado
+- [ ] Regla R-02 (todo documento validado o en "no aplica"), que pasó de F4 (decisión del 2 nov.)
 - [ ] Estados del expediente con fecha; panel y lista de clientes por estado
 - [ ] Ficha del cliente en pestañas
 - [ ] Checklist del preparador y resumen de debida diligencia (8867)
@@ -169,6 +173,7 @@ Wiplitask: `cmvskow9b007h1420if0ijyyu` · ⏳
 ### F6 — Cálculo validado y borrador del 1040
 Wiplitask: `cmvskowhd007m1420ml6zef8q` · ⏳
 - [ ] Plan técnico de la fase 6 escrito y aprobado
+- [ ] Reglas que pasaron de F4 (decisión del 2 nov.): R-10 (Schedule C contra 1099), R-11 como bloqueante (con el 8812) y R-12 (proveedor de cuidado, con el 2441)
 - [ ] Validar las 12 calculadoras contra el IRS y por año (puede empezar desde F1)
 - [ ] Completar EITC, 8962 y Schedule 1-A; parámetros de 2026
 - [ ] Llenar el PDF oficial del 1040 y sus schedules (borrador)
@@ -179,6 +184,7 @@ Wiplitask: `cmvskowhd007m1420ml6zef8q` · ⏳
 Wiplitask: `cmvskowpm007r1420cq7e3zse` · ⏳
 - [ ] Fichas pendientes de formularios (1-A, A, B, D/8949, E, H, R, LEP, 4137, 4684, 8829, 8862, 8863, 8880, 8888, 8889)
 - [ ] Transcripciones del IRS con Form 8821
+- [ ] Regla R-13 (variación frente al año anterior), que pasó de F4 (decisión del 2 nov.)
 - [ ] Precarga del año anterior para clientes que vuelven
 - [ ] Meta-agente sobre el chat del portal y base de conocimiento con fuentes del IRS
 - [ ] Decidir E3 (API externa, con E2 `ClientIntakeSession`), E9 (Proceso) y E11 (Schedule F)
