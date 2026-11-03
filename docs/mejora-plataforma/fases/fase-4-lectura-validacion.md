@@ -227,6 +227,27 @@ Orden: 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. 4.1 y la ima
 - Pruebas (`ReglasDocumentoTest`, 18): un caso por regla (casilla 2 sobre la 1, 3 + 7 sobre el tope, W-2 de 2024 y tipo distinto, archivo repetido de otro cliente, 1095-A con y sin adelanto, dato clave con 0,60), umbral editable, casilla vacía, correr dos veces no duplica, corregir cierra y reabre, aceptada intacta, validar bloqueado, detalle sin montos ni SSN y regla no implementada que no corre.
 - **Para producción:** recargar el catálogo (reglas `implementada`, R-04 y R-09 con su texto nuevo y el parámetro del umbral) con autorización.
 
+**Cómo quedó 4.5b, reglas que cruzan datos (3 nov., Sonnet 5.5, en paralelo con 4.6a y 4.7a):**
+- `R01Ssn` (bloqueante): compara solo los **últimos 4 dígitos** del SSN de cada documento (`a` del W-2, `receptor-tin` de los 1099 y del SSA-1099, `5` y `8` del 1095-A) contra los números que la entrevista conoce: la casilla `ssn` de cada `tarjeta-ssn` leída y B4.3 (cónyuge, descifrado dentro de la regla). No abre nada sin números conocidos, ni si está casado y falta el del cónyuge. Un TIN con forma de EIN no se compara. **Cambio frente a la subtarea:** `16-B` a `20-B` del 1095-A (personas cubiertas) quedaron solo en R-08 (c), no en R-01: una persona cubierta que no va en la declaración es legítima y R-01 la bloquearía sin motivo; dejarlas en las dos reglas abriría dos excepciones por el mismo dato.
+- `R05ExcesoSeguroSocial` (informativa): agrupa los W-2 por los últimos 4 de la casilla `a` (por persona); dos o más W-2 de una persona con la casilla 4 sobre el máximo abren la excepción; cada cónyuge cuenta aparte. Parámetro nuevo `self_employment_tax.maximo_seguro_social_retenido_por_persona` (USD 10.918,20 en 2025); sin él la regla no corre.
+- `R08RespuestasContraDocumentos` (revisión): (a) W-2 con casilla 10 > 0 y E6 distinto de `si`; (b) más W-2 leídos que los empleos de D1.1; (c) persona cubierta del 1095-A cuyos últimos 4 no están en la entrevista (solo con todas las tarjetas leídas y el número del cónyuge).
+- `R11HijoSinSsn` (**solo aviso**, revisión en F4; bloqueante en F6): persona de C con parentesco de hijo, hijastro o hijo de crianza, menor de 17 el 31 de diciembre y C9 distinto de `ssn_valido`.
+- `RespuestaGuardador::guardar` corre el motor (con `app()`, sin ciclos) cuando hay datos leídos en la entrevista o la respuesta es C2, C3 o C9; así cambiar E6 a `si` cierra la excepción de R-08 (a). Ninguna excepción guarda un SSN, monto o nombre.
+- Pruebas (`ReglasCruzadasTest`, 14). **Producción:** la carga del catálogo trae el parámetro nuevo.
+
+**Cómo quedó 4.6a, visor de documento, servidor (3 nov., Sonnet 5.5):**
+- Rutas bajo `clientes/{cliente}/documentos/{item}/visor`: la página Inertia `clientes/visor` (`clientes.documentos.visor`), la imagen de cada hoja (`.pagina`, PNG descifrado al vuelo, `Cache-Control: private, no-store`), `POST .../datos/{dato}/revelar` (`RequirePassword`, `throttle:10,1`) y `PATCH .../datos/{dato}` (corregir, `CorregirDatoRequest`: valor máx. 255, motivo requerido máx. 500).
+- Permisos con `ClientePolicy`; un ítem, lectura o dato de otro cliente da 404; la página debe existir. El dato debe estar entre los vigentes.
+- Props: `cliente`, `item`, `archivos` (URL firmada), `lecturas` (última terminada por archivo, con las URL de sus imágenes), `datos` (casilla, descripción del catálogo, `tipo_dato`, `clave`, `sensible`, `confianza`, `motivo_confianza` con título y explicación, legibilidad, página, recuadro, origen, quién corrigió, `excepciones` abiertas con `detalle`), `confianza_tabla` y `umbral`. **Lo sensible va `null`** (valor y evidencia) y se pide con `revelar`; una casilla que el catálogo ya no conoce se trata como sensible.
+- **Pendiente:** revelar deja registro en la bitácora con acción `Actualizado` y la etiqueta `revelado` (sin el valor); lo ideal es una acción `Revelado` propia o una tabla de revelados como en F2.9, que no estaba en los archivos permitidos.
+- Pruebas (`VisorTest`, 10).
+
+**Cómo quedó 4.7a, cola de excepciones, servidor (3 nov., Sonnet 5.5):**
+- `ColaExcepciones`, `ExcepcionController`, `ResolverExcepcionRequest`. Rutas `GET /excepciones` (`clientes.excepciones.index`, página `excepciones/index`), `POST /excepciones/{excepcion}/aceptar` (nota requerida) y `.../consultar` (texto requerido; usa `ChecklistDocumentos::observar` y deja la excepción `consultada`, todo o nada). El prefijo es `/excepciones` y no `/clientes/excepciones` porque `clientes/{cliente}` se lo comería.
+- La lista: abiertas y consultadas de los clientes del preparador (el administrador ve todas), por severidad, fecha e id, con filtros por severidad, estado y cliente. Por fila: regla, severidad, estado, cliente, ítem, casilla, `motivo_confianza` (solo R-03) y enlaces (`corregir` apunta al visor). Nunca valores.
+- La ficha trae `excepciones_abiertas: {total, bloqueantes}` (`VistaEntrevistaPreparador`). La bitácora la cubre el `AuditoriaObserver` sin valores.
+- Pruebas (`ColaExcepcionesTest`, 10). Suite completa con 4.5b, 4.6a y 4.7a: 826 pruebas, 822 pasan y 4 se saltan.
+
 ## 4.6 Visor de documento
 
 **Modelo: Sonnet 5.5** (pantalla) **+ Opus 5.5** (corrección, reapertura y permisos).
