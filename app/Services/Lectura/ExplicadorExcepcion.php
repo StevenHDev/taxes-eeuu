@@ -86,7 +86,7 @@ class ExplicadorExcepcion
         }
 
         return [
-            'caso' => __('Este archivo parece un :detectado, pero se subió como :esperado.', [
+            'caso' => __('Este archivo se leyó como «:detectado», pero se subió como «:esperado».', [
                 'detectado' => $this->nombreDeDocumento((string) ($detalle['detectado'] ?? ''), $anio),
                 'esperado' => $this->nombreDeDocumento((string) ($detalle['esperado'] ?? ''), $anio),
             ]),

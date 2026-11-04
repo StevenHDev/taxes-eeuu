@@ -69,7 +69,7 @@ class ExplicadorExcepcionTest extends TestCase
     {
         $r = $this->explicar('R-06', ['campo' => 'tipo', 'detectado' => '1099-nec', 'esperado' => '1099-k']);
 
-        $this->assertSame('Este archivo parece un Form 1099-NEC, pero se subió como Form 1099-K.', $r['caso']);
+        $this->assertSame('Este archivo se leyó como «Form 1099-NEC», pero se subió como «Form 1099-K».', $r['caso']);
         $this->assertNotNull($r['que_hacer']);
     }
 
@@ -116,7 +116,7 @@ class ExplicadorExcepcionTest extends TestCase
         app()->setLocale('en');
 
         $this->assertSame('This document says it is for 2024, but the return is for 2025.', $this->explicar('R-06', ['campo' => 'anio', 'detectado' => 2024, 'esperado' => 2025])['caso']);
-        $this->assertSame('This file looks like a Form 1099-NEC, but it was uploaded as Form 1099-K.', $this->explicar('R-06', ['campo' => 'tipo', 'detectado' => '1099-nec', 'esperado' => '1099-k'])['caso']);
+        $this->assertSame('This file was read as “Form 1099-NEC”, but it was uploaded as “Form 1099-K”.', $this->explicar('R-06', ['campo' => 'tipo', 'detectado' => '1099-nec', 'esperado' => '1099-k'])['caso']);
         $this->assertSame('There are more W-2s read than jobs in the interview.', $this->explicar('R-08', ['problema' => 'Hay más W-2 leídos que empleos en la entrevista.'])['caso']);
     }
 

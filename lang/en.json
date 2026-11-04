@@ -54,7 +54,6 @@
     "En el W-2, la casilla 3 más la 7 (propinas) pasan del tope del Seguro Social del año.": "On the W-2, box 3 plus box 7 (tips) is over the Social Security limit for the year.",
     "Este documento dice que es del :detectado, pero la declaración es del :esperado.": "This document says it is for :detectado, but the return is for :esperado.",
     "Pídele al cliente el documento del :esperado; si este sí es el correcto, acepta la excepción con una nota.": "Ask the client for the :esperado document; if this one is correct, accept the exception with a note.",
-    "Este archivo parece un :detectado, pero se subió como :esperado.": "This file looks like a :detectado, but it was uploaded as :esperado.",
     "Dile al cliente que lo suba donde corresponde; si el documento sí está bien ubicado, acepta la excepción con una nota.": "Tell the client to upload it where it belongs; if the document is in the right place, accept the exception with a note.",
     "documento no reconocido": "unrecognized document",
     "Este mismo archivo ya lo subió otro cliente.": "Another client already uploaded this same file.",
@@ -65,5 +64,6 @@
     "El W-2 trae beneficios de cuidado de dependientes y la entrevista dice que no se pagó cuidado.": "The W-2 shows dependent care benefits but the interview says no care was paid.",
     "Hay más W-2 leídos que empleos en la entrevista.": "There are more W-2s read than jobs in the interview.",
     "La persona cubierta del 1095-A no está en la entrevista.": "The person covered on the 1095-A is not in the interview.",
-    "Hay adelanto del crédito de la prima: el Form 8962 es obligatorio.": "There is an advance premium tax credit: Form 8962 is required."
+    "Hay adelanto del crédito de la prima: el Form 8962 es obligatorio.": "There is an advance premium tax credit: Form 8962 is required.",
+    "Este archivo se leyó como «:detectado», pero se subió como «:esperado».": "This file was read as “:detectado”, but it was uploaded as “:esperado”."
 }
