@@ -85,7 +85,7 @@ Entender al cliente → preguntar solo lo que corresponde según lo que responde
   2026 se carga desde los archivos de 2025 más `2026/ajustes.php`.
 - **Entrevista** (F2): **un solo motor** (`MotorEntrevista`) decide qué preguntas se ven y qué documentos y formularios se activan; **un solo camino de escritura** (`RespuestaGuardador`) para el portal, el agente, el preparador y la migración. El portal y el agente **no** tienen reglas propias de qué mostrar: si hace falta una regla, va en el catálogo (condición o activación) o en el motor.
 - **Bandera por cliente** (`users.entrevista_catalogo`, se cambia en Usuarios): el flujo nuevo convive con el actual hasta la entrega 2.10. Todo lo nuevo se condiciona a `User::usaEntrevistaCatalogo()`; los clientes sin la bandera no deben notar ningún cambio.
-- **Agente de WhatsApp:** la fase la deriva `EstadoConversacionResolver` de los datos, nunca de la memoria del chat. Los prompts viven en `agente_prompts` por versión. Los archivos `prompt_actuales/fases/*.md` son la fuente: `agente:borrador-prompts` arma un borrador y un administrador lo publica en "Agente → Prompts".
+- **Agente de WhatsApp:** la fase la deriva `EstadoConversacionResolver` de los datos, nunca de la memoria del chat. Los prompts viven en `agente_prompts` por versión. Los archivos `prompt_actuales/fases/*.md` son la fuente: `agente:borrador-prompts` arma un borrador y un administrador lo publica en "Agente → Prompts". **Ojo:** sin `--fases=` el borrador copia la versión vigente y el cambio del archivo no entra; para tomar una fase del archivo hay que pasarla (`--fases=entrevista,seguimiento`). El comando avisa de las fases cuyo archivo difiere de la vigente y quedaron fuera.
 
 ## 5. Una entrega, paso a paso
 
