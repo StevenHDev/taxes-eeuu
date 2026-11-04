@@ -1549,6 +1549,11 @@
             "usted": "Yo",
             "conyuge": "Mi cónyuge"
         },
+        "origenConRespuesta": {
+            "whatsapp": "Por WhatsApp respondiste «{{respuesta}}» el {{fecha}}"
+        },
+        "respuestaSi": "sí",
+        "respuestaNo": "no",
         "origen": {
             "whatsapp": "Respondiste por WhatsApp el {{fecha}}",
             "preparador": "Lo anotó tu preparador el {{fecha}}",

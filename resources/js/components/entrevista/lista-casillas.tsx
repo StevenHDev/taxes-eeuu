@@ -176,7 +176,10 @@ export function ListaCasillas({
                                 ) : null}
                             </FilaCasilla>
                         )}
-                        <OrigenRespuesta pregunta={p} />
+                        <OrigenRespuesta
+                            pregunta={p}
+                            valor={valores[p.codigo]}
+                        />
                         <InputError message={errores[p.codigo]} />
                     </div>
                 );
