@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\FirmarConsentimientoRequest;
+use App\Jobs\ContinuarPorWhatsappTrasConsentimientoJob;
+use App\Models\WhatsappControl;
 use App\Services\Consentimiento\Consentimientos;
+use App\Services\WhatsappAgent\EstadoConversacionResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -72,7 +75,15 @@ class ConsentimientoController extends Controller
             return back()->withErrors(['version' => $e->getMessage()]);
         }
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Consentimiento firmado.')]);
+        // Si el cliente venía de WhatsApp, el agente sigue la entrevista allá sin que tenga que avisar.
+        ContinuarPorWhatsappTrasConsentimientoJob::dispatch($cliente->id);
+
+        $porWhatsapp = EstadoConversacionResolver::entrevistaPorWhatsapp($cliente)
+            && WhatsappControl::query()->where('cliente_id', $cliente->id)->exists();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $porWhatsapp
+            ? __('Consentimiento firmado. Te escribimos por WhatsApp para seguir.')
+            : __('Consentimiento firmado.')]);
 
         return to_route('portal.entrevista.inicio');
     }

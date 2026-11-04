@@ -7,11 +7,13 @@ use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\Entrevista\EstadoDocumento;
 use App\Enums\FaseConversacion;
 use App\Enums\UserRole;
+use App\Jobs\ContinuarPorWhatsappTrasConsentimientoJob;
 use App\Jobs\ProcesarMensajeWhatsappJob;
 use App\Models\Documento;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaRespuesta;
 use App\Models\User;
+use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Services\Consentimiento\Consentimientos;
@@ -338,5 +340,50 @@ class AgenteEntrevistaTest extends TestCase
 
         $this->assertSame('mi ssn es '.RedactorDatosSensibles::MARCA, WhatsappMensaje::query()->where('rol', 'cliente')->sole()->contenido);
         $this->assertStringNotContainsString('6789', json_encode(Http::recorded()->map(fn ($r) => $r[0]->data())->all()));
+    }
+
+    private function conversacionDelCliente(int $horasAtras = 1): void
+    {
+        WhatsappControl::query()->create(['telefono' => self::TELEFONO, 'cliente_id' => $this->cliente->id, 'estado' => 'agente']);
+        $mensaje = WhatsappMensaje::query()->create([
+            'telefono' => self::TELEFONO, 'cliente_id' => $this->cliente->id, 'rol' => 'cliente',
+            'contenido' => 'ya voy a firmar', 'mensaje_externo_id' => 'SM'.uniqid(), 'proveedor' => 'twilio',
+        ]);
+        $mensaje->forceFill(['created_at' => now()->subHours($horasAtras)])->save();
+    }
+
+    private function continuarTrasFirmar(): void
+    {
+        $canal = Mockery::mock(WhatsappChannel::class);
+        $canal->shouldReceive('enviarTexto')->andReturn('SM'.uniqid());
+        $this->app->instance(WhatsappChannel::class, $canal);
+
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'Listo, empecemos.']]]])]);
+
+        (new ContinuarPorWhatsappTrasConsentimientoJob($this->cliente->id))->handle(app(AgenteConversacionalService::class), $canal);
+    }
+
+    public function test_al_firmar_el_agente_sigue_la_entrevista_por_whatsapp_sin_que_el_cliente_avise(): void
+    {
+        $this->conversacionDelCliente();
+        $this->firmar();
+
+        $this->continuarTrasFirmar();
+
+        $mensajes = WhatsappMensaje::query()->orderBy('id')->get();
+        $this->assertSame(ContinuarPorWhatsappTrasConsentimientoJob::AVISO_FIRMA, $mensajes[1]->contenido);
+        $this->assertSame('agente', $mensajes[2]->rol->value);
+        $this->assertSame('Listo, empecemos.', $mensajes[2]->contenido);
+    }
+
+    public function test_al_firmar_no_se_escribe_si_pasaron_mas_de_24_horas_ni_si_no_hay_conversacion(): void
+    {
+        $this->firmar();
+        $this->continuarTrasFirmar();
+        $this->assertSame(0, WhatsappMensaje::query()->count(), 'Sin conversación de WhatsApp no se escribe.');
+
+        $this->conversacionDelCliente(horasAtras: 30);
+        $this->continuarTrasFirmar();
+        $this->assertSame(1, WhatsappMensaje::query()->count(), 'Fuera de la ventana de 24 horas Twilio rechaza el texto libre.');
     }
 }
