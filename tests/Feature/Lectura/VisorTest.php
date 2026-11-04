@@ -3,8 +3,10 @@
 namespace Tests\Feature\Lectura;
 
 use App\Enums\AccionAuditoria;
+use App\Enums\CatalogoFiscal\SeveridadRegla;
 use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\Entrevista\EstadoDocumento;
+use App\Enums\Lectura\EstadoExcepcion;
 use App\Enums\Lectura\EstadoLectura;
 use App\Enums\Lectura\Legibilidad;
 use App\Enums\Lectura\MotivoConfianza;
@@ -17,6 +19,7 @@ use App\Models\Entrevista\EntrevistaDocumento;
 use App\Models\Lectura\DocumentoDato;
 use App\Models\Lectura\DocumentoDatoCambio;
 use App\Models\Lectura\DocumentoLectura;
+use App\Models\Lectura\Excepcion;
 use App\Models\User;
 use App\Services\Entrevista\ChecklistDocumentos;
 use App\Services\Entrevista\DocumentosEntrevista;
@@ -162,6 +165,31 @@ class VisorTest extends TestCase
                 ->etc()));
 
         $this->assertStringNotContainsString('6789', $respuesta->getContent());
+    }
+
+    public function test_el_visor_explica_las_excepciones_de_todo_el_documento_aunque_no_sean_de_una_casilla(): void
+    {
+        app()->setLocale('es');
+        Excepcion::query()->create([
+            'entrevista_id' => $this->entrevista->id,
+            'entrevista_documento_id' => $this->item->id,
+            'regla_codigo' => 'R-06',
+            'severidad' => SeveridadRegla::Bloqueante,
+            'clave' => 'R-06#visor',
+            'detalle' => ['campo' => 'anio', 'detectado' => 2024, 'esperado' => 2025],
+            'estado' => EstadoExcepcion::Abierta,
+        ]);
+
+        $this->actingAs($this->preparador)->get($this->ruta('clientes.documentos.visor'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('excepciones', 1, fn (Assert $e) => $e
+                    ->where('regla_codigo', 'R-06')
+                    ->where('caso', 'Este documento dice que es del 2024, pero la declaración es del 2025.')
+                    ->where('severidad', 'bloqueante')
+                    ->whereType('que_hacer', 'string')
+                    ->whereType('regla_descripcion', 'string')
+                    ->etc()));
     }
 
     public function test_otro_preparador_recibe_403_en_todo(): void

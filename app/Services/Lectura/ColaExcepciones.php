@@ -137,10 +137,13 @@ class ColaExcepciones
         $documento = $e->item === null ? null : $this->catalogo->documentos($anio)->firstWhere('codigo', $e->item->documento_codigo);
         $motivo = $e->regla_codigo === 'R-03' ? MotivoConfianza::tryFrom((string) ($e->detalle['motivo_confianza'] ?? '')) : null;
         $clienteId = $e->entrevista->user_id;
+        $explicacion = app(ExplicadorExcepcion::class)->explicar($e);
 
         return [
             'id' => $e->id,
             'regla' => ['codigo' => $e->regla_codigo, 'descripcion' => $regla['descripcion'] ?? null],
+            'caso' => $explicacion['caso'],
+            'que_hacer' => $explicacion['que_hacer'],
             'severidad' => $e->severidad->value,
             'estado' => $e->estado->value,
             'cliente' => ['id' => $clienteId, 'nombre' => $e->entrevista->user->name],

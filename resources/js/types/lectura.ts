@@ -13,6 +13,20 @@ export type ExcepcionDato = {
     severidad: string;
     estado: string;
     detalle: Record<string, unknown> | null;
+    /** Por qué saltó en este caso, en palabras. */
+    caso?: string;
+};
+
+/** Una excepción abierta de todo el documento (también las que no son de una casilla: año, tipo, repetido). */
+export type ExcepcionDocumento = {
+    id: number;
+    regla_codigo: string;
+    regla_descripcion: string | null;
+    severidad: 'bloqueante' | 'revision' | 'informativa';
+    estado: string;
+    casilla: string | null;
+    caso: string;
+    que_hacer: string | null;
 };
 
 export type MotivoConfianza = {

@@ -50,7 +50,11 @@
             "motivo": "Reason for the correction",
             "cancelar": "Cancel",
             "guardar": "Save correction"
-        }
+        },
+        "excepcionesTitulo_one": "Open exception on this document",
+        "excepcionesTitulo_other": "{{count}} open exceptions on this document",
+        "queHacer": "What to do:",
+        "queRevisa": "What the rule checks:"
     },
     "common": {
         "actions": "Actions",
@@ -99,7 +103,9 @@
         "excepciones": "Exceptions"
     },
     "excepciones": {
-        "head": { "title": "Exceptions" },
+        "head": {
+            "title": "Exceptions"
+        },
         "heading": "Exceptions",
         "subheading": "What the rules found that needs your decision before moving on with each client.",
         "buscar": "Search the queue…",
@@ -144,7 +150,7 @@
         },
         "aceptar": {
             "titulo": "Accept with note",
-            "descripcion": "You are about to accept exception {{regla}} for {{cliente}}. Your note stays in the history.",
+            "descripcion": "You are about to accept exception {{regla}} for {{cliente}}: {{caso}} Your note stays in the history.",
             "etiqueta": "Note",
             "placeholder": "Why you are accepting it…",
             "enviar": "Accept exception"
@@ -156,7 +162,9 @@
             "placeholder": "What do you need clarified…",
             "enviar": "Send question"
         },
-        "dialogo": { "cancelar": "Cancel" },
+        "dialogo": {
+            "cancelar": "Cancel"
+        },
         "vacio": {
             "titulo": "There are no open exceptions",
             "descripcion": "Everything the rules checked is in order. When something needs your decision, it will show up here.",
@@ -168,7 +176,9 @@
             "bloqueantes_one": "{{count}} blocking",
             "bloqueantes_other": "{{count}} blocking",
             "ver": "See exceptions"
-        }
+        },
+        "queHacer": "What to do:",
+        "queRevisa": "What the rule checks:"
     },
     "userMenu": {
         "settings": "Settings",

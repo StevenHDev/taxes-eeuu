@@ -17,6 +17,7 @@ use App\Services\Entrevista\TransicionNoPermitida;
 use App\Services\Lectura\CalculadoraConfianza;
 use App\Services\Lectura\DatosDocumento;
 use App\Services\Lectura\EsquemaLectura;
+use App\Services\Lectura\ExplicadorExcepcion;
 use App\Services\Lectura\PaginasDocumento;
 use App\Support\ParametrosFiscales;
 use Illuminate\Http\JsonResponse;
@@ -51,6 +52,10 @@ class VisorDocumentoController extends Controller
             ->whereIn('documento_dato_id', $vigentes->modelKeys())
             ->get()
             ->groupBy('documento_dato_id');
+        $explicador = app(ExplicadorExcepcion::class);
+        $reglas = $catalogo->reglas($anio)->keyBy('codigo');
+        // Las excepciones de todo el documento, no solo las de un dato: R-06 (año o tipo) y R-07 (repetido) no son de una casilla.
+        $delDocumento = Excepcion::query()->abiertas()->where('entrevista_documento_id', $item->id)->orderBy('id')->get();
         $correctores = User::withTrashed()->whereIn('id', $vigentes->pluck('corregido_por')->filter()->unique())->pluck('name', 'id');
         $lecturas = $this->lecturasVigentes($item);
 
@@ -86,6 +91,20 @@ class VisorDocumentoController extends Controller
                     ->map(fn (int $n) => route('clientes.documentos.visor.pagina', [$cliente, $item, $l, $n]))
                     ->values(),
             ])->values(),
+            'excepciones' => $delDocumento->map(function (Excepcion $e) use ($explicador, $reglas) {
+                $explicacion = $explicador->explicar($e);
+
+                return [
+                    'id' => $e->id,
+                    'regla_codigo' => $e->regla_codigo,
+                    'regla_descripcion' => $reglas->get($e->regla_codigo)['descripcion'] ?? null,
+                    'severidad' => $e->severidad->value,
+                    'estado' => $e->estado->value,
+                    'casilla' => $e->detalle['casilla'] ?? null,
+                    'caso' => $explicacion['caso'],
+                    'que_hacer' => $explicacion['que_hacer'],
+                ];
+            })->values(),
             'datos' => $vigentes->map(fn (DocumentoDato $d) => $this->dato($d, $casillas[$d->casilla] ?? null, $excepciones->get($d->id, collect()), $correctores))->values(),
             'confianza_tabla' => CalculadoraConfianza::tabla(),
             'umbral' => ParametrosFiscales::valor($anio, 'lectura', 'umbral_confianza'),
@@ -198,6 +217,7 @@ class VisorDocumentoController extends Controller
                 'severidad' => $e->severidad->value,
                 'estado' => $e->estado->value,
                 'detalle' => $e->detalle,
+                'caso' => app(ExplicadorExcepcion::class)->explicar($e)['caso'],
             ])->values(),
         ];
     }

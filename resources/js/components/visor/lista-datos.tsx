@@ -334,12 +334,16 @@ function textoDeLaExcepcion(
     excepcion: {
         regla_codigo: string;
         detalle: Record<string, unknown> | null;
+        caso?: string;
     },
     t: TFunction,
 ): string {
     const problema = excepcion.detalle?.problema;
 
-    return typeof problema === 'string'
-        ? problema
-        : t('visor.reglaPendiente', { regla: excepcion.regla_codigo });
+    return (
+        excepcion.caso ??
+        (typeof problema === 'string'
+            ? problema
+            : t('visor.reglaPendiente', { regla: excepcion.regla_codigo }))
+    );
 }

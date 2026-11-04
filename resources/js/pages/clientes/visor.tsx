@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ConfianzaPanel } from '@/components/visor/confianza-panel';
 import { CorregirDatoDialog } from '@/components/visor/corregir-dato-dialog';
+import { ExcepcionesDocumento } from '@/components/visor/excepciones-documento';
 import { ListaDatos } from '@/components/visor/lista-datos';
 import { PaginaDocumento } from '@/components/visor/pagina-documento';
 import { dashboard } from '@/routes';
@@ -15,6 +16,7 @@ import type { EstadoDocumento } from '@/types/entrevista';
 import type {
     ArchivoVisor,
     DatoLeido,
+    ExcepcionDocumento,
     FilaConfianza,
     Hoja,
     ItemVisor,
@@ -27,6 +29,7 @@ type Props = {
     item: ItemVisor;
     archivos: ArchivoVisor[];
     lecturas: LecturaVisor[];
+    excepciones: ExcepcionDocumento[];
     datos: DatoLeido[];
     confianza_tabla: FilaConfianza[];
     umbral: number;
@@ -42,6 +45,7 @@ export default function VisorDocumento({
     item,
     archivos,
     lecturas,
+    excepciones,
     datos,
     confianza_tabla: tabla,
     umbral,
@@ -159,6 +163,8 @@ export default function VisorDocumento({
                     </div>
                     <ConfianzaPanel tabla={tabla} umbral={umbral} />
                 </div>
+
+                <ExcepcionesDocumento excepciones={excepciones} />
 
                 {fallo ? (
                     <Alert variant="destructive">

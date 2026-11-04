@@ -87,6 +87,21 @@ class ColaExcepcionesTest extends TestCase
         ]);
     }
 
+    public function test_cada_fila_trae_por_que_salto_en_este_caso(): void
+    {
+        app()->setLocale('es');
+        $item = $this->item($this->entrevista);
+        $this->excepcion($this->entrevista, 'R-06', SeveridadRegla::Bloqueante, $item, ['campo' => 'anio', 'detectado' => 2024, 'esperado' => 2025]);
+
+        $this->actingAs($this->preparador)->get(route('clientes.excepciones.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('excepciones.0', fn (Assert $fila) => $fila
+                    ->where('caso', 'Este documento dice que es del 2024, pero la declaración es del 2025.')
+                    ->whereType('que_hacer', 'string')
+                    ->etc()));
+    }
+
     public function test_la_lista_va_por_severidad_y_despues_por_fecha_con_lo_que_pide_la_pantalla(): void
     {
         $item = $this->item($this->entrevista);

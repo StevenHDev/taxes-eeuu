@@ -50,7 +50,11 @@
             "motivo": "Motivo de la corrección",
             "cancelar": "Cancelar",
             "guardar": "Guardar corrección"
-        }
+        },
+        "excepcionesTitulo_one": "Excepción abierta en este documento",
+        "excepcionesTitulo_other": "{{count}} excepciones abiertas en este documento",
+        "queHacer": "Qué hacer:",
+        "queRevisa": "Qué revisa la regla:"
     },
     "common": {
         "actions": "Acciones",
@@ -99,7 +103,9 @@
         "excepciones": "Excepciones"
     },
     "excepciones": {
-        "head": { "title": "Excepciones" },
+        "head": {
+            "title": "Excepciones"
+        },
         "heading": "Excepciones",
         "subheading": "Lo que las reglas encontraron y necesita tu decisión antes de seguir con cada cliente.",
         "buscar": "Buscar en la cola…",
@@ -144,7 +150,7 @@
         },
         "aceptar": {
             "titulo": "Aceptar con nota",
-            "descripcion": "Vas a aceptar la excepción {{regla}} de {{cliente}}. Tu nota queda en el historial.",
+            "descripcion": "Vas a aceptar la excepción {{regla}} de {{cliente}}: {{caso}} Tu nota queda en el historial.",
             "etiqueta": "Nota",
             "placeholder": "Por qué la aceptas…",
             "enviar": "Aceptar excepción"
@@ -156,7 +162,9 @@
             "placeholder": "Qué necesitas que te aclare…",
             "enviar": "Enviar consulta"
         },
-        "dialogo": { "cancelar": "Cancelar" },
+        "dialogo": {
+            "cancelar": "Cancelar"
+        },
         "vacio": {
             "titulo": "No hay excepciones abiertas",
             "descripcion": "Todo lo que revisaron las reglas está en orden. Cuando algo necesite tu decisión, aparecerá aquí.",
@@ -168,7 +176,9 @@
             "bloqueantes_one": "{{count}} bloqueante",
             "bloqueantes_other": "{{count}} bloqueantes",
             "ver": "Ver excepciones"
-        }
+        },
+        "queHacer": "Qué hacer:",
+        "queRevisa": "Qué revisa la regla:"
     },
     "userMenu": {
         "settings": "Ajustes",

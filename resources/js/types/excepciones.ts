@@ -13,6 +13,10 @@ export type MotivoConfianza = {
 export type Excepcion = {
     id: number;
     regla: { codigo: string; descripcion: string };
+    /** Por qué saltó en este caso, en palabras. */
+    caso: string;
+    /** Qué hacer; solo en las reglas que más trabajo dan. */
+    que_hacer: string | null;
     severidad: SeveridadExcepcion;
     estado: EstadoExcepcion;
     cliente: { id: number; nombre: string };

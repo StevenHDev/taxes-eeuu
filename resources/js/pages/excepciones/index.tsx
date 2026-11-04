@@ -188,12 +188,26 @@ function ReglaCelda({ excepcion }: { excepcion: Excepcion }) {
 
     return (
         <div className="w-72 space-y-1 whitespace-normal">
-            <div className="line-clamp-2 text-sm" title={regla.descripcion}>
+            <div className="line-clamp-3 text-sm" title={excepcion.caso}>
                 <span className="font-mono text-xs font-medium">
                     {regla.codigo}
                 </span>{' '}
-                {primeraFrase(regla.descripcion)}
+                {excepcion.caso}
             </div>
+            <div
+                className="line-clamp-2 text-xs text-muted-foreground"
+                title={regla.descripcion}
+            >
+                {t('excepciones.queRevisa')} {primeraFrase(regla.descripcion)}
+            </div>
+            {excepcion.que_hacer ? (
+                <div className="text-xs text-muted-foreground">
+                    <span className="font-medium">
+                        {t('excepciones.queHacer')}
+                    </span>{' '}
+                    {excepcion.que_hacer}
+                </div>
+            ) : null}
             {motivo ? (
                 <div className="space-y-0.5">
                     <div className="flex items-center gap-1">
@@ -257,6 +271,7 @@ function Acciones({ excepcion }: { excepcion: Excepcion }) {
                 descripcion={t('excepciones.aceptar.descripcion', {
                     regla: excepcion.regla.codigo,
                     cliente: excepcion.cliente.nombre,
+                    caso: excepcion.caso,
                 })}
                 etiqueta={t('excepciones.aceptar.etiqueta')}
                 placeholder={t('excepciones.aceptar.placeholder')}
