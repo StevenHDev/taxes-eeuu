@@ -120,6 +120,21 @@ class AgenteEntrevistaTest extends TestCase
         $this->assertSame(FaseConversacion::Seguimiento, $this->fase());
     }
 
+    public function test_por_whatsapp_no_se_guarda_nada_de_la_pantalla_de_identidad_aunque_no_sea_sensible(): void
+    {
+        $this->firmar();
+
+        $resultado = $this->tool('guardar_respuestas', ['respuestas' => [
+            ['codigo' => 'A1', 'valor' => 'nunca casado'],
+            ['codigo' => 'A2', 'valor' => 'no'],
+            ['codigo' => 'B1', 'valor' => 'nunca_casado'],
+        ]]);
+
+        $this->assertSame(['B1'], $resultado['guardadas']);
+        $this->assertSame(['A1', 'A2'], array_column($resultado['rechazadas'], 'codigo'));
+        $this->assertSame(0, EntrevistaRespuesta::query()->whereIn('pregunta_codigo', ['A1', 'A2'])->count());
+    }
+
     public function test_guardar_respuestas_guarda_varias_con_canal_whatsapp_y_rechaza_lo_sensible_y_lo_no_visible(): void
     {
         $this->firmar();

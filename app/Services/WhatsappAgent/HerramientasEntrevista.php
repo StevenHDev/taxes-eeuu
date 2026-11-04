@@ -141,12 +141,22 @@ class HerramientasEntrevista
         }
 
         $entrevista = $this->entrevista($cliente);
+        $preguntas = $this->catalogo->preguntas($entrevista->tax_year)->keyBy('codigo');
         $guardadas = [];
         $rechazadas = [];
 
         foreach ($respuestas as $r) {
             $codigo = is_array($r) ? (string) ($r['codigo'] ?? '') : '';
             $personaId = is_array($r) && isset($r['persona_id']) ? (int) $r['persona_id'] : null;
+
+            // La pantalla 1 (identidad: nombre, nacimiento, ocupación, dirección) es solo del portal: por aquí
+            // nunca se pregunta, así que un código de esa pantalla es un código equivocado (el agente guardó
+            // "nunca casado" como nombre y "no" como dirección).
+            if (($preguntas->get($codigo)['pantalla'] ?? 2) < 2) {
+                $rechazadas[] = ['codigo' => $codigo, 'motivo' => 'Esa pregunta se responde solo en el portal; revisa el código: guarda con el código que te dio consultar_entrevista.'];
+
+                continue;
+            }
 
             try {
                 $this->guardador->guardar($entrevista->fresh(), new RespuestaData($codigo, $r['valor'] ?? null, $personaId), CanalRespuesta::Whatsapp, $actor);
