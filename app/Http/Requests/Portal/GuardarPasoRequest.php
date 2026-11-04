@@ -47,6 +47,14 @@ class GuardarPasoRequest extends FormRequest
         return [function (Validator $validator) {
             $preguntas = $this->preguntasDelPaso()->keyBy('codigo');
 
+            // "¿Eras ciudadano?" no se puede dejar sin contestar: sin ella no se sabe si sigue la pregunta de la visa.
+            // Con cónyuge se contesta con casillas y dejarlas sin marcar es "no" (ver respuestasAGuardar).
+            foreach (PasosEntrevista::APARTE as $codigo) {
+                if ($preguntas->has($codigo) && ! $this->conConyuge() && $this->vacio($this->input("respuestas.{$codigo}"))) {
+                    $validator->errors()->add("respuestas.{$codigo}", __('Elige «sí» o «no».'));
+                }
+            }
+
             foreach ($this->input('respuestas', []) as $codigo => $valor) {
                 $pregunta = $preguntas->get((string) $codigo);
 
@@ -132,7 +140,10 @@ class GuardarPasoRequest extends FormRequest
             $valor = $enviadas[$pregunta['codigo']] ?? null;
 
             if ($this->vacio($valor)) {
-                if (! $pasos->esCasilla($pregunta, $this->pantalla(), $this->paso())) {
+                $sinMarcarEsNo = $pasos->esCasilla($pregunta, $this->pantalla(), $this->paso())
+                    || (in_array($pregunta['codigo'], PasosEntrevista::APARTE, true) && $this->conConyuge());
+
+                if (! $sinMarcarEsNo) {
                     continue;
                 }
 
@@ -143,6 +154,13 @@ class GuardarPasoRequest extends FormRequest
         }
 
         return $guardar;
+    }
+
+    private function conConyuge(): bool
+    {
+        $pasos = app(PasosEntrevista::class);
+
+        return $pasos->conConyuge($pasos->situacion($this->entrevista()));
     }
 
     private function vacio(mixed $valor): bool

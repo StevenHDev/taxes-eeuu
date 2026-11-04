@@ -51,6 +51,20 @@ return [
         ],
     ],
     [
+        'codigo' => 'tarjeta-ssn-conyuge', 'grupo' => 'identidad', 'nombre_oficial' => null,
+        'nombre_sencillo_es' => 'Tarjeta del Seguro Social, carta ITIN o ATIN de tu cónyuge', 'nombre_sencillo_en' => 'Social Security card, ITIN or ATIN letter for your spouse',
+        'emisor_es' => 'Seguro Social (SSA) o IRS', 'emisor_en' => 'Social Security (SSA) or IRS',
+        'fecha_llegada' => null, 'si_no_llega_es' => 'Si se perdió la tarjeta, tu cónyuge puede pedir una de reemplazo en ssa.gov. Para el ITIN, escríbele al IRS.', 'si_no_llega_en' => 'If the card was lost, your spouse can request a replacement at ssa.gov. For an ITIN, contact the IRS.',
+        'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 3,
+        'fuente_texto' => 'Encabezado del 1040: número del cónyuge; Schedule 8812 y Pub. 596',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040.pdf',
+        'casillas' => [
+            ['casilla' => 'nombre', 'descripcion' => 'Nombre de la persona, como está impreso en la tarjeta o carta', 'tipo_dato' => 'nombre', 'clave' => true, 'sensible' => true, 'orden' => 1],
+            ['casilla' => 'ssn', 'descripcion' => 'Número de Seguro Social, ITIN o ATIN de la persona', 'tipo_dato' => 'ssn', 'clave' => true, 'sensible' => true, 'orden' => 2],
+            ['casilla' => 'no-valido-para-trabajar', 'descripcion' => 'La tarjeta dice "no válida para trabajar" o "válida solo con autorización del DHS"', 'tipo_dato' => 'si_no', 'clave' => true, 'sensible' => false, 'orden' => 3],
+        ],
+    ],
+    [
         'codigo' => 'ip-pin', 'grupo' => 'identidad', 'nombre_oficial' => 'IP PIN (protección de identidad)',
         'nombre_sencillo_es' => 'Número del IP PIN del año', 'nombre_sencillo_en' => 'This year\'s IP PIN',
         'emisor_es' => 'IRS', 'emisor_en' => 'IRS',

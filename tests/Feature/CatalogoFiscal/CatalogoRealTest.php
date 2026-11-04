@@ -55,10 +55,10 @@ class CatalogoRealTest extends TestCase
 
         $conteos = $verificador->conteos(2025);
         $this->assertSame(100, $conteos['preguntas']);
-        $this->assertSame(46, $conteos['documentos']);
+        $this->assertSame(47, $conteos['documentos']);
         $this->assertSame(29, $conteos['formularios']);
         $this->assertSame(13, $conteos['reglas']);
-        $this->assertSame(344, $conteos['casillas']);
+        $this->assertSame(347, $conteos['casillas']);
         $this->assertSame(98, $conteos['lineas']);
 
         // 2026 apaga F10 y F11: los créditos por vehículo limpio y de energía
@@ -283,7 +283,7 @@ class CatalogoRealTest extends TestCase
 
     public function test_las_imagenes_de_ejemplo_son_de_formularios_del_irs_y_existen(): void
     {
-        $sinImagen = ['tarjeta-ssn', 'ssa-1099', 'id-foto', 'registros-ingresos-gastos', 'registros-alquiler'];
+        $sinImagen = ['tarjeta-ssn', 'tarjeta-ssn-conyuge', 'ssa-1099', 'id-foto', 'registros-ingresos-gastos', 'registros-alquiler'];
 
         foreach ([2025, 2026] as $anio) {
             $documentos = $this->lector->documentos($anio);

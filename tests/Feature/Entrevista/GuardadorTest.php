@@ -63,7 +63,7 @@ class GuardadorTest extends TestCase
      */
     public static function sensibles(): array
     {
-        return array_combine($codigos = ['A3', 'A12', 'B4.3', 'C9', 'C10', 'G3', 'G4'], array_map(fn ($c) => [$c], $codigos));
+        return array_combine($codigos = ['A3', 'A12', 'B4', 'B4.1', 'B4.3', 'C9', 'C10', 'G3', 'G4'], array_map(fn ($c) => [$c], $codigos));
     }
 
     #[DataProvider('sensibles')]
@@ -74,6 +74,20 @@ class GuardadorTest extends TestCase
         $this->rechaza($codigo, 'si', CanalRespuesta::Whatsapp);
 
         $this->assertSame(0, $this->entrevista->respuestas()->where('pregunta_codigo', $codigo)->count());
+    }
+
+    public function test_el_ssn_del_conyuge_son_nueve_digitos_o_no_tiene(): void
+    {
+        $this->responder('B1', 'casado');
+
+        $this->responder('B4.3', '123456789', CanalRespuesta::Portal);
+        $this->assertSame('123-45-6789', $this->entrevista->fresh()->respuestas()->where('pregunta_codigo', 'B4.3')->first()->valor);
+
+        $this->responder('B4.3', ' No  tiene ', CanalRespuesta::Portal);
+        $this->assertSame('no tiene', $this->entrevista->fresh()->respuestas()->where('pregunta_codigo', 'B4.3')->first()->valor);
+
+        $this->rechaza('B4.3', 'No', CanalRespuesta::Portal);
+        $this->rechaza('B4.3', '12345', CanalRespuesta::Portal);
     }
 
     public function test_un_valor_de_otro_tipo_o_fuera_de_las_opciones_falla(): void

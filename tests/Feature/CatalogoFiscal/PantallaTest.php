@@ -21,7 +21,7 @@ class PantallaTest extends TestCase
 
     private const PESTANAS = [
         'preguntas' => 100,
-        'documentos' => 46,
+        'documentos' => 47,
         'formularios' => 29,
         'parametros' => 34,
         'reglas' => 13,

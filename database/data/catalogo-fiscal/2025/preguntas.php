@@ -222,6 +222,7 @@ return [
             ['respuesta' => 'casado', 'objetivo' => 'pregunta:B2'],
             ['respuesta' => 'casado', 'objetivo' => 'pregunta:B3'],
             ['respuesta' => 'casado', 'objetivo' => 'pregunta:B4'],
+            ['respuesta' => 'casado', 'objetivo' => 'documento:tarjeta-ssn-conyuge'],
             ['respuesta' => 'viudo', 'objetivo' => 'pregunta:B6'],
         ],
     ],
@@ -248,7 +249,7 @@ return [
     [
         'codigo' => 'B4', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 4,
         'texto_es' => 'Nombre completo de tu cónyuge', 'texto_en' => 'Your spouse\'s full name', 'ayuda_es' => null,
-        'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => true,
         'condicion' => ['pregunta' => 'B1', 'es' => 'casado'],
         'efecto_es' => 'Habilita la declaración conjunta o por separado',
         'fuente_texto' => 'Encabezado del 1040 y casillas del cónyuge',
@@ -259,7 +260,7 @@ return [
         // F2.6: antes iba junto con el resto de los datos del cónyuge en B4.
         'codigo' => 'B4.1', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 4,
         'texto_es' => 'Fecha de nacimiento de tu cónyuge', 'texto_en' => 'Your spouse\'s date of birth', 'ayuda_es' => null,
-        'tipo_respuesta' => 'fecha', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => false,
+        'tipo_respuesta' => 'fecha', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => true,
         'condicion' => ['pregunta' => 'B1', 'es' => 'casado'],
         'efecto_es' => 'Edad ≥ 65 → deducción estándar adicional del cónyuge (línea 12d)',
         'fuente_texto' => 'Encabezado del 1040 y casillas del cónyuge',
@@ -280,7 +281,7 @@ return [
     [
         // F2.6: el número del cónyuge, sensible: solo se responde en el portal.
         'codigo' => 'B4.3', 'bloque' => 'B', 'pantalla' => 2, 'orden' => 4,
-        'texto_es' => 'SSN o ITIN de tu cónyuge', 'texto_en' => 'Your spouse\'s SSN or ITIN', 'ayuda_es' => null,
+        'texto_es' => 'SSN o ITIN de tu cónyuge', 'texto_en' => 'Your spouse\'s SSN or ITIN', 'ayuda_es' => 'Escribe los 9 dígitos. Si tu cónyuge no tiene SSN ni ITIN, escribe «no tiene».',
         'tipo_respuesta' => 'dato', 'opciones' => null, 'nivel' => 'seguimiento', 'por_persona' => false, 'sensible' => true,
         'condicion' => ['pregunta' => 'B1', 'es' => 'casado'],
         'efecto_es' => 'Encabezado del 1040 (número del cónyuge)',

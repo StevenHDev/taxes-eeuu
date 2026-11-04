@@ -111,7 +111,7 @@ class EsquemaLecturaTest extends TestCase
     {
         foreach ([2025, 2026] as $anio) {
             $leibles = array_keys($this->esquemas()->documentosLeibles($anio));
-            $this->assertCount(21, $leibles, "{$anio}: son 21 los documentos que se leen.");
+            $this->assertCount(22, $leibles, "{$anio}: son 22 los documentos que se leen.");
 
             foreach ($leibles as $codigo) {
                 $esquema = $this->esquemas()->para($codigo, $anio);

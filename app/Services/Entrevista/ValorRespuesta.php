@@ -24,6 +24,9 @@ final class ValorRespuesta
 {
     private const LARGO_MAXIMO_DATO = 500;
 
+    /** El número del cónyuge (SSN o ITIN) es un dato libre en el catálogo, pero no cualquier texto. */
+    private const SSN_CONYUGE = 'B4.3';
+
     /**
      * @param  string|int|float|list<string>  $valor
      */
@@ -55,9 +58,11 @@ final class ValorRespuesta
             TipoRespuesta::Casillas => is_array($crudo) && array_is_list($crudo) && array_diff($crudo, $opciones) === []
                 ? array_values(array_intersect($opciones, $crudo))
                 : throw $rechazo(__('Elige entre las opciones de la lista.')),
-            TipoRespuesta::Dato => is_scalar($crudo) && ($texto = trim((string) $crudo)) !== '' && mb_strlen($texto) <= self::LARGO_MAXIMO_DATO
+            TipoRespuesta::Dato => $codigo === self::SSN_CONYUGE
+                ? self::ssnOItin($crudo) ?? throw $rechazo(__('Escribe los 9 dígitos del SSN o ITIN, o «no tiene».'))
+                : (is_scalar($crudo) && ($texto = trim((string) $crudo)) !== '' && mb_strlen($texto) <= self::LARGO_MAXIMO_DATO
                 ? $texto
-                : throw $rechazo(__('Escribe un texto de hasta :max caracteres.', ['max' => self::LARGO_MAXIMO_DATO])),
+                : throw $rechazo(__('Escribe un texto de hasta :max caracteres.', ['max' => self::LARGO_MAXIMO_DATO]))),
             TipoRespuesta::Fecha => self::fecha($crudo) ?? throw $rechazo(__('Escribe una fecha válida (AAAA-MM-DD).')),
             TipoRespuesta::Numero => is_numeric($crudo) && $crudo >= 0
                 ? $crudo + 0
@@ -98,6 +103,28 @@ final class ValorRespuesta
         }
 
         return array_values(array_intersect(['usted', 'conyuge'], $lista));
+    }
+
+    /**
+     * Nueve dígitos (se guardan como 123-45-6789) o «no tiene».
+     */
+    private static function ssnOItin(mixed $crudo): ?string
+    {
+        if (! is_scalar($crudo)) {
+            return null;
+        }
+
+        $texto = trim((string) $crudo);
+
+        if (preg_match('/^no\s+tiene$/iu', $texto) === 1) {
+            return 'no tiene';
+        }
+
+        $digitos = preg_replace('/[\s-]/', '', $texto);
+
+        return preg_match('/^\d{9}$/', (string) $digitos) === 1
+            ? substr($digitos, 0, 3).'-'.substr($digitos, 3, 2).'-'.substr($digitos, 5)
+            : null;
     }
 
     private static function fecha(mixed $crudo): ?string

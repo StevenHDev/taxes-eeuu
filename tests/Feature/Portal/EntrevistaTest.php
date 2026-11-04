@@ -9,6 +9,7 @@ use App\Models\Entrevista\EntrevistaPersona;
 use App\Models\User;
 use App\Services\Consentimiento\Consentimientos;
 use App\Services\Consentimiento\ConsentimientosCargador;
+use App\Services\Entrevista\MotorEntrevista;
 use App\Services\Entrevista\RespuestaData;
 use App\Services\Entrevista\RespuestaGuardador;
 use Database\Seeders\CatalogoFiscalSeeder;
@@ -143,6 +144,41 @@ class EntrevistaTest extends TestCase
             ->assertSessionHasErrors('respuestas.B1');
 
         $this->assertSame(0, $this->entrevista()->respuestas()->count());
+    }
+
+    public function test_el_portal_no_deja_pasar_la_pregunta_de_ciudadania_sin_responder(): void
+    {
+        $this->actingAs($this->cliente)
+            ->put(route('portal.entrevista.guardar', ['pantalla' => 3, 'paso' => 'entrada']), ['respuestas' => ['A5' => 'no', 'A8' => 'no']])
+            ->assertSessionHasErrors('respuestas.A6');
+
+        $this->assertNull($this->respuesta('A5'), 'Nada se guarda si el paso no es válido.');
+    }
+
+    public function test_con_conyuge_dejar_la_ciudadania_sin_marcar_es_no_y_abre_la_visa(): void
+    {
+        $this->actingAs($this->cliente)
+            ->put(route('portal.entrevista.guardar', ['pantalla' => 2, 'paso' => 'entrada']), ['respuestas' => ['B1' => 'casado', 'B5' => 'si']]);
+
+        $this->actingAs($this->cliente)
+            ->put(route('portal.entrevista.guardar', ['pantalla' => 3, 'paso' => 'entrada']), ['respuestas' => ['A6' => [], 'A5' => 'no']])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('no', $this->respuesta('A6'));
+    }
+
+    public function test_casado_pide_la_tarjeta_del_conyuge_y_sus_datos_van_solo_por_el_portal(): void
+    {
+        $guardador = app(RespuestaGuardador::class);
+        $entrevista = $this->entrevista();
+        $guardador->guardar($entrevista, new RespuestaData('B1', 'casado', null), CanalRespuesta::Portal, $this->cliente);
+
+        $pendientes = collect(app(MotorEntrevista::class)->situacion($this->entrevista())->pendientesParaWhatsapp())->pluck('codigo')->all();
+        $this->assertNotContains('B4', $pendientes);
+        $this->assertNotContains('B4.1', $pendientes);
+        $this->assertContains('B4.2', $pendientes, 'La ocupación del cónyuge no es sensible y se pregunta por WhatsApp.');
+
+        $this->assertContains('tarjeta-ssn-conyuge', $this->entrevista()->documentos()->vigentes()->pluck('documento_codigo')->all());
     }
 
     public function test_casado_abre_el_seguimiento_de_la_pantalla_2_y_la_3_muestra_al_conyuge(): void
