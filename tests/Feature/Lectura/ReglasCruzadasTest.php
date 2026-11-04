@@ -175,6 +175,18 @@ class ReglasCruzadasTest extends TestCase
         $this->assertCount(0, $this->excepciones('R-01'));
     }
 
+    public function test_r01_la_tarjeta_del_conyuge_cuenta_como_numero_conocido(): void
+    {
+        $this->responder('B1', 'casado');
+        $this->documento('tarjeta-ssn', ['ssn' => '987-65-4321']);
+        $this->documento('tarjeta-ssn-conyuge', ['ssn' => '987-65-4322']);
+        $this->documento('w2', ['a' => '***-**-4322']);
+
+        $this->correr();
+
+        $this->assertCount(0, $this->excepciones('R-01'), 'El W-2 del cónyuge coincide con su tarjeta.');
+    }
+
     public function test_r05_dos_w2_de_la_misma_persona_sobre_el_maximo_es_informativa_sin_montos(): void
     {
         $this->documento('w2', ['a' => '123-45-6789', '4' => '6000.00']);

@@ -15,6 +15,15 @@ use Illuminate\Support\Collection;
  */
 class R06AnioYTipo implements Regla
 {
+    /**
+     * La tarjeta del cónyuge es el mismo documento que la de cada persona: el lector ve una tarjeta del
+     * Seguro Social y no puede saber de quién es, así que no cuenta como otro tipo.
+     */
+    private static function tipoBase(string $codigo): string
+    {
+        return $codigo === 'tarjeta-ssn-conyuge' ? 'tarjeta-ssn' : $codigo;
+    }
+
     public function codigo(): string
     {
         return 'R-06';
@@ -42,7 +51,7 @@ class R06AnioYTipo implements Regla
                     );
                 }
 
-                if ($lectura->tipo_detectado !== null && $lectura->tipo_detectado !== $item->documento_codigo) {
+                if ($lectura->tipo_detectado !== null && self::tipoBase($lectura->tipo_detectado) !== self::tipoBase($item->documento_codigo)) {
                     $hallazgos[] = new Hallazgo(
                         "R-06#item:{$item->id}#documento:{$lectura->documento_id}#tipo",
                         $item,

@@ -86,7 +86,9 @@ class R01Ssn implements Regla
         $tarjetas = 0;
         $pendientes = false;
 
-        foreach ($entrevista->documentos()->vigentes()->where('documento_codigo', 'tarjeta-ssn')->get() as $tarjeta) {
+        $tarjetaConyugeLeida = false;
+
+        foreach ($entrevista->documentos()->vigentes()->whereIn('documento_codigo', ['tarjeta-ssn', 'tarjeta-ssn-conyuge'])->get() as $tarjeta) {
             $ultimos = self::ultimos4($datosPorItem->get($tarjeta->id, collect())->firstWhere('casilla', 'ssn')?->valor);
 
             if ($ultimos === null) {
@@ -97,6 +99,7 @@ class R01Ssn implements Regla
 
             $numeros[] = $ultimos;
             $tarjetas++;
+            $tarjetaConyugeLeida = $tarjetaConyugeLeida || $tarjeta->documento_codigo === 'tarjeta-ssn-conyuge';
         }
 
         $respuesta = fn (string $codigo) => EntrevistaRespuesta::query()
@@ -111,7 +114,7 @@ class R01Ssn implements Regla
 
         return [
             'numeros' => array_values(array_unique($numeros)),
-            'conyuge_pendiente' => $respuesta('B1') === 'casado' && $conyuge === null && $tarjetas < 2,
+            'conyuge_pendiente' => $respuesta('B1') === 'casado' && $conyuge === null && ! $tarjetaConyugeLeida && $tarjetas < 2,
             'tarjetas_pendientes' => $pendientes,
         ];
     }

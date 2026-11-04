@@ -224,6 +224,15 @@ class ReglasDocumentoTest extends TestCase
         $this->assertSame(1, $lectura->datos()->count(), 'Lo leído se conserva.');
     }
 
+    public function test_r06_la_tarjeta_del_conyuge_leida_como_tarjeta_del_seguro_social_no_es_otro_tipo(): void
+    {
+        $this->lectura($this->item('tarjeta-ssn-conyuge'), tipo: 'tarjeta-ssn', anio: null);
+
+        $this->correr();
+
+        $this->assertCount(0, $this->excepciones('R-06'));
+    }
+
     public function test_r06_un_documento_del_ano_y_tipo_correctos_no_abre_nada(): void
     {
         $this->lectura($this->item());
