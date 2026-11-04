@@ -113,6 +113,12 @@ class EsquemaLecturaTest extends TestCase
             $leibles = array_keys($this->esquemas()->documentosLeibles($anio));
             $this->assertCount(22, $leibles, "{$anio}: son 22 los documentos que se leen.");
 
+            // OpenAI rechaza el esquema entero si un valor del enum de texto es un número: el código "1098" (Form 1098)
+            // se vuelve entero al ser clave de un arreglo de PHP. Con eso ninguna lectura funcionó en producción.
+            $tipos = $this->esquemas()->para('w2', $anio)['properties']['tipo_documento']['enum'];
+            $this->assertSame($tipos, array_map('strval', $tipos), "{$anio}: todos los tipos del enum son texto.");
+            $this->assertContains('1098', $tipos);
+
             foreach ($leibles as $codigo) {
                 $esquema = $this->esquemas()->para($codigo, $anio);
                 $this->afirmarEstricto($esquema);

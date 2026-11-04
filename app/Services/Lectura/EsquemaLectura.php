@@ -100,7 +100,8 @@ class EsquemaLectura
         return $this->objeto([
             'tipo_documento' => [
                 'type' => 'string',
-                'enum' => [...array_keys($this->documentosLeibles($anio)), self::DESCONOCIDO],
+                // strval: PHP vuelve entero el código "1098" al usarlo de clave, y OpenAI rechaza un enum de texto con un número.
+                'enum' => [...array_map('strval', array_keys($this->documentosLeibles($anio))), self::DESCONOCIDO],
                 'description' => "The code of the form in the images ({$nombres}). Use \"".self::DESCONOCIDO.'" if it is none of them.',
             ],
             'anio' => [
