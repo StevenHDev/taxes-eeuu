@@ -34,8 +34,13 @@ case "$CONTAINER_ROLE" in
         # loop de "poor man's cron" de un minuto que la propia documentación
         # de Laravel recomienda para entornos sin cron real — ver
         # routes/console.php (meta-agente:analizar) para lo que dispara.
-        (while true; do php artisan schedule:run >> /dev/null 2>&1; sleep 60; done) &
-        exec php artisan queue:work --tries=3 --max-time=3600
+        #
+        # El worker corre como www-data, igual que PHP-FPM: lo que escribe en
+        # el disco compartido (las páginas de las lecturas, F4.3a) las tiene
+        # que poder leer el visor del preparador. Como root, la carpeta de cada
+        # lectura quedaba 0700 de root y el visor daba 404 en la imagen.
+        (while true; do runuser -u www-data -- php artisan schedule:run >> /dev/null 2>&1; sleep 60; done) &
+        exec runuser -u www-data -- php artisan queue:work --tries=3 --max-time=3600
         ;;
     reverb)
         exec php artisan reverb:start --host=0.0.0.0 --port="${REVERB_SERVER_PORT:-8080}"
