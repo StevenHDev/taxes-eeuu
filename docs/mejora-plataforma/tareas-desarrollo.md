@@ -194,6 +194,23 @@ Wiplitask: `cmvskowpm007r1420cq7e3zse` · ⏳
 
 ---
 
+## Ajustes de la entrevista vistos en las pruebas reales (3 y 4 nov.)
+
+Salen de las conversaciones de prueba con el agente y el portal. Los marcados ✅ ya están en producción o en el repo; los demás esperan.
+
+- [ ] **Personas que vivieron con el cliente pero no son sus dependientes.** Si el cliente dice que alguien vivió con él pero no estaba a su cargo (por ejemplo, sus papás), esa persona se descarta como dependiente y no se le debe pedir nada más. Hoy se abren 29 respuestas por 2 personas (nombre, nacimiento, SSN o ITIN, IP PIN, parentesco, estudiante, incapacidad…) y dos tarjetas del Seguro Social, y solo después se ve que no califican. Propuesta: mover C12 (¿pagó más de la mitad de su propia manutención?), C13 (ingresos menores de USD 5.200) y C14 (¿el cliente pagó más de la mitad de la suya?) para que se pregunten primero, y condicionar el resto de las preguntas de la persona y su tarjeta del Seguro Social a que siga pudiendo ser dependiente (C12 = no, o C13 = sí o C14 = sí, según la regla de pariente calificado; confirmar la regla exacta con la Pub. 501 antes de programar). Visto el 4 nov. con el usuario #37 (Steven): papás con ingresos altos que se mantienen solos.
+- [ ] **Residencia fiscal.** A un cliente que dice no ser ciudadano y no haber estado con visa (o que estuvo con visa) no se le pregunta el tipo de visa ni si es residente (green card, prueba de presencia sustancial). De eso depende si es 1040 o 1040-NR. Llevarlo a las preguntas P1–P10 para GTS o a una pregunta de seguimiento (usuarios #34 y #36).
+- [ ] **1099 al declarar trabajo por cuenta propia.** D15 = sí pide de golpe 1099-NEC, 1099-K y 1099-MISC. Preguntar antes de qué pagadores recibió pagos (usuario #36, manualidades).
+- [ ] **Declaración sin ningún ingreso.** Un cliente que contesta "no" a todos los ingresos termina sin aviso. Una regla informativa para el preparador (F5).
+- [ ] **Reenvío de respuestas no enviadas** (outbox): un job que falla después de guardar el mensaje del cliente pierde la respuesta pendiente (error 21617 de Twilio visto el 3 nov.).
+- [ ] **Firma del consentimiento por WhatsApp.** El salto al portal para firmar el §7216 sigue siendo necesario. Quitarlo es una decisión legal (L1 y L3 de la tarea "Pendientes legales de F2").
+- [x] El agente guardaba respuestas con códigos equivocados (A1 y A2 con "nunca casado" y "no"); `guardar_respuestas` rechaza por WhatsApp cualquier código de la pantalla 1 (4 nov.).
+- [x] El agente inventaba, repetía y reordenaba preguntas; el prompt exige una por una, en el mismo orden y con el mismo alcance que `proximas_preguntas` (4 nov.; publicar borrador de prompts).
+- [x] El agente arranca solo al firmar el consentimiento en el portal, sin que el cliente avise (4 nov.).
+- [x] Nombre y fecha de nacimiento del cónyuge solo en el portal; SSN o ITIN del cónyuge con formato; documento de la tarjeta del cónyuge; ciudadanía obligatoria sin cónyuge (4 nov.).
+
+---
+
 ## Pendientes técnicos sueltos
 
 Wiplitask: `cmvtv0tag015u1420rmbglh9g` · ⏳
