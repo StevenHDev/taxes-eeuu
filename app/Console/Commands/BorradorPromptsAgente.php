@@ -37,6 +37,7 @@ class BorradorPromptsAgente extends Command
         $maxima = (int) AgentePrompt::query()->max('version');
         $borrador = $maxima > (int) $vigente ? $maxima : (int) $vigente + 1;
         $filas = [];
+        $distintas = [];
 
         foreach (FaseConversacion::cases() as $fase) {
             $actual = AgentePromptVigente::paraFase($fase);
@@ -55,9 +56,19 @@ class BorradorPromptsAgente extends Command
             );
 
             $filas[] = [$fase->value, $desdeArchivo ? 'archivo' : "versión {$vigente}"];
+
+            if (! $desdeArchivo && is_file($ruta) && trim((string) file_get_contents($ruta)) !== trim((string) $actual)) {
+                $distintas[] = $fase->value;
+            }
         }
 
         $this->table(['Fase', 'Contenido'], $filas);
+
+        // Sin --fases el borrador copia la versión vigente: un cambio en el archivo no entra solo.
+        if ($distintas !== []) {
+            $this->warn('El archivo de estas fases es distinto de la versión vigente y NO entró al borrador: '.implode(', ', $distintas).'. Para tomarlo del archivo, vuelve a correr con --fases='.implode(',', $distintas).'.');
+        }
+
         $this->info("Borrador {$borrador} listo, sin publicar. Revísalo y publícalo desde Agente → Prompts.");
 
         return self::SUCCESS;
