@@ -10,6 +10,7 @@ use Closure;
  *
  *   {"pregunta": "B1", "es": "casado"}      la respuesta calza (lista = alguna de)
  *   {"pregunta": "C4", "hasta": 6}          número menor o igual
+ *   {"pregunta": "C4", "desde": 7}          número mayor o igual
  *   {"todas": [...]} / {"alguna": [...]}
  *
  * No sabe de personas ni de visibilidad: recibe la respuesta de cada
@@ -40,6 +41,10 @@ class EvaluadorCondicion
 
         if (array_key_exists('hasta', $condicion)) {
             return is_numeric($valor) && $valor <= $condicion['hasta'];
+        }
+
+        if (array_key_exists('desde', $condicion)) {
+            return is_numeric($valor) && $valor >= $condicion['desde'];
         }
 
         return ValorRespuesta::coincide($valor, $condicion['es']);

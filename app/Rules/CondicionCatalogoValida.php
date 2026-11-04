@@ -12,6 +12,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
  *
  *   {"pregunta": "B1", "es": "casado"}
  *   {"pregunta": "C4", "hasta": 6}      (número menor o igual; F2.2)
+ *   {"pregunta": "C4", "desde": 7}      (número mayor o igual)
  *   {"todas": [condición, …]}
  *   {"alguna": [condición, …]}
  *
@@ -73,8 +74,10 @@ class CondicionCatalogoValida implements ValidationRule
             return is_scalar($valor['es']) || is_array($valor['es']);
         }
 
-        if ($claves === ['hasta', 'pregunta']) {
-            if (! is_string($valor['pregunta']) || $valor['pregunta'] === '' || ! is_numeric($valor['hasta'])) {
+        if ($claves === ['hasta', 'pregunta'] || $claves === ['desde', 'pregunta']) {
+            $limite = $valor['hasta'] ?? $valor['desde'];
+
+            if (! is_string($valor['pregunta']) || $valor['pregunta'] === '' || ! is_numeric($limite)) {
                 return false;
             }
 

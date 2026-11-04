@@ -106,6 +106,10 @@ class ChecklistDocumentosTest extends TestCase
         $this->responder('C0', 'si');
         $una = app(RespuestaGuardador::class)->agregarPersona($this->entrevista);
         $otra = app(RespuestaGuardador::class)->agregarPersona($this->entrevista);
+        foreach ([$una, $otra] as $persona) {
+            $this->responder('C3', 'hijo', $persona->id);
+            $this->responder('C4', 12, $persona->id);
+        }
         $this->responder('C9', 'ssn_valido', $una->id);
         $this->responder('C9', 'itin', $otra->id);
 

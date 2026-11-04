@@ -280,6 +280,7 @@ class ReglasCruzadasTest extends TestCase
         $this->responder('C0', 'si');
         $hijo = $this->guardador->agregarPersona($this->entrevista, 'Hijo');
         $this->responder('C3', 'hijo', $hijo->id);
+        $this->responder('C4', 12, $hijo->id);
         $this->responder('C2', '2012-05-10', $hijo->id);
         $this->responder('C9', 'itin', $hijo->id);
 
@@ -298,11 +299,16 @@ class ReglasCruzadasTest extends TestCase
         $this->responder('C0', 'si');
         $mayor = $this->guardador->agregarPersona($this->entrevista, 'Mayor');
         $this->responder('C3', 'hijo', $mayor->id);
+        $this->responder('C4', 12, $mayor->id);
         $this->responder('C2', '2008-12-31', $mayor->id); // cumple 17 el 31 de diciembre de 2025
         $this->responder('C9', 'itin', $mayor->id);
 
         $padre = $this->guardador->agregarPersona($this->entrevista, 'Padre');
         $this->responder('C3', 'padre', $padre->id);
+        $this->responder('C4', 12, $padre->id);
+        $this->responder('C12', 'no', $padre->id);
+        $this->responder('C13', 'si', $padre->id);
+        $this->responder('C14', 'si', $padre->id);
         $this->responder('C2', '2015-01-01', $padre->id);
         $this->responder('C9', 'itin', $padre->id);
 

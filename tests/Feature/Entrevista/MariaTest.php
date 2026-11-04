@@ -138,8 +138,8 @@ class MariaTest extends TestCase
         $this->actingAs($this->maria)->put(route('portal.entrevista.guardar', ['pantalla' => 1, 'paso' => 'entrada']), ['respuestas' => [
             'A1' => 'María Prueba', 'A1.1' => '1990-04-12', 'A1.2' => 'Cajera', 'A2' => '100 Main St, Miami, FL 33101', 'A3' => 'ssn_valido',
         ]])->assertSessionHasNoErrors();
-        $this->actingAs($this->maria)->put(route('portal.entrevista.persona.guardar', ['persona' => $hijo['persona_id'], 'paso' => 'entrada']), ['respuestas' => [
-            'C1' => 'Mateo Prueba', 'C2' => '2017-06-01', 'C3' => 'hijo', 'C4' => '12', 'C5' => 'no', 'C6' => 'si', 'C7' => 'no', 'C8' => 'no', 'C9' => 'ssn_valido', 'C10' => 'no', 'C11' => 'no',
+        $this->actingAs($this->maria)->put(route('portal.entrevista.persona.guardar', ['persona' => $hijo['persona_id'], 'paso' => 'seguimiento']), ['respuestas' => [
+            'C1' => 'Mateo Prueba', 'C2' => '2017-06-01', 'C5' => 'no', 'C6' => 'si', 'C7' => 'no', 'C8' => 'no', 'C9' => 'ssn_valido', 'C10' => 'no', 'C11' => 'no',
         ]])->assertSessionHasNoErrors();
         $this->actingAs($this->maria)->put(route('portal.entrevista.guardar', ['pantalla' => 3, 'paso' => 'entrada']), ['respuestas' => [
             'A5' => 'no', 'A6' => ['usted'], 'A8' => 'no', 'A9' => 'no', 'A10' => 'no', 'A11' => 'no', 'A12' => 'no', 'A13' => 'no',

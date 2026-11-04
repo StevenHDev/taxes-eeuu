@@ -170,6 +170,8 @@ class MotorTest extends TestCase
     {
         $this->responder('C0', 'si');
         $persona = $this->guardador->agregarPersona($this->entrevista);
+        $this->responder('C3', 'hijo', $persona);
+        $this->responder('C4', 12, $persona);
         $this->responder('C9', 'ssn_valido', $persona);
         $this->assertTrue($this->situacion()->tieneFormulario('sch-8812'));
 

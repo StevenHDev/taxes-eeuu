@@ -103,6 +103,8 @@ class DocumentosTest extends TestCase
         $this->responder('A3', 'ssn_valido');
         $this->responder('C0', 'si');
         $persona = app(RespuestaGuardador::class)->agregarPersona($this->entrevista());
+        $this->responder('C3', 'hijo', $persona->id);
+        $this->responder('C4', 12, $persona->id);
         $this->responder('C9', 'ssn_valido', $persona->id);
 
         $lista = $this->lista();
@@ -171,6 +173,8 @@ class DocumentosTest extends TestCase
     {
         $this->responder('C0', 'si');
         $persona = app(RespuestaGuardador::class)->agregarPersona($this->entrevista());
+        $this->responder('C3', 'hijo', $persona->id);
+        $this->responder('C4', 12, $persona->id);
         $this->responder('C9', 'itin', $persona->id);
         $item = $this->item('tarjeta-ssn', $persona->id);
 

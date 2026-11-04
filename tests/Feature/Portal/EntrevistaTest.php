@@ -205,11 +205,45 @@ class EntrevistaTest extends TestCase
         $persona = EntrevistaPersona::query()->sole();
 
         $this->actingAs($this->cliente)
-            ->put(route('portal.entrevista.persona.guardar', ['persona' => $persona->id, 'paso' => 'entrada']), ['respuestas' => ['C1' => 'Pedro', 'C3' => 'padre', 'C4' => '12']])
+            ->put(route('portal.entrevista.persona.guardar', ['persona' => $persona->id, 'paso' => 'entrada']), ['respuestas' => ['C3' => 'padre', 'C4' => '12']])
             ->assertRedirect(route('portal.entrevista.persona', ['persona' => $persona->id, 'paso' => 'seguimiento']));
 
         $this->assertSame(['C12', 'C13', 'C14'], $this->codigosDelPaso(route('portal.entrevista.persona', ['persona' => $persona->id, 'paso' => 'seguimiento'])));
         $this->assertSame('padre', $this->respuesta('C3', $persona));
+    }
+
+    public function test_un_padre_que_se_mantiene_solo_queda_exento_y_no_se_le_pide_nada_mas(): void
+    {
+        $this->actingAs($this->cliente)->put(route('portal.entrevista.guardar', ['pantalla' => 4, 'paso' => 'entrada']), ['respuestas' => ['C0' => 'si']]);
+        $this->actingAs($this->cliente)->post(route('portal.entrevista.personas.store'));
+        $persona = EntrevistaPersona::query()->sole();
+        $ruta = fn (string $paso) => route('portal.entrevista.persona', ['persona' => $persona->id, 'paso' => $paso]);
+
+        $this->actingAs($this->cliente)->put(route('portal.entrevista.persona.guardar', ['persona' => $persona->id, 'paso' => 'entrada']), ['respuestas' => ['C3' => 'padre', 'C4' => '12']]);
+
+        $this->actingAs($this->cliente)
+            ->put(route('portal.entrevista.persona.guardar', ['persona' => $persona->id, 'paso' => 'seguimiento']), ['respuestas' => ['C12' => 'si', 'C13' => 'no', 'C14' => 'no']])
+            ->assertRedirect(route('portal.entrevista.personas'));
+
+        $this->assertSame(['C12', 'C13', 'C14'], $this->codigosDelPaso($ruta('seguimiento')), 'Exenta: ni nombre, ni SSN, ni documentos.');
+        $this->assertNotContains('tarjeta-ssn', $this->entrevista()->documentos()->vigentes()->pluck('documento_codigo')->all());
+    }
+
+    public function test_un_padre_que_puede_ser_dependiente_sigue_con_sus_datos(): void
+    {
+        $this->actingAs($this->cliente)->put(route('portal.entrevista.guardar', ['pantalla' => 4, 'paso' => 'entrada']), ['respuestas' => ['C0' => 'si']]);
+        $this->actingAs($this->cliente)->post(route('portal.entrevista.personas.store'));
+        $persona = EntrevistaPersona::query()->sole();
+        $ruta = fn (string $paso) => route('portal.entrevista.persona', ['persona' => $persona->id, 'paso' => $paso]);
+
+        $this->actingAs($this->cliente)->put(route('portal.entrevista.persona.guardar', ['persona' => $persona->id, 'paso' => 'entrada']), ['respuestas' => ['C3' => 'padre', 'C4' => '12']]);
+
+        $this->actingAs($this->cliente)
+            ->put(route('portal.entrevista.persona.guardar', ['persona' => $persona->id, 'paso' => 'seguimiento']), ['respuestas' => ['C12' => 'no', 'C13' => 'si', 'C14' => 'si']])
+            ->assertRedirect($ruta('seguimiento'));
+
+        $this->assertContains('C1', $this->codigosDelPaso($ruta('seguimiento')));
+        $this->assertContains('C9', $this->codigosDelPaso($ruta('seguimiento')));
     }
 
     public function test_quitar_una_persona_la_archiva_y_otra_cuenta_no_puede_verla(): void
