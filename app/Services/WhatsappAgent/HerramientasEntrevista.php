@@ -153,7 +153,7 @@ class HerramientasEntrevista
             // nunca se pregunta, así que un código de esa pantalla es un código equivocado (el agente guardó
             // "nunca casado" como nombre y "no" como dirección).
             if (($preguntas->get($codigo)['pantalla'] ?? 2) < 2) {
-                $rechazadas[] = ['codigo' => $codigo, 'motivo' => 'Esa pregunta se responde solo en el portal; revisa el código: guarda con el código que te dio consultar_entrevista.'];
+                $rechazadas[] = ['codigo' => $codigo, 'motivo' => 'Código equivocado: esa pregunta no se hace por WhatsApp. No se lo menciones al cliente ni le repitas la pregunta: llama a consultar_entrevista y guarda con el `codigo` exacto de proximas_preguntas.'];
 
                 continue;
             }
