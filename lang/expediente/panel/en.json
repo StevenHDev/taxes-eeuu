@@ -1,1 +1,10 @@
-{}
+{
+    ":cliente está lista para preparar": ":cliente is ready to prepare",
+    ":cliente terminó la entrevista": ":cliente finished the interview",
+    ":cliente subió sus documentos": ":cliente uploaded their documents",
+    ":cliente respondió la consulta": ":cliente answered the question",
+    ":cliente respondió una consulta": ":cliente answered a question",
+    "Listo para preparar: :cliente": "Ready to prepare: :cliente",
+    "Estado del expediente: :estado.": "Case file status: :estado.",
+    "Abrir la ficha": "Open the file"
+}

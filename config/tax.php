@@ -21,6 +21,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Avisos por correo al preparador (F5.6)
+    |--------------------------------------------------------------------------
+    |
+    | Un correo cuando un expediente queda "Listo para preparar" y cuando el
+    | cliente responde una consulta. Apágalo sin deploy con
+    | AVISOS_CORREO_PREPARADOR=false.
+    |
+    */
+    'avisos_correo_preparador' => (bool) env('AVISOS_CORREO_PREPARADOR', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Entrevista sobre el catálogo fiscal (F2)
     |--------------------------------------------------------------------------
     |

@@ -17,7 +17,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('clientes', [ClienteController::class, 'store'])->name('clientes.store');
     Route::get('clientes/{cliente}', [ClienteController::class, 'show'])->name('clientes.show');
     Route::delete('clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
-    Route::get('clientes/{cliente}/export', [ClienteController::class, 'export'])->name('clientes.export');
     Route::get('clientes/{cliente}/conversacion-whatsapp', [ClienteController::class, 'conversacionWhatsapp'])
         ->name('clientes.conversacion-whatsapp');
     Route::post('clientes/{cliente}/whatsapp/tomar-control', [ClienteController::class, 'tomarControlWhatsapp'])
@@ -26,14 +25,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('clientes.whatsapp.devolver-control');
     Route::post('clientes/{cliente}/whatsapp/enviar', [ClienteController::class, 'enviarMensajeWhatsapp'])
         ->name('clientes.whatsapp.enviar');
-    Route::post('clientes/{cliente}/formas/{forma}/marcar-revisado', [ClienteController::class, 'marcarRevisado'])
-        ->name('clientes.marcar-revisado');
     Route::post('clientes/{cliente}/determinaciones', [DeterminacionFiscalController::class, 'store'])
         ->name('clientes.determinaciones.store');
-    Route::post('clientes/{cliente}/nivel-riesgo', [ClienteController::class, 'establecerNivelRiesgo'])
-        ->name('clientes.nivel-riesgo.store');
-    Route::delete('clientes/{cliente}/nivel-riesgo', [ClienteController::class, 'limpiarNivelRiesgo'])
-        ->name('clientes.nivel-riesgo.destroy');
 
     Route::get('clientes/{cliente}/campos/{campo}/historial', [CampoClienteController::class, 'historial'])
         ->name('clientes.campos.historial');

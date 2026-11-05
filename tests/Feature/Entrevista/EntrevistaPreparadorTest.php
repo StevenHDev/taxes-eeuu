@@ -63,9 +63,9 @@ class EntrevistaPreparadorTest extends TestCase
     public function test_el_preparador_ve_la_entrevista_con_canal_y_fecha_y_lo_sensible_oculto(): void
     {
         $this->actingAs($this->preparador)
-            ->get(route('clientes.show', $this->cliente))
+            ->get(route('clientes.ficha.entrevista', $this->cliente))
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->component('clientes/show')
+                ->component('ficha/entrevista')
                 ->missing('entrevista')
                 ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
                     ->where('entrevista.estado', 'en_curso')
@@ -86,7 +86,7 @@ class EntrevistaPreparadorTest extends TestCase
         app(Consentimientos::class)->firmar($this->cliente, $this->entrevista->tax_year, 1, 'Cliente', null, null);
 
         $this->actingAs($this->preparador)
-            ->get(route('clientes.show', $this->cliente))
+            ->get(route('clientes.ficha.entrevista', $this->cliente))
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
                     ->where('entrevista.consentimiento.version', 1)
@@ -195,7 +195,7 @@ class EntrevistaPreparadorTest extends TestCase
         $nuevo = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $this->preparador->id]);
 
         $this->actingAs($this->preparador)
-            ->get(route('clientes.show', $nuevo))
+            ->get(route('clientes.ficha.entrevista', $nuevo))
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->loadDeferredProps(fn (AssertableInertia $reload) => $reload->where('entrevista', null)));
     }

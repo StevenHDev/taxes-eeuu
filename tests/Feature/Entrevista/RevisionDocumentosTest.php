@@ -122,7 +122,7 @@ class RevisionDocumentosTest extends TestCase
         app(ChecklistDocumentos::class)->marcarNoAplica($this->item('id-foto'), 'La entregué en la oficina.');
 
         $this->actingAs($this->preparador)
-            ->get(route('clientes.show', $this->cliente))
+            ->get(route('clientes.ficha.documentos', $this->cliente))
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
                     ->where('entrevista.documentos_resumen.por_revisar', 1)

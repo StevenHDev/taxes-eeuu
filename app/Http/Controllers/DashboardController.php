@@ -3,48 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
-use App\Http\Concerns\ManagesClientes;
-use App\Models\User;
-use App\Services\DashboardSummaryService;
+use App\Services\Expediente\PanelExpedientes;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    use ManagesClientes;
-
-    public function __construct(private readonly DashboardSummaryService $summary) {}
+    public function __construct(private readonly PanelExpedientes $panel) {}
 
     public function index(): Response|RedirectResponse
     {
         $user = request()->user();
 
-        // El inicio del cliente es su entrevista (F2.5); "Mi información"
-        // (cálculos sin revisar, 9.7) se retiró en F2.11 y la reemplaza la
-        // fase 5.
+        // El inicio del cliente es su entrevista (F2.5).
         if ($user->role === UserRole::Client) {
             return redirect()->route('portal.entrevista.inicio');
         }
 
         $taxYear = (int) request()->query('tax_year', config('tax.current_tax_year'));
 
-        $clientes = $this->clientesVisiblesPara($user)
-            ->with(['formasCliente' => fn ($query) => $query->where('tax_year', $taxYear)])
-            ->get();
-
-        $porEstado = $clientes
-            ->map(fn (User $cliente) => $this->estadoGeneralDe($cliente))
-            ->countBy();
-
         return Inertia::render('dashboard', [
-            'resumen' => [
-                'total' => $clientes->count(),
-                'sin_iniciar' => $porEstado->get('sin_iniciar', 0),
-                'en_progreso' => $porEstado->get('en_progreso', 0),
-                'completo' => $porEstado->get('completo', 0),
-                ...$this->summary->resumenPara($clientes, $taxYear),
-            ],
+            'panel' => Inertia::defer(fn () => $this->panel->resumen($user, $taxYear), rescue: true),
             'taxYearActual' => $taxYear,
         ]);
     }

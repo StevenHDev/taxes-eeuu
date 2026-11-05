@@ -368,8 +368,8 @@ class DeterminacionFiscalTest extends TestCase
         $this->actingAs($preparador)->post(route('clientes.determinaciones.store', $cliente), ['tax_year' => 2025]);
 
         $this->actingAs($preparador)
-            ->get(route('clientes.show', $cliente))
+            ->get(route('clientes.ficha.historial', $cliente))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->has('determinaciones', 12));
+            ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload->has('anterior.determinaciones', 12)));
     }
 }

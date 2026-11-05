@@ -3,9 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
-use App\Models\CampoCliente;
-use App\Models\FormaCliente;
-use App\Models\HistorialCambio;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -30,62 +27,22 @@ class DashboardTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_un_preparador_ve_el_resumen_solo_de_sus_clientes(): void
+    public function test_el_panel_llega_diferido_y_sin_el_resumen_viejo(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $propio = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-        $ajeno = User::factory()->create(['role' => UserRole::Client]);
-
-        FormaCliente::query()->create(['user_id' => $propio->id, 'forma' => 'form_1040', 'estado' => 'completo']);
-        FormaCliente::query()->create(['user_id' => $ajeno->id, 'forma' => 'form_1040', 'estado' => 'completo']);
-
-        CampoCliente::query()->create([
-            'user_id' => $propio->id, 'forma' => 'form_1040', 'campo' => 'ingresos',
-            'tipo_campo' => 'dato', 'modo' => 'texto', 'valor_texto' => 1000,
-            'estado' => 'recibido', 'source' => 'agente_ia',
-        ]);
-        HistorialCambio::query()->create([
-            'user_id' => $propio->id, 'forma' => 'form_1040', 'campo' => 'ingresos',
-            'valor_nuevo' => 1000, 'source' => 'agente_ia',
-        ]);
 
         $this->actingAs($preparador)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('resumen.total', 1)
-                ->where('resumen.completo', 1)
-                ->where('resumen.sin_iniciar', 0)
-                ->where('resumen.formas_completas_porcentaje', 100)
-                ->where('resumen.distribucion_por_forma.0.forma', 'form_1040')
-                ->where('resumen.distribucion_por_forma.0.cantidad', 1)
-                ->where('resumen.pendientes_revisar.0.cliente_nombre', $propio->name)
-                ->where('resumen.actividad_reciente.0.cliente_nombre', $propio->name)
-                ->where('resumen.ultimos_clientes.0.id', $propio->id)
-                ->has('resumen.actividad_por_dia', 7));
-    }
-
-    public function test_actividad_reciente_no_falla_con_un_campo_unico_por_cliente(): void
-    {
-        // Los campos únicos por cliente (SSN, cónyuge, dependientes) se auditan
-        // con forma='transversal' — no es una TaxForm real, así que el resumen
-        // no puede llamar TaxForm::from() a ciegas sobre este dato.
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-
-        HistorialCambio::query()->create([
-            'user_id' => $cliente->id,
-            'forma' => 'transversal',
-            'campo' => 'identificacion_ssn_itin',
-            'valor_nuevo' => '123456789',
-            'source' => 'agente_ia',
-        ]);
-
-        $this->actingAs($preparador)
-            ->get(route('dashboard'))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('resumen.actividad_reciente.0.forma_label', 'Datos del cliente'));
+                ->component('dashboard')
+                ->missing('resumen')
+                ->has('taxYearActual')
+                ->loadDeferredProps(fn (Assert $reload) => $reload
+                    ->has('panel.por_estado', 12)
+                    ->has('panel.colas')
+                    ->has('panel.avisos')
+                    ->has('panel.ultimos_clientes')));
     }
 
     public function test_el_inicio_del_cliente_es_su_entrevista(): void

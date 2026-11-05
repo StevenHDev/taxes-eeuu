@@ -42,13 +42,13 @@ class DocumentoDuplicadoTest extends TestCase
         $this->subirDocumento($preparador, $cliente, 'form_1099_nec', UploadedFile::fake()->createWithContent('1099.pdf', $contenido));
 
         $this->actingAs($preparador)
-            ->get(route('clientes.show', $cliente).'?tax_year=2025')
+            ->get(route('clientes.ficha.historial', $cliente).'?tax_year=2025')
             ->assertOk()
-            ->assertInertia(function (Assert $page) {
-                $page->has('campos', 2);
+            ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(function (Assert $reload) {
+                $reload->has('anterior.campos', 2);
 
                 foreach (['w2', 'form_1099_nec'] as $campo) {
-                    $page->where('campos', function (Collection $campos) use ($campo) {
+                    $reload->where('anterior.campos', function (Collection $campos) use ($campo) {
                         $fila = $campos->firstWhere('campo', $campo);
 
                         return $fila['documento']['duplicado']['posible_duplicado'] === true
@@ -56,7 +56,7 @@ class DocumentoDuplicadoTest extends TestCase
                             && $fila['documento']['duplicado']['mismo_cliente'] !== null;
                     });
                 }
-            });
+            }));
     }
 
     public function test_archivos_distintos_no_se_marcan_como_duplicados(): void
@@ -69,11 +69,11 @@ class DocumentoDuplicadoTest extends TestCase
         $this->subirDocumento($preparador, $cliente, 'form_1099_nec', UploadedFile::fake()->createWithContent('1099.pdf', 'contenido-b'));
 
         $this->actingAs($preparador)
-            ->get(route('clientes.show', $cliente).'?tax_year=2025')
+            ->get(route('clientes.ficha.historial', $cliente).'?tax_year=2025')
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('campos', function (Collection $campos) {
+            ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload->where('anterior.campos', function (Collection $campos) {
                 return $campos->every(fn (array $c) => $c['documento']['duplicado']['posible_duplicado'] === false);
-            }));
+            })));
     }
 
     public function test_un_preparador_no_ve_la_identidad_de_un_cliente_que_no_tiene_asignado_al_coincidir_el_hash(): void
@@ -89,10 +89,11 @@ class DocumentoDuplicadoTest extends TestCase
         $this->subirDocumento($preparador2, $clienteB, 'w2', UploadedFile::fake()->createWithContent('w2.pdf', $contenido));
 
         $this->actingAs($preparador2)
-            ->get(route('clientes.show', $clienteB).'?tax_year=2025')
+            ->get(route('clientes.ficha.historial', $clienteB).'?tax_year=2025')
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('campos.0.documento.duplicado.otro_cliente', true)
-                ->where('campos.0.documento.duplicado.otro_cliente_detalle', null));
+            ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('anterior.campos.0.documento.duplicado.otro_cliente', true)
+                ->where('anterior.campos.0.documento.duplicado.otro_cliente_detalle', null)));
     }
 
     public function test_un_administrador_ve_el_detalle_completo_del_otro_cliente(): void
@@ -109,11 +110,11 @@ class DocumentoDuplicadoTest extends TestCase
         $this->subirDocumento($preparador2, $clienteB, 'w2', UploadedFile::fake()->createWithContent('w2.pdf', $contenido));
 
         $this->actingAs($admin)
-            ->get(route('clientes.show', $clienteB).'?tax_year=2025')
+            ->get(route('clientes.ficha.historial', $clienteB).'?tax_year=2025')
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('campos.0.documento.duplicado.otro_cliente', true)
-                ->where('campos.0.documento.duplicado.otro_cliente_detalle.cliente_nombre', 'Cliente A')
-                ->where('campos.0.documento.duplicado.otro_cliente_detalle.campo', 'w2'));
+            ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('anterior.campos.0.documento.duplicado.otro_cliente', true)
+                ->where('anterior.campos.0.documento.duplicado.otro_cliente_detalle.cliente_nombre', 'Cliente A')
+                ->where('anterior.campos.0.documento.duplicado.otro_cliente_detalle.campo', 'w2')));
     }
 }

@@ -3,12 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
-use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\CampoCliente;
-use App\Models\CampoDerivationLog;
 use App\Models\CampoReveal;
 use App\Models\Documento;
-use App\Models\FormaCliente;
 use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Notifications\BienvenidaClientePortal;
@@ -65,83 +62,6 @@ class ClientePanelTest extends TestCase
         $cliente = User::factory()->create(['role' => UserRole::Client]);
 
         $this->actingAs($admin)->get(route('clientes.show', $cliente))->assertOk();
-    }
-
-    public function test_el_detalle_carga_con_campos_sensibles_con_acentos(): void
-    {
-        $admin = User::factory()->create(['role' => UserRole::Administrator]);
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
-
-        // Enmascarar por bytes partía el carácter acentuado y producía UTF-8
-        // inválido, que hacía fallar la serialización JSON de toda la respuesta.
-        $this->crearCampo($cliente, 'info_conyuge', [
-            'valor_texto' => ['nombre_completo' => 'María López', 'ssn' => '123-45-6789'],
-        ]);
-
-        // Petición Inertia (XHR) — es la que serializa las props como JsonResponse.
-        $respuesta = $this->actingAs($admin)
-            ->withHeaders([
-                'X-Inertia' => 'true',
-                'X-Inertia-Version' => app(HandleInertiaRequests::class)->version(request()),
-            ])
-            ->get(route('clientes.show', $cliente))
-            ->assertOk();
-
-        $conyuge = collect($respuesta->json('props.campos'))
-            ->firstWhere('campo', 'info_conyuge');
-
-        $this->assertSame('*******ópez', $conyuge['valor']['nombre_completo']);
-        $this->assertSame('*******6789', $conyuge['valor']['ssn']);
-    }
-
-    public function test_el_detalle_expone_subcampos_y_tipo_dato_para_editar_objetos_correctamente(): void
-    {
-        // Regresión: sin esto, el editor genérico del panel no tenía forma de
-        // saber qué subcampos existen para un objeto/array_object (ej. los
-        // nuevos de info_dependientes/estado_civil de la Fase 2), y los
-        // omitía por completo del formulario de edición.
-        $admin = User::factory()->create(['role' => UserRole::Administrator]);
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
-
-        $this->crearCampo($cliente, 'info_dependientes', [
-            'forma' => 'transversal',
-            'valor_texto' => [['nombre_completo' => 'Kid One', 'fecha_nacimiento' => '2015-01-01', 'ssn' => '111-22-3333']],
-        ]);
-
-        $respuesta = $this->actingAs($admin)
-            ->withHeaders([
-                'X-Inertia' => 'true',
-                'X-Inertia-Version' => app(HandleInertiaRequests::class)->version(request()),
-            ])
-            ->get(route('clientes.show', $cliente))
-            ->assertOk();
-
-        // Campo ya cargado: 'campos' trae sus subcampos completos (no solo los 3 viejos).
-        $dependientes = collect($respuesta->json('props.campos'))->firstWhere('campo', 'info_dependientes');
-        $this->assertContains('relacion', $dependientes['subcampos']);
-        $this->assertContains('meses_en_hogar', $dependientes['subcampos']);
-        $this->assertSame('array_object', $dependientes['tipo_dato']);
-
-        // Campo nunca cargado (estado_civil): 'catalogoDisponible' también trae subcampos.
-        $estadoCivil = collect($respuesta->json('props.catalogoDisponible'))->firstWhere('campo', 'estado_civil');
-        $this->assertNotNull($estadoCivil);
-        $this->assertContains('casado_al_31_dic', $estadoCivil['subcampos']);
-        $this->assertSame('object', $estadoCivil['tipo_dato']);
-    }
-
-    public function test_marcar_una_forma_como_revisada(): void
-    {
-        $preparador = User::factory()->create(['role' => UserRole::Preparer]);
-        $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1040', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        $this->actingAs($preparador)
-            ->post(route('clientes.marcar-revisado', ['cliente' => $cliente, 'forma' => 'form_1040']), ['tax_year' => 2025])
-            ->assertRedirect();
-
-        $forma = FormaCliente::query()->where('user_id', $cliente->id)->first();
-        $this->assertNotNull($forma->revisado_en);
-        $this->assertSame($preparador->id, $forma->revisado_por);
     }
 
     public function test_revelar_un_campo_sensible_exige_reconfirmar_la_contrasena(): void
@@ -288,65 +208,19 @@ class ClientePanelTest extends TestCase
                 ->where('clientes.1.name', 'Jane Doe'));
     }
 
-    /**
-     * Ver CampoDerivationLog / EventoRecoleccionService::registrarDerivacion().
-     */
-    public function test_el_show_expone_los_derivation_logs_del_ano_fiscal_actual(): void
+    public function test_las_rutas_web_retiradas_ya_no_existen(): void
     {
         $preparador = User::factory()->create(['role' => UserRole::Preparer]);
         $cliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $preparador->id]);
 
-        $documento = Documento::query()->create([
-            'user_id' => $cliente->id,
-            'forma' => 'transversal',
-            'tax_year' => 2025,
-            'campo' => 'w2',
-            'file_path' => 'clientes/w2.pdf',
-            'file_original_name' => 'w2.pdf',
-            'file_mime_type' => 'application/pdf',
-            'file_size' => 10,
-            'formato' => 'pdf',
-            'estado_validacion' => 'recibido',
-        ]);
+        foreach (['clientes.export', 'clientes.marcar-revisado', 'clientes.nivel-riesgo.store', 'clientes.nivel-riesgo.destroy'] as $nombre) {
+            $this->assertFalse(Route::has($nombre), $nombre);
+        }
 
-        CampoDerivationLog::query()->create([
-            'user_id' => $cliente->id,
-            'tax_year' => 2025,
-            'documento_id' => $documento->id,
-            'documento_campo' => 'w2',
-            'relaciones_esperadas' => [
-                ['forma' => 'form_1040', 'campo' => 'salarios_medicare', 'subcampo' => null, 'descripcion' => null, 'acumulable' => true],
-            ],
-            'revelados_recibidos' => [],
-            'relaciones_faltantes' => [
-                ['forma' => 'form_1040', 'campo' => 'salarios_medicare', 'subcampo' => null, 'descripcion' => null, 'acumulable' => true],
-            ],
-        ]);
-
-        $this->actingAs($preparador)
-            ->get(route('clientes.show', ['cliente' => $cliente, 'tax_year' => 2025]))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->has('derivationLogs', 1)
-                ->where('derivationLogs.0.documento_campo', 'w2')
-                ->where('derivationLogs.0.documento_nombre', 'w2.pdf')
-                ->has('derivationLogs.0.relaciones_faltantes', 1));
-    }
-
-    public function test_el_listado_solo_ofrece_formas_en_alcance_pero_muestra_las_viejas_del_cliente(): void
-    {
-        $admin = User::factory()->create(['role' => UserRole::Administrator]);
-        $cliente = User::factory()->create(['role' => UserRole::Client]);
-        FormaCliente::query()->create(['user_id' => $cliente->id, 'forma' => 'form_1065', 'tax_year' => 2025, 'estado' => 'en_progreso']);
-
-        $this->actingAs($admin)
-            ->get(route('clientes.index', ['tax_year' => 2025]))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('formas', fn ($formas) => collect($formas)->pluck('value')->all() === ['form_1040', 'schedule_c', 'schedule_e', 'schedule_f'])
-                ->where('clientes.0.formas.0.forma', 'form_1065'));
-
-        $this->actingAs($admin)->get(route('clientes.show', ['cliente' => $cliente, 'tax_year' => 2025]))->assertOk();
+        $this->actingAs($preparador)->get("/clientes/{$cliente->id}/export")->assertNotFound();
+        $this->actingAs($preparador)->post("/clientes/{$cliente->id}/formas/form_1040/marcar-revisado", ['tax_year' => 2025])->assertNotFound();
+        $this->actingAs($preparador)->post("/clientes/{$cliente->id}/nivel-riesgo", ['tax_year' => 2025, 'nivel' => 'alto'])->assertNotFound();
+        $this->actingAs($preparador)->delete("/clientes/{$cliente->id}/nivel-riesgo", ['tax_year' => 2025])->assertNotFound();
     }
 
     public function test_los_datos_del_formulario_anterior_son_de_solo_lectura_en_la_ficha(): void

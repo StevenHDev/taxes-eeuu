@@ -2,54 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CatalogoFiscal\SeveridadRegla;
 use App\Enums\EstadoControlConversacion;
-use App\Enums\NivelRiesgo;
+use App\Enums\Expediente\EstadoExpediente;
+use App\Enums\Expediente\PerfilExpediente;
+use App\Enums\Lectura\EstadoExcepcion;
 use App\Enums\RolMensajeWhatsapp;
-use App\Enums\TaxForm;
 use App\Enums\UserRole;
 use App\Http\Concerns\ManagesClientes;
 use App\Http\Requests\ClienteStoreRequest;
-use App\Models\CampoCatalogo;
-use App\Models\CampoDerivationLog;
-use App\Models\DeterminacionFiscal;
-use App\Models\Documento;
-use App\Models\FormaCliente;
-use App\Models\NivelRiesgoManual;
+use App\Models\Consentimiento\Consentimiento;
+use App\Models\Entrevista\Entrevista;
+use App\Models\Expediente\Expediente;
+use App\Models\Expediente\ExpedienteEvento;
+use App\Models\Lectura\Excepcion;
 use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
 use App\Notifications\BienvenidaClientePortal;
-use App\Services\ClienteExportService;
-use App\Services\DocumentoDuplicadoService;
 use App\Services\Entrevista\ChecklistDocumentos;
-use App\Services\Entrevista\VistaEntrevistaPreparador;
-use App\Services\RiesgoCasoService;
+use App\Services\Expediente\DiagnosticoExpediente;
+use App\Services\Expediente\FichaCliente;
 use App\Services\UsuarioRetencionService;
 use App\Services\Whatsapp\WhatsappChannel;
-use App\Support\TaxFieldCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ClienteController extends Controller
 {
     use ManagesClientes;
 
     public function __construct(
-        private readonly ClienteExportService $export,
-        private readonly DocumentoDuplicadoService $duplicados,
-        private readonly RiesgoCasoService $riesgo,
         private readonly WhatsappChannel $canal,
         private readonly UsuarioRetencionService $retencion,
-        private readonly VistaEntrevistaPreparador $vistaEntrevista,
         private readonly ChecklistDocumentos $checklist,
+        private readonly FichaCliente $ficha,
+        private readonly DiagnosticoExpediente $diagnostico,
     ) {}
 
     public function index(Request $request): Response
@@ -61,16 +56,21 @@ class ClienteController extends Controller
         // Colección completa (scopeada por rol): el filtrado, orden y paginado
         // se hacen client-side con el DataTable de TanStack en el navegador.
         $clientes = $this->clientesVisiblesPara($request->user())
-            ->with(['formasCliente' => fn ($query) => $query->where('tax_year', $taxYear)])
             ->orderByDesc('created_at')
             ->get();
 
-        // F3.4: qué le falta a cada uno, en una sola consulta.
-        $documentos = $this->checklist->resumenPorCliente($clientes->modelKeys(), $taxYear);
+        $ids = $clientes->modelKeys();
+
+        // Todo por cliente en consultas agrupadas, sin una por fila.
+        $documentos = $this->checklist->resumenPorCliente($ids, $taxYear);
+        $expedientes = Expediente::query()->where('tax_year', $taxYear)->whereIn('user_id', $ids)->get()->keyBy('user_id');
+        $canales = Entrevista::query()->where('tax_year', $taxYear)->whereIn('user_id', $ids)->pluck('canal_inicio', 'user_id');
+        $excepciones = $this->excepcionesPorCliente($ids, $taxYear);
 
         $clientes = $clientes
-            ->map(function (User $cliente) use ($taxYear, $documentos) {
-                $riesgo = $this->riesgo->nivelEfectivo($cliente, $taxYear);
+            ->map(function (User $cliente) use ($documentos, $expedientes, $canales, $excepciones) {
+                $expediente = $expedientes->get($cliente->id);
+                $estado = $expediente?->estado ?? EstadoExpediente::Invitado;
 
                 return [
                     'id' => $cliente->id,
@@ -78,28 +78,68 @@ class ClienteController extends Controller
                     'email' => $cliente->email,
                     'phone' => $cliente->phone,
                     'es_prueba' => $cliente->es_prueba,
-                    'estado_general' => $this->estadoGeneralDe($cliente),
-                    'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
-                        'forma' => $f->forma,
-                        'forma_label' => TaxForm::from($f->forma)->label(),
-                        'estado' => $f->estado,
-                    ]),
-                    'nivel_riesgo' => $riesgo['nivel']->value,
-                    'nivel_riesgo_label' => $riesgo['nivel']->label(),
-                    'nivel_riesgo_fuente' => $riesgo['fuente'],
+                    'expediente' => [
+                        'estado' => $estado->value,
+                        'label' => $estado->label(),
+                        'desde' => $expediente?->estado_desde->toIso8601String(),
+                        'turno' => $estado->turno(),
+                        'vence_en' => $expediente?->vence_en?->toDateString(),
+                    ],
+                    'perfil' => $expediente?->perfil ?? [],
+                    'canal_inicio' => $canales->get($cliente->id)?->value,
+                    'excepciones' => $excepciones[$cliente->id] ?? ['total' => 0, 'bloqueantes' => 0],
                     'documentos' => $documentos[$cliente->id] ?? null,
                     'created_at' => $cliente->created_at,
                 ];
             });
 
+        $filtro = EstadoExpediente::tryFrom((string) $request->query('estado'));
+
         return Inertia::render('clientes/index', [
             'clientes' => $clientes,
-            'formas' => array_map(
-                fn (TaxForm $f) => ['value' => $f->value, 'label' => $f->label()],
-                TaxForm::enAlcance(),
+            'estados' => array_map(
+                fn (EstadoExpediente $e) => ['valor' => $e->value, 'label' => $e->label()],
+                EstadoExpediente::cases(),
+            ),
+            'perfiles' => array_map(
+                fn (PerfilExpediente $p) => ['valor' => $p->value, 'label' => $p->label()],
+                PerfilExpediente::cases(),
             ),
             'taxYearActual' => $taxYear,
+            'filtroEstado' => $filtro?->value,
         ]);
+    }
+
+    /**
+     * Excepciones abiertas por cliente (total y bloqueantes), en una consulta.
+     *
+     * @param  list<int>  $clienteIds
+     * @return array<int, array{total: int, bloqueantes: int}>
+     */
+    private function excepcionesPorCliente(array $clienteIds, int $taxYear): array
+    {
+        $filas = Excepcion::query()
+            ->whereIn('excepciones.estado', [EstadoExcepcion::Abierta, EstadoExcepcion::Consultada])
+            ->join('entrevistas', 'entrevistas.id', '=', 'excepciones.entrevista_id')
+            ->whereIn('entrevistas.user_id', $clienteIds)
+            ->where('entrevistas.tax_year', $taxYear)
+            ->selectRaw('entrevistas.user_id as user_id, excepciones.severidad as severidad, count(*) as cuantas')
+            ->groupBy('entrevistas.user_id', 'excepciones.severidad')
+            ->toBase()
+            ->get();
+
+        $resumen = [];
+
+        foreach ($filas as $fila) {
+            $resumen[$fila->user_id] ??= ['total' => 0, 'bloqueantes' => 0];
+            $resumen[$fila->user_id]['total'] += (int) $fila->cuantas;
+
+            if ($fila->severidad === SeveridadRegla::Bloqueante->value) {
+                $resumen[$fila->user_id]['bloqueantes'] += (int) $fila->cuantas;
+            }
+        }
+
+        return $resumen;
     }
 
     public function store(ClienteStoreRequest $request): RedirectResponse
@@ -150,237 +190,82 @@ class ClienteController extends Controller
     {
         $this->authorize('view', $cliente);
 
-        // Superficie humana (preparador navegando el panel): default al año
-        // fiscal actual cuando no se especifica, con opción de cambiarlo.
         $taxYear = (int) $request->query('tax_year', config('tax.current_tax_year'));
 
-        $cliente->load([
-            'formasCliente' => fn ($query) => $query->where('tax_year', $taxYear),
-            'camposCliente' => fn ($query) => $query->where('tax_year', $taxYear)->with('documento')->orderBy('campo'),
-            'determinacionesFiscales' => fn ($query) => $query->where('tax_year', $taxYear),
-        ]);
-
-        $camposCargados = $cliente->camposCliente->map(fn ($c) => "{$c->forma}:{$c->campo}");
-        $unicosCargados = $cliente->camposCliente
-            ->filter(fn ($c) => TaxFieldCatalog::isUnicoPorCliente($taxYear, $c->campo))
-            ->pluck('campo');
-
-        // Por cada forma real, sus campos propios + transversales-por-forma que el
-        // cliente aún no tiene cargados — excluyendo los únicos por cliente, que se
-        // agregan una sola vez aparte (no por forma).
-        // Formas en alcance más las que el cliente ya tenga declaradas (un
-        // cliente viejo con una forma fuera de alcance sigue pudiendo editarse).
-        $formasOfrecidas = collect(TaxForm::enAlcance())
-            ->concat($cliente->formasCliente->map(fn (FormaCliente $f) => TaxForm::tryFrom($f->forma))->filter())
-            ->unique(fn (TaxForm $forma) => $forma->value);
-
-        $disponiblePorForma = $formasOfrecidas
-            ->flatMap(fn (TaxForm $forma) => collect(TaxFieldCatalog::fieldsFor($taxYear, $forma))
-                ->reject(fn (array $campo) => TaxFieldCatalog::isUnicoPorCliente($taxYear, $campo['campo'])
-                    || $camposCargados->contains("{$forma->value}:{$campo['campo']}"))
-                ->map(fn (array $campo) => [
-                    'forma' => $forma->value,
-                    'campo' => $campo['campo'],
-                    'tipo_campo' => $campo['tipo']->value,
-                    'tipo_dato' => $campo['tipo_dato']?->value,
-                    'subcampos' => $campo['subcampos'] ?? null,
-                    'formatos_aceptados' => $campo['formatos_aceptados'] ?? null,
-                    'obligatorio' => $campo['obligatorio'],
-                ]));
-
-        // Los campos únicos por cliente (SSN, cónyuge, dependientes, documentos
-        // extra...): una sola vez, bajo su propia pseudo-forma ('transversal' o
-        // 'documentos_extra', ver CampoCatalogo::pseudoFormas), si no están ya
-        // cargados.
-        $disponibleUnicos = CampoCatalogo::query()
-            ->where('unico_por_cliente', true)
-            ->where('tax_year', $taxYear)
-            ->orderBy('clave')
-            ->get()
-            ->reject(fn (CampoCatalogo $c) => $unicosCargados->contains($c->clave))
-            ->map(fn (CampoCatalogo $c) => [
-                'forma' => $c->forma,
-                'campo' => $c->clave,
-                'tipo_campo' => $c->tipo_campo->value,
-                'tipo_dato' => $c->tipo_dato?->value,
-                'subcampos' => $c->subcampos,
-                'formatos_aceptados' => $c->formatos_aceptados,
-                'obligatorio' => $c->obligatorio,
-            ]);
-
-        return Inertia::render('clientes/show', [
-            'cliente' => [
-                'id' => $cliente->id,
-                'name' => $cliente->name,
-                'email' => $cliente->email,
-                'phone' => $cliente->phone,
-                'es_prueba' => $cliente->es_prueba,
-            ],
-            'taxYearActual' => $taxYear,
-            // F2.9: la entrevista del cliente, diferida para no frenar el
-            // resto de la ficha.
-            'entrevista' => Inertia::defer(fn () => $this->vistaEntrevista->para($cliente, $taxYear, app()->getLocale() === 'en'), rescue: true),
-            'nivelRiesgo' => $this->riesgo->nivelEfectivo($cliente, $taxYear),
-            'catalogoDisponible' => $disponiblePorForma
-                ->concat($disponibleUnicos)
-                ->values(),
-            'formas' => $cliente->formasCliente->map(fn (FormaCliente $f) => [
-                'forma' => $f->forma,
-                'forma_label' => TaxForm::from($f->forma)->label(),
-                'estado' => $f->estado,
-                'revisado_en' => $f->revisado_en,
-            ]),
-            'campos' => $cliente->camposCliente->map(function ($c) use ($taxYear, $request) {
-                $definicion = TaxFieldCatalog::find($taxYear, $c->forma, $c->campo);
-
-                return [
-                    'forma' => $c->forma,
-                    'campo' => $c->campo,
-                    'tipo_campo' => $c->tipo_campo,
-                    'tipo_dato' => $definicion['tipo_dato']?->value,
-                    'subcampos' => $definicion['subcampos'] ?? null,
-                    'modo' => $c->modo,
-                    'estado' => $c->estado,
-                    'advertencia' => $c->advertencia,
-                    'valor' => $c->valor,
-                    'es_sensible' => $c->esSensible(),
-                    'formatos_aceptados' => $definicion['formatos_aceptados'] ?? null,
-                    'obligatorio' => $definicion['obligatorio'] ?? false,
-                    'documento' => $c->documento ? [
-                        'id' => $c->documento->id,
-                        'file_original_name' => $c->documento->file_original_name,
-                        'file_mime_type' => $c->documento->file_mime_type,
-                        'formato' => $c->documento->formato,
-                        'estado_validacion' => $c->documento->estado_validacion,
-                        'download_url' => $c->documento->downloadUrl(),
-                        'preview_url' => $c->documento->previewUrl(),
-                        'duplicado' => $this->duplicadoDe($c->documento, $request->user()),
-                    ] : null,
-                    'updated_at' => $c->updated_at,
-                ];
-            }),
-            'determinaciones' => $cliente->determinacionesFiscales->map(fn (DeterminacionFiscal $d) => [
-                'tipo' => $d->tipo,
-                'resultado' => $d->resultado,
-                'version_reglas' => $d->version_reglas,
-                'calculado_en' => $d->calculado_en,
-            ]),
-            // Traza de qué relaciones documento→campo se cubrieron (o no) al
-            // guardar cada documento — ver CampoDerivationLog y
-            // EventoRecoleccionService::registrarDerivacion(). Solo interesa
-            // al preparador para depurar, así que va aparte de `campos`.
-            'derivationLogs' => CampoDerivationLog::query()
-                ->where('user_id', $cliente->id)
-                ->where('tax_year', $taxYear)
-                ->with('documento:id,file_original_name')
-                ->latest('id')
-                ->get()
-                ->map(fn (CampoDerivationLog $log) => [
-                    'documento_campo' => $log->documento_campo,
-                    'documento_nombre' => $log->documento?->file_original_name,
-                    'relaciones_esperadas' => $log->relaciones_esperadas,
-                    'relaciones_faltantes' => $log->relaciones_faltantes,
-                    'created_at' => $log->created_at,
-                ]),
+        return Inertia::render('ficha/resumen', [
+            'ficha' => $this->ficha->encabezado($cliente, $taxYear, $request->user()),
+            'resumen' => Inertia::defer(fn () => $this->resumen($cliente, $taxYear), rescue: true),
         ]);
     }
 
     /**
+     * Lo de la pestaña Resumen: diagnóstico, entrevista, consentimiento, los 30
+     * eventos más nuevos y la acción principal según el estado. Nada sensible.
+     *
      * @return array<string, mixed>
      */
-    private function duplicadoDe(Documento $documento, User $actor): array
+    private function resumen(User $cliente, int $taxYear): array
     {
-        $coincidencias = $this->duplicados->buscarCoincidencias($documento);
+        $diagnostico = $this->diagnostico->para($cliente, $taxYear);
+        $expediente = Expediente::query()->where('user_id', $cliente->id)->where('tax_year', $taxYear)->first();
+        $entrevista = Entrevista::query()->where('user_id', $cliente->id)->where('tax_year', $taxYear)->first();
+        $consentimiento = Consentimiento::query()->with('texto')
+            ->where('user_id', $cliente->id)->where('tax_year', $taxYear)->latest('aceptado_en')->first();
 
-        $mismoCliente = $coincidencias
-            ->filter(fn (Documento $d) => $d->user_id === $documento->user_id)
-            ->map(fn (Documento $d) => ['forma' => $d->forma, 'campo' => $d->campo])
-            ->values();
-
-        $deOtroCliente = $coincidencias->first(fn (Documento $d) => $d->user_id !== $documento->user_id);
-
-        // El actor solo ve el nombre/forma/campo del otro cliente si tiene
-        // acceso a ese cliente (mismo límite de visibilidad que separa a los
-        // preparadores entre sí) — de lo contrario, solo la señal booleana.
-        $otroClienteDetalle = $deOtroCliente && $actor->can('view', $deOtroCliente->user)
-            ? ['cliente_id' => $deOtroCliente->user_id, 'cliente_nombre' => $deOtroCliente->user->name, 'forma' => $deOtroCliente->forma, 'campo' => $deOtroCliente->campo]
-            : null;
+        $eventos = $expediente === null ? collect() : ExpedienteEvento::query()
+            ->where('expediente_id', $expediente->id)
+            ->with('actor:id,name')
+            ->orderByDesc('id')
+            ->limit(30)
+            ->get();
 
         return [
-            'posible_duplicado' => $coincidencias->isNotEmpty(),
-            'mismo_cliente' => $mismoCliente->isNotEmpty() ? $mismoCliente->all() : null,
-            'otro_cliente' => $deOtroCliente !== null,
-            'otro_cliente_detalle' => $otroClienteDetalle,
+            'diagnostico' => $diagnostico->toArray(),
+            'entrevista' => $entrevista === null ? null : [
+                'estado' => $entrevista->estado->value,
+                'iniciada_en' => $entrevista->iniciada_en->toIso8601String(),
+                'confirmada_en' => $entrevista->confirmada_en?->toIso8601String(),
+                'canal_inicio' => $entrevista->canal_inicio->value,
+            ],
+            'consentimiento' => $consentimiento === null ? null : [
+                'version' => $consentimiento->texto->version,
+                'provisional' => $consentimiento->texto->provisional,
+                'aceptado_en' => $consentimiento->aceptado_en->toIso8601String(),
+            ],
+            'eventos' => $eventos->map(fn (ExpedienteEvento $e) => [
+                'id' => $e->id,
+                'tipo' => $e->tipo->value,
+                'tipo_label' => $e->tipo->label(),
+                'estado_anterior' => $e->estado_anterior?->value,
+                'estado_nuevo' => $e->estado_nuevo?->value,
+                'estado_nuevo_label' => $e->estado_nuevo?->label(),
+                'actor' => $e->actor?->name,
+                'motivo' => $e->motivo,
+                'creado_en' => $e->created_at->toIso8601String(),
+            ])->values()->all(),
+            'accion_principal' => $this->accionPrincipal($cliente, $taxYear, $diagnostico->estado),
         ];
     }
 
-    public function marcarRevisado(Request $request, User $cliente, string $forma): RedirectResponse
+    /**
+     * @return array{clave: string, url: string}|null
+     */
+    private function accionPrincipal(User $cliente, int $taxYear, EstadoExpediente $estado): ?array
     {
-        $this->authorize('update', $cliente);
+        $clave = match ($estado) {
+            EstadoExpediente::PorValidar => 'documentos',
+            EstadoExpediente::ListoParaPreparar => 'revision',
+            EstadoExpediente::EnRevision => Route::has('clientes.hoja-taxwise.show') ? 'hoja' : 'revision',
+            default => null,
+        };
 
-        // Acción mutante con consecuencias de auditoría: requerida explícita,
-        // sin default de config — el preparador debe declarar qué año revisó.
-        $request->validate(['tax_year' => ['required', 'integer', 'digits:4']]);
+        $ruta = $clave === null ? null : FichaCliente::PESTANAS[$clave] ?? null;
 
-        $taxForm = TaxForm::from($forma);
+        if ($ruta === null || ! Route::has($ruta)) {
+            return null;
+        }
 
-        $formaCliente = FormaCliente::query()
-            ->where('user_id', $cliente->id)
-            ->where('forma', $taxForm->value)
-            ->where('tax_year', $request->integer('tax_year'))
-            ->firstOrFail();
-
-        $formaCliente->marcarRevisado(request()->user());
-
-        return back();
-    }
-
-    public function establecerNivelRiesgo(Request $request, User $cliente): RedirectResponse
-    {
-        $this->authorize('update', $cliente);
-
-        // Acción mutante con consecuencias de auditoría: requerida explícita,
-        // sin default de config — mismo criterio que marcarRevisado.
-        $request->validate([
-            'tax_year' => ['required', 'integer', 'digits:4'],
-            'nivel' => ['required', Rule::enum(NivelRiesgo::class)],
-        ]);
-
-        NivelRiesgoManual::query()->updateOrCreate(
-            ['user_id' => $cliente->id, 'tax_year' => $request->integer('tax_year')],
-            [
-                'nivel' => $request->enum('nivel', NivelRiesgo::class),
-                'establecido_por' => $request->user()->id,
-                'establecido_en' => now(),
-            ],
-        );
-
-        return back();
-    }
-
-    public function limpiarNivelRiesgo(Request $request, User $cliente): RedirectResponse
-    {
-        $this->authorize('update', $cliente);
-
-        $request->validate(['tax_year' => ['required', 'integer', 'digits:4']]);
-
-        NivelRiesgoManual::query()
-            ->where('user_id', $cliente->id)
-            ->where('tax_year', $request->integer('tax_year'))
-            ->delete();
-
-        return back();
-    }
-
-    public function export(Request $request, User $cliente): BinaryFileResponse
-    {
-        $this->authorize('view', $cliente);
-
-        $taxYear = (int) $request->query('tax_year', config('tax.current_tax_year'));
-
-        $zipPath = $this->export->exportarZip($cliente, $taxYear);
-
-        return response()->download($zipPath, "cliente-{$cliente->id}-{$taxYear}.zip")->deleteFileAfterSend();
+        return ['clave' => $clave, 'url' => route($ruta, ['cliente' => $cliente->id, 'tax_year' => $taxYear])];
     }
 
     /**
