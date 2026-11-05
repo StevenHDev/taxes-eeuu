@@ -42,6 +42,85 @@
         "confirmarContrasena": "Confirm your password to reveal",
         "revelarError": "The value could not be revealed. Try again.",
         "cargando": "Loading…",
-        "error": "This section could not be loaded. Reload the page."
+        "error": "This section could not be loaded. Reload the page.",
+        "excepciones": {
+            "titulo": "Open exceptions for {{anio}}",
+            "verCola": "See the queue for all my clients",
+            "vacioTitulo": "This client has no open exceptions",
+            "vacioDescripcion": "Everything the rules checked is in order for this year. If something needs your decision, it will show up here."
+        },
+        "documentos": {
+            "sinEntrevista": "This client has no interview this year yet, so there are no documents to show."
+        },
+        "resumen": {
+            "queFalta": "What's missing for \"Ready to prepare\"",
+            "cumplido": "Done",
+            "pendiente": "Pending",
+            "consentimientoOk": "Consent signed (v{{version}}, {{fecha}})",
+            "consentimientoOkSinDatos": "Consent signed",
+            "consentimientoFalta": "The client's consent is missing",
+            "entrevistaOk": "Interview confirmed ({{fecha}})",
+            "entrevistaOkSinFecha": "Interview confirmed",
+            "entrevistaFalta": "The interview is not confirmed yet",
+            "r02Inactiva": "Documents are validated once the interview is confirmed",
+            "r02Ok": "Every document is validated or marked \"not applicable\"",
+            "r02Faltan_one": "R-02: {{count}} document not validated",
+            "r02Faltan_other": "R-02: {{count}} documents not validated",
+            "verDocumentos": "Go to documents",
+            "noAplica_one": "{{count}} document marked \"not applicable\"",
+            "noAplica_other": "{{count}} documents marked \"not applicable\"",
+            "excepcionesOk": "No exceptions holding it back",
+            "excepcionesFrenan_one": "{{count}} exception holding it back",
+            "excepcionesFrenan_other": "{{count}} exceptions holding it back",
+            "informativas_one": "{{count}} informational",
+            "informativas_other": "{{count}} informational",
+            "verExcepciones": "View exceptions",
+            "consultasOk": "No open questions",
+            "consultasAbiertas_one": "{{count}} open question",
+            "consultasAbiertas_other": "{{count}} open questions",
+            "listoTitulo": "All in order",
+            "listoTexto": "The file meets everything needed to move to \"Ready to prepare\".",
+            "accion": {
+                "documentos": "Go to documents",
+                "revision": "Start review",
+                "hoja": "Open the TaxWise sheet"
+            },
+            "leTocaAlCliente": "It's the client's turn.",
+            "leTocaAlClienteN_one": "It's the client's turn: {{count}} item pending.",
+            "leTocaAlClienteN_other": "It's the client's turn: {{count}} items pending.",
+            "estadoDoc": {
+                "pendiente": "Pending",
+                "subido": "Uploaded",
+                "leido": "Read",
+                "no_se_pudo_leer": "Could not be read",
+                "con_observacion": "With a remark",
+                "validado": "Validated",
+                "no_aplica": "Not applicable",
+                "no_aplica_rechazado": "\"Not applicable\" rejected"
+            },
+            "entrevistaIniciada": "Interview started on {{fecha}} via {{canal}}",
+            "sinEntrevista": "No interview yet",
+            "canal": {
+                "whatsapp": "WhatsApp",
+                "portal": "the portal",
+                "preparador": "the preparer",
+                "migracion": "migration"
+            },
+            "consentimientoLinea": "Consent: version {{version}}",
+            "consentimientoLineaProvisional": "Consent: version {{version}} (provisional text)",
+            "sinConsentimiento": "No signed consent",
+            "lineaTiempo": "Timeline",
+            "errorDetalle": "The file summary could not be loaded. Reload the page."
+        },
+        "historial": {
+            "eventos": "File activity",
+            "vacio": "There is no activity on this file yet",
+            "anterior": "Previous form (read only)",
+            "anteriorAyuda": "Data collected with the previous form. It is kept for reference and cannot be edited here."
+        },
+        "linea": {
+            "por": "by {{quien}}",
+            "sistema": "by the system"
+        }
     }
 }

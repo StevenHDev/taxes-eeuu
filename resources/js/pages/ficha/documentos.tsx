@@ -1,6 +1,47 @@
-import { FichaSkeleton } from '@/components/ficha/ficha-skeleton';
+import { Deferred, Head } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
+import { DocumentosCliente } from '@/components/cliente/documentos-cliente';
+import {
+    EntrevistaClienteError,
+    EntrevistaClienteSkeleton,
+} from '@/components/cliente/entrevista-cliente';
+import { dashboard } from '@/routes';
+import { index as clientesIndex } from '@/routes/clientes';
+import type { VistaEntrevista } from '@/types/entrevista';
+import type { FichaEncabezado } from '@/types/expediente';
 
-// Provisional: la reemplaza la ola 4 de la fase 5.
-export default function FichaDocumentos() {
-    return <FichaSkeleton />;
+/** Pestaña Documentos: resumen, excepciones abiertas y la lista con revisión y "Ver datos". */
+export default function FichaDocumentos({
+    ficha,
+    entrevista,
+}: {
+    ficha: FichaEncabezado;
+    entrevista?: VistaEntrevista | null;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <>
+            <Head
+                title={`${t('ficha.pestanas.documentos')} · ${ficha.cliente.name}`}
+            />
+            <Deferred
+                data="entrevista"
+                fallback={<EntrevistaClienteSkeleton />}
+                rescue={<EntrevistaClienteError />}
+            >
+                <DocumentosCliente
+                    clienteId={ficha.cliente.id}
+                    entrevista={entrevista ?? null}
+                />
+            </Deferred>
+        </>
+    );
 }
+
+FichaDocumentos.layout = {
+    breadcrumbs: [
+        { title: 'nav.dashboard', href: dashboard() },
+        { title: 'nav.clients', href: clientesIndex() },
+    ],
+};

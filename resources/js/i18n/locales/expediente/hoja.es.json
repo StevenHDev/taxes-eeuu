@@ -1,1 +1,49 @@
-{ "hoja": {} }
+{
+    "hoja": {
+        "titulo": "Hoja para TaxWise",
+        "tituloAnio": "Hoja para TaxWise · {{anio}}",
+        "nota": "Hoja de trabajo para digitar en TaxWise. No se presenta al IRS.",
+        "generada": "Generada el {{fecha}}",
+        "soloPendiente": "Solo lo pendiente",
+        "descargarCsv": "Descargar CSV",
+        "imprimir": "Imprimir o guardar PDF",
+        "conteos": {
+            "filas_one": "{{count}} fila",
+            "filas_other": "{{count}} filas",
+            "pendientes_one": "{{count}} pendiente",
+            "pendientes_other": "{{count}} pendientes",
+            "dudas_one": "{{count}} con dudas",
+            "dudas_other": "{{count}} con dudas",
+            "excepcion_one": "{{count}} con excepción",
+            "excepcion_other": "{{count}} con excepción",
+            "sinValidar_one": "{{count}} sin validar",
+            "sinValidar_other": "{{count}} sin validar"
+        },
+        "columnas": {
+            "destino": "Destino",
+            "descripcion": "Descripción",
+            "valor": "Valor",
+            "origen": "Origen",
+            "estado": "Estado"
+        },
+        "totalesTitulo": "Totales de control",
+        "totalesAyuda": "Sumas de las casillas leídas para comparar con lo que calcula TaxWise. No son un cálculo fiscal.",
+        "totales": {
+            "destino": "Destino",
+            "descripcion": "Descripción",
+            "valor": "Total",
+            "nota": "Nota",
+            "completa": "Estado"
+        },
+        "completa": "Completa",
+        "incompleta": "Incompleta",
+        "confianza": "Confianza {{valor}}",
+        "comoSeCalcula": "¿Cómo se calcula?",
+        "revelarAria": "Revelar el valor de {{descripcion}}",
+        "sinValor": "Sin valor",
+        "nadaPendiente": "No hay nada pendiente en esta hoja.",
+        "vacio": "Todavía no hay datos para la hoja: el cliente no ha respondido ni subido documentos.",
+        "errorTitulo": "No se pudo armar la hoja",
+        "error": "No se pudo cargar la hoja para TaxWise. Recarga la página."
+    }
+}

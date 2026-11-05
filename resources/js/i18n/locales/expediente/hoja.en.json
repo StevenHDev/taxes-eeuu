@@ -1,1 +1,49 @@
-{ "hoja": {} }
+{
+    "hoja": {
+        "titulo": "TaxWise sheet",
+        "tituloAnio": "TaxWise sheet · {{anio}}",
+        "nota": "Worksheet for entering data into TaxWise. It is not filed with the IRS.",
+        "generada": "Generated on {{fecha}}",
+        "soloPendiente": "Only what is pending",
+        "descargarCsv": "Download CSV",
+        "imprimir": "Print or save as PDF",
+        "conteos": {
+            "filas_one": "{{count}} row",
+            "filas_other": "{{count}} rows",
+            "pendientes_one": "{{count}} pending",
+            "pendientes_other": "{{count}} pending",
+            "dudas_one": "{{count}} read with doubts",
+            "dudas_other": "{{count}} read with doubts",
+            "excepcion_one": "{{count}} with an exception",
+            "excepcion_other": "{{count}} with an exception",
+            "sinValidar_one": "{{count}} not validated",
+            "sinValidar_other": "{{count}} not validated"
+        },
+        "columnas": {
+            "destino": "Goes to",
+            "descripcion": "Description",
+            "valor": "Value",
+            "origen": "Source",
+            "estado": "Status"
+        },
+        "totalesTitulo": "Control totals",
+        "totalesAyuda": "Sums of the boxes read, to compare with what TaxWise calculates. They are not a tax calculation.",
+        "totales": {
+            "destino": "Goes to",
+            "descripcion": "Description",
+            "valor": "Total",
+            "nota": "Note",
+            "completa": "Status"
+        },
+        "completa": "Complete",
+        "incompleta": "Incomplete",
+        "confianza": "Confidence {{valor}}",
+        "comoSeCalcula": "How is it calculated?",
+        "revelarAria": "Reveal the value of {{descripcion}}",
+        "sinValor": "No value",
+        "nadaPendiente": "Nothing is pending on this sheet.",
+        "vacio": "There is no data for the sheet yet: the client has not answered or uploaded documents.",
+        "errorTitulo": "The sheet could not be built",
+        "error": "The TaxWise sheet could not be loaded. Reload the page."
+    }
+}

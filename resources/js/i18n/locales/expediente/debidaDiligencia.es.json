@@ -1,1 +1,54 @@
-{ "debidaDiligencia": {} }
+{
+    "debidaDiligencia": {
+        "titulo": "Debida diligencia (Form 8867)",
+        "subtitulo": "El respaldo de cómo, cuándo y de quién salió cada dato. El Form 8867 lo llenas en TaxWise.",
+        "imprimir": "Imprimir",
+        "creditos": {
+            "titulo": "Créditos que se reclaman",
+            "ayuda": "La plataforma los sugiere con su motivo; los confirmas tú.",
+            "sugerido": "Sugerido: {{motivo}}",
+            "guardar": "Guardar créditos",
+            "marcadoPor": "Marcado por {{nombre}} el {{fecha}}",
+            "sinConfirmar": "Aún no los has confirmado."
+        },
+        "entrevista": {
+            "titulo": "Entrevista",
+            "iniciada": "iniciada el {{fecha}} por {{canal}}",
+            "confirmada": "confirmada el {{fecha}} en el portal",
+            "sinConfirmar": "sin confirmar",
+            "consentimiento": "consentimiento v{{version}} firmado el {{fecha}}",
+            "sinConsentimiento": "sin consentimiento firmado"
+        },
+        "canal": {
+            "whatsapp": "WhatsApp",
+            "portal": "Portal",
+            "preparador": "Preparador",
+            "migracion": "Migración"
+        },
+        "persona": "Persona {{orden}}",
+        "sinRespuesta": "Sin respuesta",
+        "sensible": "Sensible, oculta",
+        "verEnEntrevista": "Ver en Entrevista",
+        "porCliente": "el cliente",
+        "porPreparador": "corregida por {{nombre}}",
+        "cambios_one": "{{count}} cambio",
+        "cambios_other": "{{count}} cambios",
+        "sinPreguntas": "Esta parte no tiene preguntas visibles para este cliente.",
+        "documentos": "Documentos en que se basó",
+        "validadoPor": "Validado por {{nombre}}, {{fecha}}",
+        "verDocumento": "Ver documento",
+        "estadoDocumento": {
+            "pendiente": "Pendiente",
+            "subido": "Subido, sin validar",
+            "leido": "Leído, sin validar",
+            "no_se_pudo_leer": "No se pudo leer",
+            "con_observacion": "Con observación",
+            "validado": "Validado",
+            "no_aplica": "No aplica",
+            "no_aplica_rechazado": "No aplica (rechazado)"
+        },
+        "sinCreditos": "Ningún crédito del 8867 marcado: este cliente no necesita el resumen. La parte I se muestra igual.",
+        "sinEntrevista": "Este cliente aún no tiene una entrevista para este año, así que no hay respaldo que mostrar.",
+        "generadoEn": "Generado el {{fecha}}"
+    }
+}

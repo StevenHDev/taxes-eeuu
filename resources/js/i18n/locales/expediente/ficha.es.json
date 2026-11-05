@@ -42,6 +42,85 @@
         "confirmarContrasena": "Confirma tu contraseña para revelar",
         "revelarError": "No se pudo revelar el valor. Inténtalo de nuevo.",
         "cargando": "Cargando…",
-        "error": "No se pudo cargar esta sección. Recarga la página."
+        "error": "No se pudo cargar esta sección. Recarga la página.",
+        "excepciones": {
+            "titulo": "Excepciones abiertas de {{anio}}",
+            "verCola": "Ver la cola de todos mis clientes",
+            "vacioTitulo": "Este cliente no tiene excepciones abiertas",
+            "vacioDescripcion": "Lo que revisaron las reglas está en orden para este año. Si algo necesita tu decisión, aparecerá aquí."
+        },
+        "documentos": {
+            "sinEntrevista": "Este cliente aún no tiene entrevista en este año, así que no hay documentos que mostrar."
+        },
+        "resumen": {
+            "queFalta": "Qué falta para «Listo para preparar»",
+            "cumplido": "Cumplido",
+            "pendiente": "Pendiente",
+            "consentimientoOk": "Consentimiento firmado (v{{version}}, {{fecha}})",
+            "consentimientoOkSinDatos": "Consentimiento firmado",
+            "consentimientoFalta": "Falta el consentimiento del cliente",
+            "entrevistaOk": "Entrevista confirmada ({{fecha}})",
+            "entrevistaOkSinFecha": "Entrevista confirmada",
+            "entrevistaFalta": "La entrevista todavía no está confirmada",
+            "r02Inactiva": "Los documentos se validan cuando la entrevista esté confirmada",
+            "r02Ok": "Todos los documentos están validados o marcados como «no aplica»",
+            "r02Faltan_one": "R-02: {{count}} documento sin validar",
+            "r02Faltan_other": "R-02: {{count}} documentos sin validar",
+            "verDocumentos": "Ir a documentos",
+            "noAplica_one": "{{count}} documento marcado como «no aplica»",
+            "noAplica_other": "{{count}} documentos marcados como «no aplica»",
+            "excepcionesOk": "Sin excepciones que frenen",
+            "excepcionesFrenan_one": "{{count}} excepción que frena",
+            "excepcionesFrenan_other": "{{count}} excepciones que frenan",
+            "informativas_one": "{{count}} informativa",
+            "informativas_other": "{{count}} informativas",
+            "verExcepciones": "Ver excepciones",
+            "consultasOk": "Sin consultas abiertas",
+            "consultasAbiertas_one": "{{count}} consulta abierta",
+            "consultasAbiertas_other": "{{count}} consultas abiertas",
+            "listoTitulo": "Todo en orden",
+            "listoTexto": "El expediente cumple todo lo necesario para pasar a «Listo para preparar».",
+            "accion": {
+                "documentos": "Ir a documentos",
+                "revision": "Empezar revisión",
+                "hoja": "Abrir la hoja para TaxWise"
+            },
+            "leTocaAlCliente": "Le toca al cliente.",
+            "leTocaAlClienteN_one": "Le toca al cliente: tiene {{count}} pendiente.",
+            "leTocaAlClienteN_other": "Le toca al cliente: tiene {{count}} pendientes.",
+            "estadoDoc": {
+                "pendiente": "Pendiente",
+                "subido": "Subido",
+                "leido": "Leído",
+                "no_se_pudo_leer": "No se pudo leer",
+                "con_observacion": "Con observación",
+                "validado": "Validado",
+                "no_aplica": "No aplica",
+                "no_aplica_rechazado": "«No aplica» rechazado"
+            },
+            "entrevistaIniciada": "Entrevista iniciada el {{fecha}} por {{canal}}",
+            "sinEntrevista": "Todavía no hay entrevista",
+            "canal": {
+                "whatsapp": "WhatsApp",
+                "portal": "el portal",
+                "preparador": "el preparador",
+                "migracion": "migración"
+            },
+            "consentimientoLinea": "Consentimiento: versión {{version}}",
+            "consentimientoLineaProvisional": "Consentimiento: versión {{version}} (texto provisional)",
+            "sinConsentimiento": "Sin consentimiento firmado",
+            "lineaTiempo": "Línea de tiempo",
+            "errorDetalle": "No se pudo cargar el resumen del expediente. Recarga la página."
+        },
+        "historial": {
+            "eventos": "Movimientos del expediente",
+            "vacio": "Todavía no hay movimientos en este expediente",
+            "anterior": "Formulario anterior (solo lectura)",
+            "anteriorAyuda": "Datos que se recogieron con el formulario anterior. Se conservan para consulta; no se editan aquí."
+        },
+        "linea": {
+            "por": "por {{quien}}",
+            "sistema": "por el sistema"
+        }
     }
 }

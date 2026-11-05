@@ -1,1 +1,99 @@
-{ "panel": {} }
+{
+    "panel": {
+        "titulo": "Dashboard",
+        "tituloAnio": "Dashboard · {{anio}}",
+        "subtitulo": "Where each case stands and what is up to you today.",
+        "cargando": "Loading the dashboard…",
+        "error": "The dashboard could not be loaded. Reload the page.",
+        "porEstado": {
+            "titulo": "Cases by status",
+            "abrir_one": "{{estado}}: {{count}} case. Open the list",
+            "abrir_other": "{{estado}}: {{count}} cases. Open the list"
+        },
+        "teToca": {
+            "titulo": "Up to you",
+            "listos": "Ready to prepare",
+            "porValidar": "To validate",
+            "enConsulta": "In consultation",
+            "excepciones": "Open exceptions",
+            "bloqueantes_one": "{{count}} blocking",
+            "bloqueantes_other": "{{count}} blocking",
+            "vencen": "Due in 30 days"
+        },
+        "vencen": {
+            "titulo": "Due in 30 days",
+            "vacio": "No case is due in the next 30 days.",
+            "hoy": "Today",
+            "enDias_one": "in {{count}} day",
+            "enDias_other": "in {{count}} days",
+            "vencido_one": "Overdue by {{count}} day",
+            "vencido_other": "Overdue by {{count}} days"
+        },
+        "avisos": {
+            "titulo": "Notices (14 days)",
+            "vacio": "No notices in the last 14 days."
+        },
+        "tiempos": {
+            "titulo": "Times",
+            "sinDatos": "No data yet",
+            "muestra_one": "Based on {{count}} case this year.",
+            "muestra_other": "Based on {{count}} cases this year.",
+            "diasHastaListo": {
+                "etiqueta": "Days to \"Ready\"",
+                "ayuda": "From the start of the interview until it was ready to prepare."
+            },
+            "horasPreparacion": {
+                "etiqueta": "Preparation hours",
+                "ayuda": "From \"In review\" to \"Prepared in TaxWise\"."
+            },
+            "consultas": {
+                "etiqueta": "Consultations per case",
+                "ayuda": "Times the client was asked something."
+            },
+            "correcciones": {
+                "etiqueta": "Corrections per case",
+                "ayuda": "Read values the preparer had to correct."
+            }
+        },
+        "ultimos": {
+            "titulo": "Latest clients",
+            "verTodos": "View clients",
+            "vacio": "There are no clients yet."
+        },
+        "lista": {
+            "subtitulo": "Work queue: who is in which status, whose turn it is and what is due soon.",
+            "columns": {
+                "estado": "Case status",
+                "leToca": "Up to",
+                "vence": "Due",
+                "perfil": "Income type",
+                "excepciones": "Exceptions",
+                "canal": "Channel"
+            },
+            "desde": "since {{fecha}}",
+            "sinVencimiento": "No due date",
+            "sinPerfil": "No income type yet",
+            "sinExcepciones": "No exceptions",
+            "excepcionesTotal_one": "{{count}} exception",
+            "excepcionesTotal_other": "{{count}} exceptions",
+            "bloqueantes_one": "{{count}} blocking",
+            "bloqueantes_other": "{{count}} blocking",
+            "conExcepciones": "With exceptions",
+            "turno": {
+                "preparador": "Preparer",
+                "cliente": "Client",
+                "irs": "IRS",
+                "nadie": "No one"
+            },
+            "canal": {
+                "whatsapp": "WhatsApp",
+                "portal": "Portal",
+                "preparador": "Preparer",
+                "migracion": "Migration"
+            },
+            "filtroEstado": "Showing only: {{estado}}",
+            "quitarFiltro": "Clear filter",
+            "sinResultadosEstado": "There are no clients in this status."
+        }
+    }
+}

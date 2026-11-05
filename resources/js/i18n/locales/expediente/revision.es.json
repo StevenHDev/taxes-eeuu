@@ -1,1 +1,73 @@
-{ "revision": {} }
+{
+    "revision": {
+        "titulo": "Revisión",
+        "elegir": "Elige una opción",
+        "motivo": "Motivo de la decisión",
+        "guardar": "Guardar",
+        "cerrada": "Las decisiones están cerradas porque el expediente ya se presentó.",
+        "decididoPor": "Decidido por {{quien}} el {{fecha}}",
+        "respondioCliente": "El cliente respondió",
+        "sinRespuestas": "Todavía no hay respuestas para mostrar.",
+        "error": {
+            "titulo": "No pudimos cargar la revisión",
+            "detalle": "Recarga la página. Si sigue pasando, avisa al equipo."
+        },
+        "antes": {
+            "titulo": "Todavía no se puede revisar",
+            "detalle": "La revisión empieza cuando el expediente esté Listo para preparar: {{motivos}}.",
+            "decisiones": "Mientras tanto, ya puedes tomar las decisiones de abajo."
+        },
+        "estadoCivil": {
+            "titulo": "1. Estado civil para el IRS",
+            "decision": "Decisión"
+        },
+        "personas": {
+            "titulo": "2. Personas del hogar",
+            "vacio": "El cliente no declaró personas que revisar.",
+            "clasificacion": "Clasificación",
+            "clasificacionDe": "Clasificación de {{persona}}",
+            "sensibles": "Datos sensibles (nombre, fecha, número): ver en Entrevista.",
+            "verEntrevista": "Abrir Entrevista"
+        },
+        "checklist": {
+            "titulo": "3. Checklist de revisión",
+            "cumplido": "Cumplido",
+            "falta": "Falta",
+            "noAplica": "No aplica",
+            "loVerifica": "Lo verifica la plataforma.",
+            "soloEnRevision": "Se confirma cuando el expediente está En revisión.",
+            "confirmadoPor": "Confirmado por {{quien}} el {{fecha}}",
+            "marcadosNoAplica": "Marcados como no aplica:",
+            "nota": "Nota: {{nota}}",
+            "notaOpcional": "Nota (opcional)",
+            "ir": {
+                "identidad": "Ir a documentos",
+                "estado_civil": "Ir a la entrevista",
+                "dependientes": "Ir a la entrevista",
+                "documentos": "Ir a documentos",
+                "excepciones": "Ir a excepciones",
+                "debida_diligencia": "Abrir resumen 8867",
+                "anio_anterior": "Ir a documentos"
+            }
+        },
+        "acciones": {
+            "titulo": "Mover el expediente",
+            "ninguna": "No hay acciones disponibles en este estado."
+        },
+        "transicion": {
+            "fecha": "Fecha de presentación",
+            "motivo": "Motivo del rechazo",
+            "cancelar": "Cancelar",
+            "confirmarBoton": "Confirmar",
+            "confirmar": {
+                "empezar": "Vas a empezar la revisión de este expediente.",
+                "preparado": "Vas a marcar este expediente como preparado en TaxWise.",
+                "a_firma": "Vas a marcar este expediente como enviado a firmar (Form 8879).",
+                "presentado": "Vas a marcar este expediente como presentado al IRS. Indica la fecha.",
+                "aceptado": "Vas a marcar este expediente como aceptado por el IRS.",
+                "rechazado": "Vas a marcar este expediente como rechazado por el IRS. Cuéntanos el motivo.",
+                "volver_a_revision": "Vas a devolver este expediente a revisión."
+            }
+        }
+    }
+}

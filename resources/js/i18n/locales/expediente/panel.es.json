@@ -1,1 +1,99 @@
-{ "panel": {} }
+{
+    "panel": {
+        "titulo": "Panel",
+        "tituloAnio": "Panel · {{anio}}",
+        "subtitulo": "Dónde está cada expediente y qué te toca hoy.",
+        "cargando": "Cargando el panel…",
+        "error": "No se pudo cargar el panel. Recarga la página.",
+        "porEstado": {
+            "titulo": "Expedientes por estado",
+            "abrir_one": "{{estado}}: {{count}} expediente. Abrir la lista",
+            "abrir_other": "{{estado}}: {{count}} expedientes. Abrir la lista"
+        },
+        "teToca": {
+            "titulo": "Te toca",
+            "listos": "Listos para preparar",
+            "porValidar": "Por validar",
+            "enConsulta": "En consulta",
+            "excepciones": "Excepciones abiertas",
+            "bloqueantes_one": "{{count}} bloqueante",
+            "bloqueantes_other": "{{count}} bloqueantes",
+            "vencen": "Vencen en 30 días"
+        },
+        "vencen": {
+            "titulo": "Vencen en 30 días",
+            "vacio": "Ningún expediente vence en los próximos 30 días.",
+            "hoy": "Hoy",
+            "enDias_one": "en {{count}} día",
+            "enDias_other": "en {{count}} días",
+            "vencido_one": "Vencido hace {{count}} día",
+            "vencido_other": "Vencido hace {{count}} días"
+        },
+        "avisos": {
+            "titulo": "Avisos (14 días)",
+            "vacio": "No hay avisos en los últimos 14 días."
+        },
+        "tiempos": {
+            "titulo": "Tiempos",
+            "sinDatos": "Sin datos todavía",
+            "muestra_one": "Sobre {{count}} expediente del año.",
+            "muestra_other": "Sobre {{count}} expedientes del año.",
+            "diasHastaListo": {
+                "etiqueta": "Días hasta «Listo»",
+                "ayuda": "Desde que empezó la entrevista hasta que quedó lista para preparar."
+            },
+            "horasPreparacion": {
+                "etiqueta": "Horas de preparación",
+                "ayuda": "De «En revisión» a «Preparado en TaxWise»."
+            },
+            "consultas": {
+                "etiqueta": "Consultas por expediente",
+                "ayuda": "Veces que se le preguntó algo al cliente."
+            },
+            "correcciones": {
+                "etiqueta": "Correcciones por expediente",
+                "ayuda": "Datos leídos que el preparador tuvo que corregir."
+            }
+        },
+        "ultimos": {
+            "titulo": "Últimos clientes",
+            "verTodos": "Ver clientes",
+            "vacio": "Todavía no hay clientes."
+        },
+        "lista": {
+            "subtitulo": "Cola de trabajo: quién está en qué estado, a quién le toca y qué vence pronto.",
+            "columns": {
+                "estado": "Estado del expediente",
+                "leToca": "Le toca",
+                "vence": "Vence",
+                "perfil": "Tipo de ingreso",
+                "excepciones": "Excepciones",
+                "canal": "Canal"
+            },
+            "desde": "desde {{fecha}}",
+            "sinVencimiento": "Sin vencimiento",
+            "sinPerfil": "Sin tipo de ingreso todavía",
+            "sinExcepciones": "Sin excepciones",
+            "excepcionesTotal_one": "{{count}} excepción",
+            "excepcionesTotal_other": "{{count}} excepciones",
+            "bloqueantes_one": "{{count}} bloqueante",
+            "bloqueantes_other": "{{count}} bloqueantes",
+            "conExcepciones": "Con excepciones",
+            "turno": {
+                "preparador": "Preparador",
+                "cliente": "Cliente",
+                "irs": "IRS",
+                "nadie": "Nadie"
+            },
+            "canal": {
+                "whatsapp": "WhatsApp",
+                "portal": "Portal",
+                "preparador": "Preparador",
+                "migracion": "Migración"
+            },
+            "filtroEstado": "Mostrando solo: {{estado}}",
+            "quitarFiltro": "Quitar filtro",
+            "sinResultadosEstado": "No hay clientes en este estado."
+        }
+    }
+}

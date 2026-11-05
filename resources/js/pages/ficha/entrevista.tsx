@@ -1,6 +1,48 @@
-import { FichaSkeleton } from '@/components/ficha/ficha-skeleton';
+import { Deferred, Head } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
+import {
+    EntrevistaCliente,
+    EntrevistaClienteError,
+    EntrevistaClienteSkeleton,
+} from '@/components/cliente/entrevista-cliente';
+import { dashboard } from '@/routes';
+import { index as clientesIndex } from '@/routes/clientes';
+import type { VistaEntrevista } from '@/types/entrevista';
+import type { FichaEncabezado } from '@/types/expediente';
 
-// Provisional: la reemplaza la ola 4 de la fase 5.
-export default function FichaEntrevista() {
-    return <FichaSkeleton />;
+/** Pestaña Entrevista: las respuestas por pantalla, con corregir, revelar e historial. */
+export default function FichaEntrevista({
+    ficha,
+    entrevista,
+}: {
+    ficha: FichaEncabezado;
+    entrevista?: VistaEntrevista | null;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <>
+            <Head
+                title={`${t('ficha.pestanas.entrevista')} · ${ficha.cliente.name}`}
+            />
+            <Deferred
+                data="entrevista"
+                fallback={<EntrevistaClienteSkeleton />}
+                rescue={<EntrevistaClienteError />}
+            >
+                <EntrevistaCliente
+                    clienteId={ficha.cliente.id}
+                    taxYear={ficha.tax_year}
+                    entrevista={entrevista ?? null}
+                />
+            </Deferred>
+        </>
+    );
 }
+
+FichaEntrevista.layout = {
+    breadcrumbs: [
+        { title: 'nav.dashboard', href: dashboard() },
+        { title: 'nav.clients', href: clientesIndex() },
+    ],
+};

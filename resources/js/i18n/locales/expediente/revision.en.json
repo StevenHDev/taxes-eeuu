@@ -1,1 +1,73 @@
-{ "revision": {} }
+{
+    "revision": {
+        "titulo": "Review",
+        "elegir": "Choose an option",
+        "motivo": "Reason for the decision",
+        "guardar": "Save",
+        "cerrada": "Decisions are closed because the return was already filed.",
+        "decididoPor": "Decided by {{quien}} on {{fecha}}",
+        "respondioCliente": "The client answered",
+        "sinRespuestas": "There are no answers to show yet.",
+        "error": {
+            "titulo": "We could not load the review",
+            "detalle": "Reload the page. If it keeps happening, tell the team."
+        },
+        "antes": {
+            "titulo": "It cannot be reviewed yet",
+            "detalle": "The review starts when the file is Ready to prepare: {{motivos}}.",
+            "decisiones": "In the meantime, you can already make the decisions below."
+        },
+        "estadoCivil": {
+            "titulo": "1. Filing status for the IRS",
+            "decision": "Decision"
+        },
+        "personas": {
+            "titulo": "2. People in the household",
+            "vacio": "The client did not list any people to review.",
+            "clasificacion": "Classification",
+            "clasificacionDe": "Classification of {{persona}}",
+            "sensibles": "Sensitive data (name, date, number): see it in Interview.",
+            "verEntrevista": "Open Interview"
+        },
+        "checklist": {
+            "titulo": "3. Review checklist",
+            "cumplido": "Done",
+            "falta": "Missing",
+            "noAplica": "Not applicable",
+            "loVerifica": "Checked by the platform.",
+            "soloEnRevision": "It is confirmed when the file is In review.",
+            "confirmadoPor": "Confirmed by {{quien}} on {{fecha}}",
+            "marcadosNoAplica": "Marked as not applicable:",
+            "nota": "Note: {{nota}}",
+            "notaOpcional": "Note (optional)",
+            "ir": {
+                "identidad": "Go to documents",
+                "estado_civil": "Go to the interview",
+                "dependientes": "Go to the interview",
+                "documentos": "Go to documents",
+                "excepciones": "Go to exceptions",
+                "debida_diligencia": "Open the 8867 summary",
+                "anio_anterior": "Go to documents"
+            }
+        },
+        "acciones": {
+            "titulo": "Move the file",
+            "ninguna": "There are no actions available in this status."
+        },
+        "transicion": {
+            "fecha": "Filing date",
+            "motivo": "Reason for the rejection",
+            "cancelar": "Cancel",
+            "confirmarBoton": "Confirm",
+            "confirmar": {
+                "empezar": "You are about to start the review of this file.",
+                "preparado": "You are about to mark this file as prepared in TaxWise.",
+                "a_firma": "You are about to mark this file as sent for signature (Form 8879).",
+                "presentado": "You are about to mark this file as filed with the IRS. Enter the date.",
+                "aceptado": "You are about to mark this file as accepted by the IRS.",
+                "rechazado": "You are about to mark this file as rejected by the IRS. Tell us the reason.",
+                "volver_a_revision": "You are about to send this file back to review."
+            }
+        }
+    }
+}

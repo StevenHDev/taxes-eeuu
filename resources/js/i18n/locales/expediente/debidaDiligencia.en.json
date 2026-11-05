@@ -1,1 +1,54 @@
-{ "debidaDiligencia": {} }
+{
+    "debidaDiligencia": {
+        "titulo": "Due diligence (Form 8867)",
+        "subtitulo": "The record of how, when and from whom each answer came. You fill out Form 8867 in TaxWise.",
+        "imprimir": "Print",
+        "creditos": {
+            "titulo": "Credits being claimed",
+            "ayuda": "The platform suggests them with the reason; you confirm them.",
+            "sugerido": "Suggested: {{motivo}}",
+            "guardar": "Save credits",
+            "marcadoPor": "Marked by {{nombre}} on {{fecha}}",
+            "sinConfirmar": "You haven't confirmed them yet."
+        },
+        "entrevista": {
+            "titulo": "Interview",
+            "iniciada": "started on {{fecha}} via {{canal}}",
+            "confirmada": "confirmed on {{fecha}} in the portal",
+            "sinConfirmar": "not confirmed",
+            "consentimiento": "consent v{{version}} signed on {{fecha}}",
+            "sinConsentimiento": "no signed consent"
+        },
+        "canal": {
+            "whatsapp": "WhatsApp",
+            "portal": "Portal",
+            "preparador": "Preparer",
+            "migracion": "Migration"
+        },
+        "persona": "Person {{orden}}",
+        "sinRespuesta": "No answer",
+        "sensible": "Sensitive, hidden",
+        "verEnEntrevista": "See in Interview",
+        "porCliente": "the client",
+        "porPreparador": "corrected by {{nombre}}",
+        "cambios_one": "{{count}} change",
+        "cambios_other": "{{count}} changes",
+        "sinPreguntas": "This part has no visible questions for this client.",
+        "documentos": "Documents it was based on",
+        "validadoPor": "Validated by {{nombre}}, {{fecha}}",
+        "verDocumento": "View document",
+        "estadoDocumento": {
+            "pendiente": "Pending",
+            "subido": "Uploaded, not validated",
+            "leido": "Read, not validated",
+            "no_se_pudo_leer": "Could not be read",
+            "con_observacion": "With a note",
+            "validado": "Validated",
+            "no_aplica": "Does not apply",
+            "no_aplica_rechazado": "Does not apply (rejected)"
+        },
+        "sinCreditos": "No Form 8867 credit marked: this client does not need the summary. Part I is shown anyway.",
+        "sinEntrevista": "This client has no interview for this year yet, so there is no record to show.",
+        "generadoEn": "Generated on {{fecha}}"
+    }
+}
