@@ -151,6 +151,19 @@ export default function VisorDocumento({
         }
     };
 
+    // Desde una excepción: elige el dato, lo trae a la vista y le da el foco.
+    const irADato = (id: number) => {
+        elegir(id);
+        requestAnimationFrame(() => {
+            const boton = document.querySelector<HTMLButtonElement>(
+                `button[data-dato="${id}"]`,
+            );
+
+            boton?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            boton?.focus({ preventScroll: true });
+        });
+    };
+
     // Solo se dibuja el recuadro si es de la hoja que se está viendo.
     const hojaActual = hojas[indiceHoja];
     const recuadro =
@@ -211,7 +224,11 @@ export default function VisorDocumento({
                     <ConfianzaPanel tabla={tabla} umbral={umbral} />
                 </div>
 
-                <ExcepcionesDocumento excepciones={excepciones} />
+                <ExcepcionesDocumento
+                    excepciones={excepciones}
+                    datos={datos}
+                    onIrADato={irADato}
+                />
 
                 {fallo ? (
                     <Alert variant="destructive">

@@ -59,12 +59,15 @@ export function PaginaDocumento({
                 </div>
             ) : null}
             {/* `key` reinicia el estado de carga al cambiar de hoja. */}
-            <ImagenHoja
-                key={hoja.url}
-                hoja={hoja}
-                primera={indice === 0}
-                recuadro={recuadro}
-            />
+            {/* Con el visor fijo, una hoja más alta que la pantalla se recorre aquí dentro. */}
+            <div className="lg:max-h-[calc(100svh-10rem)] lg:overflow-y-auto lg:rounded-lg">
+                <ImagenHoja
+                    key={hoja.url}
+                    hoja={hoja}
+                    primera={indice === 0}
+                    recuadro={recuadro}
+                />
+            </div>
         </div>
     );
 }
@@ -82,6 +85,14 @@ function ImagenHoja({
     const [estado, setEstado] = useState<'cargando' | 'lista' | 'error'>(
         'cargando',
     );
+
+    // Con la página renderizada en el servidor la imagen puede terminar de
+    // cargar antes de que React enganche `onLoad`: se mira al montar.
+    const marcarSiYaCargo = (img: HTMLImageElement | null) => {
+        if (img?.complete) {
+            setEstado(img.naturalWidth > 0 ? 'lista' : 'error');
+        }
+    };
 
     if (estado === 'error') {
         return (
@@ -105,6 +116,7 @@ function ImagenHoja({
             ) : null}
             <div className={estado === 'cargando' ? 'hidden' : 'relative'}>
                 <img
+                    ref={marcarSiYaCargo}
                     src={hoja.url}
                     alt={t('visor.imagenAlt', { archivo: hoja.archivo })}
                     loading={primera ? 'eager' : 'lazy'}
