@@ -38,6 +38,8 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            // El render en servidor usa este idioma para no chocar con el del navegador al hidratar.
+            'locale' => app()->getLocale(),
             'auth' => [
                 'user' => $request->user(),
                 // F0.1: aviso de Ajustes → Seguridad cuando el personal
