@@ -87,8 +87,10 @@ class ModeloExpedienteTest extends TestCase
         $this->assertSame(['causa' => 'prueba'], $evento->datos);
         $this->assertInstanceOf(CarbonInterface::class, $evento->created_at);
 
+        // Otra persona: crear la entrevista de este cliente haría que el recálculo (5.1b) toque este expediente.
+        $otroCliente = User::factory()->create(['role' => UserRole::Client]);
         $entrevista = Entrevista::create([
-            'user_id' => $expediente->user_id, 'tax_year' => 2025,
+            'user_id' => $otroCliente->id, 'tax_year' => 2025,
             'estado' => EstadoEntrevista::EnCurso, 'canal_inicio' => CanalRespuesta::Portal,
             'iniciada_en' => now(),
         ]);
@@ -142,9 +144,10 @@ class ModeloExpedienteTest extends TestCase
             'estado' => EstadoEntrevista::EnCurso, 'canal_inicio' => CanalRespuesta::Portal,
             'iniciada_en' => now(),
         ]);
-        $expediente = $this->expediente($cliente, 2025, ['entrevista_id' => $entrevista->id]);
+        // Desde 5.1b crear la entrevista crea (y enlaza) su expediente.
+        $expediente = Expediente::query()->where('user_id', $cliente->id)->delAnio(2025)->sole();
 
-        $this->assertTrue($entrevista->expediente->is($expediente));
+        $this->assertTrue($entrevista->fresh()->expediente->is($expediente));
         $this->assertTrue($expediente->entrevista->is($entrevista));
     }
 

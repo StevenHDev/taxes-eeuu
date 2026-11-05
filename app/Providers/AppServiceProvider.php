@@ -18,6 +18,7 @@ use App\Models\CatalogoFiscal\CatalogoFormulario;
 use App\Models\CatalogoFiscal\CatalogoLinea;
 use App\Models\CatalogoFiscal\CatalogoPregunta;
 use App\Models\CatalogoFiscal\CatalogoRegla;
+use App\Models\Consentimiento\Consentimiento;
 use App\Models\DeterminacionFiscal;
 use App\Models\Documento;
 use App\Models\Entrevista\Entrevista;
@@ -37,6 +38,7 @@ use App\Models\User;
 use App\Models\WhatsappMensaje;
 use App\Observers\AuditoriaObserver;
 use App\Observers\CatalogoCambioObserver;
+use App\Observers\ExpedienteObserver;
 use App\Observers\RespuestaEntrevistaObserver;
 use App\Observers\WhatsappMensajeObserver;
 use App\Policies\AgentePromptPolicy;
@@ -46,6 +48,7 @@ use App\Policies\BitacoraPolicy;
 use App\Policies\CatalogoFiscalPolicy;
 use App\Policies\ClientePolicy;
 use App\Policies\WhatsappMensajePolicy;
+use App\Services\Expediente\EstadosExpediente;
 use App\Services\Lectura\LectorDocumentos;
 use App\Services\Lectura\LectorManual;
 use App\Services\Lectura\LectorOpenAi;
@@ -82,6 +85,9 @@ class AppServiceProvider extends ServiceProvider
         // Twilio es el único proveedor de WhatsApp; el resto del sistema habla
         // contra la interfaz WhatsappChannel (y las pruebas la reemplazan).
         $this->app->bind(WhatsappChannel::class, TwilioChannel::class);
+
+        // Los recálculos pendientes del expediente viven en la petición (F5.1b).
+        $this->app->scoped(EstadosExpediente::class);
 
         // La bandera se lee al resolver (no al arrancar) para poder apagar la
         // lectura sin reiniciar y para las pruebas.
@@ -140,6 +146,12 @@ class AppServiceProvider extends ServiceProvider
         // ya es un registro que solo se inserta.
         foreach ([Expediente::class, ExpedientePersona::class, ExpedienteRevisionPunto::class] as $modelo) {
             $modelo::observe(AuditoriaObserver::class);
+        }
+
+        // El estado del expediente se recalcula después del commit cuando cambia
+        // un ítem del checklist, una excepción, la entrevista o el consentimiento.
+        foreach ([EntrevistaDocumento::class, Excepcion::class, Entrevista::class, Consentimiento::class] as $modelo) {
+            $modelo::observe(ExpedienteObserver::class);
         }
 
         // Textos en inglés del servidor de F5, uno por área (lang/expediente/<area>/en.json).

@@ -6,6 +6,7 @@ use App\Enums\Lectura\EstadoExcepcion;
 use App\Models\CatalogoFiscal\CatalogoRegla;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Lectura\Excepcion;
+use App\Services\Expediente\EstadosExpediente;
 use App\Services\Lectura\DatosDocumento;
 use Illuminate\Support\Facades\DB;
 
@@ -75,6 +76,9 @@ class MotorReglas
                     ->update(['estado' => EstadoExcepcion::Corregida, 'resuelta_en' => now()]);
             }
         });
+
+        // El update masivo de arriba no dispara eventos de modelo: se pide aquí.
+        app(EstadosExpediente::class)->pedirRecalculo($entrevista->user_id, $entrevista->tax_year);
     }
 
     private function registrar(Entrevista $entrevista, string $codigo, CatalogoRegla $registro, Hallazgo $hallazgo): void
