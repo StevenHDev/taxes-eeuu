@@ -301,4 +301,16 @@ return [
         'fuente_texto' => 'Form 8839', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i8839.pdf',
         'lineas' => [],
     ],
+    [
+        'codigo' => 'f8867', 'nombre' => 'Form 8867', 'para_que' => 'Debida diligencia del preparador pagado (EIC, crédito por hijos, AOTC y cabeza de familia)',
+        'siempre' => false, 'ficha' => 'completa', 'orden' => 30,
+        'fuente_texto' => 'Form 8867 e instrucciones (rev. noviembre de 2025)', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i8867.pdf',
+        'lineas' => [
+            ['linea' => 'parte-i', 'descripcion' => 'Parte I — Requisitos de debida diligencia (entrevista y conocimiento)', 'origen_tipo' => 'respuesta', 'origen_clave' => 'A1;A3;A5;A6;B1;C0'],
+            ['linea' => 'parte-ii', 'descripcion' => 'Parte II — Crédito por ingreso del trabajo (EIC)', 'origen_tipo' => 'respuesta', 'origen_clave' => 'A3;A5;A6;B1;B3;C0;C2;C3;C4;C5;C6;C7;C8;C9;C11;D1;D9;D10;D15;D16'],
+            ['linea' => 'parte-iii', 'descripcion' => 'Parte III — Crédito por hijos, ACTC y otros dependientes', 'origen_tipo' => 'respuesta', 'origen_clave' => 'C0;C2;C3;C4;C5;C6;C9;C11;C11.1;C12;C13;C14'],
+            ['linea' => 'parte-iv', 'descripcion' => 'Parte IV — Crédito de oportunidad americana (AOTC)', 'origen_tipo' => 'respuesta', 'origen_clave' => 'F1;F1.1'],
+            ['linea' => 'parte-v', 'descripcion' => 'Parte V — Cabeza de familia', 'origen_tipo' => 'respuesta', 'origen_clave' => 'B1;B3;B5;C0;C3;C4'],
+        ],
+    ],
 ];

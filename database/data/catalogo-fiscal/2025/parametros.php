@@ -35,4 +35,22 @@ return [
         'fuente_texto' => 'Instrucciones del 1040 de 2025; Schedule 3, línea 11',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
     ],
+    [
+        'categoria' => 'vencimientos', 'clave' => 'presentacion', 'valor' => '2026-04-15',
+        'grupo' => 'topes_umbrales', 'tipo' => 'fecha',
+        'nombre_es' => 'Fecha límite para presentar la declaración del año',
+        'formulario_linea' => 'Form 1040',
+        'condicion_es' => 'Ordena la cola del preparador por vencimiento: el expediente que vence primero aparece primero.',
+        'fuente_texto' => 'IRC §6072(a); instrucciones del 1040 de 2025',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
+    ],
+    [
+        'categoria' => 'vencimientos', 'clave' => 'extension', 'valor' => '2026-10-15',
+        'grupo' => 'topes_umbrales', 'tipo' => 'fecha',
+        'nombre_es' => 'Fecha límite con la extensión (Form 4868)',
+        'formulario_linea' => 'Form 4868',
+        'condicion_es' => 'Aplica si el cliente respondió "sí" a G2 (pidió extensión). Ordena la cola del preparador por vencimiento.',
+        'fuente_texto' => 'Form 4868 e instrucciones',
+        'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f4868.pdf',
+    ],
 ];

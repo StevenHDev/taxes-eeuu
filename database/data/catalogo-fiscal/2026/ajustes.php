@@ -11,6 +11,8 @@ return [
     'parametros' => [
         'dependiente_calificado.limite_ingreso_bruto_pariente_calificado' => 5300,
         'edad.nacido_antes_de_mayor_65' => '1962-01-02',
+        'vencimientos.presentacion' => '2027-04-15',
+        'vencimientos.extension' => '2027-10-15',
     ],
     'casillas' => [
         '1099-nec' => ['1' => ['casilla' => '1a']],

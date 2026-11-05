@@ -5,6 +5,7 @@ namespace Tests\Feature\CatalogoFiscal;
 use App\Http\Requests\CatalogoFiscal\DocumentoRequest;
 use App\Models\CatalogoFiscal\CatalogoFormulario;
 use App\Models\CatalogoFiscal\CatalogoPregunta;
+use App\Models\CatalogoFiscal\CatalogoRegla;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Services\CatalogoFiscal\CatalogoFiscalVerificador;
 use App\Support\ParametrosFiscales;
@@ -56,10 +57,10 @@ class CatalogoRealTest extends TestCase
         $conteos = $verificador->conteos(2025);
         $this->assertSame(100, $conteos['preguntas']);
         $this->assertSame(47, $conteos['documentos']);
-        $this->assertSame(29, $conteos['formularios']);
+        $this->assertSame(30, $conteos['formularios']);
         $this->assertSame(13, $conteos['reglas']);
         $this->assertSame(347, $conteos['casillas']);
-        $this->assertSame(98, $conteos['lineas']);
+        $this->assertSame(103, $conteos['lineas']);
 
         // 2026 apaga F10 y F11: los créditos por vehículo limpio y de energía
         // de la vivienda terminan en 2025 (F3.9).
@@ -310,5 +311,45 @@ class CatalogoRealTest extends TestCase
         foreach (['A3', 'C9', 'G3', 'G4'] as $codigo) {
             $this->assertContains($codigo, $sensibles);
         }
+    }
+
+    public function test_el_form_8867_tiene_sus_cinco_partes_con_preguntas_que_existen(): void
+    {
+        $f = $this->lector->formularios(2025)->firstWhere('codigo', 'f8867');
+
+        $this->assertNotNull($f);
+        $this->assertSame('completa', $f['ficha']);
+        $this->assertFalse($f['siempre']);
+        $this->assertSame(
+            ['parte-i', 'parte-ii', 'parte-iii', 'parte-iv', 'parte-v'],
+            collect($f['lineas'])->pluck('linea')->all(),
+        );
+
+        $preguntas = $this->lector->preguntas(2025)->pluck('codigo')->all();
+        foreach ($f['lineas'] as $linea) {
+            $this->assertSame('respuesta', $linea['origen_tipo']);
+            foreach (explode(';', $linea['origen_clave']) as $codigo) {
+                $this->assertContains($codigo, $preguntas, "{$linea['linea']}: la pregunta {$codigo} no existe.");
+            }
+        }
+
+        $this->assertSame('F1;F1.1', $this->origen('f8867', 'parte-iv'));
+        $this->assertSame('B1;B3;B5;C0;C3;C4', $this->origen('f8867', 'parte-v'));
+    }
+
+    public function test_los_vencimientos_del_anio_estan_en_los_parametros(): void
+    {
+        $this->assertSame('2026-04-15', ParametrosFiscales::valor(2025, 'vencimientos', 'presentacion'));
+        $this->assertSame('2026-10-15', ParametrosFiscales::valor(2025, 'vencimientos', 'extension'));
+        $this->assertSame('2027-04-15', ParametrosFiscales::valor(2026, 'vencimientos', 'presentacion'));
+        $this->assertSame('2027-10-15', ParametrosFiscales::valor(2026, 'vencimientos', 'extension'));
+    }
+
+    public function test_r02_esta_implementada(): void
+    {
+        $r02 = CatalogoRegla::query()->delAnio(2025)->where('codigo', 'R-02')->sole();
+
+        $this->assertTrue($r02->implementada);
+        $this->assertStringContainsString('no abre filas en la cola de excepciones', $r02->descripcion);
     }
 }

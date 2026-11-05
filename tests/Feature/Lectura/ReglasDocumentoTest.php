@@ -385,6 +385,7 @@ class ReglasDocumentoTest extends TestCase
     {
         $implementadas = CatalogoRegla::query()->delAnio(2025)->where('implementada', true)->orderBy('codigo')->pluck('codigo')->all();
 
-        $this->assertSame(['R-01', 'R-03', 'R-04', 'R-05', 'R-06', 'R-07', 'R-08', 'R-09', 'R-11'], $implementadas);
+        // R-02 se evalúa sobre el expediente (F5), no en MotorReglas: el catálogo la marca implementada, pero no es una de sus clases.
+        $this->assertSame(['R-01', 'R-02', 'R-03', 'R-04', 'R-05', 'R-06', 'R-07', 'R-08', 'R-09', 'R-11'], $implementadas);
     }
 }
