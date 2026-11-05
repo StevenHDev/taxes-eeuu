@@ -21,6 +21,7 @@ use App\Services\Expediente\EstadosExpediente;
 use App\Services\Lectura\ColaExcepciones;
 use App\Services\Lectura\Reglas\MotorReglas;
 use Database\Seeders\CatalogoFiscalSeeder;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\App;
@@ -242,5 +243,18 @@ class RecalculoTest extends TestCase
         $cliente->forceFill(['es_prueba' => true])->save();
         Artisan::call('expedientes:recalcular', ['--solo-prueba' => true]);
         $this->assertSame(1, Expediente::query()->count());
+    }
+
+    public function test_si_el_recalculo_falla_lo_que_hacia_el_cliente_sigue(): void
+    {
+        $this->partialMock(EstadosExpediente::class, fn ($mock) => $mock->shouldReceive('recalcular')->andThrow(new \RuntimeException('falla de prueba')));
+        $this->app->forgetInstance(ExceptionHandler::class);
+        $manejador = \Mockery::mock(ExceptionHandler::class);
+        $manejador->shouldReceive('report')->atLeast()->once();
+        $this->app->instance(ExceptionHandler::class, $manejador);
+
+        [$cliente, $entrevista] = $this->clienteConExpediente(['D1' => 'si'], confirmada: false);
+
+        $this->assertSame('si', $entrevista->respuestas()->where('pregunta_codigo', 'D1')->first()->valor, 'La respuesta se guardó aunque el recálculo falló.');
     }
 }

@@ -14,6 +14,7 @@ use App\Services\Entrevista\MotorEntrevista;
 use App\Support\ParametrosFiscales;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * El único que escribe el estado automático del expediente (y quien registra
@@ -101,10 +102,16 @@ class EstadosExpediente
         DB::afterCommit(function () use ($clave, $clienteId, $taxYear) {
             unset($this->pendientes[$clave]);
 
-            $cliente = User::withTrashed()->find($clienteId);
+            // El recálculo corre dentro de lo que el cliente está haciendo (responder, subir un archivo): si falla, se
+            // registra y la operación del cliente sigue. El estado se corrige en el siguiente cambio o con expedientes:recalcular.
+            try {
+                $cliente = User::withTrashed()->find($clienteId);
 
-            if ($cliente !== null) {
-                $this->recalcular($cliente, $taxYear);
+                if ($cliente !== null) {
+                    $this->recalcular($cliente, $taxYear);
+                }
+            } catch (Throwable $e) {
+                report($e);
             }
         });
 
