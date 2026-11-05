@@ -976,7 +976,9 @@
             "inicioSesion": "Login",
             "cierreSesion": "Logout",
             "archivado": "Archived",
-            "restaurado": "Restored"
+            "restaurado": "Restored",
+            "revelado": "Data revealed",
+            "exportado": "Exported"
         },
         "columns": {
             "date": "Date",

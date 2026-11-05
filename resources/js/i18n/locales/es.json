@@ -976,7 +976,9 @@
             "inicioSesion": "Inicio de sesión",
             "cierreSesion": "Cierre de sesión",
             "archivado": "Archivado",
-            "restaurado": "Restaurado"
+            "restaurado": "Restaurado",
+            "revelado": "Dato revelado",
+            "exportado": "Exportado"
         },
         "columns": {
             "date": "Fecha",

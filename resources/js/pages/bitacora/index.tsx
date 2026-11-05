@@ -19,6 +19,8 @@ function useAccionLabel(): Record<AccionAuditoria, string> {
         restaurado: t('bitacora.acciones.restaurado'),
         inicio_sesion: t('bitacora.acciones.inicioSesion'),
         cierre_sesion: t('bitacora.acciones.cierreSesion'),
+        revelado: t('bitacora.acciones.revelado'),
+        exportado: t('bitacora.acciones.exportado'),
     };
 }
 
@@ -33,6 +35,8 @@ const ACCION_BADGE_VARIANT: Record<
     restaurado: 'secondary',
     inicio_sesion: 'outline',
     cierre_sesion: 'outline',
+    revelado: 'outline',
+    exportado: 'outline',
 };
 
 function useColumns(): ColumnDef<BitacoraEvento>[] {

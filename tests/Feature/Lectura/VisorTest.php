@@ -203,7 +203,7 @@ class VisorTest extends TestCase
         $this->actingAs($otro)->withSession($sesion)->postJson($this->ruta('clientes.documentos.visor.revelar', [$this->ssn]))->assertForbidden();
         $this->actingAs($otro)->patch($this->ruta('clientes.documentos.visor.corregir', [$this->monto]), ['valor' => '1', 'motivo' => 'x'])->assertForbidden();
 
-        $this->assertSame(0, BitacoraActividad::query()->where('campos_afectados', 'like', '%revelado%')->count());
+        $this->assertSame(0, BitacoraActividad::query()->where('accion', AccionAuditoria::Revelado)->count());
         $this->assertSame('45120.00', $this->monto->fresh()->valor);
     }
 
@@ -263,7 +263,7 @@ class VisorTest extends TestCase
         $yo->get($this->ruta('clientes.documentos.visor.pagina', [$this->lectura, 0]))->assertNotFound();
     }
 
-    public function test_revelar_exige_contrasena_y_queda_en_la_bitacora_sin_el_valor(): void
+    public function test_revelar_deja_la_accion_revelado_sin_el_valor(): void
     {
         $this->actingAs($this->preparador)
             ->postJson($this->ruta('clientes.documentos.visor.revelar', [$this->ssn]))
@@ -274,10 +274,40 @@ class VisorTest extends TestCase
             ->assertOk()
             ->assertJson(['valor' => self::SSN]);
 
-        $evento = BitacoraActividad::query()->where('auditable_type', DocumentoDato::class)->where('auditable_id', $this->ssn->id)->where('accion', AccionAuditoria::Actualizado)->sole();
+        $evento = BitacoraActividad::query()->where('auditable_type', DocumentoDato::class)->where('auditable_id', $this->ssn->id)->where('accion', AccionAuditoria::Revelado)->sole();
         $this->assertSame($this->preparador->id, $evento->actor_id);
-        $this->assertSame(['revelado'], $evento->campos_afectados);
+        $this->assertNull($evento->campos_afectados);
         $this->assertStringNotContainsString('6789', json_encode($evento->getAttributes()));
+    }
+
+    public function test_el_visor_abre_en_el_dato_pedido(): void
+    {
+        $this->actingAs($this->preparador)
+            ->get($this->ruta('clientes.documentos.visor').'?dato='.$this->monto->id)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('dato_inicial', $this->monto->id));
+
+        $this->actingAs($this->preparador)
+            ->get($this->ruta('clientes.documentos.visor'))
+            ->assertInertia(fn (Assert $page) => $page->where('dato_inicial', null));
+    }
+
+    public function test_un_dato_de_otro_item_no_se_abre_en_el_visor(): void
+    {
+        $otroCliente = User::factory()->create(['role' => UserRole::Client, 'preparer_id' => $this->preparador->id]);
+        $guardador = app(RespuestaGuardador::class);
+        $otra = $guardador->entrevistaDe($otroCliente, CanalRespuesta::Portal);
+        $guardador->guardar($otra, new RespuestaData('D1', 'si'), CanalRespuesta::Portal, $otroCliente);
+        $ajeno = $otra->documentos()->where('documento_codigo', 'w2')->firstOrFail();
+        $archivo = app(DocumentosEntrevista::class)->subir($ajeno, UploadedFile::fake()->create('w2.pdf', 10, 'application/pdf'));
+        $datoAjeno = $this->dato($this->lectura($archivo, $ajeno), '1', '1.00');
+
+        foreach ([$datoAjeno->id, 999999, 'abc'] as $pedido) {
+            $this->actingAs($this->preparador)
+                ->get($this->ruta('clientes.documentos.visor').'?dato='.$pedido)
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page->where('dato_inicial', null));
+        }
     }
 
     public function test_corregir_guarda_el_historial_reabre_lo_validado_y_corre_las_reglas(): void

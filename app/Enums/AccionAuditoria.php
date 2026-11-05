@@ -11,6 +11,8 @@ enum AccionAuditoria: string
     case Restaurado = 'restaurado';
     case InicioSesion = 'inicio_sesion';
     case CierreSesion = 'cierre_sesion';
+    case Revelado = 'revelado';
+    case Exportado = 'exportado';
 
     public function label(): string
     {
@@ -22,6 +24,8 @@ enum AccionAuditoria: string
             self::Restaurado => 'Restaurado',
             self::InicioSesion => 'Inicio de sesión',
             self::CierreSesion => 'Cierre de sesión',
+            self::Revelado => 'Dato revelado',
+            self::Exportado => 'Exportado',
         };
     }
 }

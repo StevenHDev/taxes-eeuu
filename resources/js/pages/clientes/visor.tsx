@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, FileSearch } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DocumentoEstado } from '@/components/entrevista/documento-estado';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -31,9 +31,37 @@ type Props = {
     lecturas: LecturaVisor[];
     excepciones: ExcepcionDocumento[];
     datos: DatoLeido[];
+    dato_inicial: number | null;
     confianza_tabla: FilaConfianza[];
     umbral: number;
 };
+
+/** La hoja donde está un dato (el mismo orden que `hojas`), o 0 si no hay. */
+function indiceDeHoja(
+    datoId: number | null,
+    datos: DatoLeido[],
+    lecturas: LecturaVisor[],
+): number {
+    const dato = datos.find((d) => d.id === datoId);
+
+    if (!dato?.pagina) {
+        return 0;
+    }
+
+    let antes = 0;
+
+    for (const l of lecturas) {
+        if (l.id === dato.lectura_id) {
+            return dato.pagina <= l.imagenes.length
+                ? antes + dato.pagina - 1
+                : 0;
+        }
+
+        antes += l.imagenes.length;
+    }
+
+    return 0;
+}
 
 /**
  * El visor de un documento leído (F4.6): la imagen de cada hoja al lado de
@@ -47,16 +75,35 @@ export default function VisorDocumento({
     lecturas,
     excepciones,
     datos,
+    dato_inicial: datoInicial,
     confianza_tabla: tabla,
     umbral,
 }: Props) {
     const { t } = useTranslation();
-    const [seleccionadoId, setSeleccionadoId] = useState<number | null>(null);
-    const [indiceHoja, setIndiceHoja] = useState(0);
+    const [seleccionadoId, setSeleccionadoId] = useState<number | null>(
+        () => datoInicial,
+    );
+    const [indiceHoja, setIndiceHoja] = useState(() =>
+        indiceDeHoja(datoInicial, datos, lecturas),
+    );
     const [revelados, setRevelados] = useState<Record<number, ValorRevelado>>(
         {},
     );
     const [corrigiendo, setCorrigiendo] = useState<DatoLeido | null>(null);
+
+    // El dato pedido en la URL recibe el foco al montar (ref callback, sin efecto).
+    const enfocarInicial = useCallback(
+        (seccion: HTMLElement | null) => {
+            if (seccion && datoInicial !== null) {
+                seccion
+                    .querySelector<HTMLButtonElement>(
+                        `button[data-dato="${datoInicial}"]`,
+                    )
+                    ?.focus();
+            }
+        },
+        [datoInicial],
+    );
 
     const hojas = useMemo<Hoja[]>(
         () =>
@@ -231,6 +278,7 @@ export default function VisorDocumento({
                             ) : null}
                         </div>
                         <section
+                            ref={enfocarInicial}
                             aria-labelledby="visor-datos"
                             className="space-y-2"
                         >

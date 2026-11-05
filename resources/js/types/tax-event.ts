@@ -368,7 +368,9 @@ export type AccionAuditoria =
     | 'archivado'
     | 'restaurado'
     | 'inicio_sesion'
-    | 'cierre_sesion';
+    | 'cierre_sesion'
+    | 'revelado'
+    | 'exportado';
 
 export type BitacoraEvento = {
     id: number;

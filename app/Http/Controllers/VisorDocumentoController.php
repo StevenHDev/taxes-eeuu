@@ -40,7 +40,7 @@ use RuntimeException;
  */
 class VisorDocumentoController extends Controller
 {
-    public function show(User $cliente, EntrevistaDocumento $item, DatosDocumento $datos, EsquemaLectura $esquema, CatalogoFiscal $catalogo): InertiaResponse
+    public function show(Request $request, User $cliente, EntrevistaDocumento $item, DatosDocumento $datos, EsquemaLectura $esquema, CatalogoFiscal $catalogo): InertiaResponse
     {
         $this->authorize('view', $cliente);
         $this->asegurarDelCliente($cliente, $item);
@@ -60,6 +60,9 @@ class VisorDocumentoController extends Controller
         $lecturas = $this->lecturasVigentes($item);
 
         $documento = $catalogo->documentos($anio)->firstWhere('codigo', $item->documento_codigo);
+        // `?dato=` abre el visor en un dato; si no es un dato vigente de este ítem, se ignora.
+        $pedido = $request->integer('dato');
+        $datoInicial = $pedido > 0 && $vigentes->contains('id', $pedido) ? $pedido : null;
 
         return Inertia::render('clientes/visor', [
             'cliente' => ['id' => $cliente->id, 'name' => $cliente->name],
@@ -106,6 +109,7 @@ class VisorDocumentoController extends Controller
                 ];
             })->values(),
             'datos' => $vigentes->map(fn (DocumentoDato $d) => $this->dato($d, $casillas[$d->casilla] ?? null, $excepciones->get($d->id, collect()), $correctores))->values(),
+            'dato_inicial' => $datoInicial,
             'confianza_tabla' => CalculadoraConfianza::tabla(),
             'umbral' => ParametrosFiscales::valor($anio, 'lectura', 'umbral_confianza'),
         ]);
@@ -146,11 +150,11 @@ class VisorDocumentoController extends Controller
             'actor_id' => $request->user()->id,
             'actor_nombre' => $request->user()->name,
             'actor_email' => $request->user()->email,
-            'accion' => AccionAuditoria::Actualizado,
+            'accion' => AccionAuditoria::Revelado,
             'auditable_type' => $dato::class,
             'auditable_id' => $dato->id,
             'etiqueta' => "Reveló el dato {$dato->casilla} de {$item->documento_codigo} (cliente #{$cliente->id})",
-            'campos_afectados' => ['revelado'],
+            'campos_afectados' => null,
             'ip_address' => $request->ip(),
         ]);
 
