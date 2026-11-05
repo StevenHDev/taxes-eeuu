@@ -34,9 +34,16 @@ class PaginasDocumentoTest extends TestCase
 
     private Entrevista $entrevista;
 
+    private string $temporal;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Una carpeta temporal propia: en la suite paralela otros procesos también convierten páginas en la del sistema.
+        $this->temporal = sys_get_temp_dir().'/prueba_lectura_'.bin2hex(random_bytes(6));
+        mkdir($this->temporal, 0700);
+        config(['tax.lectura_temporal' => $this->temporal]);
 
         Storage::fake(Documento::disco());
         $this->seed(CatalogoFiscalSeeder::class);
@@ -45,6 +52,14 @@ class PaginasDocumentoTest extends TestCase
         $guardador = app(RespuestaGuardador::class);
         $this->entrevista = $guardador->entrevistaDe($cliente, CanalRespuesta::Portal);
         $guardador->guardar($this->entrevista, new RespuestaData('D1', 'si'), CanalRespuesta::Portal, $cliente);
+    }
+
+    protected function tearDown(): void
+    {
+        array_map('rmdir', glob($this->temporal.'/*') ?: []);
+        @rmdir($this->temporal);
+
+        parent::tearDown();
     }
 
     private function item(): EntrevistaDocumento
@@ -126,7 +141,7 @@ class PaginasDocumentoTest extends TestCase
             $this->assertStringNotContainsString('PNG', substr((string) Storage::disk(Documento::disco())->get($ruta), 0, 16), "{$ruta} quedó en claro.");
         }
 
-        $this->assertSame([], glob(sys_get_temp_dir().'/lectura_*') ?: [], 'Quedó un directorio temporal.');
+        $this->assertSame([], glob($this->temporal.'/lectura_*') ?: [], 'Quedó un directorio temporal.');
     }
 
     public function test_un_jpg_y_un_png_dan_una_pagina(): void
@@ -209,7 +224,7 @@ class PaginasDocumentoTest extends TestCase
 
         $this->assertSame(0, $lectura->fresh()->paginas);
         $this->assertSame([], Storage::disk(Documento::disco())->allFiles("lecturas/{$lectura->id}"));
-        $this->assertSame([], glob(sys_get_temp_dir().'/lectura_*') ?: [], 'Quedó un directorio temporal.');
+        $this->assertSame([], glob($this->temporal.'/lectura_*') ?: [], 'Quedó un directorio temporal.');
     }
 
     public function test_un_archivo_de_un_tipo_no_soportado_o_dañado_da_un_error_claro(): void

@@ -268,7 +268,8 @@ class PaginasDocumento
 
     private function directorioTemporal(): string
     {
-        $directorio = sys_get_temp_dir().'/lectura_'.bin2hex(random_bytes(8));
+        $base = (string) (config('tax.lectura_temporal') ?: sys_get_temp_dir());
+        $directorio = $base.'/lectura_'.bin2hex(random_bytes(8));
 
         throw_unless(mkdir($directorio, 0700), new RuntimeException('No se pudo crear el directorio temporal.'));
 

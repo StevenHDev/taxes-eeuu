@@ -44,4 +44,11 @@ return [
     */
     'lectura_automatica' => (bool) env('LECTURA_AUTOMATICA', true),
 
+    /*
+    | `lectura_temporal`: carpeta donde se convierten las páginas de un archivo
+    | antes de guardarlas cifradas. Vacía, se usa la temporal del sistema. Las
+    | pruebas ponen una propia para no verse con las de otros procesos.
+    */
+    'lectura_temporal' => env('LECTURA_TEMPORAL'),
+
 ];
