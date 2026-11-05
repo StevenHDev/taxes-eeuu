@@ -8,6 +8,7 @@ import AgenteLayout from '@/layouts/agente/layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import CatalogoFiscalLayout from '@/layouts/catalogo-fiscal/layout';
+import FichaLayout from '@/layouts/ficha/layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
 configureEcho({
@@ -28,6 +29,8 @@ createInertiaApp({
                 return [AppLayout, AgenteLayout];
             case name.startsWith('catalogo-fiscal/'):
                 return [AppLayout, CatalogoFiscalLayout];
+            case name.startsWith('ficha/'):
+                return [AppLayout, FichaLayout];
             default:
                 return AppLayout;
         }

@@ -462,3 +462,25 @@
     border-color: var(--primary);
     font-weight: 500;
 }
+
+@media print {
+    @page {
+        margin: 12mm;
+    }
+
+    html,
+    body {
+        background: #fff !important;
+        color: #000;
+    }
+
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    /* El hueco del menú lateral también ocupa lugar al imprimir. */
+    [data-slot='sidebar'] {
+        display: none !important;
+    }
+}

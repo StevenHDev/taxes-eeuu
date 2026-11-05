@@ -2,6 +2,18 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from './locales/en.json';
 import es from './locales/es.json';
+import debidaDiligenciaEn from './locales/expediente/debidaDiligencia.en.json';
+import debidaDiligenciaEs from './locales/expediente/debidaDiligencia.es.json';
+import fichaEn from './locales/expediente/ficha.en.json';
+import fichaEs from './locales/expediente/ficha.es.json';
+import hojaEn from './locales/expediente/hoja.en.json';
+import hojaEs from './locales/expediente/hoja.es.json';
+import miDeclaracionEn from './locales/expediente/miDeclaracion.en.json';
+import miDeclaracionEs from './locales/expediente/miDeclaracion.es.json';
+import panelEn from './locales/expediente/panel.en.json';
+import panelEs from './locales/expediente/panel.es.json';
+import revisionEn from './locales/expediente/revision.en.json';
+import revisionEs from './locales/expediente/revision.es.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'es'] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
@@ -53,8 +65,28 @@ export function getInitialLanguage(): Language {
 
 i18n.use(initReactI18next).init({
     resources: {
-        en: { translation: en },
-        es: { translation: es },
+        en: {
+            translation: {
+                ...en,
+                ...fichaEn,
+                ...revisionEn,
+                ...hojaEn,
+                ...debidaDiligenciaEn,
+                ...panelEn,
+                ...miDeclaracionEn,
+            },
+        },
+        es: {
+            translation: {
+                ...es,
+                ...fichaEs,
+                ...revisionEs,
+                ...hojaEs,
+                ...debidaDiligenciaEs,
+                ...panelEs,
+                ...miDeclaracionEs,
+            },
+        },
     },
     lng: getInitialLanguage(),
     fallbackLng: DEFAULT_LANGUAGE,

@@ -1,0 +1,47 @@
+{
+    "ficha": {
+        "pestanas": {
+            "resumen": "Summary",
+            "entrevista": "Interview",
+            "documentos": "Documents",
+            "excepciones": "Exceptions",
+            "revision": "Review",
+            "hoja": "TaxWise sheet",
+            "debida_diligencia": "Due diligence",
+            "historial": "History"
+        },
+        "pestanasAria": "Client file sections",
+        "seccion": "Section",
+        "anio": "Year",
+        "desde": "since {{fecha}}",
+        "leToca": {
+            "etiqueta": "Up next: {{quien}}",
+            "cliente": "the client",
+            "preparador": "the preparer",
+            "irs": "the IRS",
+            "nadie": "nobody"
+        },
+        "vence": "Due {{fecha}}",
+        "sinExpediente": "No case file for this year",
+        "conteos": {
+            "excepciones_one": "{{count}} exception",
+            "excepciones_other": "{{count}} exceptions",
+            "bloqueantes_one": "{{count}} blocking",
+            "bloqueantes_other": "{{count}} blocking",
+            "porValidar_one": "{{count}} document to validate",
+            "porValidar_other": "{{count}} documents to validate",
+            "faltan_one": "{{count}} document to receive",
+            "faltan_other": "{{count}} documents to receive"
+        },
+        "cambiosTrasPresentar": "Something changed after filing: check whether an amendment is needed.",
+        "cambiosTrasPresentarTitulo": "Changes after filing",
+        "imprimir": "Print",
+        "impresion": "{{cliente}} · Tax year {{anio}}",
+        "revelar": "Reveal",
+        "revelarAria": "Reveal the protected value",
+        "confirmarContrasena": "Confirm your password to reveal",
+        "revelarError": "The value could not be revealed. Try again.",
+        "cargando": "Loading…",
+        "error": "This section could not be loaded. Reload the page."
+    }
+}

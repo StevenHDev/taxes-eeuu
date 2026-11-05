@@ -1,0 +1,47 @@
+{
+    "ficha": {
+        "pestanas": {
+            "resumen": "Resumen",
+            "entrevista": "Entrevista",
+            "documentos": "Documentos",
+            "excepciones": "Excepciones",
+            "revision": "Revisión",
+            "hoja": "Hoja para TaxWise",
+            "debida_diligencia": "Debida diligencia",
+            "historial": "Historial"
+        },
+        "pestanasAria": "Secciones de la ficha del cliente",
+        "seccion": "Sección",
+        "anio": "Año",
+        "desde": "desde {{fecha}}",
+        "leToca": {
+            "etiqueta": "Le toca: {{quien}}",
+            "cliente": "el cliente",
+            "preparador": "el preparador",
+            "irs": "el IRS",
+            "nadie": "nadie"
+        },
+        "vence": "Vence {{fecha}}",
+        "sinExpediente": "Sin expediente en este año",
+        "conteos": {
+            "excepciones_one": "{{count}} excepción",
+            "excepciones_other": "{{count}} excepciones",
+            "bloqueantes_one": "{{count}} bloqueante",
+            "bloqueantes_other": "{{count}} bloqueantes",
+            "porValidar_one": "{{count}} documento por validar",
+            "porValidar_other": "{{count}} documentos por validar",
+            "faltan_one": "{{count}} documento por recibir",
+            "faltan_other": "{{count}} documentos por recibir"
+        },
+        "cambiosTrasPresentar": "Algo cambió después de presentar: revisa si hace falta una enmienda.",
+        "cambiosTrasPresentarTitulo": "Cambios después de presentar",
+        "imprimir": "Imprimir",
+        "impresion": "{{cliente}} · Año fiscal {{anio}}",
+        "revelar": "Revelar",
+        "revelarAria": "Revelar el valor protegido",
+        "confirmarContrasena": "Confirma tu contraseña para revelar",
+        "revelarError": "No se pudo revelar el valor. Inténtalo de nuevo.",
+        "cargando": "Cargando…",
+        "error": "No se pudo cargar esta sección. Recarga la página."
+    }
+}
