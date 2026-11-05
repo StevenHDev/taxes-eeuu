@@ -4,6 +4,7 @@ namespace App\Models\Entrevista;
 
 use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\Entrevista\EstadoEntrevista;
+use App\Models\Expediente\Expediente;
 use App\Models\Lectura\Excepcion;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -29,6 +31,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $migrada_en
  * @property int|null $consentimiento_id
  * @property-read User $user
+ * @property-read Expediente|null $expediente
  * @property-read Collection<int, EntrevistaPersona> $personas
  * @property-read Collection<int, EntrevistaRespuesta> $respuestas
  * @property-read Collection<int, EntrevistaDocumento> $documentos
@@ -57,6 +60,14 @@ class Entrevista extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return HasOne<Expediente, $this>
+     */
+    public function expediente(): HasOne
+    {
+        return $this->hasOne(Expediente::class);
     }
 
     /**

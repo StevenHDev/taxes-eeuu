@@ -24,6 +24,9 @@ use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaDocumento;
 use App\Models\Entrevista\EntrevistaPersona;
 use App\Models\Entrevista\EntrevistaRespuesta;
+use App\Models\Expediente\Expediente;
+use App\Models\Expediente\ExpedientePersona;
+use App\Models\Expediente\ExpedienteRevisionPunto;
 use App\Models\FormaCliente;
 use App\Models\Lectura\DocumentoDato;
 use App\Models\Lectura\DocumentoLectura;
@@ -131,6 +134,18 @@ class AppServiceProvider extends ServiceProvider
             $modelo::observe(AuditoriaObserver::class);
         }
         EntrevistaRespuesta::observe(RespuestaEntrevistaObserver::class);
+
+        // Expediente (F5): estado, decisiones y puntos de la revisión van a la
+        // bitácora general (solo nombres de atributo); ExpedienteEvento no, porque
+        // ya es un registro que solo se inserta.
+        foreach ([Expediente::class, ExpedientePersona::class, ExpedienteRevisionPunto::class] as $modelo) {
+            $modelo::observe(AuditoriaObserver::class);
+        }
+
+        // Textos en inglés del servidor de F5, uno por área (lang/expediente/<area>/en.json).
+        foreach (['estados', 'ficha', 'revision', 'debida-diligencia', 'hoja', 'panel', 'mi-declaracion'] as $area) {
+            $this->app['translator']->addJsonPath(lang_path("expediente/{$area}"));
+        }
 
         foreach ([CatalogoPregunta::class, CatalogoDocumento::class, CatalogoCasilla::class, CatalogoFormulario::class, CatalogoLinea::class, CatalogoActivacion::class, CatalogoRegla::class, ParametroFiscal::class] as $pieza) {
             $pieza::observe(CatalogoCambioObserver::class);

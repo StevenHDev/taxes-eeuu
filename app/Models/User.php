@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use App\Models\Entrevista\Entrevista;
+use App\Models\Expediente\Expediente;
 use App\Services\UsuarioRetencionService;
 use App\Support\TelefonoWhatsapp;
 use Database\Factories\UserFactory;
@@ -140,6 +141,14 @@ class User extends Authenticatable implements PasskeyUser
     public function entrevistas(): HasMany
     {
         return $this->hasMany(Entrevista::class);
+    }
+
+    /**
+     * @return HasMany<Expediente, $this>
+     */
+    public function expedientes(): HasMany
+    {
+        return $this->hasMany(Expediente::class);
     }
 
     /**

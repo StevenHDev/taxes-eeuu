@@ -8,6 +8,9 @@ use App\Models\CampoCatalogo;
 use App\Models\CampoCliente;
 use App\Models\DeterminacionFiscal;
 use App\Models\Documento;
+use App\Models\Expediente\Expediente;
+use App\Models\Expediente\ExpedientePersona;
+use App\Models\Expediente\ExpedienteRevisionPunto;
 use App\Models\FormaCliente;
 use App\Models\NivelRiesgoManual;
 use App\Models\User;
@@ -111,6 +114,10 @@ class AuditoriaObserver
             $model instanceof FormaCliente => "{$model->forma} (cliente #{$model->user_id})",
             $model instanceof DeterminacionFiscal => "{$model->tipo->value} (cliente #{$model->user_id})",
             $model instanceof NivelRiesgoManual => "cliente #{$model->user_id}",
+            // Expediente (F5): nunca el motivo ni las decisiones, solo nombres de atributo.
+            $model instanceof Expediente => "expediente {$model->tax_year} (cliente #{$model->user_id})",
+            $model instanceof ExpedientePersona => "persona #{$model->persona_id} (expediente #{$model->expediente_id})",
+            $model instanceof ExpedienteRevisionPunto => "{$model->punto->value} (expediente #{$model->expediente_id})",
             // Piezas del catálogo fiscal por año (F1): "A1 (2025)", "w2 (2025)".
             str_starts_with($model::class, 'App\\Models\\CatalogoFiscal\\') => "{$model->getAttribute('codigo')} ({$model->getAttribute('tax_year')})",
             default => class_basename($model),
