@@ -1,1 +1,6 @@
-{ "miDeclaracion": {} }
+{
+    "miDeclaracion": {
+        "titulo": "Your return",
+        "actualizado": "Updated on {{fecha}}"
+    }
+}

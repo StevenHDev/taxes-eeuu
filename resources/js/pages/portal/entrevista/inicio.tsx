@@ -5,10 +5,16 @@ import {
     CircleDashed,
     CircleDot,
     FileText,
+    FileCheck2,
+    Hourglass,
+    ShieldCheck,
+    TriangleAlert,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
     documentos as rutaDocumentos,
     paso as rutaPaso,
@@ -23,6 +29,41 @@ const ICONO: Record<EstadoPantalla, typeof CircleCheck> = {
     sin_empezar: CircleDashed,
 };
 
+type EstadoExpediente =
+    | 'invitado'
+    | 'en_entrevista'
+    | 'en_consulta'
+    | 'en_recoleccion'
+    | 'por_validar'
+    | 'listo_para_preparar'
+    | 'en_revision'
+    | 'preparado_en_taxwise'
+    | 'esperando_firma'
+    | 'presentado'
+    | 'aceptado'
+    | 'rechazado';
+
+type ExpedienteCliente = {
+    estado: EstadoExpediente;
+    texto: string;
+    desde: string | null;
+};
+
+const ICONO_EXPEDIENTE: Record<EstadoExpediente, LucideIcon> = {
+    invitado: CircleDashed,
+    en_entrevista: CircleDot,
+    en_consulta: CircleDot,
+    en_recoleccion: FileText,
+    por_validar: Hourglass,
+    listo_para_preparar: Hourglass,
+    en_revision: Hourglass,
+    preparado_en_taxwise: FileCheck2,
+    esperando_firma: FileCheck2,
+    presentado: FileCheck2,
+    aceptado: ShieldCheck,
+    rechazado: TriangleAlert,
+};
+
 /**
  * Inicio de la entrevista (F2.5): las 8 pantallas con su estado, sin
  * importar si se respondieron por WhatsApp o aquí, y una sola acción
@@ -35,6 +76,7 @@ export default function InicioEntrevista({
     conPersonas,
     documentos,
     estado,
+    expediente,
 }: {
     taxYear: number;
     pantallas: AvancePantalla[];
@@ -43,8 +85,16 @@ export default function InicioEntrevista({
     conPersonas: boolean;
     documentos: { total: number; faltan: number };
     estado: 'en_curso' | 'confirmada' | 'reabierta';
+    expediente: ExpedienteCliente;
 }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const IconoExpediente = ICONO_EXPEDIENTE[expediente.estado];
+    const actualizado =
+        expediente.desde === null
+            ? null
+            : new Intl.DateTimeFormat(i18n.language, {
+                  dateStyle: 'long',
+              }).format(new Date(expediente.desde));
     const empezada = pantallas.some((p) => p.respondidas > 0);
     const enlace = (numero: number) =>
         numero === 4 && conPersonas
@@ -64,6 +114,37 @@ export default function InicioEntrevista({
                         {t('entrevista.inicio.descripcion', { anio: taxYear })}
                     </p>
                 </header>
+
+                <Card
+                    role="region"
+                    aria-labelledby="mi-declaracion-titulo"
+                    className="gap-0 py-0"
+                >
+                    <CardContent className="flex items-start gap-3 p-4">
+                        <IconoExpediente
+                            className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                        <div className="min-w-0 space-y-1">
+                            <h2
+                                id="mi-declaracion-titulo"
+                                className="text-sm font-semibold text-foreground"
+                            >
+                                {t('miDeclaracion.titulo')}
+                            </h2>
+                            <p className="text-sm text-foreground">
+                                {expediente.texto}
+                            </p>
+                            {actualizado !== null ? (
+                                <p className="text-xs text-muted-foreground">
+                                    {t('miDeclaracion.actualizado', {
+                                        fecha: actualizado,
+                                    })}
+                                </p>
+                            ) : null}
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {continuarEn !== null ? (
                     <Button asChild size="lg" className="w-full sm:w-auto">

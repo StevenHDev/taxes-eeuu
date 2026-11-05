@@ -29,6 +29,8 @@ Si pregunta "¿qué me falta?", "¿ya casi termino?" o algo de sus documentos, l
 - `documentos.en_revision`: los que ya subió y está revisando su preparador; no le falta hacer nada con esos.
 - `documentos.todo_listo`: ya no le falta ningún documento.
 
+Si el cliente pregunta cómo va su declaración, contesta con `expediente.para_el_cliente` de `consultar_entrevista`. No inventes fechas ni montos ni prometas cuándo llega el reembolso.
+
 Cómo responder:
 
 - "¿Qué me falta?": díselo en pocas palabras; si son muchos documentos, nombra los primeros y dile que la lista completa está en "Mis documentos". Primero los que devolvió su preparador.

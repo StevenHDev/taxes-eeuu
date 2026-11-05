@@ -3,9 +3,11 @@
 namespace Tests\Feature\Portal;
 
 use App\Enums\Entrevista\CanalRespuesta;
+use App\Enums\Expediente\EstadoExpediente;
 use App\Enums\UserRole;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaPersona;
+use App\Models\Expediente\Expediente;
 use App\Models\User;
 use App\Services\Consentimiento\Consentimientos;
 use App\Services\Consentimiento\ConsentimientosCargador;
@@ -252,7 +254,8 @@ class EntrevistaTest extends TestCase
         $this->actingAs($this->cliente)->post(route('portal.entrevista.personas.store'));
         $persona = EntrevistaPersona::query()->sole();
 
-        $otro = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true]);
+        $otro = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true, 'phone' => '+15550009999']);
+        app(Consentimientos::class)->firmar($otro, (int) config('tax.current_tax_year'), 1, 'Otro', null, null);
         app(Consentimientos::class)->firmar($otro, (int) config('tax.current_tax_year'), 1, 'Otro', null, null);
         $this->actingAs($otro)->get(route('portal.entrevista.persona', ['persona' => $persona->id]))->assertNotFound();
         $this->actingAs($otro)->delete(route('portal.entrevista.personas.destroy', $persona))->assertNotFound();
@@ -283,5 +286,40 @@ class EntrevistaTest extends TestCase
         $this->actingAs($this->cliente)->withUnencryptedCookie('language', 'es')
             ->put($ruta, ['respuestas' => ['B1' => 'casada']])
             ->assertSessionHasErrors(['respuestas.B1' => 'Elige una de las opciones.']);
+    }
+
+    public function test_el_inicio_cuenta_en_que_va_la_declaracion_en_espanol_y_en_ingles(): void
+    {
+        $expediente = $this->entrevista()->expediente;
+        $expediente->update(['estado' => EstadoExpediente::Aceptado, 'estado_desde' => '2026-11-03 10:00:00']);
+
+        $this->actingAs($this->cliente)->withUnencryptedCookie('language', 'es')
+            ->get(route('portal.entrevista.inicio'))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('expediente.estado', 'aceptado')
+                ->where('expediente.texto', 'El IRS aceptó tu declaración.')
+                ->whereNot('expediente.desde', null));
+
+        $this->actingAs($this->cliente)->withUnencryptedCookie('language', 'en')
+            ->get(route('portal.entrevista.inicio'))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('expediente.texto', 'The IRS accepted your return.'));
+    }
+
+    public function test_el_inicio_no_muestra_el_estado_de_otro_cliente(): void
+    {
+        $otro = User::factory()->create(['role' => UserRole::Client, 'es_prueba' => true, 'phone' => '+15550009999']);
+        app(Consentimientos::class)->firmar($otro, (int) config('tax.current_tax_year'), 1, 'Otro', null, null);
+        $entrevistaOtro = app(RespuestaGuardador::class)->entrevistaDe($otro, CanalRespuesta::Portal)->fresh();
+        $entrevistaOtro->expediente->update(['estado' => EstadoExpediente::Aceptado]);
+        $this->entrevista()->expediente->update(['estado' => EstadoExpediente::Rechazado]);
+
+        $this->actingAs($this->cliente)->get(route('portal.entrevista.inicio'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('expediente.estado', 'rechazado'));
+
+        $this->actingAs($otro)->get(route('portal.entrevista.inicio'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('expediente.estado', 'aceptado'));
+
+        $this->assertSame(2, Expediente::query()->count());
     }
 }

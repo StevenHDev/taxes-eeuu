@@ -5,6 +5,7 @@ namespace Tests\Feature\Entrevista;
 use App\DataTransferObjects\MensajeEntranteWhatsapp;
 use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\Entrevista\EstadoDocumento;
+use App\Enums\Expediente\EstadoExpediente;
 use App\Enums\FaseConversacion;
 use App\Enums\UserRole;
 use App\Jobs\ContinuarPorWhatsappTrasConsentimientoJob;
@@ -12,6 +13,7 @@ use App\Jobs\ProcesarMensajeWhatsappJob;
 use App\Models\Documento;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaRespuesta;
+use App\Models\Expediente\Expediente;
 use App\Models\User;
 use App\Models\WhatsappControl;
 use App\Models\WhatsappMensaje;
@@ -171,6 +173,37 @@ class AgenteEntrevistaTest extends TestCase
 
         $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'B1', 'valor' => 'casado']]]);
         $this->assertTrue($this->tool('consultar_entrevista')['con_conyuge']);
+    }
+
+    public function test_consultar_entrevista_trae_en_que_va_la_declaracion_sin_montos(): void
+    {
+        $this->firmar();
+        $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'B1', 'valor' => 'casado']]]);
+        $this->assertArrayHasKey('estado', $this->tool('consultar_entrevista')['expediente']);
+
+        $expediente = Expediente::query()->where('user_id', $this->cliente->id)->firstOrFail();
+        $expediente->update(['estado' => EstadoExpediente::Presentado, 'presentado_en' => '2026-03-10', 'estado_desde' => '2026-03-10 09:00:00']);
+
+        $resultado = $this->tool('consultar_entrevista');
+
+        $this->assertSame('presentado', $resultado['expediente']['estado']);
+        $this->assertStringContainsString('Presentamos tu declaración al IRS el', $resultado['expediente']['para_el_cliente']);
+        $this->assertStringContainsString('2026', $resultado['expediente']['para_el_cliente']);
+        $this->assertNotNull($resultado['expediente']['desde']);
+        $this->assertSame(['estado', 'para_el_cliente', 'desde'], array_keys($resultado['expediente']));
+        $this->assertDoesNotMatchRegularExpression('/\$\s?\d|refund|reembolso de/i', json_encode($resultado['expediente'], JSON_UNESCAPED_UNICODE));
+    }
+
+    public function test_el_texto_del_estado_para_el_agente_sale_en_espanol_aunque_el_portal_este_en_ingles(): void
+    {
+        $this->firmar();
+        $this->tool('guardar_respuestas', ['respuestas' => [['codigo' => 'B1', 'valor' => 'casado']]]);
+        Expediente::query()->where('user_id', $this->cliente->id)->update(['estado' => EstadoExpediente::Aceptado]);
+
+        app()->setLocale('en');
+
+        $this->assertSame('El IRS aceptó tu declaración.', $this->tool('consultar_entrevista')['expediente']['para_el_cliente']);
+        $this->assertSame('en', app()->getLocale());
     }
 
     public function test_consultar_entrevista_da_como_maximo_8_preguntas_de_una_sola_pantalla_y_los_seguimientos_primero(): void

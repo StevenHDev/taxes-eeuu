@@ -8,6 +8,7 @@ use App\Http\Controllers\Portal\Concerns\ConChatDeDudas;
 use App\Http\Requests\Portal\GuardarPasoRequest;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaPersona;
+use App\Models\Expediente\Expediente;
 use App\Services\Entrevista\ConfirmacionEntrevista;
 use App\Services\Entrevista\DocumentosEntrevista;
 use App\Services\Entrevista\PasosEntrevista;
@@ -15,6 +16,7 @@ use App\Services\Entrevista\RespuestaData;
 use App\Services\Entrevista\RespuestaGuardador;
 use App\Services\Entrevista\RespuestaRechazada;
 use App\Services\Entrevista\SituacionEntrevista;
+use App\Services\Expediente\DiagnosticoExpediente;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -38,14 +40,26 @@ class EntrevistaController extends Controller
         private readonly DocumentosEntrevista $documentos,
     ) {}
 
-    public function inicio(Request $request): Response
+    public function inicio(Request $request, DiagnosticoExpediente $diagnostico): Response
     {
         $entrevista = $this->entrevista($request);
         $situacion = $this->pasos->situacion($entrevista);
         $avance = $this->pasos->avance($situacion);
 
+        // Solo lee: el estado lo recalculan el observer y EstadosExpediente.
+        $expediente = Expediente::query()
+            ->where('user_id', $entrevista->user_id)
+            ->where('tax_year', $entrevista->tax_year)
+            ->first();
+        $estado = $expediente?->estado ?? $diagnostico->para($request->user(), $entrevista->tax_year)->estado;
+
         return Inertia::render('portal/entrevista/inicio', [
             'taxYear' => $entrevista->tax_year,
+            'expediente' => [
+                'estado' => $estado->value,
+                'texto' => $estado->textoCliente($expediente?->presentado_en),
+                'desde' => $expediente?->estado_desde?->toIso8601String(),
+            ],
             'pantallas' => $avance,
             'continuarEn' => collect($avance)->firstWhere(fn (array $p) => $p['estado'] !== 'completa')['numero'] ?? null,
             'personas' => $entrevista->personas()->count(),

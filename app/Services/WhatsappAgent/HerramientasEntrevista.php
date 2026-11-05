@@ -6,6 +6,7 @@ use App\Enums\Entrevista\CanalRespuesta;
 use App\Enums\Entrevista\EstadoDocumento;
 use App\Models\Entrevista\Entrevista;
 use App\Models\Entrevista\EntrevistaPersona;
+use App\Models\Expediente\Expediente;
 use App\Models\User;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Services\Entrevista\DocumentosEntrevista;
@@ -14,7 +15,9 @@ use App\Services\Entrevista\PasosEntrevista;
 use App\Services\Entrevista\RespuestaData;
 use App\Services\Entrevista\RespuestaGuardador;
 use App\Services\Entrevista\RespuestaRechazada;
+use App\Services\Expediente\DiagnosticoExpediente;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 
 /**
  * Las tools del agente sobre la entrevista nueva (F2.8): todas leen el
@@ -33,6 +36,7 @@ class HerramientasEntrevista
         private readonly PasosEntrevista $pasos,
         private readonly RespuestaGuardador $guardador,
         private readonly DocumentosEntrevista $documentos,
+        private readonly DiagnosticoExpediente $diagnostico,
     ) {}
 
     /**
@@ -81,12 +85,51 @@ class HerramientasEntrevista
                 'identidad_pendiente' => collect($situacion->pantallas[1]['preguntas'] ?? [])->contains('respondida', false),
             ],
             'documentos' => $this->resumenDocumentos($documentos, $personas),
+            'expediente' => $this->estadoExpediente($cliente, $entrevista),
             'enlaces' => [
                 'entrevista' => route('portal.entrevista.inicio'),
                 'documentos' => route('portal.entrevista.documentos'),
                 'revisar_y_confirmar' => route('portal.entrevista.resumen'),
             ],
         ];
+    }
+
+    /**
+     * En qué va la declaración, sin montos. El texto va siempre en español: el
+     * agente lo traduce si el cliente habla inglés. Solo lee, no recalcula.
+     *
+     * @return array{estado: string, para_el_cliente: string, desde: string|null}
+     */
+    private function estadoExpediente(User $cliente, Entrevista $entrevista): array
+    {
+        $expediente = Expediente::query()
+            ->where('user_id', $cliente->id)
+            ->where('tax_year', $entrevista->tax_year)
+            ->first();
+        $estado = $expediente?->estado ?? $this->diagnostico->para($cliente, $entrevista->tax_year)->estado;
+
+        return [
+            'estado' => $estado->value,
+            'para_el_cliente' => $this->enEspanol(fn () => $estado->textoCliente($expediente?->presentado_en)),
+            'desde' => $expediente?->estado_desde?->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Corre `$texto` con el idioma en español y deja el de la solicitud como estaba.
+     *
+     * @param  callable(): string  $texto
+     */
+    private function enEspanol(callable $texto): string
+    {
+        $anterior = App::getLocale();
+        App::setLocale('es');
+
+        try {
+            return $texto();
+        } finally {
+            App::setLocale($anterior);
+        }
     }
 
     /**
