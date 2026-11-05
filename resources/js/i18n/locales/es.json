@@ -51,6 +51,10 @@
             "cancelar": "Cancelar",
             "guardar": "Guardar corrección"
         },
+        "casillasConExcepcion_one": "{{count}} casilla con excepción",
+        "casillasConExcepcion_other": "{{count}} casillas con excepción",
+        "comoSeCalcula": "Cómo se calcula",
+        "casillasConExcepcionLista": "Casillas con excepción de la regla {{regla}}",
         "excepcionesTitulo_one": "Excepción abierta en este documento",
         "excepcionesTitulo_other": "{{count}} excepciones abiertas en este documento",
         "queHacer": "Qué hacer:",
@@ -279,80 +283,6 @@
             "confirmLabel": "Confirma la contraseña",
             "submit": "Crear contraseña y entrar",
             "vence": "El enlace es de un solo uso y vence a los 60 minutos. Si venció, pídele uno nuevo al asistente por WhatsApp."
-        }
-    },
-    "dashboard": {
-        "pageTitle": "Dashboard",
-        "welcome": {
-            "title": "Bienvenido",
-            "description": "Tu preparador va a ir cargando tu información acá. No tenés acceso al panel interno."
-        },
-        "hero": {
-            "clientsInManagement": "Clientes en gestión",
-            "inProgress_one": "{{count}} en progreso",
-            "inProgress_other": "{{count}} en progreso",
-            "completed_one": "{{count}} completo",
-            "completed_other": "{{count}} completos",
-            "notStarted_one": "{{count}} sin iniciar",
-            "notStarted_other": "{{count}} sin iniciar",
-            "viewClients": "Ver clientes"
-        },
-        "activity": {
-            "title": "Actividad",
-            "subtitle": "Campos recibidos por día · últimos 7 días",
-            "source": {
-                "aiAgent": "Agente IA",
-                "preparer": "Preparador",
-                "admin": "Admin",
-                "client": "Cliente"
-            }
-        },
-        "stats": {
-            "notStarted": "Sin iniciar",
-            "inProgress": "En progreso",
-            "completed": "Completos"
-        },
-        "kpi": {
-            "fieldsReceived": {
-                "label": "Campos recibidos",
-                "tag": "Progreso",
-                "hint": "Sobre el total esperado de todas las formas."
-            },
-            "completedForms": {
-                "label": "Formas completas",
-                "tag": "Total",
-                "hint": "De las formas iniciadas que llegaron al 100%."
-            },
-            "pendingReview": {
-                "label": "Pendientes de revisar",
-                "tag": "Revisión",
-                "hint": "Formas completas esperando aprobación.",
-                "hintEmpty": "No hay formas esperando revisión."
-            },
-            "highRisk": {
-                "label": "Alto riesgo",
-                "tag": "Riesgo",
-                "hint": "Casos con nivel de riesgo alto (automático o manual).",
-                "hintEmpty": "Ningún caso con riesgo alto por ahora."
-            }
-        },
-        "recentActivity": {
-            "title": "Actividad reciente",
-            "empty": "Todavía no hay actividad.",
-            "columns": {
-                "field": "Campo",
-                "client": "Cliente",
-                "source": "Origen",
-                "date": "Fecha"
-            }
-        },
-        "completedForms": {
-            "title": "Formas completas",
-            "distributionByForm": "Distribución por forma"
-        },
-        "latestClients": {
-            "title": "Últimos clientes",
-            "empty": "Todavía no hay clientes."
         }
     },
     "portalChat": {
@@ -610,30 +540,11 @@
             "title": "Clientes"
         },
         "heading": "Clientes",
-        "subheading": "Estado de recolección de datos por cliente, campo a campo.",
         "searchPlaceholder": "Buscar por nombre, email o teléfono…",
         "emptyMessage": "Todavía no hay clientes.",
         "columns": {
             "client": "Cliente",
-            "status": "Estado",
-            "forms": "Formas",
-            "risk": "Riesgo",
             "documents": "Documentos"
-        },
-        "estado": {
-            "sinIniciar": "Sin iniciar",
-            "enProgreso": "En progreso",
-            "completo": "Completo"
-        },
-        "riesgo": {
-            "bajo": "Bajo",
-            "medio": "Medio",
-            "alto": "Alto",
-            "fuenteManual": "Nivel fijado manualmente",
-            "fuenteAutomatica": "Nivel sugerido automáticamente"
-        },
-        "filters": {
-            "form": "Forma"
         },
         "newClient": {
             "trigger": "Nuevo cliente",
@@ -846,7 +757,6 @@
             "confirmPassword": "Confirma tu contraseña para revelar",
             "reveal": "Revelar"
         },
-        "exportZip": "Exportar ZIP",
         "whatsapp": {
             "trigger": "Conversación de WhatsApp",
             "title": "Conversación de WhatsApp — {{name}}",
@@ -868,12 +778,7 @@
             "manualPlaceholder": "Escribe un mensaje para enviar como preparador…",
             "send": "Enviar"
         },
-        "formState": {
-            "complete": "Completo",
-            "inProgress": "En progreso"
-        },
         "reviewed": "Revisado",
-        "markReviewed": "Marcar revisado",
         "table": {
             "field": "Campo",
             "status": "Estado",
@@ -925,13 +830,7 @@
             "otros": "Otros"
         },
         "categoriaAtencion_one": "{{count}} pendiente",
-        "categoriaAtencion_other": "{{count}} pendientes",
-        "riesgo": {
-            "label": "Nivel de riesgo",
-            "fuenteManual": "Fijado manualmente",
-            "fuenteAutomatica": "Sugerido automáticamente",
-            "quitarOverride": "Quitar override"
-        }
+        "categoriaAtencion_other": "{{count}} pendientes"
     },
     "usuarios": {
         "title": "Usuarios",

@@ -37,7 +37,7 @@ enum PuntoRevision: string
             self::Documentos => __('Se cumple cuando cada documento requerido está validado o marcado como "no aplica" (regla R-02).'),
             self::Excepciones => __('Se cumple cuando no queda ninguna excepción bloqueante o de revisión abierta.'),
             self::DebidaDiligencia => __('Confírmalo tú cuando hayas revisado el resumen del Form 8867. Solo se pide si marcaste créditos.'),
-            self::AnioAnterior => __('Confírmalo tú cuando hayas comparado con la declaración del año anterior. Solo se pide si el cliente la presentó.'),
+            self::AnioAnterior => __('Confírmalo tú cuando hayas comparado contra la declaración del año anterior que subió el cliente. Solo se pide si el cliente respondió que la tiene (G5 = sí).'),
         };
     }
 

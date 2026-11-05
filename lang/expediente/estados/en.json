@@ -43,7 +43,7 @@
     "Se cumple cuando cada documento requerido está validado o marcado como \"no aplica\" (regla R-02).": "Met when each required document is validated or marked \"does not apply\" (rule R-02).",
     "Se cumple cuando no queda ninguna excepción bloqueante o de revisión abierta.": "Met when no blocking or review exception remains open.",
     "Confírmalo tú cuando hayas revisado el resumen del Form 8867. Solo se pide si marcaste créditos.": "You confirm this one once you have reviewed the Form 8867 summary. Only required if you marked credits.",
-    "Confírmalo tú cuando hayas comparado con la declaración del año anterior. Solo se pide si el cliente la presentó.": "You confirm this one once you have compared with the prior-year return. Only required if the client filed one.",
+    "Confírmalo tú cuando hayas comparado contra la declaración del año anterior que subió el cliente. Solo se pide si el cliente respondió que la tiene (G5 = sí).": "You confirm this one once you have compared against the prior-year return the client uploaded. Only required if the client said they have one (G5 = yes).",
     "Crédito por ingreso del trabajo (EIC)": "Earned income credit (EIC)",
     "Crédito por hijos y otros dependientes (CTC/ACTC/ODC)": "Child and other dependent credits (CTC/ACTC/ODC)",
     "Crédito de oportunidad americana (AOTC)": "American opportunity credit (AOTC)",

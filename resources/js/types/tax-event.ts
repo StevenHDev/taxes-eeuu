@@ -1,5 +1,3 @@
-import type { ResumenDocumentos } from '@/types/entrevista';
-
 export type TaxForm =
     | 'form_1040'
     | 'schedule_c'
@@ -12,11 +10,6 @@ export type TaxForm =
     | 'form_990'
     | 'form_1040_nr';
 
-export type FormaOption = {
-    value: TaxForm;
-    label: string;
-};
-
 // Forma bajo la que se guarda un valor: una de las 10 formas, o una
 // pseudo-forma para los campos únicos por cliente — 'transversal' (identidad:
 // SSN, cónyuge, dependientes, estado civil, w2, 1099-NEC, 1095-A) o
@@ -26,35 +19,6 @@ export type FormaAlmacen = TaxForm | 'transversal' | 'documentos_extra';
 
 export type FieldState = 'recibido' | 'pendiente' | 'invalido' | 'no_aplica';
 export type FormState = 'en_progreso' | 'completo';
-export type EstadoGeneral = 'sin_iniciar' | 'en_progreso' | 'completo';
-export type NivelRiesgo = 'bajo' | 'medio' | 'alto';
-export type NivelRiesgoFuente = 'manual' | 'automatico';
-
-export type NivelRiesgoEfectivo = {
-    nivel: NivelRiesgo;
-    fuente: NivelRiesgoFuente;
-};
-
-export type ClienteFormaResumen = {
-    forma: TaxForm;
-    forma_label: string;
-    estado: FormState;
-};
-
-export type Cliente = {
-    id: number;
-    name: string;
-    email: string;
-    phone: string | null;
-    es_prueba: boolean;
-    estado_general: EstadoGeneral;
-    formas: ClienteFormaResumen[];
-    documentos: ResumenDocumentos | null;
-    nivel_riesgo: NivelRiesgo;
-    nivel_riesgo_label: string;
-    nivel_riesgo_fuente: NivelRiesgoFuente;
-    created_at: string;
-};
 
 export type ClienteForma = {
     forma: TaxForm;
@@ -116,23 +80,6 @@ export type CampoCliente = {
  * diferencia de CampoCliente, no tiene estado/valor/documento porque
  * justamente todavía no existe ninguna fila para él.
  */
-export type CampoPendiente = {
-    forma: string;
-    campo: string;
-    tipo_campo: 'documento' | 'dato' | 'mixto';
-    tipo_dato:
-        'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
-    subcampos: string[] | null;
-    formatos_aceptados: string[] | null;
-    obligatorio: boolean;
-    sensible: boolean;
-    orden?: number;
-    // Etiqueta del grupo de baja frecuencia al que pertenece (ej. "Créditos
-    // menos comunes"), o null si no pertenece a ninguno — ver
-    // PromptActivoStep tipo=grupo, mismo agrupamiento que ya usa WhatsApp.
-    grupo?: string | null;
-};
-
 export type HistorialCambio = {
     valor_anterior: unknown;
     valor_nuevo: unknown;
@@ -161,33 +108,6 @@ export type CatalogoDisponibleItem = {
     subcampos: string[] | null;
     formatos_aceptados: string[] | null;
     obligatorio: boolean;
-};
-
-export type CampoCatalogo = {
-    id: number;
-    forma: string;
-    tax_year: number;
-    clave: string;
-    tipo_campo: 'documento' | 'dato' | 'mixto';
-    tipo_dato:
-        'string' | 'number' | 'object' | 'array_string' | 'array_object' | null;
-    formatos_aceptados: string[] | null;
-    subcampos: string[] | null;
-    obligatorio: boolean;
-    sensible: boolean;
-};
-
-export type RelacionDocumento = {
-    forma: string;
-    campo: string;
-    subcampo: string | null;
-    descripcion: string | null;
-    acumulable: boolean;
-};
-
-export type DerivationStats = {
-    total: number;
-    con_faltantes: number;
 };
 
 export type TipoDeterminacion =
@@ -382,34 +302,4 @@ export type BitacoraEvento = {
     etiqueta: string | null;
     campos_afectados: string[] | null;
     ip_address: string | null;
-};
-
-export type DashboardResumen = {
-    total: number;
-    sin_iniciar: number;
-    en_progreso: number;
-    completo: number;
-    actividad_por_dia: { fecha: string; cantidad: number }[];
-    campos_recibidos_porcentaje: number;
-    formas_completas_porcentaje: number;
-    distribucion_por_forma: {
-        forma: TaxForm;
-        forma_label: string;
-        cantidad: number;
-    }[];
-    pendientes_revisar: {
-        cliente_id: number;
-        cliente_nombre: string;
-        forma: TaxForm;
-        forma_label: string;
-    }[];
-    casos_alto_riesgo: number;
-    actividad_reciente: {
-        campo: string;
-        forma_label: string;
-        cliente_nombre: string;
-        source: 'agente_ia' | 'preparador' | 'administrador' | 'cliente';
-        created_at: string | null;
-    }[];
-    ultimos_clientes: { id: number; name: string }[];
 };
