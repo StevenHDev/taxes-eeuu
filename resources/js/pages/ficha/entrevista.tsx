@@ -2,9 +2,9 @@ import { Deferred, Head } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import {
     EntrevistaCliente,
-    EntrevistaClienteError,
     EntrevistaClienteSkeleton,
 } from '@/components/cliente/entrevista-cliente';
+import { SeccionError } from '@/components/ficha/seccion-error';
 import { dashboard } from '@/routes';
 import { index as clientesIndex } from '@/routes/clientes';
 import type { VistaEntrevista } from '@/types/entrevista';
@@ -28,7 +28,12 @@ export default function FichaEntrevista({
             <Deferred
                 data="entrevista"
                 fallback={<EntrevistaClienteSkeleton />}
-                rescue={<EntrevistaClienteError />}
+                rescue={
+                    <SeccionError
+                        only={['entrevista']}
+                        detalle={t('clienteShow.entrevista.error')}
+                    />
+                }
             >
                 <EntrevistaCliente
                     clienteId={ficha.cliente.id}

@@ -203,9 +203,9 @@ function DocumentoFilaPreparador({
     const validar = () =>
         form.patch(rutaRevisar({ cliente: clienteId, item: d.id }).url, {
             preserveScroll: true,
-            // Solo la entrevista: así no vuelve al esqueleto y no se pierde
-            // la posición en la ficha.
-            only: ['entrevista'],
+            // Solo la entrevista y el encabezado (sus conteos cambian): así no
+            // vuelve al esqueleto y no se pierde la posición en la ficha.
+            only: ['entrevista', 'ficha'],
         });
 
     const revisadoEn = d.revisado_en
@@ -370,9 +370,9 @@ function RevisionDialog({
             rutaRevisar({ cliente: clienteId, item: documento.id }).url,
             {
                 preserveScroll: true,
-                // Solo la entrevista: así no vuelve al esqueleto y no se pierde
-                // la posición en la ficha.
-                only: ['entrevista'],
+                // Solo la entrevista y el encabezado (sus conteos cambian): así
+                // no vuelve al esqueleto y no se pierde la posición.
+                only: ['entrevista', 'ficha'],
                 onSuccess: onCerrar,
             },
         );

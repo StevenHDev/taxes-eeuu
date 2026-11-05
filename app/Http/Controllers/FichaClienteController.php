@@ -41,15 +41,15 @@ class FichaClienteController extends Controller
     public function excepciones(Request $request, User $cliente, ColaExcepciones $cola): Response
     {
         return $this->pestana($request, $cliente, 'ficha/excepciones', fn (int $anio) => [
-            'excepciones' => Inertia::defer(fn () => $cola->lista($request->user(), ['cliente' => $cliente->id, 'anio' => $anio])),
+            'excepciones' => Inertia::defer(fn () => $cola->lista($request->user(), ['cliente' => $cliente->id, 'anio' => $anio]), rescue: true),
         ]);
     }
 
     public function historial(Request $request, User $cliente, FichaAnterior $anterior): Response
     {
         return $this->pestana($request, $cliente, 'ficha/historial', fn (int $anio) => [
-            'eventos' => Inertia::defer(fn () => $this->eventos($cliente, $anio)),
-            'anterior' => Inertia::defer(fn () => $anterior->para($cliente, $anio, $request->user())),
+            'eventos' => Inertia::defer(fn () => $this->eventos($cliente, $anio), rescue: true),
+            'anterior' => Inertia::defer(fn () => $anterior->para($cliente, $anio, $request->user()), rescue: true),
         ]);
     }
 

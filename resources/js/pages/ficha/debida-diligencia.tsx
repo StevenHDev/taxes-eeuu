@@ -4,6 +4,7 @@ import { entrevista as rutaEntrevista } from '@/actions/App/Http/Controllers/Fic
 import { DebidaContenido } from '@/components/debida-diligencia/contenido';
 import { BotonImprimir } from '@/components/ficha/boton-imprimir';
 import { FichaSkeleton } from '@/components/ficha/ficha-skeleton';
+import { SeccionError } from '@/components/ficha/seccion-error';
 import { dashboard } from '@/routes';
 import { index as clientesIndex } from '@/routes/clientes';
 import type { DebidaDiligenciaVista } from '@/types/debida-diligencia';
@@ -32,7 +33,11 @@ export default function FichaDebidaDiligencia({ ficha, debida }: Props) {
                     </div>
                     <BotonImprimir etiqueta={t('debidaDiligencia.imprimir')} />
                 </div>
-                <Deferred data="debida" fallback={<FichaSkeleton />}>
+                <Deferred
+                    data="debida"
+                    fallback={<FichaSkeleton />}
+                    rescue={<SeccionError only={['debida']} />}
+                >
                     {debida && (
                         <DebidaContenido
                             debida={debida}

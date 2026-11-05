@@ -3,6 +3,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FichaSkeleton } from '@/components/ficha/ficha-skeleton';
+import { SeccionError } from '@/components/ficha/seccion-error';
 import { AccionesExpediente } from '@/components/revision/acciones-expediente';
 import { ChecklistRevision } from '@/components/revision/checklist-revision';
 import { EstadoCivilForm } from '@/components/revision/estado-civil-form';
@@ -28,18 +29,6 @@ const ANTES_DE_REVISAR = new Set<EstadoExpediente>([
     'en_recoleccion',
     'por_validar',
 ]);
-
-function RevisionError() {
-    const { t } = useTranslation();
-
-    return (
-        <Alert variant="destructive">
-            <TriangleAlert aria-hidden="true" />
-            <AlertTitle>{t('revision.error.titulo')}</AlertTitle>
-            <AlertDescription>{t('revision.error.detalle')}</AlertDescription>
-        </Alert>
-    );
-}
 
 function Contenido({
     clienteId,
@@ -154,7 +143,13 @@ export default function FichaRevision({ ficha, revision }: Props) {
             <Deferred
                 data="revision"
                 fallback={<FichaSkeleton />}
-                rescue={<RevisionError />}
+                rescue={
+                    <SeccionError
+                        only={['revision']}
+                        titulo={t('revision.error.titulo')}
+                        detalle={t('revision.error.detalle')}
+                    />
+                }
             >
                 {revision && (
                     <Contenido

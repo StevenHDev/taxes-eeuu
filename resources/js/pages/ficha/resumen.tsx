@@ -1,11 +1,10 @@
 import { Deferred, Head } from '@inertiajs/react';
-import { CircleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FichaSkeleton } from '@/components/ficha/ficha-skeleton';
 import { LineaTiempo, useFormatoFecha } from '@/components/ficha/linea-tiempo';
 import { QueFalta } from '@/components/ficha/que-falta';
 import type { AccionPrincipal } from '@/components/ficha/que-falta';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { SeccionError } from '@/components/ficha/seccion-error';
 import { dashboard } from '@/routes';
 import { index as clientesIndex } from '@/routes/clientes';
 import type {
@@ -31,20 +30,6 @@ type ResumenExpediente = {
     eventos: EventoExpediente[];
     accion_principal: AccionPrincipal | null;
 };
-
-function ResumenError() {
-    const { t } = useTranslation();
-
-    return (
-        <Alert variant="destructive">
-            <CircleAlert aria-hidden="true" />
-            <AlertTitle>{t('ficha.error')}</AlertTitle>
-            <AlertDescription>
-                {t('ficha.resumen.errorDetalle')}
-            </AlertDescription>
-        </Alert>
-    );
-}
 
 function ContenidoResumen({
     ficha,
@@ -132,7 +117,12 @@ export default function FichaResumen({
             <Deferred
                 data="resumen"
                 fallback={<FichaSkeleton />}
-                rescue={<ResumenError />}
+                rescue={
+                    <SeccionError
+                        only={['resumen']}
+                        detalle={t('ficha.resumen.errorDetalle')}
+                    />
+                }
             >
                 {resumen ? (
                     <ContenidoResumen ficha={ficha} resumen={resumen} />

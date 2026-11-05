@@ -9,6 +9,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ResolverExcepcionDialog } from '@/components/excepciones/resolver-dialog';
+import { SeccionError } from '@/components/ficha/seccion-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,6 +31,9 @@ const SEVERIDAD: Record<
     revision: { variant: 'secondary', icono: TriangleAlert },
     informativa: { variant: 'outline', icono: Info },
 };
+
+// La lista y los conteos del encabezado cambian al resolver una excepción.
+const RECARGAR = ['excepciones', 'ficha'];
 
 function ExcepcionesSkeleton() {
     const { t } = useTranslation();
@@ -192,6 +196,7 @@ function TarjetaExcepcion({ excepcion: e }: { excepcion: Excepcion }) {
                 )}
                 <ResolverExcepcionDialog
                     action={e.enlaces.aceptar}
+                    recargar={RECARGAR}
                     campo="nota"
                     titulo={t('excepciones.aceptar.titulo')}
                     descripcion={t('excepciones.aceptar.descripcion', {
@@ -211,6 +216,7 @@ function TarjetaExcepcion({ excepcion: e }: { excepcion: Excepcion }) {
                 {e.enlaces.consultar ? (
                     <ResolverExcepcionDialog
                         action={e.enlaces.consultar}
+                        recargar={RECARGAR}
                         campo="texto"
                         titulo={t('excepciones.consultar.titulo')}
                         descripcion={t('excepciones.consultar.descripcion', {
@@ -272,7 +278,11 @@ export default function FichaExcepciones({
                         </Link>
                     </Button>
                 </div>
-                <Deferred data="excepciones" fallback={<ExcepcionesSkeleton />}>
+                <Deferred
+                    data="excepciones"
+                    fallback={<ExcepcionesSkeleton />}
+                    rescue={<SeccionError only={['excepciones']} />}
+                >
                     {(excepciones ?? []).length === 0 ? (
                         <Vacio />
                     ) : (

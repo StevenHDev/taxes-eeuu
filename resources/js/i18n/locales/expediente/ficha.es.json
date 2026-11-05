@@ -121,6 +121,12 @@
         "linea": {
             "por": "por {{quien}}",
             "sistema": "por el sistema"
+        },
+        "errorSeccion": {
+            "titulo": "No se pudo cargar esta sección",
+            "detalle": "Algo falló al traer los datos. Tus cambios anteriores están a salvo. Inténtalo de nuevo.",
+            "reintentar": "Reintentar",
+            "reintentando": "Reintentando…"
         }
     }
 }

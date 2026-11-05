@@ -1,27 +1,16 @@
 import { Deferred, Head } from '@inertiajs/react';
-import { CircleAlert, History } from 'lucide-react';
+import { History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { DerivationLogsPanel } from '@/components/derivation-logs-panel';
 import { DeterminacionFiscalPanel } from '@/components/determinacion-fiscal-panel';
 import { FichaSkeleton } from '@/components/ficha/ficha-skeleton';
 import { LineaTiempo } from '@/components/ficha/linea-tiempo';
+import { SeccionError } from '@/components/ficha/seccion-error';
 import { FormasAnteriores } from '@/components/ficha-anterior/ficha-anterior';
 import type { AnteriorFicha } from '@/components/ficha-anterior/ficha-anterior';
-import { Alert, AlertTitle } from '@/components/ui/alert';
 import { dashboard } from '@/routes';
 import { index as clientesIndex } from '@/routes/clientes';
 import type { EventoExpediente, FichaEncabezado } from '@/types/expediente';
-
-function HistorialError() {
-    const { t } = useTranslation();
-
-    return (
-        <Alert variant="destructive">
-            <CircleAlert aria-hidden="true" />
-            <AlertTitle>{t('ficha.error')}</AlertTitle>
-        </Alert>
-    );
-}
 
 export default function FichaHistorial({
     ficha,
@@ -53,7 +42,7 @@ export default function FichaHistorial({
                     <Deferred
                         data="eventos"
                         fallback={<FichaSkeleton />}
-                        rescue={<HistorialError />}
+                        rescue={<SeccionError only={['eventos']} />}
                     >
                         {eventos && eventos.length > 0 ? (
                             <LineaTiempo eventos={eventos} />
@@ -72,7 +61,7 @@ export default function FichaHistorial({
                 <Deferred
                     data="anterior"
                     fallback={<FichaSkeleton />}
-                    rescue={<HistorialError />}
+                    rescue={<SeccionError only={['anterior']} />}
                 >
                     {anterior ? (
                         <section

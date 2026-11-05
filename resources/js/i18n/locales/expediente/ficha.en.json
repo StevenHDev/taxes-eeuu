@@ -121,6 +121,12 @@
         "linea": {
             "por": "by {{quien}}",
             "sistema": "by the system"
+        },
+        "errorSeccion": {
+            "titulo": "This section could not be loaded",
+            "detalle": "Something went wrong while fetching the data. Your earlier changes are safe. Please try again.",
+            "reintentar": "Try again",
+            "reintentando": "Trying again…"
         }
     }
 }

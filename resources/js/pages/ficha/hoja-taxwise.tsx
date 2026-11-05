@@ -1,12 +1,12 @@
 import { Deferred, Head, usePage } from '@inertiajs/react';
 import type { TFunction } from 'i18next';
-import { AlertCircle, Download, FileSpreadsheet, Info } from 'lucide-react';
+import { Download, FileSpreadsheet, Info } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BotonImprimir } from '@/components/ficha/boton-imprimir';
+import { SeccionError } from '@/components/ficha/seccion-error';
 import { SeccionHoja } from '@/components/hoja/seccion-hoja';
 import { TotalesHoja } from '@/components/hoja/totales-hoja';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -42,18 +42,6 @@ function HojaSkeleton() {
                 </div>
             ))}
         </div>
-    );
-}
-
-function HojaError() {
-    const { t } = useTranslation();
-
-    return (
-        <Alert variant="destructive">
-            <AlertCircle aria-hidden="true" />
-            <AlertTitle>{t('hoja.errorTitulo')}</AlertTitle>
-            <AlertDescription>{t('hoja.error')}</AlertDescription>
-        </Alert>
     );
 }
 
@@ -214,7 +202,13 @@ export default function FichaHojaTaxwise() {
                 <Deferred
                     data="hoja"
                     fallback={<HojaSkeleton />}
-                    rescue={<HojaError />}
+                    rescue={
+                        <SeccionError
+                            only={['hoja']}
+                            titulo={t('hoja.errorTitulo')}
+                            detalle={t('hoja.error')}
+                        />
+                    }
                 >
                     <HojaConDatos soloPendiente={soloPendiente} />
                 </Deferred>

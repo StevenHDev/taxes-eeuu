@@ -29,6 +29,7 @@ export function ResolverExcepcionDialog({
     etiqueta,
     placeholder,
     enviar,
+    recargar,
 }: {
     action: string;
     campo: 'nota' | 'texto';
@@ -38,6 +39,8 @@ export function ResolverExcepcionDialog({
     etiqueta: string;
     placeholder: string;
     enviar: string;
+    /** Props a recargar tras resolver; sin él, se recarga la página entera. */
+    recargar?: string[];
 }) {
     const { t } = useTranslation();
     const [abierto, setAbierto] = useState(false);
@@ -52,6 +55,7 @@ export function ResolverExcepcionDialog({
                 <Form
                     action={action}
                     method="post"
+                    options={{ preserveScroll: true, only: recargar }}
                     onSuccess={() => setAbierto(false)}
                     className="space-y-4"
                 >

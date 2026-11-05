@@ -502,9 +502,9 @@ function CorregirDialog({
     const guardar = () =>
         form.put(rutaCorregir({ cliente: clienteId, respuesta: id }).url, {
             preserveScroll: true,
-            // Solo la entrevista: así no vuelve al esqueleto y no se pierde
-            // la posición en la ficha.
-            only: ['entrevista'],
+            // Solo la entrevista y el encabezado (sus conteos cambian): así no
+            // vuelve al esqueleto y no se pierde la posición en la ficha.
+            only: ['entrevista', 'ficha'],
             onSuccess: () => {
                 toast.success(t('clienteShow.entrevista.corregida'));
                 onGuardado(id);
