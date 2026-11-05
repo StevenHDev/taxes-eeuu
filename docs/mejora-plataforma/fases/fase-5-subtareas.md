@@ -36,24 +36,24 @@
 
 | Ola | # | Subtarea | Depende de | Estado |
 | --- | --- | --- | --- | --- |
-| 1 | 5.0a | Bitácora "Revelado"/"Exportado" y visor abierto en un dato | — | ⏳ |
-| 1 | 5.1a | Modelo de datos del expediente | — | ⏳ |
-| 1 | 5.1c | Catálogo: Form 8867, vencimientos y R-02 | — | ⏳ |
-| 1 | 5.2a | Andamiaje de la ficha en el frontend | — | ⏳ |
-| 2 | 5.1b | Diagnóstico, estados, R-02 y recálculo | 5.1a, 5.1c | ⏳ |
-| 3 | 5.2b | Ficha: Entrevista, Documentos, Excepciones e Historial (servidor) | 5.1b | ⏳ |
-| 3 | 5.3a | Revisión: decisiones, checklist y transiciones (servidor) | 5.1b | ⏳ |
-| 3 | 5.4a | Debida diligencia: resumen y créditos (servidor) | 5.1b | ⏳ |
-| 3 | 5.5a | Hoja para TaxWise: servicio, página y CSV (servidor) | 5.1b, 5.0a | ⏳ |
-| 3 | 5.6a | Resumen, lista, panel, avisos y retiros (servidor) | 5.1b | ⏳ |
-| 3 | 5.7a | "¿Cómo va lo mío?" en el portal y el agente | 5.1b | ⏳ |
-| 4 | 5.2c | Pantallas Resumen e Historial | 5.2a, 5.2b, 5.6a | ⏳ |
-| 4 | 5.2d | Pantallas Entrevista, Documentos y Excepciones | 5.2a, 5.2b | ⏳ |
-| 4 | 5.3b | Pantalla Revisión | 5.2a, 5.3a | ⏳ |
-| 4 | 5.4b | Pantalla Debida diligencia | 5.2a, 5.4a | ⏳ |
-| 4 | 5.5b | Pantalla Hoja para TaxWise | 5.2a, 5.5a | ⏳ |
-| 4 | 5.6b | Pantallas Panel y Lista de clientes | 5.2a, 5.6a | ⏳ |
-| 5 | — | Cierre (agente principal): Wayfinder, pint, tipos, suite completa, `npm run build`, `MariaExpedienteTest`, revisión en el navegador, borrar claves i18n sin uso, documentación | todas | ⏳ |
+| 1 | 5.0a | Bitácora "Revelado"/"Exportado" y visor abierto en un dato | — | ✅ |
+| 1 | 5.1a | Modelo de datos del expediente | — | ✅ |
+| 1 | 5.1c | Catálogo: Form 8867, vencimientos y R-02 | — | ✅ |
+| 1 | 5.2a | Andamiaje de la ficha en el frontend | — | ✅ |
+| 2 | 5.1b | Diagnóstico, estados, R-02 y recálculo | 5.1a, 5.1c | ✅ |
+| 3 | 5.2b | Ficha: Entrevista, Documentos, Excepciones e Historial (servidor) | 5.1b | ✅ |
+| 3 | 5.3a | Revisión: decisiones, checklist y transiciones (servidor) | 5.1b | ✅ |
+| 3 | 5.4a | Debida diligencia: resumen y créditos (servidor) | 5.1b | ✅ |
+| 3 | 5.5a | Hoja para TaxWise: servicio, página y CSV (servidor) | 5.1b, 5.0a | ✅ |
+| 3 | 5.6a | Resumen, lista, panel, avisos y retiros (servidor) | 5.1b | ✅ |
+| 3 | 5.7a | "¿Cómo va lo mío?" en el portal y el agente | 5.1b | ✅ |
+| 4 | 5.2c | Pantallas Resumen e Historial | 5.2a, 5.2b, 5.6a | ✅ |
+| 4 | 5.2d | Pantallas Entrevista, Documentos y Excepciones | 5.2a, 5.2b | ✅ |
+| 4 | 5.3b | Pantalla Revisión | 5.2a, 5.3a | ✅ |
+| 4 | 5.4b | Pantalla Debida diligencia | 5.2a, 5.4a | ✅ |
+| 4 | 5.5b | Pantalla Hoja para TaxWise | 5.2a, 5.5a | ✅ |
+| 4 | 5.6b | Pantallas Panel y Lista de clientes | 5.2a, 5.6a | ✅ |
+| 5 | — | Cierre (agente principal): Wayfinder, pint, tipos, suite completa, `npm run build`, `MariaExpedienteTest`, revisión en el navegador, borrar claves i18n sin uso, documentación | todas | ✅ |
 
 **Por qué este reparto no se pisa:** cada subtarea de una ola tiene sus propios controladores, servicios, rutas (`routes/expediente-<area>.php`), textos (`lang/expediente/<area>/en.json` y `locales/expediente/<area>.*.json`), tipos de TypeScript y pruebas. Los archivos compartidos (`AppServiceProvider`, `web.php`, `app.tsx`, `i18n/index.ts`, `ClienteController`, `routes/clientes.php`) tienen **un solo dueño** en toda la fase.
 

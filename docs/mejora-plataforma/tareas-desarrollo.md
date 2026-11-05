@@ -26,7 +26,7 @@
 | F2 | Entrevista por WhatsApp y por el portal | Media | ✅ | F1 (L1 y L3 en la tarea de pendientes legales) |
 | F3 | Checklist de documentos | Media | 🔄 | F2 |
 | F4 | Lectura y validación de documentos | Media | ⏳ | F1, F3 |
-| F5 | Expediente, revisión del preparador y hoja para TaxWise | Media | ⏳ | F4 |
+| F5 | Expediente, revisión del preparador y hoja para TaxWise | Media | ✅ | F4 |
 | F6 | Cálculo validado y borrador del 1040 | Media | ⏳ | F1, F4 (la validación puede empezar desde F1) |
 | F7 | Pendientes para después | Baja | ⏳ | Sección 10 |
 
@@ -163,14 +163,16 @@ Wiplitask: `cmvskow2m007c142002rui266` · ✅ (3 nov.)
 - [ ] Pendientes menores: publicar el borrador de prompts 7 (Steven, desde Agente → Prompts); la hoja del visor no queda fija al bajar; probar "Revelar" en el navegador; una acción propia "Revelado" en la bitácora
 
 ### F5 — Expediente, revisión del preparador y hoja para TaxWise
-Wiplitask: `cmvskow9b007h1420if0ijyyu` · ⏳
-- [ ] Plan técnico de la fase 5 escrito y aprobado
-- [ ] Regla R-02 (todo documento validado o en "no aplica"), que pasó de F4 (decisión del 2 nov.)
-- [ ] Estados del expediente con fecha; panel y lista de clientes por estado
-- [ ] Ficha del cliente en pestañas
-- [ ] Checklist del preparador y resumen de debida diligencia (8867)
-- [ ] Hoja para TaxWise (pantalla, PDF y Excel)
-- [ ] Avisos al preparador; reemplazar "Mi información", el riesgo y el ZIP
+Wiplitask: `cmvskow9b007h1420if0ijyyu` · ✅ (5 nov.)
+- [x] Plan técnico de la fase 5 escrito y aprobado
+- [x] Regla R-02 (todo documento validado o en "no aplica"), que pasó de F4 (decisión del 2 nov.)
+- [x] Estados del expediente con fecha (12 estados, 6 calculados y 6 manuales); panel y lista de clientes por estado
+- [x] Ficha del cliente en pestañas (Resumen, Entrevista, Documentos, Excepciones, Revisión, Hoja para TaxWise, Debida diligencia, Historial)
+- [x] Checklist del preparador y resumen de debida diligencia (8867)
+- [x] Hoja para TaxWise (pantalla, impresión/PDF y CSV enmascarado)
+- [x] Avisos al preparador; reemplazar "Mi información", el riesgo y el ZIP
+- [x] Cierre: prueba de punta a punta (`MariaExpedienteTest`), estados de error con "Reintentar" en las pestañas con datos diferidas, conteos del encabezado que se actualizan al validar, limpieza de código y claves sin uso, revisión en el navegador
+- [ ] Pendientes menores: claves i18n y tipos que dudamos (`portalFormulario.*`, `portalChat.*`, `common.*`, tipos sin uso de `types/*`) para una pasada futura; el panel de confianza solo existe en la hoja y el visor (no en Excepciones ni Debida diligencia); probar a mano el foco al cerrar el panel de la hoja; probar la vista previa de impresión de la hoja y de la debida diligencia; el estado de error de las pestañas no se probó forzando un fallo del servidor
 
 ### F6 — Cálculo validado y borrador del 1040
 Wiplitask: `cmvskowhd007m1420ml6zef8q` · ⏳
