@@ -32,7 +32,7 @@ class ColaExcepciones
     ) {}
 
     /**
-     * @param  array{severidad?: string|null, estado?: string|null, cliente?: int|string|null}  $filtros
+     * @param  array{severidad?: string|null, estado?: string|null, cliente?: int|string|null, anio?: int|string|null}  $filtros
      * @return list<array<string, mixed>>
      */
     public function lista(User $actor, array $filtros = []): array
@@ -40,6 +40,7 @@ class ColaExcepciones
         $severidad = SeveridadRegla::tryFrom((string) ($filtros['severidad'] ?? ''));
         $estado = EstadoExcepcion::tryFrom((string) ($filtros['estado'] ?? ''));
         $cliente = (int) ($filtros['cliente'] ?? 0);
+        $anio = (int) ($filtros['anio'] ?? 0);
 
         $excepciones = Excepcion::query()
             ->abiertas()
@@ -47,6 +48,7 @@ class ColaExcepciones
             ->when($severidad, fn ($q) => $q->where('severidad', $severidad))
             ->when($estado?->abierta(), fn ($q) => $q->where('estado', $estado))
             ->when($cliente > 0, fn ($q) => $q->whereHas('entrevista', fn ($e) => $e->where('user_id', $cliente)))
+            ->when($anio > 0, fn ($q) => $q->whereHas('entrevista', fn ($e) => $e->where('tax_year', $anio)))
             ->with(['entrevista.user:id,name', 'item:id,entrevista_id,documento_codigo,numero', 'dato:id,casilla'])
             ->orderByRaw("case severidad when 'bloqueante' then 0 when 'revision' then 1 else 2 end")
             ->orderBy('created_at')
