@@ -1,1 +1,8 @@
-{}
+{
+    "El estado civil decidido para el IRS es cabeza de familia (HOH)": "The marital status decided for the IRS is head of household (HOH)",
+    "La persona :orden está clasificada como :clasificacion": "Person :orden is classified as :clasificacion",
+    "Hubo gastos de educación superior (F1)": "There were higher education expenses (F1)",
+    "Hubo ingreso del trabajo (:preguntas) y el SSN es válido para trabajar (A3)": "There was earned income (:preguntas) and the SSN is valid for employment (A3)",
+    "La declaración ya se presentó: los créditos ya no se pueden cambiar.": "The return has already been filed: the credits can no longer be changed.",
+    "Guardaste los créditos que se reclaman.": "You saved the credits being claimed."
+}
