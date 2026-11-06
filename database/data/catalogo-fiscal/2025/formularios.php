@@ -27,6 +27,7 @@ return [
             ['linea' => '20', 'descripcion' => 'Otros créditos no reembolsables del Schedule 3', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-3:8'],
             ['linea' => '23', 'descripcion' => 'Otros impuestos del Schedule 2', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-2:4;sch-2:1a'],
             ['linea' => '25a', 'descripcion' => 'Retención federal de W-2 (suma de la casilla 2)', 'origen_tipo' => 'casilla', 'origen_clave' => 'w2:2'],
+            ['linea' => '25b', 'descripcion' => 'Retención federal de los Form(s) 1099 (casilla 4 de los 1099-NEC, 1099-K, 1099-MISC, 1099-R, 1099-G, 1099-INT y 1099-DIV; casilla 6 del SSA-1099)', 'origen_tipo' => 'casilla', 'origen_clave' => '1099-nec:4;1099-k:4;1099-misc:4;1099-r:4;1099-g:4;1099-int:4;1099-div:4;ssa-1099:6'],
             ['linea' => '26', 'descripcion' => 'Pagos estimados', 'origen_tipo' => 'respuesta', 'origen_clave' => 'G1'],
             ['linea' => '27a', 'descripcion' => 'Crédito por ingreso del trabajo (Schedule EIC)', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-eic:credito'],
             ['linea' => '28', 'descripcion' => 'Parte reembolsable del crédito por hijos (ACTC, Schedule 8812)', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-8812:27'],
@@ -41,6 +42,7 @@ return [
         'fuente_texto' => 'Schedule 1 de 2025', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040s1.pdf',
         'lineas' => [
             ['linea' => '3', 'descripcion' => 'Ganancia o pérdida de negocio (Schedule C, línea 31)', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-c:31'],
+            ['linea' => '8z', 'descripcion' => 'Otros ingresos (1099-MISC casilla 3 y casilla 8). Si es ingreso de un negocio propio va al Schedule C; lo decide el preparador', 'origen_tipo' => 'casilla', 'origen_clave' => '1099-misc:3;1099-misc:8'],
             ['linea' => '10', 'descripcion' => 'Total de otros ingresos (suma de las líneas 1 a 9)', 'origen_tipo' => 'calculo', 'origen_clave' => null],
             ['linea' => '15', 'descripcion' => 'Mitad del impuesto de autoempleo, deducible (Schedule SE, línea 13)', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-se:13'],
         ],
@@ -72,7 +74,7 @@ return [
         'siempre' => false, 'ficha' => 'completa', 'orden' => 5,
         'fuente_texto' => 'Schedule C de 2025', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040sc.pdf',
         'lineas' => [
-            ['linea' => '1', 'descripcion' => 'Ingresos brutos: 1099-NEC (casilla 1) + 1099-K (casilla 1a) + ingresos sin formulario', 'origen_tipo' => 'casilla', 'origen_clave' => '1099-nec:1;1099-k:1a'],
+            ['linea' => '1', 'descripcion' => 'Ingresos brutos: 1099-NEC (c. 1), 1099-K (c. 1a), 1099-MISC (c. 5 y 6) y sin formulario. Normalmente Schedule C; si es esporádico o hobby va a Schedule 1 línea 8z; si era empleado, sueldos y Form 8919. Lo decide el preparador', 'origen_tipo' => 'casilla', 'origen_clave' => '1099-nec:1;1099-k:1a;1099-misc:5;1099-misc:6'],
             ['linea' => '4', 'descripcion' => 'Costo de la mercancía vendida (si vende productos)', 'origen_tipo' => 'calculo', 'origen_clave' => null],
             ['linea' => '8-27', 'descripcion' => 'Gastos por categoría: vehículo, contratistas, seguros, renta, materiales, servicios, etc.', 'origen_tipo' => 'calculo', 'origen_clave' => null],
             ['linea' => '28', 'descripcion' => 'Total de gastos', 'origen_tipo' => 'calculo', 'origen_clave' => null],
@@ -214,8 +216,11 @@ return [
     [
         'codigo' => 'sch-e', 'nombre' => 'Schedule E', 'para_que' => 'Alquileres y regalías',
         'siempre' => false, 'ficha' => 'pendiente', 'orden' => 15,
-        'fuente_texto' => 'Schedule E de 2025 (Pub. 527)', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/p527.pdf',
-        'lineas' => [],
+        'fuente_texto' => 'Schedule E de 2025 (Pub. 527)', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040se.pdf',
+        'lineas' => [
+            ['linea' => '3', 'descripcion' => 'Alquileres recibidos (1099-MISC casilla 1). Normalmente va aquí, pero pasa al Schedule C si hubo servicios importantes al inquilino, venta de inmuebles como negocio o alquiler de bienes personales como negocio; lo decide el preparador', 'origen_tipo' => 'casilla', 'origen_clave' => '1099-misc:1'],
+            ['linea' => '4', 'descripcion' => 'Regalías recibidas (1099-MISC casilla 2). Normalmente va aquí, pero pasa al Schedule C si hubo servicios importantes al inquilino, venta de inmuebles como negocio o alquiler de bienes personales como negocio; lo decide el preparador', 'origen_tipo' => 'casilla', 'origen_clave' => '1099-misc:2'],
+        ],
     ],
     [
         'codigo' => 'sch-h', 'nombre' => 'Schedule H', 'para_que' => 'Empleados domésticos',

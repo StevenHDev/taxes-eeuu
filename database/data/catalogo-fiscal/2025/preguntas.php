@@ -763,6 +763,9 @@ return [
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-c'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-se'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-2'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1'],
             ['respuesta' => 'si', 'objetivo' => 'documento:1099-nec'],
             ['respuesta' => 'si', 'objetivo' => 'documento:1099-k'],
             ['respuesta' => 'si', 'objetivo' => 'documento:1099-misc'],
@@ -791,6 +794,9 @@ return [
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-c'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-se'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-2'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1'],
             ['respuesta' => 'si', 'objetivo' => 'documento:1099-k'],
             ['respuesta' => 'si', 'objetivo' => 'documento:1099-nec'],
             ['respuesta' => 'si', 'objetivo' => 'documento:registros-ingresos-gastos'],
@@ -807,6 +813,8 @@ return [
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-c'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-se'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:sch-2'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-e'],
             ['respuesta' => 'si', 'objetivo' => 'documento:registros-ingresos-gastos'],
         ],

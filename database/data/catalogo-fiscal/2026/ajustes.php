@@ -18,7 +18,7 @@ return [
         '1099-nec' => ['1' => ['casilla' => '1a']],
     ],
     'lineas' => [
-        'sch-c:1' => ['origen_clave' => '1099-nec:1a;1099-k:1a'],
+        'sch-c:1' => ['origen_clave' => '1099-nec:1a;1099-k:1a;1099-misc:5;1099-misc:6'],
     ],
     'preguntas' => [
         'A1' => ['fuente_texto' => 'Encabezado y firma del 1040 (la firma pide la ocupación). 1040 línea 12d: "nació antes del 2 de enero de 1962"'],

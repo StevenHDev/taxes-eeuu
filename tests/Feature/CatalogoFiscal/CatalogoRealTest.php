@@ -60,11 +60,26 @@ class CatalogoRealTest extends TestCase
         $this->assertSame(30, $conteos['formularios']);
         $this->assertSame(13, $conteos['reglas']);
         $this->assertSame(347, $conteos['casillas']);
-        $this->assertSame(103, $conteos['lineas']);
+        $this->assertSame(107, $conteos['lineas']);
 
         // 2026 apaga F10 y F11: los créditos por vehículo limpio y de energía
         // de la vivienda terminan en 2025 (F3.9).
         $this->assertSame([...$conteos, 'preguntas' => 98], $verificador->conteos(2026));
+    }
+
+    public function test_los_textos_del_catalogo_caben_en_sus_columnas(): void
+    {
+        // sqlite no aplica el largo de string(255); PostgreSQL sí, y la carga falla en producción.
+        foreach ([2025, 2026] as $anio) {
+            $formularios = collect($this->lector->formularios($anio));
+
+            foreach ($formularios as $formulario) {
+                foreach ($formulario['lineas'] ?? [] as $linea) {
+                    $this->assertLessThanOrEqual(255, mb_strlen($linea['descripcion']), "{$anio} {$formulario['codigo']}:{$linea['linea']} descripcion");
+                    $this->assertLessThanOrEqual(255, mb_strlen((string) ($linea['origen_clave'] ?? '')), "{$anio} {$formulario['codigo']}:{$linea['linea']} origen_clave");
+                }
+            }
+        }
     }
 
     public function test_los_creditos_que_terminan_en_2025_solo_se_preguntan_en_2025(): void

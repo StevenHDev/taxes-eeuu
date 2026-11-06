@@ -244,6 +244,27 @@ class HojaTaxwiseTest extends TestCase
         $this->assertStringContainsString('(Cliente Y)', collect($hoja['secciones'])->firstWhere('codigo', 'negocio')['grupos'][0]['titulo']);
     }
 
+    public function test_la_retencion_del_1099_va_a_la_25b_y_la_casilla_sin_linea_trae_un_destino_por_defecto(): void
+    {
+        [$cliente, $e] = $this->clienteConExpediente(['D1' => 'si', 'D15' => 'si']);
+        $w2 = $this->item($e, 'w2', EstadoDocumento::Leido);
+        $this->leer($w2, ['c' => ['Empresa X'], 'anio' => ['2025'], '3' => ['45120.00']]);
+        $nec = $this->item($e, '1099-nec', EstadoDocumento::Leido);
+        $this->leer($nec, ['pagador-nombre' => ['Cliente Y'], '1' => ['8000.00'], '4' => ['800.00']]);
+
+        $hoja = $this->hoja($cliente, 2025);
+
+        $this->assertSame('Form 1040 · línea 25b', $this->fila($hoja, 'Casilla 4 —', 'Form 1099-NEC')['destino']);
+        // W-2 casilla 3: sin línea fija en el catálogo.
+        $this->assertSame('Form W-2 · pantalla de TaxWise · casilla 3', $this->fila($hoja, 'Casilla 3 —', 'Form W-2')['destino']);
+        $this->assertSame('Solo para validar (no se digita)', $this->fila($hoja, 'Casilla anio —', 'Form W-2')['destino']);
+        $this->assertContains('Form 1040 · línea 25b', array_column($hoja['totales'], 'destino'));
+
+        // El CSV usa el mismo destino.
+        $csv = collect(iterator_to_array(app(HojaTaxwise::class)->filasCsv($cliente, 2025), false));
+        $this->assertTrue($csv->contains(fn (array $f) => $f[1] === 'Form W-2 · pantalla de TaxWise · casilla 3'));
+    }
+
     public function test_lo_sensible_sale_enmascarado_y_nunca_en_claro(): void
     {
         [$cliente, $e, $preparador, $w2, $tarjeta] = $this->maria();

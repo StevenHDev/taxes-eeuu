@@ -56,6 +56,9 @@ class HojaTaxwise
     /** Los documentos que el cliente agrega por fuera de la lista caen en esta sección. */
     private const SECCION_DE_OTROS = 'situaciones';
 
+    /** Casillas de marcar que solo informan y no se digitan en TaxWise (documento:casilla). */
+    private const CASILLAS_SOLO_VALIDAR = ['1099-nec:2', '1099-misc:7', '1099-misc:13', '1099-div:11'];
+
     /** Casillas con el nombre de quien emite el documento (solo salen si no son sensibles). */
     private const CASILLAS_EMISOR = ['c', 'pagador-nombre'];
 
@@ -735,7 +738,33 @@ class HojaTaxwise
     {
         $destinos = $ctx['destinosCasilla']["{$item->documento_codigo}:{$casilla['casilla']}"] ?? [];
 
-        return $destinos === [] ? null : implode(' '.__('y').' ', $destinos);
+        if ($destinos !== []) {
+            return implode(' '.__('y').' ', $destinos);
+        }
+
+        if ($this->soloValidar($item->documento_codigo, $casilla)) {
+            return __('Solo para validar (no se digita)');
+        }
+
+        $documento = $ctx['documentos']->get($item->documento_codigo);
+        $nombre = (string) ($documento['nombre_oficial'] ?? ($ctx['ingles'] ? ($documento['nombre_sencillo_en'] ?? $documento['nombre_sencillo_es'] ?? null) : ($documento['nombre_sencillo_es'] ?? null)) ?? $item->documento_codigo);
+
+        return $nombre.' · '.__('pantalla de TaxWise').' · '.__('casilla :casilla', ['casilla' => $casilla['casilla']]);
+    }
+
+    /**
+     * Casillas que no se digitan: el año impreso y las casillas de marcar
+     * informativas (ventas directas de USD 5.000 o más del 1099-NEC casilla 2 y
+     * del 1099-MISC casilla 7, y el requisito FATCA). Va por lista y no por
+     * tipo de dato: otras casillas de marcar sí se digitan (W-2 casilla 13 de
+     * empleado estatutario, 1099-R casilla 2b).
+     *
+     * @param  array<string, mixed>  $casilla
+     */
+    private function soloValidar(string $documento, array $casilla): bool
+    {
+        return ($casilla['tipo_dato'] ?? null) === 'anio'
+            || in_array("{$documento}:{$casilla['casilla']}", self::CASILLAS_SOLO_VALIDAR, true);
     }
 
     /**
