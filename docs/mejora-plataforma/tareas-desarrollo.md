@@ -172,6 +172,9 @@ Wiplitask: `cmvskow9b007h1420if0ijyyu` · ✅ (5 nov.)
 - [x] Hoja para TaxWise (pantalla, impresión/PDF y CSV enmascarado)
 - [x] Avisos al preparador; reemplazar "Mi información", el riesgo y el ZIP
 - [x] Cierre: prueba de punta a punta (`MariaExpedienteTest`), estados de error con "Reintentar" en las pestañas con datos diferidas, conteos del encabezado que se actualizan al validar, limpieza de código y claves sin uso, revisión en el navegador
+- [x] **Verificación contra el IRS de los destinos (5 nov.)**: Schedule 1, SE y 2 se activan con trabajo por cuenta propia (D15 a D17); destinos nuevos 25b, Schedule E líneas 3 y 4, Schedule 1 línea 8z; la hoja ya no deja el destino vacío (pantalla de TaxWise o "Solo para validar"); la pestaña Entrevista separa "Formularios que prepara GTS" de "Documentos que respaldan la declaración". Fuentes y diferencias por año en [verificacion-irs-destinos.md](verificacion-irs-destinos.md). Hace falta recargar el catálogo 2025/2026 en producción.
+- [ ] Form 8995 (deducción por ingresos calificados del negocio): no está en el catálogo; validar con GTS y las instrucciones del IRS antes de agregarlo
+- [ ] 1099-K de 2026: casillas 1c y 1d (propinas) para el Schedule 1-A, Parte II; agregar al preparar el 2026
 - [ ] Pendientes menores: claves i18n y tipos que dudamos (`portalFormulario.*`, `portalChat.*`, `common.*`, tipos sin uso de `types/*`) para una pasada futura; el panel de confianza solo existe en la hoja y el visor (no en Excepciones ni Debida diligencia); probar a mano el foco al cerrar el panel de la hoja; probar la vista previa de impresión de la hoja y de la debida diligencia; el estado de error de las pestañas no se probó forzando un fallo del servidor
 
 ### F6 — Cálculo validado y borrador del 1040
