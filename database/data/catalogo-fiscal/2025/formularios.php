@@ -32,6 +32,9 @@ return [
             ['linea' => '27a', 'descripcion' => 'Crédito por ingreso del trabajo (Schedule EIC)', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-eic:credito'],
             ['linea' => '28', 'descripcion' => 'Parte reembolsable del crédito por hijos (ACTC, Schedule 8812)', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-8812:27'],
             ['linea' => '31', 'descripcion' => 'Crédito neto por prima del Marketplace y pago con la extensión', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-3:9;sch-3:10'],
+            ['linea' => '35a-35d', 'descripcion' => 'Reembolso por depósito directo: monto, número de ruta, tipo y número de cuenta. Con varias cuentas, Form 8888', 'origen_tipo' => 'respuesta', 'origen_clave' => 'G3'],
+            ['linea' => '36', 'descripcion' => 'Parte del reembolso que se aplica al impuesto estimado del año siguiente', 'origen_tipo' => 'respuesta', 'origen_clave' => 'G3'],
+            ['linea' => '37', 'descripcion' => 'Monto que debe y cómo lo paga (débito de la cuenta, tarjeta u otro)', 'origen_tipo' => 'respuesta', 'origen_clave' => 'G4'],
         ],
     ],
 
@@ -44,6 +47,7 @@ return [
             ['linea' => '3', 'descripcion' => 'Ganancia o pérdida de negocio (Schedule C, línea 31)', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-c:31'],
             ['linea' => '8z', 'descripcion' => 'Otros ingresos (1099-MISC casilla 3 y casilla 8). Si es ingreso de un negocio propio va al Schedule C; lo decide el preparador', 'origen_tipo' => 'casilla', 'origen_clave' => '1099-misc:3;1099-misc:8'],
             ['linea' => '10', 'descripcion' => 'Total de otros ingresos (suma de las líneas 1 a 9)', 'origen_tipo' => 'calculo', 'origen_clave' => null],
+            ['linea' => '11', 'descripcion' => 'Gastos de educador (útiles escolares comprados por el cliente)', 'origen_tipo' => 'respuesta', 'origen_clave' => 'E8'],
             ['linea' => '15', 'descripcion' => 'Mitad del impuesto de autoempleo, deducible (Schedule SE, línea 13)', 'origen_tipo' => 'linea', 'origen_clave' => 'sch-se:13'],
         ],
     ],
@@ -76,7 +80,7 @@ return [
         'lineas' => [
             ['linea' => '1', 'descripcion' => 'Ingresos brutos: 1099-NEC (c. 1), 1099-K (c. 1a), 1099-MISC (c. 5 y 6) y sin formulario. Normalmente Schedule C; si es esporádico o hobby va a Schedule 1 línea 8z; si era empleado, sueldos y Form 8919. Lo decide el preparador', 'origen_tipo' => 'casilla', 'origen_clave' => '1099-nec:1;1099-k:1a;1099-misc:5;1099-misc:6'],
             ['linea' => '4', 'descripcion' => 'Costo de la mercancía vendida (si vende productos)', 'origen_tipo' => 'calculo', 'origen_clave' => null],
-            ['linea' => '8-27', 'descripcion' => 'Gastos por categoría: vehículo, contratistas, seguros, renta, materiales, servicios, etc.', 'origen_tipo' => 'calculo', 'origen_clave' => null],
+            ['linea' => '8-27', 'descripcion' => 'Gastos por categoría (vehículo, contratistas, seguros, renta, materiales, servicios), de los registros del negocio', 'origen_tipo' => 'respuesta', 'origen_clave' => 'D15'],
             ['linea' => '28', 'descripcion' => 'Total de gastos', 'origen_tipo' => 'calculo', 'origen_clave' => null],
             ['linea' => '30', 'descripcion' => 'Oficina en casa (Form 8829 o método simplificado)', 'origen_tipo' => 'calculo', 'origen_clave' => null],
             ['linea' => '31', 'descripcion' => 'Ganancia o pérdida neta', 'origen_tipo' => 'calculo', 'origen_clave' => null],

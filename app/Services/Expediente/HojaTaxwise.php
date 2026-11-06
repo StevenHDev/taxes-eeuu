@@ -542,18 +542,20 @@ class HojaTaxwise
         $nombre = $this->tituloItem($ctx, $item, false);
 
         if ($item->esOtro() || $casillas->isEmpty()) {
+            $destino = $this->destinoDeItem($ctx, $item);
+
             if ($item->estado === EstadoDocumento::Pendiente) {
-                return [$this->fila("item:{$item->id}", null, $nombre, null, 'texto', $titulo, $enlace, 'pendiente', __('Falta: el cliente no lo ha subido'))];
+                return [$this->fila("item:{$item->id}", $destino, $nombre, null, 'texto', $titulo, $enlace, 'pendiente', __('Falta: el cliente no lo ha subido'))];
             }
 
-            return [$this->fila("item:{$item->id}", null, $nombre, null, 'texto', $this->origenManual($titulo, $item->archivos_count), $enlace, 'manual', __('Digitar desde el documento'))];
+            return [$this->fila("item:{$item->id}", $destino, $nombre, null, 'texto', $this->origenManual($titulo, $item->archivos_count), $enlace, 'manual', __('Digitar desde el documento'))];
         }
 
         /** @var Collection<int, DocumentoDato> $datos */
         $datos = $ctx['datos'][$item->id];
 
         if ($datos->isEmpty()) {
-            return [$this->fila("item:{$item->id}", null, $nombre, null, 'texto', $titulo, $enlace, 'pendiente', $this->textoSinLeer($item))];
+            return [$this->fila("item:{$item->id}", $this->destinoDeItem($ctx, $item), $nombre, null, 'texto', $titulo, $enlace, 'pendiente', $this->textoSinLeer($item))];
         }
 
         $filas = [];
@@ -728,6 +730,28 @@ class HojaTaxwise
         }
 
         return ['sin_validar', __('Leído, sin validar')];
+    }
+
+    /**
+     * Destino de un documento sin casillas (registros del negocio, recibos,
+     * datos bancarios): las líneas que alimentan las preguntas que lo
+     * activaron. Si ninguna tiene línea, son archivos de respaldo que no se digitan.
+     *
+     * @param  array<string, mixed>  $ctx
+     */
+    private function destinoDeItem(array $ctx, EntrevistaDocumento $item): string
+    {
+        $destinos = [];
+
+        foreach ($ctx['situacion']->activadoPor($item->documento_codigo, $item->persona_id) as $pregunta) {
+            foreach ($ctx['destinosRespuesta'][$pregunta] ?? [] as $destino) {
+                $destinos[$destino] = true;
+            }
+        }
+
+        return $destinos === []
+            ? __('Respaldo del cliente (no se digita)')
+            : implode(' '.__('y').' ', array_keys($destinos));
     }
 
     /**

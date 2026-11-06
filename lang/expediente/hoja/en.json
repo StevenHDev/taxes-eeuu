@@ -72,5 +72,6 @@
     "La inteligencia artificial no está segura de algún carácter. Hay que compararlo con el documento.": "The artificial intelligence is not sure of some character. It has to be compared with the document.",
     "Lo que se leyó no tiene la forma que corresponde a la casilla (por ejemplo, un monto con tres decimales o un SSN de 8 dígitos). Casi seguro se leyó mal: hay que revisarlo.": "What was read does not have the shape the box calls for (for example, an amount with three decimals or an 8-digit SSN). It was almost surely misread: it has to be reviewed.",
     "La casilla está borrosa, cortada o tapada y no se pudo leer. Si el documento la trae, hay que escribir el dato a mano.": "The box is blurry, cut off or covered and could not be read. If the document has it, the value has to be typed by hand.",
-    "No se leyó ningún valor en esta casilla. Si el documento la trae, hay que escribir el dato a mano; si no la trae, se deja vacía.": "No value was read in this box. If the document has it, the value has to be typed by hand; if it does not, it is left empty."
+    "No se leyó ningún valor en esta casilla. Si el documento la trae, hay que escribir el dato a mano; si no la trae, se deja vacía.": "No value was read in this box. If the document has it, the value has to be typed by hand; if it does not, it is left empty.",
+    "Respaldo del cliente (no se digita)": "Client backup (not entered)"
 }

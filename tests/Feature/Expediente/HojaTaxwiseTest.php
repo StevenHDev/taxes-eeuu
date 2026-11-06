@@ -265,6 +265,24 @@ class HojaTaxwiseTest extends TestCase
         $this->assertTrue($csv->contains(fn (array $f) => $f[1] === 'Form W-2 · pantalla de TaxWise · casilla 3'));
     }
 
+    public function test_los_documentos_sin_casillas_traen_el_destino_de_la_pregunta_que_los_activo(): void
+    {
+        [$cliente, $e] = $this->clienteConExpediente(['D15' => 'si', 'E8' => 'si', 'G3' => 'deposito_directo', 'G4' => 'debito_cuenta']);
+        foreach (['registros-ingresos-gastos', 'recibos-utiles-educador', 'datos-bancarios'] as $codigo) {
+            $this->item($e, $codigo, EstadoDocumento::Subido);
+        }
+
+        $hoja = $this->hoja($cliente, 2025);
+
+        $this->assertStringContainsString('Schedule C · línea 8-27', $this->fila($hoja, 'Registros de ingresos y gastos', 'Registros')['destino']);
+        $this->assertStringContainsString('Schedule 1 · línea 11', $this->fila($hoja, 'Recibos de útiles', 'Recibos')['destino']);
+        $banco = $this->fila($hoja, 'Datos bancarios (número de ruta', 'Datos bancarios')['destino'];
+        $this->assertStringContainsString('Form 1040 · línea 35a-35d', $banco);
+        $this->assertStringContainsString('Form 1040 · línea 37', $banco);
+        // Las preguntas de pago también traen su línea.
+        $this->assertStringContainsString('Form 1040 · línea 37', $this->fila($hoja, 'Si te toca pagar')['destino']);
+    }
+
     public function test_lo_sensible_sale_enmascarado_y_nunca_en_claro(): void
     {
         [$cliente, $e, $preparador, $w2, $tarjeta] = $this->maria();

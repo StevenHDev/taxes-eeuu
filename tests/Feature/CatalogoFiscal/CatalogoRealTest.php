@@ -60,7 +60,7 @@ class CatalogoRealTest extends TestCase
         $this->assertSame(30, $conteos['formularios']);
         $this->assertSame(13, $conteos['reglas']);
         $this->assertSame(347, $conteos['casillas']);
-        $this->assertSame(107, $conteos['lineas']);
+        $this->assertSame(111, $conteos['lineas']);
 
         // 2026 apaga F10 y F11: los créditos por vehículo limpio y de energía
         // de la vivienda terminan en 2025 (F3.9).
