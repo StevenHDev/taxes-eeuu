@@ -26,6 +26,11 @@ Qué se verificó y con qué fuente, para que cada destino de la **Hoja para Tax
 | Ganancia del Schedule C | Schedule 1 línea 3 y Schedule SE línea 2 | f1040s1.pdf, f1040sse.pdf | ✔ | ✔ |
 | Impuesto de autoempleo | Schedule SE línea 12 va a Schedule 2 línea **4**. La mitad deducible (Schedule SE línea 13) va a Schedule 1 línea **15** | f1040s2.pdf, f1040sse.pdf | ✔ | ✔ |
 | Cuándo se presenta el Schedule SE | Cuando la línea 4c del propio Schedule SE es de USD **400 o más** (esa línea ya multiplica por 92,35 %, así que sobre la ganancia son unos USD 433) | Instrucciones del Schedule SE, "Who Must File" | ✔ | ✔ |
+| Reembolso por depósito directo (pregunta G3) | Form 1040 líneas **35a** (monto), **35b** (número de ruta), **35c** (tipo de cuenta) y **35d** (número de cuenta). Con varias cuentas se adjunta el Form 8888 | f1040.pdf; f8888.pdf | ✔ | ✔ (borrador, mismas líneas) |
+| Reembolso aplicado al año siguiente (G3) | Form 1040 línea **36** ("aplicado a su impuesto estimado de 2026"; en el borrador, 2027) | f1040.pdf | ✔ | ✔ |
+| Monto que debe y cómo lo paga (G4) | Form 1040 línea **37** ("Amount you owe") | f1040.pdf | ✔ | ✔ |
+| Gastos de educador (E8) | Schedule 1 línea **11** "Educator expenses" | f1040s1.pdf | ✔ | ✔ |
+| Registros de ingresos y gastos del negocio (D15) | Schedule C, Parte II, líneas **8 a 27b** (gastos); línea 28 total; línea 30 oficina en casa (Form 8829) | f1040sc.pdf | ✔ | ✔ |
 | W-2 casilla 1 y 2 | Línea de sueldos (1a) y retención de W-2 (25a) | Instrucciones del W-2 para el empleado | ✔ | — |
 | W-2 casilla 10 | Form 2441 | ídem | ✔ | — |
 | W-2 casilla 8 | Form 4137 | ídem | ✔ | — |
