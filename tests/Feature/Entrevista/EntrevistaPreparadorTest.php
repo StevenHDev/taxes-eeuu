@@ -69,7 +69,7 @@ class EntrevistaPreparadorTest extends TestCase
                 ->missing('entrevista')
                 ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
                     ->where('entrevista.estado', 'en_curso')
-                    ->where('entrevista.formularios', fn ($f) => collect($f)->contains('1040'))
+                    ->where('entrevista.formularios', fn ($f) => collect($f)->contains(fn ($x) => $x['codigo'] === '1040' && array_key_exists('nombre', $x) && array_key_exists('para_que', $x)))
                     ->where('entrevista', function ($entrevista) {
                         $entrevista = collect($entrevista)->toArray();
                         $a3 = $this->pregunta($entrevista, 'A3');

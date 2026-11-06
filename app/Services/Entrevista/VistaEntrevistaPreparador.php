@@ -78,7 +78,7 @@ class VistaEntrevistaPreparador
                 'orden' => $p->orden,
                 'etiqueta' => $p->etiqueta,
             ])->values()->all(),
-            'formularios' => array_column($situacion->formularios, 'codigo'),
+            'formularios' => $this->formularios($situacion, $taxYear),
             'pantallas' => collect($situacion->pantallas)->map(fn (array $pantalla) => [
                 'numero' => $pantalla['numero'],
                 'total' => $pantalla['total'],
@@ -117,6 +117,24 @@ class VistaEntrevistaPreparador
             // F4.7: lo que el motor de reglas dejó abierto para este cliente.
             'excepciones_abiertas' => $this->cola->conteo($cliente, $taxYear),
         ];
+    }
+
+    /**
+     * Los formularios que GTS llena en TaxWise, con su nombre y para qué
+     * sirven según el catálogo del año. Si el código no está en el catálogo
+     * sale solo con el código.
+     *
+     * @return list<array{codigo: string, nombre: string|null, para_que: string|null}>
+     */
+    private function formularios(SituacionEntrevista $situacion, int $taxYear): array
+    {
+        $catalogo = $this->catalogo->formularios($taxYear)->keyBy('codigo');
+
+        return array_map(fn (array $f) => [
+            'codigo' => $f['codigo'],
+            'nombre' => $catalogo->get($f['codigo'])['nombre'] ?? null,
+            'para_que' => $catalogo->get($f['codigo'])['para_que'] ?? null,
+        ], array_values($situacion->formularios));
     }
 
     /**

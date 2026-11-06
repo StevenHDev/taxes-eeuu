@@ -140,6 +140,12 @@ export type ResumenDocumentos = {
     completo: boolean;
 };
 
+export type FormularioEntrevista = {
+    codigo: string;
+    nombre: string | null;
+    para_que: string | null;
+};
+
 /** La entrevista en la ficha del cliente (App\Services\Entrevista\VistaEntrevistaPreparador). */
 export type VistaEntrevista = {
     tax_year: number;
@@ -154,7 +160,8 @@ export type VistaEntrevista = {
     } | null;
     con_conyuge: boolean;
     personas: { id: number; orden: number; etiqueta: string }[];
-    formularios: string[];
+    /** Los que GTS llena en TaxWise; nombre y para_que salen del catálogo del año. */
+    formularios: FormularioEntrevista[];
     pantallas: {
         numero: number;
         total: number;

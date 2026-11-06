@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import { Eye, History, Pencil, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -39,8 +39,11 @@ import {
     revelar as rutaRevelar,
     update as rutaCorregir,
 } from '@/routes/clientes/entrevista/respuestas';
+import { documentos as rutaDocumentos } from '@/routes/clientes/ficha';
 import type {
     CambioRespuesta,
+    DocumentoRevision,
+    FormularioEntrevista,
     RespuestaPreparador,
     ValorEntrevista,
     VistaEntrevista,
@@ -96,6 +99,102 @@ export function EntrevistaClienteError() {
     const { t } = useTranslation();
 
     return <AlertError errors={[t('clienteShow.entrevista.error')]} />;
+}
+
+/** Qué prepara GTS y qué respalda la declaración: solo nombres, sin estados. */
+function FormulariosYDocumentos({
+    clienteId,
+    formularios,
+    documentos,
+}: {
+    clienteId: number;
+    formularios: FormularioEntrevista[];
+    documentos: DocumentoRevision[];
+}) {
+    const { t } = useTranslation();
+    // Un documento por persona en el bloque C: aquí basta una vez por código.
+    const unicos = [...new Map(documentos.map((d) => [d.codigo, d])).values()];
+
+    return (
+        <div className="grid gap-3 md:grid-cols-2">
+            <section
+                aria-labelledby="entrevista-formularios"
+                className="space-y-2 rounded-lg border bg-muted/30 p-3"
+            >
+                <div>
+                    <h3
+                        id="entrevista-formularios"
+                        className="text-sm font-semibold text-foreground"
+                    >
+                        {t('clienteShow.entrevista.formulariosGts')}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                        {t('clienteShow.entrevista.formulariosGtsAyuda')}
+                    </p>
+                </div>
+                <ul className="flex flex-wrap gap-1.5">
+                    {formularios.map((f) => (
+                        <li key={f.codigo}>
+                            <Badge
+                                variant="secondary"
+                                className="h-auto max-w-full flex-wrap gap-x-1.5 py-1 whitespace-normal"
+                                title={f.para_que ?? undefined}
+                            >
+                                <span className="font-mono">{f.codigo}</span>
+                                {f.nombre && f.nombre !== f.codigo ? (
+                                    <span>{f.nombre}</span>
+                                ) : null}
+                                {f.para_que ? (
+                                    <span className="font-normal text-muted-foreground">
+                                        · {f.para_que}
+                                    </span>
+                                ) : null}
+                            </Badge>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+            <section
+                aria-labelledby="entrevista-documentos-respaldo"
+                className="space-y-2 rounded-lg border bg-muted/30 p-3"
+            >
+                <div>
+                    <h3
+                        id="entrevista-documentos-respaldo"
+                        className="text-sm font-semibold text-foreground"
+                    >
+                        {t('clienteShow.entrevista.documentosRespaldo')}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                        {t('clienteShow.entrevista.documentosRespaldoAyuda')}
+                    </p>
+                </div>
+                {unicos.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                        {t('clienteShow.entrevista.documentosRespaldoVacio')}
+                    </p>
+                ) : (
+                    <ul className="flex flex-wrap gap-1.5">
+                        {unicos.map((d) => (
+                            <li key={d.codigo}>
+                                <Link
+                                    href={rutaDocumentos(clienteId)}
+                                    className="inline-flex min-h-11 items-center rounded-md border bg-background px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-accent/70 md:min-h-0"
+                                >
+                                    {d.nombre}
+                                    {d.nombre_oficial ? (
+                                        <span className="ml-1 text-muted-foreground">
+                                            ({d.nombre_oficial})
+                                        </span>
+                                    ) : null}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
+        </div>
+    );
 }
 
 /**
@@ -180,20 +279,11 @@ export function EntrevistaCliente({
                             : t('clienteShow.entrevista.sinConsentimiento')}
                     </span>
                 </CardDescription>
-                <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">
-                        {t('clienteShow.entrevista.formularios')}:
-                    </span>
-                    {entrevista.formularios.map((f) => (
-                        <Badge
-                            key={f}
-                            variant="secondary"
-                            className="font-mono"
-                        >
-                            {f}
-                        </Badge>
-                    ))}
-                </div>
+                <FormulariosYDocumentos
+                    clienteId={clienteId}
+                    formularios={entrevista.formularios}
+                    documentos={entrevista.documentos}
+                />
             </CardHeader>
 
             <CardContent className="space-y-6">
