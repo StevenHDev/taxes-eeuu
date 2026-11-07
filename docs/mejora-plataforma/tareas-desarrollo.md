@@ -25,7 +25,7 @@
 | F1 | Catálogo fiscal del año | Alta | ✅ | F0 |
 | F2 | Entrevista por WhatsApp y por el portal | Media | ✅ | F1 (L1 y L3 en la tarea de pendientes legales) |
 | F3 | Checklist de documentos | Media | 🔄 | F2 |
-| F4 | Lectura y validación de documentos | Media | ⏳ | F1, F3 |
+| F4 | Lectura y validación de documentos | Media | ✅ | F1, F3 |
 | F5 | Expediente, revisión del preparador y hoja para TaxWise | Media | ✅ | F4 |
 | F6 | Cálculo validado y borrador del 1040 | Media | ⏳ | F1, F4 (la validación puede empezar desde F1) |
 | F7 | Pendientes para después | Baja | ⏳ | Sección 10 |
@@ -189,6 +189,7 @@ Wiplitask: `cmvskowhd007m1420ml6zef8q` · ⏳
 
 ### F7 — Pendientes para después
 Wiplitask: `cmvskowpm007r1420cq7e3zse` · ⏳
+- [ ] **Guía de la plataforma para quien quiera usarla** (nov. 2026): un documento que explique cómo funciona y cómo se usa, pensado para presentarla a un cliente o a otra firma. Se arma a partir del informe de las fases 0 a 5
 - [ ] Fichas pendientes de formularios (1-A, A, B, D/8949, E, H, R, LEP, 4137, 4684, 8829, 8862, 8863, 8880, 8888, 8889)
 - [ ] Transcripciones del IRS con Form 8821
 - [ ] Regla R-13 (variación frente al año anterior), que pasó de F4 (decisión del 2 nov.)
