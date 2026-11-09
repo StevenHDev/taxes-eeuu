@@ -35,6 +35,7 @@ class MotorReglas
         R08RespuestasContraDocumentos::class,
         R09Adelanto8962::class,
         R11HijoSinSsn::class,
+        R14RegistrosNegocio::class,
     ];
 
     public function __construct(private readonly DatosDocumento $datos) {}

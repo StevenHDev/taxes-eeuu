@@ -10,6 +10,7 @@ use App\Services\Entrevista\ChecklistDocumentos;
 use App\Services\Lectura\DatosDocumento;
 use App\Services\Lectura\EsquemaLectura;
 use App\Services\Lectura\LectorDocumentos;
+use App\Services\Lectura\LectorHojas;
 use App\Services\Lectura\Reglas\MotorReglas;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -22,9 +23,9 @@ use Throwable;
  * se acaban, el ítem pasa a `no_se_pudo_leer`: nunca queda `subido` sin datos
  * ni aviso (documento madre 6.1.5).
  *
- * No lee lo que no se lee solo (la bandera apagada, o un documento sin
- * casillas): ahí el preparador escribe los datos en el visor y el ítem sigue
- * `subido`. Los errores no llevan datos del cliente.
+ * No lee lo que no se lee solo (la bandera apagada, salvo las hojas `xlsx` y
+ * `csv` que no usan IA, o un documento sin casillas): ahí el preparador
+ * escribe los datos en el visor y el ítem sigue `subido`. Los errores no llevan datos del cliente.
  */
 class LeerDocumentoJob implements ShouldQueue
 {
@@ -60,7 +61,10 @@ class LeerDocumentoJob implements ShouldQueue
 
         $anio = $item->entrevista->tax_year;
 
-        if (! config('tax.lectura_automatica') || ! array_key_exists($item->documento_codigo, $esquemas->documentosLeibles($anio))) {
+        // La bandera apaga la lectura con IA. Las hojas `xlsx` y `csv` (F6, 6.3b) se leen sin IA y se leen siempre.
+        $esHoja = in_array(strtolower((string) $documento->formato), ['xlsx', 'csv'], true);
+
+        if ((! config('tax.lectura_automatica') && ! $esHoja) || ! array_key_exists($item->documento_codigo, $esquemas->documentosLeibles($anio))) {
             return;
         }
 
@@ -72,7 +76,10 @@ class LeerDocumentoJob implements ShouldQueue
         ]);
 
         try {
-            $datos->guardarLectura($lectura, $lector->leer($documento, $lectura, $item->documento_codigo, $anio));
+            // Con la bandera apagada el contenedor entrega el lector manual: las hojas van directo a LectorHojas.
+            $lectorDelArchivo = $esHoja ? app(LectorHojas::class) : $lector;
+
+            $datos->guardarLectura($lectura, $lectorDelArchivo->leer($documento, $lectura, $item->documento_codigo, $anio));
         } catch (Throwable $error) {
             $datos->fallar($lectura, $error);
 

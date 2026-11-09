@@ -147,7 +147,7 @@ class VisorTest extends TestCase
                 ->has('imagenes', 1)
                 ->etc())
             ->has('datos', 2)
-            ->has('confianza_tabla', 6)
+            ->has('confianza_tabla', 7)
             ->where('umbral', 0.9)
             ->has('datos.0', fn (Assert $d) => $d
                 ->where('sensible', true)

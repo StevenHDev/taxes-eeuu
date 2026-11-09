@@ -40,8 +40,53 @@ class ExplicadorExcepcion
             'R-06' => $this->anioOTipo($detalle, $anio),
             'R-07' => ['caso' => $this->repetido($detalle), 'que_hacer' => null],
             'R-08', 'R-09', 'R-11' => ['caso' => is_string($detalle['problema'] ?? null) ? __($detalle['problema']) : __('La regla :regla encontró algo que revisar.', ['regla' => $excepcion->regla_codigo]), 'que_hacer' => null],
+            'R-14' => $this->registros($detalle),
             default => ['caso' => __('La regla :regla encontró algo que revisar.', ['regla' => $excepcion->regla_codigo]), 'que_hacer' => null],
         };
+    }
+
+    /**
+     * R-14, registros del negocio (F6 6.3b). Solo letras de columna y conteos: nunca montos ni descripciones.
+     *
+     * @param  array<string, mixed>  $detalle
+     * @return array{caso: string, que_hacer: string|null}
+     */
+    private function registros(array $detalle): array
+    {
+        if (($detalle['tipo'] ?? null) === 'archivo_sin_lector') {
+            return [
+                'caso' => __('Este archivo de registros es un PDF o una foto: se lee en una versión posterior y el preparador lo revisa.'),
+                'que_hacer' => __('Revisa el archivo; si el cliente lleva sus cuentas, la plantilla en Excel es lo más rápido.'),
+            ];
+        }
+
+        if (($detalle['tipo'] ?? null) === 'sin_categoria') {
+            return [
+                'caso' => __('Renglones de la hoja sin categoría: :n. No suman al Schedule C hasta que les pongas una.', ['n' => $this->texto($detalle['renglones'] ?? '?')]),
+                'que_hacer' => __('Ponle categoría a cada renglón en el visor, o márcalo como personal o transferencia.'),
+            ];
+        }
+
+        $partes = [];
+
+        if (($detalle['formato_no_reconocido'] ?? false) === true) {
+            $partes[] = __('la hoja no se reconoció como la plantilla ni como una lista de movimientos con fecha y monto');
+        }
+
+        if (is_array($detalle['columnas_no_reconocidas'] ?? null) && $detalle['columnas_no_reconocidas'] !== []) {
+            $partes[] = __('columnas sin reconocer: :columnas', ['columnas' => implode(', ', array_map($this->texto(...), $detalle['columnas_no_reconocidas']))]);
+        }
+
+        foreach (['filas_sin_monto' => 'filas sin un monto que se entienda: :n', 'filas_sin_fecha' => 'filas sin una fecha que se entienda: :n', 'formulas_sin_valor' => 'celdas con fórmula sin valor guardado: :n', 'hojas_sin_leer' => 'otras hojas del archivo sin leer: :n'] as $clave => $texto) {
+            if ((int) ($detalle[$clave] ?? 0) > 0) {
+                $partes[] = __($texto, ['n' => (int) $detalle[$clave]]);
+            }
+        }
+
+        return [
+            'caso' => __('La hoja trae datos que no se reconocieron').($partes === [] ? '.' : ': '.implode('; ', $partes).'.'),
+            'que_hacer' => __('Abre la hoja y revisa lo que no se reconoció; si hace falta, pídele al cliente la plantilla en Excel.'),
+        ];
     }
 
     /**

@@ -59,13 +59,14 @@ class CatalogoRealTest extends TestCase
         $this->assertSame(47, $conteos['documentos']);
         // 30 + el Form 8995 de F6 (6.0).
         $this->assertSame(31, $conteos['formularios']);
-        $this->assertSame(13, $conteos['reglas']);
+        // 13 + R-14 (registros del negocio, implementada) y R-15 (dato sin documento, informativa) de F6 6.3b.
+        $this->assertSame(15, $conteos['reglas']);
         // 347 + 32 de F6 6.3a: recibo-cuidado 7, comprobantes-pagos 4, recibos-utiles-educador 4,
         // constancia-horas-propinas 3, estado-prestamo-vehiculo 4 y registros-ingresos-gastos 10.
         $this->assertSame(379, $conteos['casillas']);
         // 111 + las de F6 (6.0): 1040 de 19 a 37; Schedules 1, 2 y 3 y Schedule SE, 8812, 2441 y 8962 completos;
         // Schedule C por categoría (35); Schedule 1-A (15) y Form 8995 (8).
-        $this->assertSame(235, $conteos['lineas']);
+        $this->assertSame(238, $conteos['lineas']);
 
         // 2026 apaga F10 y F11: los créditos por vehículo limpio y de energía
         // de la vivienda terminan en 2025 (F3.9).
@@ -145,8 +146,11 @@ class CatalogoRealTest extends TestCase
     {
         $this->assertSame(5300, ParametrosFiscales::valor(2026, 'dependiente_calificado', 'limite_ingreso_bruto_pariente_calificado'));
         $this->assertSame('1962-01-02', ParametrosFiscales::valor(2026, 'edad', 'nacido_antes_de_mayor_65'));
-        $this->assertNull(ParametrosFiscales::valor(2026, 'deduccion_estandar', 'monto_mfj'));
+        // F6 (6.1b): la deducción estándar de 2026 ya está publicada (Rev. Proc. 2025-32, 4.14) y 2025 no cambia.
+        $this->assertSame(32200, ParametrosFiscales::valor(2026, 'deduccion_estandar', 'monto_mfj'));
         $this->assertSame(31500, ParametrosFiscales::valor(2025, 'deduccion_estandar', 'monto_mfj'));
+        // Lo que el IRS aún no publica sigue pendiente.
+        $this->assertNull(ParametrosFiscales::valor(2026, 'schedule_c', 'millaje_estandar'));
 
         $c13 = fn (int $anio) => CatalogoPregunta::query()->delAnio($anio)->where('codigo', 'C13')->sole()->texto();
         $this->assertSame('¿Esta persona tuvo ingresos de menos de USD 5.200 en 2025?', $c13(2025));

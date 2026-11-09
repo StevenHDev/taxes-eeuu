@@ -17,6 +17,7 @@ La inteligencia artificial no sabe qué tan bien leyó. Por eso **no le creemos 
 | Confianza | Motivo | Qué significa |
 | --- | --- | --- |
 | **0,99** | Está en el texto del PDF | El mismo valor aparece en el texto que viene escrito dentro del PDF (no en una imagen). Es la lectura más segura. |
+| **0,99** | Leído de la hoja de cálculo (sin IA) | El valor salió de una celda de un archivo Excel o CSV, sin inteligencia artificial: es exactamente lo que escribió el cliente. Lo que hay que revisar es la categoría o la columna, no la lectura. |
 | **0,90** | Leído con claridad | La inteligencia artificial lo leyó con claridad y tiene la forma que corresponde a la casilla. Viene de una imagen (foto o PDF escaneado), así que no se puede comprobar contra el texto del archivo. |
 | **0,60** | Leído con dudas | La inteligencia artificial no está segura de algún carácter. |
 | **0,60** | Formato incorrecto | Lo leído no tiene la forma de la casilla: por ejemplo, un monto con tres decimales o un SSN de 8 dígitos. Casi seguro se leyó mal. |
@@ -39,6 +40,7 @@ La regla **R-03** dice: *un dato de una casilla clave con confianza **menor de 0
 | Motivo | Qué hace el preparador |
 | --- | --- |
 | Está en el texto del PDF | Nada: ya está comprobado. |
+| Leído de la hoja de cálculo (sin IA) | Nada con el valor. Si la plataforma no reconoció una columna o una categoría, aparece la excepción R-14 y se revisa la hoja. |
 | Leído con claridad | Nada, normalmente. Si el monto es alto o raro, vale la pena mirar el documento. |
 | Leído con dudas | Comparar con el documento y corregir si hace falta. |
 | Formato incorrecto | Mirar el documento: casi seguro hay que corregir el dato. |

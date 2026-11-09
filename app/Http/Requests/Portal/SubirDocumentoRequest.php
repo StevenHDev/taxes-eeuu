@@ -7,7 +7,8 @@ use App\Services\Entrevista\DocumentosEntrevista;
 /**
  * Subir uno o varios archivos (hasta 10) a un ítem de la lista (F2.6, F3.3):
  * en los formatos del catálogo (en "otro", PDF, JPG, PNG o HEIC) y de hasta
- * 20 MB cada uno.
+ * 20 MB cada uno. El mensaje de formato no permitido nombra los formatos de
+ * ese documento, no una lista fija.
  */
 class SubirDocumentoRequest extends ItemDocumentoRequest
 {
@@ -32,18 +33,39 @@ class SubirDocumentoRequest extends ItemDocumentoRequest
      */
     public function messages(): array
     {
-        return self::mensajes();
+        $item = $this->item();
+
+        return self::mensajes(app(DocumentosEntrevista::class)->extensiones($this->entrevista()->tax_year, $item->documento_codigo));
     }
 
     /**
+     * @param  list<string>|null  $extensiones  los formatos del documento; sin ellos, los de siempre
      * @return array<string, string>
      */
-    public static function mensajes(): array
+    public static function mensajes(?array $extensiones = null): array
     {
         return [
             'archivos.required' => __('Elige al menos un archivo.'),
             'archivos.*.max' => __('Cada archivo puede pesar hasta 20 MB.'),
-            'archivos.*.extensions' => __('Formato no permitido. Usa :formatos.', ['formatos' => __('PDF, JPG, PNG o HEIC')]),
+            'archivos.*.extensions' => __('Formato no permitido. Usa :formatos.', ['formatos' => self::formatos($extensiones)]),
         ];
+    }
+
+    /**
+     * Los formatos como los lee una persona: "PDF, JPG, PNG o HEIC". `jpeg` no se nombra aparte de `jpg`.
+     *
+     * @param  list<string>|null  $extensiones
+     */
+    private static function formatos(?array $extensiones): string
+    {
+        $formatos = array_values(array_unique(array_map(strtoupper(...), array_filter($extensiones ?? [], fn (string $e) => $e !== 'jpeg'))));
+
+        if ($formatos === [] || $formatos === ['PDF', 'JPG', 'PNG', 'HEIC']) {
+            return __('PDF, JPG, PNG o HEIC');
+        }
+
+        $ultimo = array_pop($formatos);
+
+        return $formatos === [] ? $ultimo : implode(', ', $formatos).' '.(str_starts_with(app()->getLocale(), 'en') ? 'or' : 'o').' '.$ultimo;
     }
 }

@@ -18,6 +18,7 @@ enum MotivoConfianza: string
     case FormatoIncorrecto = 'formato_incorrecto';
     case NoSeVe = 'no_se_ve';
     case SinValor = 'sin_valor';
+    case HojaCalculo = 'hoja_calculo';
 
     public function titulo(): string
     {
@@ -28,6 +29,7 @@ enum MotivoConfianza: string
             self::FormatoIncorrecto => 'Formato incorrecto',
             self::NoSeVe => 'No se ve',
             self::SinValor => 'Sin valor',
+            self::HojaCalculo => 'Leído de la hoja de cálculo (sin IA)',
         };
     }
 
@@ -40,6 +42,7 @@ enum MotivoConfianza: string
             self::FormatoIncorrecto => 'Lo que se leyó no tiene la forma que corresponde a la casilla (por ejemplo, un monto con tres decimales o un SSN de 8 dígitos). Casi seguro se leyó mal: hay que revisarlo.',
             self::NoSeVe => 'La casilla está borrosa, cortada o tapada y no se pudo leer. Si el documento la trae, hay que escribir el dato a mano.',
             self::SinValor => 'No se leyó ningún valor en esta casilla. Si el documento la trae, hay que escribir el dato a mano; si no la trae, se deja vacía.',
+            self::HojaCalculo => 'El valor salió de una celda de una hoja de cálculo (Excel o CSV), sin inteligencia artificial: es exactamente lo que escribió el cliente. Lo que se revisa es que la categoría y la columna sean las correctas, no la lectura.',
         };
     }
 }

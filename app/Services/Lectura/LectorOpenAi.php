@@ -6,6 +6,7 @@ use App\Enums\Lectura\Legibilidad;
 use App\Enums\Lectura\MotivoConfianza;
 use App\Models\Documento;
 use App\Models\Lectura\DocumentoLectura;
+use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Services\DocumentoAlmacen;
 use App\Services\WhatsappAgent\OpenAiClient;
 use RuntimeException;
@@ -19,7 +20,11 @@ use RuntimeException;
  * recuadro para el visor. En fotos y escaneados no hay texto que comparar.
  *
  * Los documentos que no se leen (sin casillas en el catálogo) se mandan al
- * lector manual sin llamar a OpenAI. Ningún mensaje de error lleva lo leído.
+ * lector manual sin llamar a OpenAI. Los de renglones (`lectura = renglones`,
+ * F6 6.3b) tampoco van a OpenAI mientras no exista el lector de renglones con
+ * IA (tramo 2): una hoja `xlsx` o `csv` la lee `LectorHojas`, sin IA; un PDF o
+ * una foto va al lector manual y la regla R-14 avisa al preparador. Ningún
+ * mensaje de error lleva lo leído.
  */
 class LectorOpenAi implements LectorDocumentos
 {
@@ -32,10 +37,18 @@ class LectorOpenAi implements LectorDocumentos
         private readonly CalculadoraConfianza $confianza,
         private readonly DocumentoAlmacen $almacen,
         private readonly LectorManual $manual,
+        private readonly LectorHojas $hojas,
+        private readonly CatalogoFiscal $catalogo,
     ) {}
 
     public function leer(Documento $documento, DocumentoLectura $lectura, string $codigo, int $anio): LecturaResultado
     {
+        if (($this->catalogo->documentos($anio)->firstWhere('codigo', $codigo)['lectura'] ?? 'casillas') === 'renglones') {
+            return in_array(strtolower((string) $documento->formato), ['xlsx', 'csv'], true)
+                ? $this->hojas->leer($documento, $lectura, $codigo, $anio)
+                : $this->manual->leer($documento, $lectura, $codigo, $anio);
+        }
+
         if (! array_key_exists($codigo, $this->esquemas->documentosLeibles($anio))) {
             return $this->manual->leer($documento, $lectura, $codigo, $anio);
         }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Reglas de validación del año fiscal 2025 (R-01 a R-13).
+ * Reglas de validación del año fiscal 2025 (R-01 a R-15).
  *
  * Origen: docs/mejora-plataforma/documento-madre.md, sección 6.2 (tabla "Reglas para una persona
  * natural (año fiscal 2025)"). Descripción tomada de la columna "Regla" (sin las negritas de markdown);
@@ -21,4 +21,6 @@ return [
     ['codigo' => 'R-11', 'descripcion' => 'Hijo declarado para el crédito por hijos sin SSN válido para trabajar (en F4 solo avisa: no bloquea)', 'severidad' => 'revision', 'implementada' => true, 'orden' => 11, 'fuente_texto' => 'Instrucciones del Schedule 8812', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040s8.pdf'],
     ['codigo' => 'R-12', 'descripcion' => 'Proveedor de cuidado sin SSN o EIN', 'severidad' => 'revision', 'orden' => 12, 'fuente_texto' => 'Form 2441, Parte I', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f2441.pdf'],
     ['codigo' => 'R-13', 'descripcion' => 'Variación de más de 25 % frente al año anterior por fuente de ingreso, o una fuente del año pasado que no aparece', 'severidad' => 'informativa', 'orden' => 13, 'fuente_texto' => 'Proceso (necesita la declaración anterior)', 'fuente_url' => null],
+    ['codigo' => 'R-14', 'descripcion' => 'Registros del negocio por revisar: una hoja con columnas, filas o categorías que no se reconocieron, renglones sin categoría, o un archivo de registros (PDF o foto) que todavía no se lee solo. Una excepción por archivo, nunca por renglón; el preparador revisa el archivo y le pone categoría a lo que quedó sin ella', 'severidad' => 'revision', 'implementada' => true, 'orden' => 14, 'fuente_texto' => 'Proceso; Schedule C de 2025 (líneas 1 y 8 a 27b)', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040sc.pdf'],
+    ['codigo' => 'R-15', 'descripcion' => 'Dato anotado sin documento: el preparador escribió un monto a mano porque el cliente no tiene el documento (respaldo manual, último recurso). Se reemplaza solo si el documento llega después', 'severidad' => 'informativa', 'orden' => 15, 'fuente_texto' => 'Proceso; Schedule C de 2025', 'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040sc.pdf'],
 ];

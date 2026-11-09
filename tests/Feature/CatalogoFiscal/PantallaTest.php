@@ -26,7 +26,8 @@ class PantallaTest extends TestCase
         'formularios' => 31,
         // 36 + los parámetros completos de 2025 de F6 (6.1a).
         'parametros' => 88,
-        'reglas' => 13,
+        // 13 + R-14 y R-15 de F6 (6.3b).
+        'reglas' => 15,
     ];
 
     protected function setUp(): void
@@ -121,7 +122,9 @@ class PantallaTest extends TestCase
                 ->where('parametros', function ($parametros) {
                     $parametros = collect($parametros);
 
-                    return $parametros->firstWhere('codigo', 'deduccion_estandar.monto_mfj')['valor'] === null
+                    // F6 (6.1b): la deducción estándar de 2026 ya está publicada; el millaje de 2026 sigue pendiente (dos tarifas).
+                    return $parametros->firstWhere('codigo', 'schedule_c.millaje_estandar')['valor'] === null
+                        && $parametros->firstWhere('codigo', 'deduccion_estandar.monto_mfj')['valor'] === 32200
                         && $parametros->firstWhere('codigo', 'dependiente_calificado.limite_ingreso_bruto_pariente_calificado')['valor'] === 5300;
                 })));
 

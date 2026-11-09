@@ -103,7 +103,7 @@ class HojaTaxwiseTest extends TestCase
 
         $this->assertSame(count($this->filas($hoja)), $hoja['conteos']['filas']);
         $this->assertSame(0.9, $hoja['umbral']);
-        $this->assertCount(6, $hoja['confianza_tabla']);
+        $this->assertCount(7, $hoja['confianza_tabla']);
     }
 
     public function test_la_prioridad_de_los_estados(): void

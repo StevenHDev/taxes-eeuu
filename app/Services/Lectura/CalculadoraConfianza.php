@@ -16,6 +16,7 @@ use App\Enums\Lectura\MotivoConfianza;
  * | El valor aparece en la capa de texto del PDF               | 0,99      |
  * | El modelo lo leyó `claro` y tiene el formato correcto      | 0,90      |
  * | El modelo lo leyó `dudoso`                                 | 0,60      |
+ * | Salió de una celda de una hoja de cálculo (sin IA)         | 0,99      |
  *
  * El orden importa: el formato se revisa antes que la capa de texto, así que
  * un valor mal formateado nunca pasa de 0,60 aunque el texto lo contenga (un
@@ -49,6 +50,7 @@ class CalculadoraConfianza
         'formato_incorrecto' => self::REVISION,
         'no_se_ve' => self::SIN_LECTURA,
         'sin_valor' => self::SIN_LECTURA,
+        'hoja_calculo' => self::EN_TEXTO_DEL_PDF,
     ];
 
     /**

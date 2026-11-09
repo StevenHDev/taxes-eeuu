@@ -199,10 +199,10 @@ class EdicionTest extends TestCase
     {
         $this->actingAs($this->admin)
             ->post(route('catalogo-fiscal.reglas.store', ['anio' => 2025]), [
-                'codigo' => 'R-14', 'descripcion' => 'Regla nueva', 'severidad' => 'informativa', 'fuente_texto' => 'Proceso',
+                'codigo' => 'R-16', 'descripcion' => 'Regla nueva', 'severidad' => 'informativa', 'fuente_texto' => 'Proceso',
             ])
             ->assertSessionHasNoErrors();
-        $this->assertSame(14, CatalogoRegla::query()->delAnio(2025)->count());
+        $this->assertSame(16, CatalogoRegla::query()->delAnio(2025)->count());
 
         $this->actingAs($this->admin)
             ->post(route('catalogo-fiscal.preguntas.store', ['anio' => 2025]), [
