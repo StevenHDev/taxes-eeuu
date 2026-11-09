@@ -13,7 +13,7 @@ return [
     ],
     'pasos' => [
         [
-            'formulario' => '1-A',
+            'formulario' => 'sch-1a',
             'linea' => '14c',
             'texto' => 'Solo cuenta la "mitad" del tiempo y medio: 15.000 dividido por 3 = USD 5.000 (la línea es una suposición: el ejemplo solo dice "para calcular la deducción por horas extra calificadas").',
             'valor' => '5000',
@@ -21,7 +21,7 @@ return [
         ],
     ],
     'lineas' => [
-        '1-A' => ['14c' => '5000'],
+        'sch-1a' => ['14c' => '5000'],
     ],
     'cubre' => [],
     'contraste' => null,

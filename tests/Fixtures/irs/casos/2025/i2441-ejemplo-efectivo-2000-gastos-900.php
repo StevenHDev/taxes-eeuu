@@ -11,14 +11,14 @@ return [
     ],
     'pasos' => [
         [
-            'formulario' => '2441',
+            'formulario' => 'f2441',
             'linea' => '12',
             'texto' => 'Beneficios recibidos (casilla 10 del W-2): USD 2.000.',
             'valor' => '2000',
             'fuente' => ['doc' => 'i2441', 'pagina' => 'p. 5 (Line 16, Example)', 'url' => 'https://www.irs.gov/pub/irs-prior/i2441--2025.pdf'],
         ],
         [
-            'formulario' => '2441',
+            'formulario' => 'f2441',
             'linea' => '16',
             'texto' => 'Gastos calificados incurridos en 2025 para el niño de 5 años: USD 900.',
             'valor' => '900',
@@ -26,8 +26,8 @@ return [
         ],
     ],
     'lineas' => [
-        '2441' => ['12' => '2000', '16' => '900'],
+        'f2441' => ['12' => '2000', '16' => '900'],
     ],
-    'cubre' => ['2441:12', '2441:16'],
+    'cubre' => ['f2441:12', 'f2441:16'],
     'contraste' => null,
 ];

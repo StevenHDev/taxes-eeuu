@@ -14,7 +14,7 @@ return [
     ],
     'pasos' => [
         [
-            'formulario' => '1-A',
+            'formulario' => 'sch-1a',
             'linea' => '14c',
             'texto' => 'El tiempo y medio de USD 10.000 de tarifa normal son USD 15.000; la "mitad" exigida por la FLSA es 15.000 / 3 = USD 5.000, que es lo que se incluye (no los 10.000 de recargo pagados).',
             'valor' => '5000',
@@ -22,7 +22,7 @@ return [
         ],
     ],
     'lineas' => [
-        '1-A' => ['14c' => '5000'],
+        'sch-1a' => ['14c' => '5000'],
     ],
     'cubre' => [],
     'contraste' => null,

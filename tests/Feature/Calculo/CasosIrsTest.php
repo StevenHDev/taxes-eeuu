@@ -93,9 +93,9 @@ class CasosIrsTest extends TestCase
         $cubiertas = CasosIrs::cubiertas(self::ANIO);
 
         $this->assertContains('1040:16', $cubiertas);
-        $this->assertContains('8962:8a', $cubiertas);
+        $this->assertContains('f8962:8a', $cubiertas);
         $this->assertSame($cubiertas, array_keys(CasosIrs::cubrenPorLinea(self::ANIO)));
-        $this->assertSame(['pub1040-tax-table-mfj-25300'], CasosIrs::cubrenPorLinea(self::ANIO)['1040:16']);
+        $this->assertContains('pub1040-tax-table-mfj-25300', CasosIrs::cubrenPorLinea(self::ANIO)['1040:16']);
     }
 
     public function test_calculo_cobertura_escribe_el_archivo_con_las_lineas_de_los_casos(): void

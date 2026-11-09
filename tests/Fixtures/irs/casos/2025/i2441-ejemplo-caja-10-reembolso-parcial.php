@@ -11,14 +11,14 @@ return [
     ],
     'pasos' => [
         [
-            'formulario' => '2441',
+            'formulario' => 'f2441',
             'linea' => '12',
             'texto' => 'Beneficios de cuidado dependiente recibidos en 2025 (casilla 10 del W-2): USD 5.000.',
             'valor' => '5000',
             'fuente' => ['doc' => 'i2441', 'pagina' => 'p. 5 (Line 14, Example)', 'url' => 'https://www.irs.gov/pub/irs-prior/i2441--2025.pdf'],
         ],
         [
-            'formulario' => '2441',
+            'formulario' => 'f2441',
             'linea' => '14',
             'texto' => 'Monto perdido (no reembolsado): 5.000 menos 4.950 = USD 50.',
             'valor' => '50',
@@ -26,8 +26,8 @@ return [
         ],
     ],
     'lineas' => [
-        '2441' => ['12' => '5000', '14' => '50'],
+        'f2441' => ['12' => '5000', '14' => '50'],
     ],
-    'cubre' => ['2441:12', '2441:14'],
+    'cubre' => ['f2441:12', 'f2441:14'],
     'contraste' => null,
 ];

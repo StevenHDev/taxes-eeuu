@@ -201,6 +201,16 @@
       "sha256": "875843baead68f6fa9aa7c3f6f27d6c1f37cb971ac334bcf414acdb4c1487684",
       "ano_verificado": "2025: 2025",
       "paginas_citadas": ""
+    },
+    {
+      "doc": "f8959",
+      "titulo": "Form 8959 (2025), Additional Medicare Tax",
+      "url": "https://www.irs.gov/pub/irs-prior/f8959--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 71969,
+      "sha256": "13e64004948331d2b708c80b1b664bf69675028edd0b84f2de6e3ca9afaa996d",
+      "ano_verificado": "Form 8959 2025",
+      "paginas_citadas": "1 (Parte I, líneas 1 a 7; líneas 18 a 24)"
     }
   ],
   "tablas": [
