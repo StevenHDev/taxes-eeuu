@@ -55,6 +55,23 @@ class ParametrosFiscales
         return $fila['valor'];
     }
 
+    /**
+     * Un parámetro de tipo tabla como objeto con su `buscar()`. Igual que
+     * `valorRequerido()`: truena si falta sembrarlo o si está pendiente (el
+     * motor lo captura por línea y dice qué parámetro falta); y también si lo
+     * guardado no es una tabla de filas `{hasta, ...}`.
+     */
+    public static function tabla(int $taxYear, string $categoria, string $clave): TablaFiscal
+    {
+        $valor = self::valorRequerido($taxYear, $categoria, $clave);
+
+        throw_unless(is_array($valor), new \RuntimeException(
+            "El parámetro fiscal [{$categoria}.{$clave}] de tax_year={$taxYear} no es una tabla.",
+        ));
+
+        return new TablaFiscal($valor);
+    }
+
     public static function invalidate(): void
     {
         Cache::forget(self::CACHE_KEY);
