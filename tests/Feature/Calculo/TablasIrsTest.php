@@ -8,8 +8,8 @@ use Tests\TestCase;
 /**
  * 6.2: pruebas que recorren las tablas completas del IRS contra la calculadora.
  *
- * Están saltadas con motivo: las calculadoras aún no existen y esta subtarea no las lee. Se activan en 6.4
- * (agente principal), cuando exista el motor. La interfaz que esperan, SIN crear ninguna clase:
+ * La Tax Table y la EIC Table completas ya se prueban en `TablaImpuestoCsvTest` y `CreditoEicCsvTest` (6.4e y 6.4g).
+ * Queda saltada la del 2441, que se activa con la calculadora de 6.4f. La interfaz que espera:
  *
  *   TablaImpuesto::paraFila(string $estadoCivil, Dinero $ingresoGravable): Dinero
  *       'soltero' | 'mfj' | 'mfs' | 'hoh'; el valor sale de la columna del mismo nombre de tax-table.csv.
@@ -22,20 +22,6 @@ use Tests\TestCase;
 class TablasIrsTest extends TestCase
 {
     private const MOTIVO = 'Se activan en 6.4 cuando exista la calculadora (el valor esperado no sale de ella).';
-
-    public function test_la_tax_table_completa_coincide_fila_por_fila(): void
-    {
-        $this->assertGreaterThan(2000, count(CasosIrs::filasCsv(2025, 'tax-table.csv')));
-
-        $this->markTestSkipped(self::MOTIVO);
-    }
-
-    public function test_la_eic_table_completa_coincide_fila_por_fila(): void
-    {
-        $this->assertGreaterThan(1000, count(CasosIrs::filasCsv(2025, 'eic-table.csv')));
-
-        $this->markTestSkipped(self::MOTIVO);
-    }
 
     public function test_la_tabla_del_2441_coincide_en_cada_escalon(): void
     {
