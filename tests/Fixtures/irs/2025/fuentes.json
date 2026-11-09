@@ -1,0 +1,686 @@
+{
+  "anio": 2025,
+  "nota": "PDF fijados el 9 nov. 2026 desde irs.gov/pub/irs-prior (versión final de 2025). Las páginas son las del archivo PDF (en estos documentos coinciden con la página impresa).",
+  "documentos": [
+    {
+      "doc": "p1040",
+      "titulo": "Publication 1040 (2025), Tax and Earned Income Credit Tables",
+      "url": "https://www.irs.gov/pub/irs-prior/p1040--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 1452403,
+      "sha256": "8ae019bd3b28b07b37e46e18597d8e899222a2224ce7482c015b130033403532",
+      "ano_verificado": "2025: Publication 1040 2025 Tax Computation Worksheet . . . . . . . . . . . . 14",
+      "paginas_citadas": "2-13 (Tax Table), 16-27 (EIC Table)"
+    },
+    {
+      "doc": "i1040gi",
+      "titulo": "Instructions for Form 1040 and 1040-SR (2025), incluye Schedule 1-A",
+      "url": "https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 4434643,
+      "sha256": "482e9c487c608f1bbeaceef35bc3c0933e8b35443cfff447e4279d590468364a",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": "107 (ejemplos 1 y 2 de horas extra, Schedule 1-A)"
+    },
+    {
+      "doc": "f1040",
+      "titulo": "Form 1040 (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 220237,
+      "sha256": "3d31c226df0d189ced80e039d01cf0f8820c1019681a0f0ca6264de277b7e982",
+      "ano_verificado": "2025: 1040 U.S. Individual Income Tax Return 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "f1040s1",
+      "titulo": "Schedule 1 (Form 1040) 2025",
+      "url": "https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 99940,
+      "sha256": "8dafec719f6a4716c259a2bdaca546d9bb9e262d1eabef885fe116a7327458fa",
+      "ano_verificado": "2025: Attach to Form 1040, 1040-SR, or 1040-NR. 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "f1040s1a",
+      "titulo": "Schedule 1-A (Form 1040) 2025",
+      "url": "https://www.irs.gov/pub/irs-prior/f1040s1a--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 94224,
+      "sha256": "64f97b38ff4218e2f188fd55a8aab7043556687487c82bbefe0b6dd1a956ecd4",
+      "ano_verificado": "2025: Attach to Form 1040, 1040-SR, or 1040-NR. 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "f1040s2",
+      "titulo": "Schedule 2 (Form 1040) 2025",
+      "url": "https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 96526,
+      "sha256": "64d867b683334cfc533993e37ccb0d143449ec29428a78206be2e4de333941e8",
+      "ano_verificado": "2025: Attach to Form 1040, 1040-SR, or 1040-NR. 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "f1040s3",
+      "titulo": "Schedule 3 (Form 1040) 2025",
+      "url": "https://www.irs.gov/pub/irs-prior/f1040s3--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 69852,
+      "sha256": "008cfd3fe3ebd0860452069b90fd0a3d53dda6dd8a5d870278370aa899a63f82",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "f1040sc",
+      "titulo": "Schedule C (Form 1040) 2025",
+      "url": "https://www.irs.gov/pub/irs-prior/f1040sc--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 122589,
+      "sha256": "ddf401dbe060467d39f90ad2abf645df1de31512821a150dc68a3882bbf19716",
+      "ano_verificado": "2025: Attach to Form 1040, 1040-SR, 1040-SS, 1040-NR, or 1041; partnerships must generally file ",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "f1040sse",
+      "titulo": "Schedule SE (Form 1040) 2025",
+      "url": "https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 80290,
+      "sha256": "05bc2b3e1dfca65d8c6fc6d652af4fa3736e953c6575d6e9f82590484677d347",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "f1040s8",
+      "titulo": "Schedule 8812 (Form 1040) 2025",
+      "url": "https://www.irs.gov/pub/irs-prior/f1040s8--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 100829,
+      "sha256": "6936462d67e2309d14a795aa0b88ef613cc6d79617431cfda3a2edf44aea52db",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "f1040sei",
+      "titulo": "Schedule EIC (Form 1040) 2025",
+      "url": "https://www.irs.gov/pub/irs-prior/f1040sei--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 112439,
+      "sha256": "b6dab52511ece16e710899542d952db578bf6c872d2580ee6760fb88ed77c4ba",
+      "ano_verificado": "2025: Complete and attach to Form 1040 or 1040-SR only if you have a qualifying child. 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "f2441",
+      "titulo": "Form 2441 (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/f2441--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 121040,
+      "sha256": "6c3c2d19163fa4c4de829abf9a89b43f08b4f4f3cb169740fc7da43e914269ce",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": "1 (línea 8)"
+    },
+    {
+      "doc": "f8962",
+      "titulo": "Form 8962 (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/f8962--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 117715,
+      "sha256": "dc7d2c6b566cac66badae721e2ce47ac47bb4e8b71aafb01721ff7368d803099",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": "1 (líneas 1 a 11, 24, 25 y 27)"
+    },
+    {
+      "doc": "f8995",
+      "titulo": "Form 8995 (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/f8995--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 72273,
+      "sha256": "55380ad230303e1586ce97f0f224265b8337ad18c9204f0fb7325e95a76b5cde",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "i1040s8",
+      "titulo": "Instructions for Schedule 8812 (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/i1040s8--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 232376,
+      "sha256": "bb9788cdf068f9d3a666b2fc351b6bd963e1e848f295d0d01df63848628e1794",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "i8962",
+      "titulo": "Instructions for Form 8962 (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/i8962--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 402164,
+      "sha256": "f4ac86ada178e8aaaf98124b3450cad0cd5d84f7b16bcadd2dd47910e07bf9a2",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": "8-9 (Tablas 1-1, 1-2, 1-3), 11 (Tabla 2), 18 (Tabla 5), 21-22 (ejemplo de Joe)"
+    },
+    {
+      "doc": "i2441",
+      "titulo": "Instructions for Form 2441 (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/i2441--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 200749,
+      "sha256": "86f0669e78b1dc00bfb99e956673d4fccee9e40d6c44d53623dd08e62567fd39",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": "5 (ejemplos de las líneas 12, 14 y 16)"
+    },
+    {
+      "doc": "i1040sc",
+      "titulo": "Instructions for Schedule C (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/i1040sc--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 357575,
+      "sha256": "b5536db91498a450572e37078d7d5ee8fdc400e385d4fee3a26c230a33e399b6",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "i1040sse",
+      "titulo": "Instructions for Schedule SE (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/i1040sse--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 176326,
+      "sha256": "ea9e3120706f9d5e21ce1c6cbec256b5e2e2bf02c44759773d9236462cf4d800",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": ""
+    },
+    {
+      "doc": "i8995",
+      "titulo": "Instructions for Form 8995 (2025)",
+      "url": "https://www.irs.gov/pub/irs-prior/i8995--2025.pdf",
+      "fecha_descarga": "2026-11-09",
+      "bytes": 216021,
+      "sha256": "875843baead68f6fa9aa7c3f6f27d6c1f37cb971ac334bcf414acdb4c1487684",
+      "ano_verificado": "2025: 2025",
+      "paginas_citadas": ""
+    }
+  ],
+  "tablas": [
+    {
+      "archivo": "tax-table.csv",
+      "doc": "p1040",
+      "paginas": "2-13",
+      "filas": 2062,
+      "descripcion": "Tax Table: ingreso gravable de 0 a menos de 100.000; hasta es exclusivo; columnas soltero, mfj, mfs, hoh"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "doc": "p1040",
+      "paginas": "16-27",
+      "filas": 1374,
+      "descripcion": "EIC Table; hasta es exclusivo; solo_N = soltero, jefe de hogar o cónyuge sobreviviente con N hijos; mfj_N = casado declarando en conjunto (el IRS indica que la columna también la usan los casados que declaran por separado y califican); una celda con asterisco remite a eic-notas.csv"
+    },
+    {
+      "archivo": "eic-notas.csv",
+      "doc": "p1040",
+      "paginas": "19,20,24,25,26,27",
+      "filas": 8,
+      "descripcion": "Notas al pie de la EIC Table: dentro de la franja, hasta \"credito_hasta_menos_de\" el crédito es \"credito\"; de ahí en adelante no hay crédito"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "doc": "f2441",
+      "paginas": "1",
+      "filas": 16,
+      "descripcion": "Form 2441 línea 8, monto decimal; hasta vacío = sin límite"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "doc": "i8962",
+      "paginas": "8-9",
+      "filas": 24,
+      "descripcion": "Tablas 1-1, 1-2 y 1-3 (línea de pobreza de 2024, usada en 2025); adicional = monto por cada persona de más de 8"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "doc": "i8962",
+      "paginas": "11",
+      "filas": 252,
+      "descripcion": "Tabla 2, cifra aplicable según el porcentaje de la línea 5; desde y hasta incluyentes; menos de 150 = 0,0000 y 400 o más = 0,0850"
+    },
+    {
+      "archivo": "f8962-limite-devolucion.csv",
+      "doc": "i8962",
+      "paginas": "18",
+      "filas": 4,
+      "descripcion": "Tabla 5, límite de devolución (línea 28); hasta es exclusivo; 400 o más = línea 28 en blanco"
+    }
+  ],
+  "revision": [
+    {
+      "archivo": "tax-table.csv",
+      "fila": "25,50,4,4,4,4",
+      "pagina": 2,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "tax-table.csv",
+      "fila": "18050,18100,1931,1808,1931,1829",
+      "pagina": 4,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "tax-table.csv",
+      "fila": "41550,41600,4751,4512,4751,4649",
+      "pagina": 7,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "tax-table.csv",
+      "fila": "42100,42150,4817,4578,4817,4715",
+      "pagina": 7,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "tax-table.csv",
+      "fila": "61300,61350,8406,6882,8406,7019",
+      "pagina": 9,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "tax-table.csv",
+      "fila": "70600,70650,10452,7998,10452,8713",
+      "pagina": 10,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "tax-table.csv",
+      "fila": "71750,71800,10705,8136,10705,8966",
+      "pagina": 10,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "tax-table.csv",
+      "fila": "79250,79300,12355,9036,12355,10616",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "tax-table.csv",
+      "fila": "80500,80550,12630,9186,12630,10891",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "tax-table.csv",
+      "fila": "83450,83500,13279,9540,13279,11540",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "1750,1800,136,604,710,799,136,604,710,799",
+      "pagina": 16,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "14750,14800,331,4328,5910,6649,649,4328,5910,6649",
+      "pagina": 18,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "16800,16850,174,4328,6730,7571,649,4328,6730,7571",
+      "pagina": 18,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "18150,18200,71,4328,7152,8046,615,4328,7152,8046",
+      "pagina": 18,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "19850,19900,0,4328,7152,8046,485,4328,7152,8046",
+      "pagina": 19,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "27900,27950,0,3597,6189,7083,0,4328,7152,8046",
+      "pagina": 20,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "45550,45600,0,776,2471,3365,0,1914,3971,4865",
+      "pagina": 23,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "52100,52150,0,0,1092,1986,0,868,2591,3485",
+      "pagina": 24,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "55850,55900,0,0,302,1196,0,268,1802,2696",
+      "pagina": 24,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "eic-table.csv",
+      "fila": "62950,63000,0,0,0,0,0,0,306,1200",
+      "pagina": 26,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-1,1,15060,5380",
+      "pagina": 8,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-1,2,20440,5380",
+      "pagina": 8,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-1,4,31200,5380",
+      "pagina": 8,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-1,5,36580,5380",
+      "pagina": 8,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-1,6,41960,5380",
+      "pagina": 8,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-2,5,45730,6730",
+      "pagina": 9,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-3,3,29690,6190",
+      "pagina": 9,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-3,4,35880,6190",
+      "pagina": 9,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-3,5,42070,6190",
+      "pagina": 9,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-pobreza.csv",
+      "fila": "1-3,6,48260,6190",
+      "pagina": 9,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "153,153,0.0012",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "165,165,0.0060",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "199,199,0.0196",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "218,218,0.0272",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "221,221,0.0284",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "330,330,0.0675",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "331,331,0.0678",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "379,379,0.0798",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "390,390,0.0825",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f8962-cifra-aplicable.csv",
+      "fila": "395,395,0.0838",
+      "pagina": 11,
+      "resultado": "coincide",
+      "metodo": "pdftotext -raw sobre el PDF fijado"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "0,15000,0.35",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "15000,17000,0.34",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "19000,21000,0.32",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "21000,23000,0.31",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "23000,25000,0.30",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "27000,29000,0.28",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "31000,33000,0.26",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "33000,35000,0.25",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "35000,37000,0.24",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f2441-tabla.csv",
+      "fila": "39000,41000,0.22",
+      "pagina": 1,
+      "resultado": "coincide",
+      "metodo": "lectura visual de la página renderizada (el texto crudo parte las columnas); se leyeron las 16 franjas"
+    },
+    {
+      "archivo": "f8962-limite-devolucion.csv",
+      "fila": "0,200,375,750",
+      "pagina": 18,
+      "resultado": "coincide",
+      "metodo": "lectura del texto de la página; la tabla solo tiene 3 franjas más \"400 o más\""
+    },
+    {
+      "archivo": "f8962-limite-devolucion.csv",
+      "fila": "200,300,975,1950",
+      "pagina": 18,
+      "resultado": "coincide",
+      "metodo": "lectura del texto de la página; la tabla solo tiene 3 franjas más \"400 o más\""
+    },
+    {
+      "archivo": "f8962-limite-devolucion.csv",
+      "fila": "300,400,1625,3250",
+      "pagina": 18,
+      "resultado": "coincide",
+      "metodo": "lectura del texto de la página; la tabla solo tiene 3 franjas más \"400 o más\""
+    },
+    {
+      "archivo": "eic-notas.csv",
+      "fila": "19100,19150,solo_0,19104,0",
+      "pagina": 19,
+      "resultado": "coincide",
+      "metodo": "cotejo contra el texto de la nota al pie (son solo 8 filas: se revisaron todas)"
+    },
+    {
+      "archivo": "eic-notas.csv",
+      "fila": "26200,26250,mfj_0,26214,1",
+      "pagina": 20,
+      "resultado": "coincide",
+      "metodo": "cotejo contra el texto de la nota al pie (son solo 8 filas: se revisaron todas)"
+    },
+    {
+      "archivo": "eic-notas.csv",
+      "fila": "50400,50450,solo_1,50434,3",
+      "pagina": 24,
+      "resultado": "coincide",
+      "metodo": "cotejo contra el texto de la nota al pie (son solo 8 filas: se revisaron todas)"
+    },
+    {
+      "archivo": "eic-notas.csv",
+      "fila": "57300,57350,solo_2,57310,1",
+      "pagina": 25,
+      "resultado": "coincide",
+      "metodo": "cotejo contra el texto de la nota al pie (son solo 8 filas: se revisaron todas)"
+    },
+    {
+      "archivo": "eic-notas.csv",
+      "fila": "57550,57600,mfj_1,57554,0",
+      "pagina": 25,
+      "resultado": "coincide",
+      "metodo": "cotejo contra el texto de la nota al pie (son solo 8 filas: se revisaron todas)"
+    },
+    {
+      "archivo": "eic-notas.csv",
+      "fila": "61550,61600,solo_3,61555,1",
+      "pagina": 25,
+      "resultado": "coincide",
+      "metodo": "cotejo contra el texto de la nota al pie (son solo 8 filas: se revisaron todas)"
+    },
+    {
+      "archivo": "eic-notas.csv",
+      "fila": "64400,64450,mfj_2,64430,3",
+      "pagina": 26,
+      "resultado": "coincide",
+      "metodo": "cotejo contra el texto de la nota al pie (son solo 8 filas: se revisaron todas)"
+    },
+    {
+      "archivo": "eic-notas.csv",
+      "fila": "68650,68700,mfj_3,68675,3",
+      "pagina": 27,
+      "resultado": "coincide",
+      "metodo": "cotejo contra el texto de la nota al pie (son solo 8 filas: se revisaron todas)"
+    }
+  ]
+}
