@@ -13,6 +13,7 @@ use App\Services\Calculo\Nucleo\Dinero;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Support\ParametrosFiscales;
 use App\Support\TablaFiscal;
+use Database\Seeders\CatalogoFiscalSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -299,5 +300,134 @@ class ParametrosTest extends TestCase
         $this->assertSame('0.029', $se('self_employment_tax', 'tasa_medicare')->valor);
         $this->assertSame('0.999', $se('self_employment_tax', 'tasa_seguro_social')->valor);
         $this->assertSame(15750, $se('deduccion_estandar', 'monto_mfs')->valor);
+    }
+
+    /**
+     * Parámetros de 2026 que siguen pendientes (sin valor) a propósito y por qué.
+     * 6.1b: solo entra lo que está en un documento oficial del IRS y cabe en la forma del parámetro.
+     *
+     * @var array<string, string>
+     */
+    private const PENDIENTES_2026 = [
+        'schedule_c.millaje_estandar' => 'dos tarifas en 2026 (72,5 centavos hasta el 30 jun. y 76 desde el 1 jul.) y el parámetro es un solo número',
+        'credito_cuidado_dependientes.agi_umbral_porcentaje_minimo' => 'distinto para la conjunta (USD 206.000) y las demás (USD 103.000); el cálculo usa la tabla',
+        'credito_ftc.umbral_de_minimis_soltero' => 'ni el borrador del Schedule 3 ni las instrucciones del 1040 de 2026 traen la cifra',
+        'credito_ftc.umbral_de_minimis_mfj' => 'ni el borrador del Schedule 3 ni las instrucciones del 1040 de 2026 traen la cifra',
+        'self_employment_tax.maximo_seguro_social_retenido_por_persona' => 'ningún documento del IRS de 2026 revisado trae la cifra',
+    ];
+
+    /**
+     * Parámetros que no vienen del IRS y por eso no llevan fuente del IRS.
+     *
+     * @var list<string>
+     */
+    private const SIN_FUENTE_DEL_IRS = ['lectura.umbral_confianza'];
+
+    public function test_los_parametros_de_2026_con_valor_traen_fuente_con_pagina_y_url_del_irs_y_el_resto_esta_pendiente_por_nombre(): void
+    {
+        $this->seed(CatalogoFiscalSeeder::class);
+
+        $pendientes = [];
+
+        foreach (ParametroFiscal::query()->where('tax_year', 2026)->get() as $p) {
+            $codigo = "{$p->categoria}.{$p->clave}";
+
+            if ($p->valor === null) {
+                $pendientes[] = $codigo;
+
+                continue;
+            }
+
+            if (in_array($codigo, self::SIN_FUENTE_DEL_IRS, true)) {
+                continue;
+            }
+
+            $this->assertMatchesRegularExpression('/\bp\. ?\d+/', (string) $p->fuente_texto, "{$codigo} de 2026 tiene valor y no cita la página");
+            $this->assertStringStartsWith('https://www.irs.gov/', (string) $p->fuente_url, "{$codigo} de 2026 tiene valor y no trae la URL del IRS");
+            $this->assertFalse($p->estaValidado(), "{$codigo} de 2026 entra sin validar");
+        }
+
+        sort($pendientes);
+        $esperados = array_keys(self::PENDIENTES_2026);
+        sort($esperados);
+
+        $this->assertSame($esperados, $pendientes);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('[schedule_c.millaje_estandar] de tax_year=2026 está pendiente');
+        ParametrosFiscales::valorRequerido(2026, 'schedule_c', 'millaje_estandar');
+    }
+
+    public function test_cada_parametro_de_2025_tiene_su_valor_de_2026_o_figura_como_pendiente(): void
+    {
+        $ajustes = require database_path('data/catalogo-fiscal/2026/ajustes.php');
+        $del2025 = [
+            ...array_keys($this->metadatos2025()),
+            ...array_map(fn (array $f) => "{$f['categoria']}.{$f['clave']}", require database_path('data/catalogo-fiscal/2025/parametros.php')),
+        ];
+
+        foreach ($ajustes['parametros'] as $codigo => $ajuste) {
+            $this->assertContains($codigo, $del2025, "{$codigo} de 2026 no existe en 2025");
+            $this->assertIsArray($ajuste, "{$codigo} de 2026 va con su fuente");
+            $this->assertArrayHasKey('fuente_texto', $ajuste);
+            $this->assertArrayHasKey('fuente_url', $ajuste);
+        }
+
+        $sinAjuste = array_values(array_diff($del2025, array_keys($ajustes['parametros'])));
+        $sinAjuste = array_values(array_diff($sinAjuste, self::SIN_FUENTE_DEL_IRS));
+        sort($sinAjuste);
+        $pendientes = array_keys(self::PENDIENTES_2026);
+        sort($pendientes);
+
+        // Los pendientes que se dejan vacíos expresamente (valor nulo) también cuentan.
+        $vacios = array_keys(array_filter($ajustes['parametros'], fn ($a) => $a['valor'] === null));
+        $this->assertSame($pendientes, collect([...$sinAjuste, ...$vacios])->sort()->values()->all());
+    }
+
+    public function test_cargar_2026_no_toca_2025_y_las_cifras_de_2026_son_las_de_la_rev_proc(): void
+    {
+        $this->seed(CatalogoFiscalSeeder::class);
+
+        // Cada una con su fuente en el archivo de ajustes: Rev. Proc. 2025-32 (p. 18, 10 a 12, 15) y Schedule SE de 2026.
+        $this->assertSame(32200, ParametrosFiscales::valor(2026, 'deduccion_estandar', 'monto_mfj'));
+        $this->assertSame(16100, ParametrosFiscales::valor(2026, 'deduccion_estandar', 'monto_mfs'));
+        $this->assertSame(184500, ParametrosFiscales::valor(2026, 'self_employment_tax', 'tope_salario_social_security'));
+        $this->assertSame(31500, ParametrosFiscales::valor(2025, 'deduccion_estandar', 'monto_mfj'));
+        $this->assertSame(176100, ParametrosFiscales::valor(2025, 'self_employment_tax', 'tope_salario_social_security'));
+        $this->assertSame('0.35', ParametrosFiscales::tabla(2025, 'credito_cuidado_dependientes', 'tabla')->buscar(15000)['decimal']);
+        $this->assertSame(10918.2, ParametrosFiscales::valor(2025, 'self_employment_tax', 'maximo_seguro_social_retenido_por_persona'));
+        $this->assertNull(ParametrosFiscales::valor(2026, 'self_employment_tax', 'maximo_seguro_social_retenido_por_persona'));
+    }
+
+    public function test_las_tablas_de_2026_se_leen_y_el_eic_es_coherente_con_sus_tasas(): void
+    {
+        $this->seed(CatalogoFiscalSeeder::class);
+
+        // Tramos: cada uno empieza por encima del anterior y la última tasa es 37 %.
+        foreach (['single', 'mfj', 'hoh', 'mfs'] as $estado) {
+            $filas = ParametroFiscal::query()->where(['tax_year' => 2026, 'categoria' => 'tax_brackets', 'clave' => $estado])->sole()->valor;
+            $this->assertCount(7, $filas);
+            $this->assertSame(0.37, $filas[6]['tasa']);
+            $this->assertSame($filas, collect($filas)->sortBy('desde')->values()->all());
+        }
+
+        // Crédito por cuidado: la tabla de 2026 trae las dos columnas y de 15.000 hacia abajo es 50 %.
+        $cuidado = ParametrosFiscales::tabla(2026, 'credito_cuidado_dependientes', 'tabla');
+        $this->assertSame('0.50', $cuidado->buscar(15000)['decimal']);
+        $this->assertSame('0.20', $cuidado->buscar(Dinero::deDolares(103001))['decimal']);
+        $fila = $cuidado->buscar(75000);
+        $this->assertSame(['hasta' => 75000, 'hasta_conjunta' => 150000, 'decimal' => '0.35'], $fila);
+
+        // EIC: máximo = ingreso ganado x tasa de entrada, redondeado a dólares (Rev. Proc. 2025-32, sección 4.06).
+        foreach (ParametroFiscal::query()->where(['tax_year' => 2026, 'categoria' => 'credito_eic', 'clave' => 'por_hijos'])->sole()->valor as $f) {
+            $calculado = Dinero::deDolares($f['ingreso_ganado'])->por($f['tasa_entrada'])->aDolares()->centavos();
+            $this->assertSame($f['maximo'] * 100, $calculado, "EIC con {$f['hijos']} hijos: el máximo no sale de la tasa de entrada");
+        }
+
+        // Crédito de la prima: tabla 2 completa de 132 a 400 y sin tope de devolución.
+        $cifra = ParametrosFiscales::tabla(2026, 'credito_prima_salud', 'tabla_cifra_aplicable');
+        $this->assertSame('0.0210', $cifra->buscar(100)['decimal']);
+        $this->assertSame('0.0314', $cifra->buscar(133)['decimal']);
+        $this->assertSame('0.0996', $cifra->buscar(350)['decimal']);
     }
 }

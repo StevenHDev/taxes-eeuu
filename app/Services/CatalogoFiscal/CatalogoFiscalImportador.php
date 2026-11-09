@@ -39,7 +39,7 @@ class CatalogoFiscalImportador
     private const CLAVES = [
         'preguntas' => ['codigo', 'bloque', 'pantalla', 'orden', 'texto_es', 'texto_en', 'ayuda_es', 'ayuda_en', 'tipo_respuesta', 'opciones', 'nivel', 'por_persona', 'sensible', 'condicion', 'efecto_es', 'fuente_texto', 'fuente_url', 'activa', 'activo'],
         'activa' => ['respuesta', 'objetivo', 'nota'],
-        'documentos' => ['codigo', 'grupo', 'nombre_oficial', 'nombre_sencillo_es', 'nombre_sencillo_en', 'emisor_es', 'emisor_en', 'fecha_llegada', 'si_no_llega_es', 'si_no_llega_en', 'que_subir_es', 'que_subir_en', 'plantilla', 'formatos', 'uno_por', 'siempre', 'orden', 'fuente_texto', 'fuente_url', 'imagen_ejemplo', 'casillas'],
+        'documentos' => ['codigo', 'grupo', 'nombre_oficial', 'nombre_sencillo_es', 'nombre_sencillo_en', 'emisor_es', 'emisor_en', 'fecha_llegada', 'si_no_llega_es', 'si_no_llega_en', 'que_subir_es', 'que_subir_en', 'plantilla', 'formatos', 'uno_por', 'lectura', 'siempre', 'orden', 'fuente_texto', 'fuente_url', 'imagen_ejemplo', 'casillas'],
         'casillas' => ['casilla', 'descripcion', 'tipo_dato', 'clave', 'sensible', 'orden'],
         'formularios' => ['codigo', 'nombre', 'para_que', 'siempre', 'ficha', 'orden', 'fuente_texto', 'fuente_url', 'lineas'],
         'lineas' => ['linea', 'descripcion', 'origen_tipo', 'origen_clave', 'campo_pdf', 'orden', 'fuente_texto', 'fuente_url', 'fuente_pagina'],
@@ -109,7 +109,7 @@ class CatalogoFiscalImportador
                 $codigo = "{$fila['categoria']}.{$fila['clave']}";
 
                 if ($derivado && array_key_exists($codigo, $ajustes['parametros'] ?? [])) {
-                    $fila['valor'] = $ajustes['parametros'][$codigo];
+                    $fila = [...$fila, ...$this->atributosDeAjusteDeParametro($ajustes['parametros'][$codigo])];
                 }
 
                 $parametrosDelArchivo[] = $codigo;
@@ -313,18 +313,35 @@ class CatalogoFiscalImportador
     }
 
     /**
-     * @param  array<string, mixed>  $parametros  categoria.clave => valor
+     * @param  array<string, mixed>  $parametros  categoria.clave => valor, o categoria.clave => ['valor' => X, 'fuente_texto' => '…', 'fuente_url' => '…']
      */
     private function aplicarAjustesDeParametros(int $anio, array $parametros): void
     {
-        foreach ($parametros as $codigo => $valor) {
+        foreach ($parametros as $codigo => $ajuste) {
             [$categoria, $clave] = explode('.', $codigo, 2);
             $parametro = ParametroFiscal::query()->where(['tax_year' => $anio, 'categoria' => $categoria, 'clave' => $clave])->first();
 
             $parametro === null
                 ? $this->resultado->avisos[] = "Ajuste: el parámetro {$codigo} no existe en {$anio}."
-                : $this->guardar($parametro, ['valor' => $valor], 'parametro', $codigo);
+                : $this->guardar($parametro, $this->atributosDeAjusteDeParametro($ajuste), 'parametro', $codigo);
         }
+    }
+
+    /**
+     * Un ajuste de parámetro viene en dos formas: el valor suelto (escalar o tabla) o
+     * `['valor' => X, 'fuente_texto' => '…', 'fuente_url' => '…']`. Una tabla es una lista de filas
+     * y nunca trae la clave `valor` en el primer nivel, así que las dos formas no se confunden.
+     * Nunca toca el estado de validación: el valor entra sin validar.
+     *
+     * @return array{valor: mixed, fuente_texto?: ?string, fuente_url?: ?string}
+     */
+    private function atributosDeAjusteDeParametro(mixed $ajuste): array
+    {
+        if (! is_array($ajuste) || ! array_key_exists('valor', $ajuste)) {
+            return ['valor' => $ajuste];
+        }
+
+        return array_intersect_key($ajuste, array_flip(['valor', 'fuente_texto', 'fuente_url']));
     }
 
     /**

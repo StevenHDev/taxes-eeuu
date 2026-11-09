@@ -176,6 +176,47 @@ class CargaTest extends TestCase
         $this->assertSame([], app(CatalogoFiscalVerificador::class)->verificar(2026));
     }
 
+    public function test_un_ajuste_de_parametro_acepta_el_valor_suelto_o_con_su_fuente_y_entra_sin_validar(): void
+    {
+        $importador = app(CatalogoFiscalImportador::class);
+        $importador->cargar(2025);
+        $this->artisan('catalogo-fiscal:copiar', ['desde' => 2025, 'hasta' => 2026])->assertSuccessful();
+        $importador->cargar(2026);
+
+        $parametro = fn (string $categoria, string $clave) => ParametroFiscal::query()
+            ->where(['tax_year' => 2026, 'categoria' => $categoria, 'clave' => $clave])->sole();
+
+        // Con fuente, en un parámetro que viene de parametros.php y en uno que solo vive en la base.
+        $edad = $parametro('edad', 'nacido_antes_de_mayor_65');
+        $this->assertSame('1962-01-02', $edad->valor);
+        $this->assertSame('Form 1040 de 2026, p. 2, línea 12d', $edad->fuente_texto);
+        $this->assertSame('https://example.test/f1040-2026.pdf', $edad->fuente_url);
+
+        $pariente = $parametro('dependiente_calificado', 'limite_ingreso_bruto_pariente_calificado');
+        $this->assertSame(5300, $pariente->valor);
+        $this->assertSame('Rev. Proc. de prueba, sección 4.23, p. 20', $pariente->fuente_texto);
+        $this->assertSame('https://example.test/rp.pdf', $pariente->fuente_url);
+        $this->assertFalse($pariente->estaValidado());
+
+        // Una tabla con fuente guarda las filas completas; la forma vieja (lista suelta) sigue valiendo.
+        $this->assertSame('0.50', ParametrosFiscales::tabla(2026, 'credito_cuidado_dependientes', 'tabla')->buscar(10000)['decimal']);
+        $this->assertSame(15000, $parametro('credito_cuidado_dependientes', 'tabla')->valor[0]['hasta_conjunta']);
+        $this->assertSame('Instrucciones de prueba, p. 6', $parametro('credito_cuidado_dependientes', 'tabla')->fuente_texto);
+        $this->assertSame(12400, $parametro('tax_brackets', 'single')->valor[1]['desde']);
+
+        // Dejar el valor vacío a propósito lo deja pendiente.
+        $this->assertNull($parametro('self_employment_tax', 'tasa_medicare')->valor);
+        $this->assertNull(ParametrosFiscales::valor(2026, 'self_employment_tax', 'tasa_medicare'));
+
+        // 2025 no cambia y una segunda carga no toca nada.
+        $this->assertSame('1961-01-02', ParametrosFiscales::valor(2025, 'edad', 'nacido_antes_de_mayor_65'));
+        $this->assertSame(5200, ParametrosFiscales::valor(2025, 'dependiente_calificado', 'limite_ingreso_bruto_pariente_calificado'));
+
+        $otra = $importador->cargar(2026);
+        $this->assertSame([], $otra->creados);
+        $this->assertSame([], $otra->actualizados);
+    }
+
     public function test_un_anio_copiado_hereda_lo_nuevo_del_origen_y_recargarlo_no_cambia_nada(): void
     {
         $importador = app(CatalogoFiscalImportador::class);
