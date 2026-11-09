@@ -180,10 +180,10 @@ Wiplitask: `cmvskow9b007h1420if0ijyyu` · ✅ (5 nov.)
 ### F6 — Cálculo validado y borrador del 1040
 Wiplitask: `cmvskowhd007m1420ml6zef8q` · 🟡 En curso (plan aprobado el 9 nov.; plan en [fases/fase-6-calculo-borrador-1040.md](fases/fase-6-calculo-borrador-1040.md))
 - [x] Plan técnico de la fase 6 escrito y aprobado (9 nov., escrito con Opus; todas las decisiones a–n aprobadas por Steven). Cambios frente al alcance original: el criterio de terminado es "coincide con el cálculo del IRS" (no hay TaxWise ni declaraciones de GTS; L5 y P9 no aplican); los montos del Schedule C, 2441, pagos, etc. **se leen de los documentos** (no los teclea el preparador); el respaldo manual es último recurso
-- [ ] 6.0 Catálogo: destinos del 1040 corregidos, líneas de cálculo con fuente y validación, Schedule C por línea
-- [ ] 6.1 Parámetros 2025 completos y 2026 cargados; 6.2 Oráculo del IRS (tablas extraídas del PDF y casos con cita)
-- [ ] 6.3 Lectura de documentos de montos: campos fijos y hojas `xlsx`/`csv` sin IA (antes del motor); extractos con IA, sumas por categoría, conciliación con los 1099 y visor (en paralelo con la pantalla)
-- [ ] 6.4 Motor de cálculo nuevo por formulario con traza (Schedules C, SE, 1, 1-A, 2, 3, 8812, 2441, EIC, 8962, 8995)
+- [x] 6.0 Catálogo: destinos del 1040 corregidos, líneas de cálculo con fuente y validación, Schedule C por línea (9 nov., `a6de33f`; revisado en el navegador)
+- [ ] 6.1 Parámetros 2025 completos (✅ 6.1a, `e1ffbe8`) y 2026 cargados (✅ 6.1b, ola 2; 82 parámetros con fuente, 5 pendientes); 6.2 Oráculo del IRS (tablas extraídas del PDF y casos con cita) ✅ `d05b3ff`
+- [ ] 6.3 Lectura de documentos de montos (6.3a casillas y `xlsx`/`csv` ✅ `4f35ead`; ✅ 6.3b hojas, renglones y R-14, ola 2): campos fijos y hojas `xlsx`/`csv` sin IA (antes del motor); extractos con IA, sumas por categoría, conciliación con los 1099 y visor (en paralelo con la pantalla)
+- [ ] 6.4 Motor de cálculo nuevo por formulario con traza (6.4a núcleo ✅ `49e6ab2`; ✅ 6.4c, 6.4e y 6.4g en la ola 2; faltan 6.4b, 6.4d, 6.4f, 6.4h y 6.4i) (Schedules C, SE, 1, 1-A, 2, 3, 8812, 2441, EIC, 8962, 8995)
 - [ ] 6.5 Respaldo manual sin documento (último recurso, con R-15)
 - [ ] 6.6 Reglas R-10, R-11 bloqueante (solo con evidencia en contra), R-11a, R-12, R-14 y R-15
 - [ ] 6.7 Pestaña "Borrador del 1040" con "cómo se calculó" por línea

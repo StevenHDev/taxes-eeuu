@@ -37,12 +37,17 @@
 
 | Ola | # | Subtarea | Depende de | Estado |
 | --- | --- | --- | --- | --- |
-| 1 | 6.0 | Catálogo: destinos corregidos, líneas con fuente y validación | — | ⏳ |
-| 1 | 6.1a | Parámetros 2025 completos y tablas como datos | — | ⏳ |
-| 1 | 6.2 | Oráculo del IRS: tablas extraídas del PDF y formato de casos | — | ⏳ |
-| 1 | 6.4a | Núcleo del motor (`Dinero`, `Linea`, `Traza`, `Declaracion`, DTO de entradas, interfaz) | — | ⏳ |
-| 1 | 6.3a | Casillas de los documentos de montos (campos fijos) y formatos `xlsx`/`csv` | — | ⏳ |
-| 2 | 6.3b · 6.4c · 6.4e · 6.4g · 6.1b · casos de 6.9 | Se detallan al cerrar la ola 1 | 6.0, 6.1a, 6.2, 6.4a, 6.3a | ⏳ |
+| 1 | 6.0 | Catálogo: destinos corregidos, líneas con fuente y validación | — | ✅ |
+| 1 | 6.1a | Parámetros 2025 completos y tablas como datos | — | ✅ |
+| 1 | 6.2 | Oráculo del IRS: tablas extraídas del PDF y formato de casos | — | ✅ |
+| 1 | 6.4a | Núcleo del motor (`Dinero`, `Linea`, `Traza`, `Declaracion`, DTO de entradas, interfaz) | — | ✅ |
+| 1 | 6.3a | Casillas de los documentos de montos (campos fijos) y formatos `xlsx`/`csv` | — | ✅ |
+| 2 | 6.3b | Hojas `xlsx`/`csv` sin IA, modelo de renglones, `SumasRegistros` y R-14 básica | ola 1 | ✅ |
+| 2 | 6.4c | Calculadoras `Schedule1` e `Ingresos1040` | ola 1 | ✅ |
+| 2 | 6.4e | Calculadora `ImpuestoYSchedule2` (Tax Table, hoja de cálculo del impuesto, Schedule 2, líneas 21 a 24) | ola 1 | ✅ |
+| 2 | 6.4g | Calculadora `Eitc` | ola 1 | ✅ |
+| 2 | 6.1b | Parámetros de 2026 | ola 1 | ✅ |
+| 2 | 6.9a | Primer lote de casos del IRS, escrito sin ver el código | ola 1 | ✅ |
 | 3 | 6.4b · 6.4d · 6.4f · 6.4h · 6.5 · 6.3c | Se detallan al cerrar la ola 2 | ola 2 | ⏳ |
 | 4 | 6.4i · 6.7a · 6.3d | Se detallan al cerrar la ola 3 | ola 3 | ⏳ |
 | 5 | 6.6 · 6.7b · 6.8a · 6.8b-n · 6.3e | Se detallan al cerrar la ola 4 | ola 4 | ⏳ |
@@ -241,6 +246,16 @@ return [
 
 ---
 
+## Cómo quedó la ola 1 (9 nov. 2026, commits `f07b3ff` a `49e6ab2`)
+
+- **6.0:** migración con fuente y validación por línea; verificador nuevo (toda línea de cálculo cita su fuente y página); botón "Marcar validada" por línea (solo se habilita con un caso que la cubra, `CoberturaCasos`); catálogo 2025 con 235 líneas verificadas contra los PDF de 2025. Schedule C líneas 8 a 27b con origen `calculo` (suma de renglones, no casilla). Form 8995 nuevo y activado junto al Schedule SE. Revisado en el navegador: se corrigieron "Página p. 1" y el panel que no se actualizaba al validar.
+- **6.1a:** 88 parámetros 2025 con fuente y página (`parametros-metadatos.php`, migración espejo `2026_11_09_160000`); `TablaFiscal` y `ParametrosFiscales::tabla()`. Las tasas del EIC salen del estatuto (26 U.S.C. §32(b)(1)), no de un PDF del año.
+- **6.2:** 20 PDF de 2025 fijados con hash en `tests/Fixtures/irs/2025/pdf/`; tablas CSV (Tax Table 2.062 filas, EIC 1.374, 2441, 8962); 7 casos con cita; comando `calculo:cobertura`. Las 3 pruebas de tablas completas siguen saltadas hasta que existan las calculadoras.
+- **6.4a:** núcleo en `App\Services\Calculo\Nucleo` (`Dinero`, `Linea`, `Traza`, `Declaracion`, `Calculadora`, `EntradasDeclaracion`, `PersonaEntrada`, `DatoEntrada`, `RespuestaEntrada`, `RolPersona`). Redondeo opcional a dólares: 50 centavos o más sube (instrucciones del 1040, p. 23).
+- **6.3a:** casillas de los 6 documentos de montos; `registros-ingresos-gastos` acepta `xlsx` y `csv`; VIN sensible (confirmado por Steven). `lectura = renglones` quedó para 6.3b (necesita migración).
+- **Suite completa:** 1.097 pruebas verdes, 7 saltadas. PDF de referencia también en `~/Downloads/pdf-irs-2025-fase6`.
+- **Carpeta de trabajo:** los PDF ya están en `tests/Fixtures/irs/2025/pdf/`; no hace falta bajarlos. Para texto, `pdftotext -layout` a una carpeta de `mktemp -d` (autorizado por Steven; se borra al terminar).
+
 ## Qué hace el agente principal al cerrar la ola 1
 
 1. Revisar cada entrega contra el plan; **verificar al azar** tres cifras de parámetros y cinco filas de cada tabla contra el PDF del IRS.
@@ -248,3 +263,205 @@ return [
 3. Probar la pantalla Formularios del catálogo en el navegador (375 px y escritorio, es y en, botón de validar con y sin caso).
 4. Escribir el "Cómo quedó" en el plan y marcar ✅ aquí; actualizar `tareas-desarrollo.md` y Wiplitask (empresa **Cupperlab**); preguntar a Steven antes de cada commit y usar `/commit`.
 5. Detallar la **ola 2** en este archivo con los nombres reales de lo que dejó la ola 1.
+
+---
+
+# Ola 2
+
+**Qué trae:** la lectura de hojas sin IA y el contrato `SumasRegistros` (6.3b), tres calculadoras que no dependen de la lectura de montos (6.4c, 6.4e, 6.4g), los parámetros de 2026 (6.1b) y el primer lote de casos del IRS escrito sin ver el código (6.9a). Corren las seis **en paralelo**.
+
+## Contratos compartidos de la ola 2
+
+**Dónde está lo que ya existe (ola 1):**
+- Núcleo del motor: `App\Services\Calculo\Nucleo\*` (`Dinero`, `Linea`, `Traza`, `PasoTraza`, `Declaracion`, `Calculadora`, `EntradasDeclaracion`, `PersonaEntrada`, `DatoEntrada`, `RespuestaEntrada`, `RolPersona`, `EstadoLinea`, `OrigenTraza`, `TipoPaso`). Léelos antes de escribir una calculadora.
+- Parámetros: `App\Support\ParametrosFiscales::valorRequerido($anio, $categoria, $clave)` y `::tabla(...)` (devuelve `TablaFiscal`). Las claves están en `database/data/catalogo-fiscal/2025/parametros-metadatos.php` (formato `categoria.clave`). Los porcentajes nuevos son **texto** (`"0.124"`): pásalos tal cual a `Dinero::por()`. Los montos son dólares enteros: conviértelos con `Dinero::deDolares()`.
+- PDF de 2025 fijados con hash en `tests/Fixtures/irs/2025/pdf/` y tablas CSV en `tests/Fixtures/irs/2025/`. **No bajes los PDF otra vez**; saca el texto con `pdftotext -layout` a una carpeta de `mktemp -d` y bórrala al terminar.
+
+**Convenciones de toda calculadora** (`App\Services\Calculo\Formularios\<Nombre>`):
+1. Implementa `Calculadora`: `formulario(): string` devuelve el **código de catálogo** (`'1040'`, `'sch-1'`, `'sch-2'`, `'sch-c'`, `'sch-se'`, `'sch-eic'`…); si la calculadora escribe líneas de varios formularios, devuelve el principal y escribe cada línea con su propio código de formulario en `Linea`.
+2. **Una calculadora escribe solo sus líneas** (las de su subtarea) y lee las de otros formularios con `Declaracion::linea($formulario, $linea)`. Si una línea que necesita **no está o es `falta_dato`**, escribe `Linea::faltaDato(...)` con el motivo en palabras ("Falta la línea 31 del Schedule C"); **nunca supone 0**.
+3. Todo número fiscal sale de `parametros_fiscales` con `ParametrosFiscales`; **ninguna constante fiscal en el código**. Si el parámetro está pendiente (2026), captura la `RuntimeException` y escribe `falta_dato` "No se puede calcular: falta el parámetro X de <año> (Catálogo → Parámetros)".
+4. Cada línea lleva su **traza** (`Traza`): entradas con su `origen` y `referencia` (id o clave, **nunca un valor sensible**), parámetros con su clave, la operación y el resultado. Si una entrada viene de un dato sin validar o con excepción (`DatoEntrada::usaSinValidar()`), la línea se escribe con `usaSinValidar` y la lista `datosSinValidar` (referencias).
+5. Lo que el piloto no calcula **no se inventa**: marca `Linea::noSoportada(...)` diciendo qué documento lo causa y deja la declaración "parcial". Documentos fuera del piloto, para detectar: `1099-int`, `1099-div`, `1099-r`, `ssa-1099`, `1099-b`, `1099-da`, `1099-g`, `k-1`, `1098-e` (si existe en el catálogo del año); basta con que haya un `datos` cuyo código empiece por ese documento.
+6. **Estado civil:** solo `EntradasDeclaracion::$estadoCivil` (`EstadoCivilIrs`). Si es `null`, todas las líneas dependientes de él salen `falta_dato` "Falta decidir el estado civil en Revisión". **MFS tiene sus propios tramos y deducción** (parámetros `tax_brackets.mfs`, `deduccion_estandar.monto_mfs`); los créditos con reglas especiales para MFS que no verifiques en las instrucciones salen `falta_dato` con "Con MFS, este crédito lo revisa el preparador".
+7. **Pruebas sin el orquestador:** cada calculadora se prueba sola construyendo `EntradasDeclaracion` y una `Declaracion` a mano y poniendo en ella, con `Declaracion::poner(Linea::calculada(...))`, las líneas de otros formularios que necesita. Valores esperados **sacados de las instrucciones y las tablas del IRS** (no del código que escribes), cada uno con un comentario de fuente (formulario, línea, página). Prueba de arquitectura: ya existe una que prohíbe `float` y `round(` en `app/Services/Calculo`; cúmplela.
+
+**Cómo llegan los datos a una calculadora** (lo llena `ArmadorEntradas` en la ola 4; hoy lo armas tú a mano en las pruebas):
+- `EntradasDeclaracion::$datos`: clave `"{documento}:{casilla}"` (por ejemplo `w2:1`, `1099-misc:3`, `recibos-utiles-educador:total`). El valor es el **total ya sumado** de todos los documentos de ese tipo de la declaración (`Dinero`), con `origen`, `referencia` y las banderas `validado` y `conExcepcion`.
+- `$sumasRegistros`: `array<string, Dinero>` con clave = línea del Schedule C (`'1-sin-formulario'`, `'2'`, `'8'` … `'27b'`, `'millas'`, `'pies-casa'`, `'pies-oficina'`).
+- `$personas`: contribuyente, cónyuge y dependientes con `ClasificacionPersona`, `edadAlFinDeAnio`, `ssnValido`, `noValidoParaTrabajar`.
+- `$respuestas`: por código de pregunta (`'E8'`, `'D15'`…).
+
+**Archivos compartidos de la ola 2 y quién manda** (para no pisarse; si dos subtareas tocan el mismo archivo, edita con reemplazos exactos de tu zona y **vuelve a leer el archivo justo antes de editar**):
+
+| Archivo | Dueño |
+| --- | --- |
+| `app/Services/CatalogoFiscal/CatalogoFiscalImportador.php` | 6.3b (clave `lectura` de documentos); 6.1b solo `aplicarAjustesDeParametros()` |
+| `app/Services/Lectura/Reglas/MotorReglas.php`, `database/data/catalogo-fiscal/2025/reglas.php`, `ExplicadorExcepcion` | 6.3b |
+| `app/Services/Calculo/Nucleo/PersonaEntrada.php` | 6.4g (solo agregar propiedades opcionales **al final**, con valor por defecto) |
+| `tests/Feature/Calculo/TablasIrsTest.php`, `CasosIrsTest.php` | **nadie** en esta ola (las pruebas de tablas completas van en archivos propios; el agente principal quita los `skip` al cierre) |
+| `composer.json`, `composer.lock` | 6.3b (`openspout/openspout`) |
+
+---
+
+## 6.3b — Hojas `xlsx`/`csv` sin IA, modelo de renglones, `SumasRegistros` y R-14 básica
+
+**Plan:** secciones "6.3b" y "Contrato `SumasRegistros`" de `fase-6-calculo-borrador-1040.md` y la decisión (l). **Skills:** `arch-service-classes`, `arch-dto-pattern`, `eloquent-casts`, `eloquent-relationships`, `eloquent-eager-loading`, `sec-mass-assignment`. **Modelo:** Sonnet 5.5.
+
+**Contexto mínimo:** `app/Services/Lectura/` (`DatosDocumento`, `LectorDocumentos`, `CalculadoraConfianza`, `MotivoConfianza`, `EsquemaLectura`, `Reglas/MotorReglas`, `Reglas/R11HijoSinSsn` como ejemplo de regla), `app/Models/Lectura/*`, `database/migrations/2026_11_03_120000_crea_lectura_de_documentos.php`, `database/data/catalogo-fiscal/2025/documentos.php` (`registros-ingresos-gastos` con sus casillas de 6.3a), `public/plantillas/registros-negocio-{es,en}.xlsx`, `tests/Fixtures/lectura/montos/` (plantilla llena en `xlsx` y `hoja-propia.csv`), `docs/mejora-plataforma/guia-confianza-de-lectura.md`, el controlador y la petición que suben documentos al portal (`SubirDocumentoRequest`).
+
+**Qué hacer** (todo según la sección "6.3b" del plan; aquí lo que no está claro allí):
+1. **`lectura = renglones`:** migración que agrega a `catalogo_documentos` una columna `lectura` (`string`, nullable; valores `casillas` por defecto o `renglones`), el modelo `CatalogoDocumento` (`#[Fillable]`), la clave `lectura` en `CLAVES['documentos']` del importador y, en `documentos.php`, `'lectura' => 'renglones'` para `registros-ingresos-gastos` (es la única edición que te toca de `documentos.php`; **nada más de ese archivo**). Que el lector de F4 (`LectorDocumentos`/`LectorOpenAi`) **no mande a OpenAI** un documento con `lectura = renglones` mientras no exista el lector de renglones con IA (tramo 2): para esos, `LectorHojas` si el archivo es `xlsx`/`csv`; si es PDF o imagen, lectura manual (sin datos) y R-14 "este archivo se lee en una versión posterior: el preparador lo revisa". Así 6.3a no dispara lecturas de OpenAI de extractos antes de tiempo.
+2. **Modelo de renglones:** migración(es) y modelos `DocumentoRenglon`, `DocumentoRenglonCambio` y columnas nuevas de `documento_lecturas` tal como las define el plan (descripción y monto **cifrados**; totales impresos cifrados). Relaciones y casts como el resto de `app/Models/Lectura`. Un solo camino de escritura: agrega a `DatosDocumento` los métodos para escribir y corregir renglones (con historial en `documento_renglon_cambios`); nada de `update()` directo desde fuera.
+3. **`App\Services\Lectura\LectorHojas`** (sin OpenAI, lector `hoja`): plantilla de F3.7 (reconocida por su encabezado y etiquetas, en español e inglés, usando una tabla fija en el nuevo `database/data/catalogo-fiscal/2025/plantilla-registros.php` que mapea cada etiqueta de categoría a su línea del Schedule C) y hoja propia por encabezados (sinónimos en el mismo archivo). `xlsx` con **`openspout/openspout`** (`composer require`; deja la versión en tu entrega) y `csv` con `fgetcsv` (separador detectado; UTF-8 o Latin-1). Fórmulas: se toma el valor guardado; una celda con fórmula sin valor → R-14. Confianza 0,99 con el motivo nuevo **"Leído de la hoja de cálculo (sin IA)"** en `MotivoConfianza` (título y explicación en palabras, y en la tabla de la guía). Una categoría que no coincide queda `no_se` y suma a R-14.
+4. **`SumasRegistros`:** interfaz `App\Services\Lectura\SumasRegistros` con `para(Expediente $expediente): ResultadoSumas`, e implementación `SumasRegistrosPorRenglones` (registrada en el contenedor). `ResultadoSumas` (DTO `readonly`): por cada clave de línea del Schedule C (`'1-sin-formulario'`, `'2'`, `'8'` … `'27b'`, `'millas'`, `'pies-casa'`, `'pies-oficina'`) un `SumaCategoria` con `total` (`Dinero`), `renglonIds` (lista de ids), `confianza`, `motivo`. En este tramo suma los renglones vigentes de hojas y plantillas de todos los archivos de `registros-ingresos-gastos` del cliente (excluye `transferencia`, `personal` y `no_se`); el cuadre y la conciliación son del tramo 2 y **no cambian el contrato**.
+5. **R-14 (primera versión)** `R14RegistrosNegocio`: columnas o filas no reconocidas de una hoja, celdas con fórmula sin valor, renglones sin categoría y archivos PDF o imagen de registros (aún sin lector con IA). Una excepción por archivo o por categoría, **nunca por renglón**; el detalle lleva ids, nunca montos ni descripciones. Texto en `ExplicadorExcepcion`. Agrega **R-14 y R-15** a `2025/reglas.php` (R-14 `revision` e `implementada`; R-15 `informativa` **sin** `implementada`, la implementa 6.5) y registra solo R-14 en `MotorReglas`.
+6. **Portal:** `registros-ingresos-gastos` acepta `xlsx` y `csv` (ya lo hace por el catálogo de 6.3a); el mensaje de formatos no aceptados debe leer los formatos del catálogo en vez de decir "PDF, JPG, PNG o HEIC" fijo, y el texto "Qué subir" del documento presenta la plantilla como **la vía más sencilla, sin presionar** ("Si llevas tus cuentas, la plantilla es lo más rápido; si no, sube tus extractos y recibos"), en `que_subir_es` y `que_subir_en` de `documentos.php` solo para este documento.
+
+**Pruebas** (`tests/Feature/Lectura/LectorHojasTest.php`, `RenglonesTest.php`, `SumasRegistrosTest.php`; OpenAI nunca se llama, `Http::assertNothingSent()` en las de hojas): plantilla de F3.7 en `xlsx` (la de `tests/Fixtures/lectura/montos/`) → cada categoría a su línea, confianza 0,99 con el motivo nuevo; `csv` con encabezados en inglés y una columna desconocida → renglones leídos y R-14 por la columna; categoría desconocida → `no_se` y R-14; fórmula sin valor → R-14; un PDF de registros no sale a OpenAI y abre R-14; suma por categoría con los ids de sus renglones; corregir un renglón deja historial y rehace la suma; ningún monto ni descripción en `excepciones.detalle`, logs ni bitácora; el importador carga `lectura = renglones`.
+
+**Archivos permitidos:** las migraciones y modelos nuevos de renglones y de `lectura`; `app/Models/CatalogoFiscal/CatalogoDocumento.php` (solo `lectura`); `app/Services/CatalogoFiscal/CatalogoFiscalImportador.php` (solo `CLAVES['documentos']`); `app/Services/Lectura/*` (nuevos y los puntos exactos de `LectorDocumentos`, `DatosDocumento`, `MotivoConfianza`, `Reglas/MotorReglas`, `ExplicadorExcepcion`); `database/data/catalogo-fiscal/2025/plantilla-registros.php` y `reglas.php`; de `documentos.php` solo `lectura` y `que_subir_*` de `registros-ingresos-gastos`; `composer.json` y `composer.lock`; la petición de subida del portal para los formatos; `docs/mejora-plataforma/guia-confianza-de-lectura.md`; sus pruebas; fixtures en `tests/Fixtures/lectura/montos/`.
+**No tocar:** `app/Services/Calculo/**`, `formularios.php`, `parametros*.php`, `2026/ajustes.php`, `tests/Fixtures/irs/**`.
+
+**Criterio de terminado:** pruebas verdes, `pint` limpio, `catalogo-fiscal:verificar` limpio en 2025 (carga con `CatalogoFiscalSeeder` en las pruebas; no corras el cargador contra la base local); en tu entrega: versión de openspout, tabla de etiquetas de la plantilla → línea, cómo detectaste plantilla vs. hoja propia, y todo lo que dejaste "por verificar".
+
+---
+
+## 6.4c — Calculadoras `Schedule1` e `Ingresos1040`
+
+**Plan:** tabla de 6.4b a 6.4h (fila 6.4c). **Skills:** `arch-service-classes`, `arch-value-objects`. **Modelo:** Sonnet 5.5.
+
+**Contexto mínimo:** el núcleo (`Nucleo/*`) y sus pruebas, las convenciones de arriba, el catálogo de líneas de `sch-1` y `1040` en `2025/formularios.php` (con las fuentes y páginas que ya tienen), los PDF `f1040`, `f1040s1` y las instrucciones `i1040gi` (sección de las líneas 1a a 11 y "Educator Expenses", p. 93).
+
+**Qué hacer** (en `App\Services\Calculo\Formularios\Schedule1` y `\Ingresos1040`):
+- **`Ingresos1040`** escribe del Form 1040: `1a` (suma de `w2:1`), `1c` y `1e` **no las calcula** (1c es del Form 4137, ficha pendiente → `no_soportada` solo si hay dato de propinas no reportadas; `1e` la escribe la calculadora del 2441 en la ola 3: tú **no la tocas**), `1z` (suma de 1a a 1h: solo 1a y las que otra calculadora ya haya puesto; las demás cuentan 0 porque el piloto no las soporta), `8` (línea 10 del Schedule 1), `9` (ingresos totales: 1z, 2b, 3b, 4b, 5b, 6b, 7a y 8; si hay documentos fuera del piloto —lista de las convenciones— la línea sale `no_soportada` diciendo cuál), `10` (línea 26 del Schedule 1), `11a` (9 menos 10) y `11b` (copia de 11a). Cero o negativo se mantiene tal cual en 9 y 11a (el formulario no lo limita).
+- **`Schedule1`** escribe `3` (línea 31 del Schedule C; si no está, `falta_dato`), `8z` (`1099-misc:3` más `1099-misc:8`), `9` (suma de 8a a 8z: solo 8z), `10` (1 a 7 y 9: solo 3, 8 y 9 del piloto; otras líneas → `no_soportada` si hay documentos fuera del piloto), `11` (gastos de educador: `recibos-utiles-educador:total` con el tope `schedule_1.tope_gastos_educador`; **primera versión: el tope se aplica una vez**; si el estado civil es MFJ y el total supera el tope, agrega a la traza "con declaración conjunta, si los dos cónyuges son educadores el tope es doble: lo revisa el preparador" y repórtalo como pendiente de decisión), `15` (línea 13 del Schedule SE; si no está, `falta_dato`), `26` (suma de 11 a 23 y 25: solo 11 y 15; si hay documentos fuera del piloto, `no_soportada`).
+- Verifica cada número de línea y su descripción contra los PDF; si el catálogo de 6.0 tiene algo distinto, **repórtalo**, no lo cambies (el catálogo es de otra subtarea).
+
+**Pruebas** (`tests/Unit/Calculo/Formularios/Schedule1Test.php` y `Ingresos1040Test.php`): casos con valores esperados de las instrucciones o armados a mano con cita: dos W-2, ganancia del Schedule C, educador con y sin tope, línea 9 con un `ssa-1099` → `no_soportada`, falta de la línea 31 del Schedule C → `falta_dato` y las líneas que dependen de ella también, traza con origen y sin valores sensibles, dato sin validar → `usaSinValidar`.
+
+**Archivos permitidos:** `app/Services/Calculo/Formularios/Schedule1.php`, `Ingresos1040.php` y sus pruebas.
+**No tocar:** el núcleo, el catálogo, otras calculadoras.
+
+**Criterio de terminado:** pruebas verdes, `pint` limpio; entrega con las líneas que escribe cada clase, lo que quedó `no_soportada`, la decisión pendiente del tope de educador y las diferencias que encontraste con el catálogo.
+
+---
+
+## 6.4e — Calculadora `ImpuestoYSchedule2` (impuesto, Schedule 2 y líneas 21 a 24 del 1040)
+
+**Plan:** tabla de 6.4b a 6.4h (fila 6.4e) y "Estrategia de validación" capa 1. **Skills:** `arch-service-classes`, `arch-value-objects`. **Modelo:** Sonnet 5.5.
+
+**Contexto mínimo:** el núcleo, las convenciones, `tests/Fixtures/irs/2025/tax-table.csv` y `fuentes.json`, `tests/Feature/Calculo/TablasIrsTest.php` (el comentario de la clase esperada: `TablaImpuesto::paraFila(string $estadoCivil, Dinero $ingresoGravable): Dinero`), PDF `p1040` (Tax Table p. 2 a 13, Tax Computation Worksheet p. 14), `f1040`, `f1040s2`, el Form 8959 de 2025 (`https://www.irs.gov/pub/irs-prior/f8959--2025.pdf` a una carpeta de `mktemp -d`; es de 6.1a), los parámetros `tax_brackets.*`, `additional_medicare_tax.*`.
+
+**Qué hacer** (en `App\Services\Calculo\Formularios\ImpuestoYSchedule2`, más `Impuesto\TablaImpuesto`):
+1. **`TablaImpuesto::paraFila(string $estadoCivil, Dinero $ingresoGravable): Dinero`** (`$estadoCivil` es el valor del enum: `single`, `mfj`, `mfs`, `hoh`, `qss`; `qss` usa la columna de MFJ): para ingreso gravable **menor de USD 100.000**, el método del IRS: la tabla da el impuesto del **punto medio de cada franja** (de USD 5 en las primeras, de USD 25 y de USD 50 según el tramo; deduce las franjas del PDF de la Pub. 1040 y **verifícalas**) calculado con los tramos del año (`tax_brackets.*`) y redondeado a dólares enteros como dice la Tax Table. **Se prueba contra las 2.062 filas de `tax-table.csv`** (todas las columnas, MFS incluida): `tests/Feature/Calculo/TablaImpuestoCsvTest.php` (archivo propio; no toques `TablasIrsTest.php`).
+2. **Línea 16 del 1040:** si el ingreso gravable (línea 15) es menor de USD 100.000, `TablaImpuesto`; si no, la **Tax Computation Worksheet** (Pub. 1040, p. 14: por estado civil, "multiplica por la tasa y resta la cifra"): impleméntala con las cifras del PDF **derivadas de los tramos del año** y pruébala con casos por tramo y en los bordes (USD 99.999 / 100.000 / 100.001 y los cortes de cada tramo). Si hay dividendos calificados o ganancias de capital (documentos fuera del piloto), la línea sale `no_soportada` (falta la hoja QDCG).
+3. **Líneas del 1040:** `17` (línea 3 del Schedule 2), `18` (16 + 17), `21` (19 + 20, leídas de Declaracion), `22` (18 − 21, mínimo cero), `23` (línea 21 del Schedule 2) y `24` (22 + 23). Las que dependan de líneas de otras calculadoras (19 y 20 de 6.4f en la ola 3) salen `falta_dato` si no están.
+4. **Schedule 2:** `3` (1a —línea 29 del 8962, leída de `f8962:29`; si no está, 0 sin aviso solo si el cliente no tiene 1095-A, si no `falta_dato`— más línea 2 AMT, que el piloto no soporta), `4` (línea 12 del Schedule SE; `falta_dato` si no está) y `11` (impuesto adicional de Medicare, **Form 8959**: parte I sobre `w2:5` con el umbral por estado civil `additional_medicare_tax.umbral_*`, parte II sobre el ingreso de autoempleo con el umbral reducido por los salarios, tasa `additional_medicare_tax.tasa`; la parte de retenciones de las líneas 19 a 24 **no**, es del 25c de 6.4h), `21` (4, 7 a 16, 18 y 19: solo 4 y 11 en el piloto).
+5. **NIIT (8960) y AMT** no se soportan: `no_soportada` solo si hay datos que la dispararían (intereses, dividendos, alquileres).
+
+**Pruebas:** la de las 2.062 filas; `TablaImpuestoTest` (puntos medios, bordes entre franjas, mínimo, MFS vs soltero, QSS = MFJ); hoja de cálculo por tramos con cifras del PDF; el ejemplo del IRS ya transcrito (`pub1040-tax-table-mfj-25300`: USD 25.300 MFJ → USD 2.562) **sin leer el archivo de caso**: cópialo a mano con su cita; Medicare adicional con salarios por encima y por debajo del umbral y para MFS; todas las líneas de arriba con `falta_dato` cuando falta una dependencia.
+
+**Archivos permitidos:** `app/Services/Calculo/Formularios/ImpuestoYSchedule2.php`, `Formularios/Impuesto/*`, `tests/Unit/Calculo/Formularios/ImpuestoYSchedule2Test.php`, `TablaImpuestoTest.php`, `tests/Feature/Calculo/TablaImpuestoCsvTest.php`.
+**No tocar:** el núcleo, `TablasIrsTest.php`, el catálogo, otras calculadoras.
+
+**Criterio de terminado:** pruebas verdes (las 2.062 filas incluidas), `pint` limpio; entrega con las franjas que dedujiste, las cifras de la hoja de cálculo con su página, y lo que dejaste `no_soportada`.
+
+---
+
+## 6.4g — Calculadora `Eitc`
+
+**Plan:** fila 6.4g y los límites de la capa 4 (EITC). **Skills:** `arch-service-classes`, `arch-value-objects`. **Modelo:** Sonnet 5.5.
+
+**Contexto mínimo:** el núcleo (en especial `PersonaEntrada`), las convenciones, `tests/Fixtures/irs/2025/eic-table.csv`, `eic-notas.csv` y `fuentes.json`, el comentario de `TablasIrsTest.php` (`CreditoEic::paraFila(string $columna, Dinero $montoDeLaHoja): Dinero`), PDF `p1040` (EIC Table desde la p. 16), `i1040gi` (instrucciones de la línea 27a, **Hoja de trabajo A y B**, requisitos y reglas de hijo calificado), `f1040sei`, el parámetro `credito_eic.por_hijos` y `credito_eic.tope_ingreso_inversion`.
+
+**Qué hacer** (en `App\Services\Calculo\Formularios\Eitc`, más `Eitc\CreditoEic`):
+1. **`CreditoEic::paraFila(string $columna, Dinero $montoDeLaHoja): Dinero`:** el crédito según la EIC Table (columnas por número de hijos y por estado civil conjunto o no) calculado **con la fórmula del IRS sobre el punto medio de cada franja de USD 50** con los parámetros `credito_eic.por_hijos` (tasa de entrada, máximo, inicio y fin de la reducción), redondeado como la tabla; incluye las **8 celdas con asterisco** (notas en `eic-notas.csv`). **Se prueba contra las 1.374 filas** de `eic-table.csv`: `tests/Feature/Calculo/CreditoEicCsvTest.php` (archivo propio).
+2. **Hoja de trabajo:** ingreso del trabajo (sueldos `w2:1` más la ganancia neta del Schedule C menos la mitad del impuesto de autoempleo, según la hoja A o B de las instrucciones; **verifica la regla exacta en el PDF**) e ingreso ajustado (línea 11b del 1040); el crédito es el que corresponde al **mayor** de los dos, por las reglas de la hoja; tope de ingreso de inversión (`credito_eic.tope_ingreso_inversion`; si hay intereses o dividendos —documentos fuera del piloto—, `no_soportada`).
+3. **Requisitos** (líneas del 1040 27a y del Schedule EIC): hijo calificado (edad y estudiante/incapacitado, tiempo de convivencia, parentesco), SSN válido del contribuyente, del cónyuge y de cada hijo, y MFS. **`PersonaEntrada` no trae estudiante, incapacitado, meses de convivencia ni parentesco:** agrega **al final**, con valor por defecto, las propiedades opcionales que necesites (`?bool $esEstudiante = null`, `?bool $incapacitado = null`, `?int $mesesConviviendo = null`, `?string $parentesco = null`, y las que verifiques que hacen falta) y documéntalas en tu entrega: las llena `ArmadorEntradas` en la ola 4 desde las preguntas C3, C4, C7 y C8. Cuando el dato opcional es `null` y es necesario, la línea sale `falta_dato` diciendo cuál.
+4. **MFS:** el crédito de MFS que vive separado tiene una excepción; **verifícala en las instrucciones de 2025**; si no puedes, `falta_dato` con "Con MFS, este crédito lo revisa el preparador".
+5. **Salidas:** línea `27a` del 1040 y el `credito` del Schedule EIC (con su traza) y las líneas `1` a `6` del Schedule EIC solo en el sentido de "qué hijos entran" (referencias, sin nombres ni SSN). Un cliente sin hijos: la hoja sin hijos (con los requisitos de edad del contribuyente, **verifícalos**).
+
+**Pruebas:** las 1.374 filas; casos por número de hijos (0, 1, 2, 3 y 4), en los bordes (fin de la entrada, inicio y fin de la reducción, MFJ vs. otros) con cifras de la EIC Table; ingreso de inversión; hijo sin SSN válido; hijo de 19 años estudiante; MFS; datos opcionales `null`. Ejemplo ya transcrito del IRS (soltero, un hijo, hoja USD 2.455 → USD 842) copiado a mano con su cita (**sin leer el archivo de caso**).
+
+**Archivos permitidos:** `app/Services/Calculo/Formularios/Eitc.php`, `Formularios/Eitc/*`, `app/Services/Calculo/Nucleo/PersonaEntrada.php` (solo agregar al final), `tests/Unit/Calculo/Formularios/EitcTest.php`, `CreditoEicTest.php`, `tests/Feature/Calculo/CreditoEicCsvTest.php`, y la prueba de `PersonaEntrada` que ya exista (solo ampliar).
+**No tocar:** `TablasIrsTest.php`, el catálogo, otras calculadoras.
+
+**Criterio de terminado:** pruebas verdes (las 1.374 filas incluidas), `pint` limpio; entrega con las propiedades nuevas de `PersonaEntrada`, las reglas de la hoja con su página, la excepción de MFS (verificada o pendiente) y lo que dejaste `falta_dato`.
+
+---
+
+## 6.1b — Parámetros de 2026
+
+**Plan:** sección "6.1 Parámetros por año", viñeta "2026". **Skills:** `laravel-best-practices` (solo si tocas el importador). **Modelo:** Sonnet 5.5.
+
+**Contexto mínimo:** `database/data/catalogo-fiscal/2026/ajustes.php`, `app/Services/CatalogoFiscal/CatalogoFiscalImportador.php` (`aplicarAjustesDeParametros`), `CatalogoFiscalCopiador`, `2025/parametros-metadatos.php` (la lista de parámetros y su forma), `tests/Feature/CatalogoFiscal/CargaTest.php` (prueba de copia a 2026), `ParametrosTest.php`.
+
+**Qué hacer:**
+1. Con **fuentes oficiales** (irs.gov; usa la búsqueda y descarga a una carpeta de `mktemp -d`): la Rev. Proc. de ajustes por inflación de 2026 (**número por verificar**: busca "Revenue Procedure 2025" "tax year 2026" inflation adjustments), los formularios y borradores de 2026 en `irs.gov/pub/irs-dft/` o `irs-pdf/` (el Schedule C, SE y 8812 de 2026 ya se sirven en `irs-pdf/`), y el aviso de la tarifa de millaje de 2026. Para **cada parámetro de la lista de 2025** que el IRS ya haya publicado para 2026, pon su valor en `2026/ajustes.php`, sección `parametros`, **con fuente** (formulario o Rev. Proc., sección y página). Lo que **no** encuentres publicado queda pendiente (no lo pongas) y se lista en tu entrega con el motivo. Nada de cifras de memoria: si no lo verificaste en un documento del IRS, no entra.
+2. Formato de un parámetro con fuente: `'categoria.clave' => ['valor' => X, 'fuente_texto' => '… p. N', 'fuente_url' => '…']` (el escalar simple sigue valiendo). Ajusta **solo** `aplicarAjustesDeParametros()` del importador para aceptar las dos formas y guardar `fuente_texto` y `fuente_url` del parámetro; sin validar.
+3. **`lineas`** de `ajustes.php`: solo las diferencias de número de línea que muestren los formularios o borradores de 2026 frente a los de 2025 (por ejemplo, si el 1040 o el Schedule 1-A cambian de numeración); cada una con su fuente en `fuente_texto`, `fuente_url` y `fuente_pagina`. **Si ninguna cambia, déjalo vacío y dilo.**
+4. No toques nada de 2025.
+
+**Pruebas:** `CargaTest` (la copia a 2026 deja los parámetros publicados con su valor y fuente, y el resto pendiente) y `ParametrosTest` (ningún parámetro de 2026 con valor sin fuente; `verificar` lista los pendientes de 2026 por nombre; cambiar 2026 no toca 2025).
+
+**Archivos permitidos:** `database/data/catalogo-fiscal/2026/ajustes.php`; `app/Services/CatalogoFiscal/CatalogoFiscalImportador.php` (solo `aplicarAjustesDeParametros`); `tests/Feature/CatalogoFiscal/CargaTest.php` y `ParametrosTest.php` (solo lo necesario); un fixture de ajustes de prueba si lo necesitas.
+**No tocar:** `2025/**`, `formularios.php`, `documentos.php`, `reglas.php`.
+
+**Criterio de terminado:** pruebas verdes, `pint` limpio; entrega con la tabla de cada parámetro de 2026 puesto (clave, valor, documento y página), la lista de los que siguen pendientes, el número de la Rev. Proc. y las líneas que cambian de número (si las hay).
+
+---
+
+## 6.9a — Primer lote de casos del IRS (escrito sin ver el código)
+
+**Plan:** "Estrategia de validación" capas 3 y 4, y "6.9 Casos de punta a punta". **Skills:** ninguna. **Modelo:** Sonnet 5.5. **Regla de oro:** **no abras `app/Services/Calculo/` ni ninguna calculadora (vieja o nueva) ni sus pruebas**; el valor esperado sale del PDF y de las instrucciones del IRS, calculado **a mano**, paso por paso, como lo haría un preparador en papel.
+
+**Contexto mínimo:** `tests/Fixtures/irs/casos/README.md` (formato y regla de doble lectura), los 7 casos ya escritos como modelo, `tests/Support/CasosIrs.php`, los PDF y tablas de `tests/Fixtures/irs/2025/` (`tax-table.csv`, `eic-table.csv`, `f2441-tabla.csv`, `f8962-*.csv`, PDF fijados), y las instrucciones del 1040 de 2025 (`i1040gi`).
+
+**Qué hacer:** escribe en `tests/Fixtures/irs/casos/2025/` estos casos, cada uno con `entradas` (hechos, no conclusiones), `pasos` (la hoja del IRS transcrita línea por línea con su fuente y **página**), `lineas` esperadas y `cubre` con **solo las líneas de las que de verdad das el valor**:
+1. `tax-soltero-ingreso-gravable-100000-borde`: ingreso gravable USD 99.999, 100.000 y 100.001, soltero (Tax Table → hoja de cálculo); valores con el CSV y la hoja de la p. 14 de la Pub. 1040.
+2. `tax-mfj-franja-borde-5` y `tax-mfs-franja`: bordes de las franjas de USD 5, 25 y 50 de la Tax Table, MFJ y MFS.
+3. `tax-hoh-tramo-24`: cambio de tramo con HOH.
+4. `eitc-sin-hijos`, `eitc-un-hijo-borde-reduccion`, `eitc-dos-hijos-mfj`, `eitc-tres-hijos-limite`: bordes de la EIC Table (fin de la entrada, inicio y fin de la reducción; MFJ vs. otros).
+5. `schedule1-educador-tope`: gastos de educador por encima del tope (verifica el tope y la regla de MFJ en las instrucciones del 1040 de 2025, p. 93).
+6. `medicare-adicional-soltero` y `medicare-adicional-mfs`: Form 8959 Parte I con salarios por encima del umbral (cifras del PDF del 8959; descárgalo de `https://www.irs.gov/pub/irs-prior/f8959--2025.pdf` a una carpeta de `mktemp -d`).
+Cada valor esperado cita formulario, línea, **página** y URL del PDF fijado (agrega a `fuentes.json` solo si fijas un PDF nuevo; si necesitas el 8959, pregunta antes de copiarlo al repositorio). Donde dos lecturas posibles de la instrucción den cifras distintas, **escribe las dos como `pendiente de revisión`** en el caso y repórtalo.
+
+**Pruebas:** `CasosIrsTest` ya revisa la estructura (cita con página y URL). Agrega **cero** pruebas que dependan del motor.
+
+**Archivos permitidos:** `tests/Fixtures/irs/casos/2025/**` (solo archivos nuevos) y, si fijas un PDF, `tests/Fixtures/irs/2025/pdf/*` y `fuentes.json`.
+**No tocar:** `app/**`, `tests/Unit/**`, `tests/Feature/**` salvo para correr `CasosIrsTest`.
+
+**Criterio de terminado:** `CasosIrsTest` verde; entrega con la lista de casos y las líneas que cada uno cubre, las lecturas ambiguas que encontraste y cualquier cifra que **no** pudiste confirmar en el PDF.
+
+---
+
+## Qué hace el agente principal al cerrar la ola 2
+
+1. Revisar cada entrega contra el plan; **verificar al azar** cinco cifras de casos y de parámetros de 2026 contra el PDF.
+2. Quitar los `skip` de `TablasIrsTest.php` (Tax Table, EIC y 2441 salen de las pruebas propias de 6.4e y 6.4g; la del 2441 sigue para 6.4f).
+3. `wayfinder:generate`, `pint --test`, `types:check`, `eslint` sobre lo tocado, suite completa con `PAO_DISABLE=1 php artisan test --parallel` (una sola vez).
+4. Contrastar los casos de 6.9a con las calculadoras de 6.4e y 6.4g: **si no coinciden, el agente principal revisa contra el PDF antes de tocar cualquiera de los dos**.
+5. Revisar en el navegador lo que toque (portal: formatos y "Qué subir"; visor de lectura de la hoja).
+6. "Cómo quedó" de la ola, `tareas-desarrollo.md`, Wiplitask (empresa **Cupperlab**); preguntar a Steven antes de cada commit (`/commit`).
+7. Detallar la **ola 3** con los nombres reales.
+
+## Cómo quedó la ola 2 (9 y 10 nov. 2026)
+
+- **6.3b:** `lectura = renglones` (migración `2026_11_10_100000`), tablas de renglones y de cambios, columnas nuevas de `documento_lecturas`, `LectorHojas` (`xlsx` con openspout v5.13.0 y `csv`, sin IA, confianza 0,99 "Leído de la hoja de cálculo"), `SumasRegistros` (interfaz + `SumasRegistrosPorRenglones`, 29 claves), regla R-14 y R-15 en el catálogo. Los PDF y fotos de registros ya no van a OpenAI: R-14 los marca para el preparador. Etiquetas de la plantilla → línea del Schedule C en `2025/plantilla-registros.php`.
+- **6.4c:** `Ingresos1040` y `Schedule1`. **6.4e:** `ImpuestoYSchedule2` con `TablaImpuesto` (Tax Table, 2.062 filas × 4 columnas, todas iguales) y `HojaImpuesto` (Tax Computation Worksheet, 20 filas de la p. 14). **6.4g:** `Eitc` y `CreditoEic` (1.374 filas de la EIC Table, iguales); cinco propiedades opcionales nuevas en `PersonaEntrada` (C3, C4, C7, C8, C11).
+- **6.1b:** 82 parámetros de 2026 con fuente (Rev. Proc. 2025-32 y borradores de 2026), 5 pendientes con motivo. Las líneas que cambian de número en 2026 quedaron **sin cargar**: el mecanismo de ajustes no puede crear ni renumerar líneas.
+- **6.9a:** 20 casos nuevos del IRS escritos sin ver el código; los dos de Medicare adicional activos con el Form 8959 fijado. `ContrasteCasosImpuestoTest` corre los casos de la línea 16 por `ImpuestoYSchedule2`: todos coinciden.
+- **Cierre:** códigos de formulario de los casos unificados con el catálogo (`f2441`, `f8962`, `sch-1a`); líneas 12, 14 y 16 del 2441 agregadas al catálogo; pruebas de tablas completas de `TablasIrsTest` reemplazadas por las de 6.4e y 6.4g (queda saltada la del 2441). Suite completa: 1.290 verdes y 7 saltadas; los 2 fallos del cierre (conteo de reglas y parámetros de 2026 en `PantallaTest`) se corrigieron y se volvieron a correr.
+
+### Decisiones y pendientes que salen de la ola 2
+
+1. **Redondeo a dólares enteros:** las calculadoras dejan centavos; el IRS permite redondear (p. 23 del 1040). Falta decidir cómo se muestra y se llena en el borrador.
+2. **Tope de gastos de educador (USD 300 por persona):** la calculadora lo aplica una vez; con dos cónyuges educadores el IRS permite 600. Hace falta una pregunta y repartir los recibos por persona.
+3. **Millaje de 2026 con dos tarifas** (hasta el 30 de junio y desde el 1 de julio) y **tabla del 2441 de 2026 con dos columnas:** forma de guardarlos.
+4. **Renumeración de líneas de 2026** (1040, Schedule 1-A y Schedule C): cómo cargarla.
+5. **`LeerDocumentoJob`:** con la lectura automática apagada no lee las hojas `xlsx`/`csv`, que no necesitan IA; y un PDF de registros queda "leído" sin datos.
+6. **Inglés de los textos del servidor** de las calculadoras y de R-14: sin archivo de idioma asignado.
+7. **Cobertura de documentos fuera del piloto:** alquileres y regalías (1099-MISC casillas 1 y 2) y el 1099-SA no marcan la declaración como parcial.
+8. **Fechas ambiguas** en hojas propias (03/10/2025): se leen como mes/día/año.
+9. **Texto fijo del portal** "PDF, JPG, PNG o HEIC" en `es.json` sigue sin leer los formatos del catálogo.
