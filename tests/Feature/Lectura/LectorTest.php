@@ -298,7 +298,7 @@ class LectorTest extends TestCase
         $archivo = $this->pdf();
         $lectura = $this->lectura($archivo);
 
-        $resultado = app(LectorDocumentos::class)->leer($archivo, $lectura, 'registros-ingresos-gastos', 2025);
+        $resultado = app(LectorDocumentos::class)->leer($archivo, $lectura, 'datos-bancarios', 2025);
 
         $this->assertSame('manual', $resultado->lector);
         $this->assertSame([], $resultado->casillas);

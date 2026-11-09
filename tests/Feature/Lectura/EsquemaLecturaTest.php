@@ -111,7 +111,9 @@ class EsquemaLecturaTest extends TestCase
     {
         foreach ([2025, 2026] as $anio) {
             $leibles = array_keys($this->esquemas()->documentosLeibles($anio));
-            $this->assertCount(22, $leibles, "{$anio}: son 22 los documentos que se leen.");
+            // 22 + los 6 documentos de montos de F6 (6.3a): recibo de cuidado, comprobantes de pagos, útiles del educador,
+            // horas extra y propinas, préstamo del vehículo y registros del negocio.
+            $this->assertCount(28, $leibles, "{$anio}: son 28 los documentos que se leen.");
 
             // OpenAI rechaza el esquema entero si un valor del enum de texto es un número: el código "1098" (Form 1098)
             // se vuelve entero al ser clave de un arreglo de PHP. Con eso ninguna lectura funcionó en producción.
@@ -139,7 +141,7 @@ class EsquemaLecturaTest extends TestCase
         $this->assertContains('1095-a', $tipo['enum']);
         $this->assertContains('tarjeta-ssn', $tipo['enum']);
         $this->assertSame(EsquemaLectura::DESCONOCIDO, last($tipo['enum']));
-        $this->assertNotContains('registros-ingresos-gastos', $tipo['enum'], 'Lo que no tiene casillas no se lee.');
+        $this->assertNotContains('datos-bancarios', $tipo['enum'], 'Lo que no tiene casillas no se lee.');
     }
 
     public function test_2026_toma_las_casillas_de_2026(): void
@@ -155,7 +157,7 @@ class EsquemaLecturaTest extends TestCase
 
     public function test_un_documento_sin_casillas_o_que_no_existe_lanza_un_error(): void
     {
-        foreach (['registros-ingresos-gastos', 'no-existe'] as $codigo) {
+        foreach (['datos-bancarios', 'no-existe'] as $codigo) {
             try {
                 $this->esquemas()->para($codigo, 2025);
                 $this->fail("{$codigo} debió dar error.");

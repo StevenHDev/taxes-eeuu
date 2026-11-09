@@ -131,7 +131,13 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 2,
         'fuente_texto' => 'Deducción por horas extra y por propinas (Schedule 1-A), instrucciones del 1040 de 2025',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
-        'casillas' => [],
+        // F6 6.3a (Schedule 1-A Partes II y III, líneas 4 y 14): una constancia por empleador. Formatos confirmados: pdf, jpg, png, heic.
+        // Por verificar con la constancia real de un empleador: si trae el recargo de las horas extra (lo que se deduce) o solo las horas; la casilla pide dólares.
+        'casillas' => [
+            ['casilla' => 'horas-extra-calificadas', 'descripcion' => 'Pago por horas extra calificadas del año, en dólares (el recargo, no las horas)', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 1],
+            ['casilla' => 'propinas-calificadas', 'descripcion' => 'Propinas calificadas del año, en dólares', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 2],
+            ['casilla' => 'ocupacion', 'descripcion' => 'Ocupación que figura en la constancia', 'tipo_dato' => 'texto', 'clave' => false, 'sensible' => false, 'orden' => 3],
+        ],
     ],
 
     // ── Negocio propio ──
@@ -215,10 +221,24 @@ return [
         'emisor_es' => 'Tú (tus propios registros)', 'emisor_en' => 'You (your own records)',
         'fecha_llegada' => null, 'si_no_llega_es' => 'Descarga los extractos del banco y de las tarjetas de tu negocio, junta tus recibos y anota el millaje. Si te falta algo, pídele a tu banco copias del año.', 'si_no_llega_en' => 'Download your business bank and card statements, gather receipts and note your mileage. If something is missing, ask your bank for copies for the year.',
         'que_subir_es' => 'Sube lo que ya tengas: extractos del banco y de las tarjetas del negocio, recibos de gastos, cobros que recibiste por Zelle, efectivo o apps sin 1099-K, tu registro de millaje y, si trabajas desde casa, cuántos pies cuadrados mide la oficina. En la nota cuéntanos lo que no sale en los papeles, como ingresos o gastos en efectivo sin recibo. No tienes que sumar nada: nosotros hacemos las cuentas.', 'que_subir_en' => 'Upload what you already have: bank and card statements for the business, expense receipts, payments you got by Zelle, cash or apps without a 1099-K, your mileage log and, if you work from home, the size of your office in square feet. In the note, tell us what the papers don\'t show, like cash income or expenses without a receipt. You don\'t have to add anything up: we do the math.', 'plantilla' => 'registros-negocio',
-        'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 4,
+        'formatos' => ['pdf', 'jpg', 'png', 'heic', 'xlsx', 'csv'], 'uno_por' => 'unico', 'orden' => 4,
         'fuente_texto' => 'Schedule C: ingresos y gastos del negocio (extractos, recibos, millaje, oficina en casa)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040sc.pdf',
-        'casillas' => [],
+        // F6 6.3a: casillas fijas que usan los dos tramos de 6.3 (los renglones van aparte, 6.3b y 6.3c). Ninguna es sensible: no traen nombres ni números de cuenta.
+        // Formatos: pdf, jpg, png, heic y también xlsx y csv (decisión l; solo aquí). Se leen sin IA (6.3b).
+        // Por hacer en 6.3b: marcar `lectura = renglones`. Hoy `catalogo_documentos` no tiene esa columna (ver la entrega de 6.3a).
+        'casillas' => [
+            ['casilla' => 'clase-detectada', 'descripcion' => 'Clase de documento: plantilla, extracto_banco, extracto_tarjeta, recibo, hoja_calculo, millaje u otro', 'tipo_dato' => 'codigo', 'clave' => false, 'sensible' => false, 'orden' => 1],
+            ['casilla' => 'periodo-desde', 'descripcion' => 'Primer día del período que cubre el documento (extractos)', 'tipo_dato' => 'fecha', 'clave' => false, 'sensible' => false, 'orden' => 2],
+            ['casilla' => 'periodo-hasta', 'descripcion' => 'Último día del período que cubre el documento (extractos)', 'tipo_dato' => 'fecha', 'clave' => false, 'sensible' => false, 'orden' => 3],
+            ['casilla' => 'total-depositos', 'descripcion' => 'Total de depósitos impreso en el extracto', 'tipo_dato' => 'monto', 'clave' => false, 'sensible' => false, 'orden' => 4],
+            ['casilla' => 'total-retiros', 'descripcion' => 'Total de retiros impreso en el extracto', 'tipo_dato' => 'monto', 'clave' => false, 'sensible' => false, 'orden' => 5],
+            ['casilla' => 'saldo-inicial', 'descripcion' => 'Saldo inicial impreso en el extracto', 'tipo_dato' => 'monto', 'clave' => false, 'sensible' => false, 'orden' => 6],
+            ['casilla' => 'saldo-final', 'descripcion' => 'Saldo final impreso en el extracto', 'tipo_dato' => 'monto', 'clave' => false, 'sensible' => false, 'orden' => 7],
+            ['casilla' => 'millas-negocio', 'descripcion' => 'Millas del negocio del año, según el registro de millaje', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 8],
+            ['casilla' => 'pies-cuadrados-casa', 'descripcion' => 'Pies cuadrados de la casa', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 9],
+            ['casilla' => 'pies-cuadrados-oficina', 'descripcion' => 'Pies cuadrados de la oficina en casa', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 10],
+        ],
     ],
 
     // ── Jubilación y beneficios ──
@@ -566,7 +586,17 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 6,
         'fuente_texto' => 'Form 2441, Parte I: nombre, dirección, SSN o EIN del proveedor y monto pagado',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f2441.pdf',
-        'casillas' => [],
+        // F6 6.3a (Form 2441 Partes I y II): un archivo = un recibo. Formatos confirmados: pdf, jpg, png, heic (un recibo es una foto o un PDF; no se aceptan hojas).
+        // El nombre de la persona cuidada se empareja con el bloque C en el servidor; si no viene, el preparador la asigna. El TIN vacío abrirá R-12 (6.6).
+        'casillas' => [
+            ['casilla' => 'proveedor-nombre', 'descripcion' => 'Nombre del proveedor del cuidado, como está impreso', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => true, 'orden' => 1],
+            ['casilla' => 'proveedor-direccion', 'descripcion' => 'Dirección del proveedor del cuidado', 'tipo_dato' => 'texto', 'clave' => false, 'sensible' => true, 'orden' => 2],
+            ['casilla' => 'proveedor-tin', 'descripcion' => 'SSN o EIN del proveedor, tal como está impreso (puede venir truncado)', 'tipo_dato' => 'tin', 'clave' => false, 'sensible' => true, 'orden' => 3],
+            ['casilla' => 'monto-pagado', 'descripcion' => 'Monto total pagado al proveedor en el período del recibo', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 4],
+            ['casilla' => 'periodo-desde', 'descripcion' => 'Primer día del período que cubre el recibo', 'tipo_dato' => 'fecha', 'clave' => false, 'sensible' => false, 'orden' => 5],
+            ['casilla' => 'periodo-hasta', 'descripcion' => 'Último día del período que cubre el recibo', 'tipo_dato' => 'fecha', 'clave' => false, 'sensible' => false, 'orden' => 6],
+            ['casilla' => 'persona-cuidada', 'descripcion' => 'Nombre de la persona cuidada (hijo o dependiente), si el recibo la trae', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => true, 'orden' => 7],
+        ],
     ],
     [
         'codigo' => 'estado-cuenta-ira', 'grupo' => 'gastos', 'nombre_oficial' => 'Estado de cuenta o Form 5498 (IRA)',
@@ -606,7 +636,13 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 8,
         'fuente_texto' => 'Deducción de hasta USD 300 para educadores, Schedule 1 línea 11',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
-        'casillas' => [],
+        // F6 6.3a (Schedule 1 línea 11): un archivo = un recibo. Formatos confirmados: pdf, jpg, png, heic (recibos impresos o fotos; los extractos de banco van en registros).
+        'casillas' => [
+            ['casilla' => 'comercio', 'descripcion' => 'Nombre del comercio donde se compró', 'tipo_dato' => 'nombre', 'clave' => false, 'sensible' => false, 'orden' => 1],
+            ['casilla' => 'fecha', 'descripcion' => 'Fecha de la compra', 'tipo_dato' => 'fecha', 'clave' => false, 'sensible' => false, 'orden' => 2],
+            ['casilla' => 'total', 'descripcion' => 'Total pagado en el recibo', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 3],
+            ['casilla' => 'descripcion', 'descripcion' => 'Qué se compró, para que el preparador vea que son útiles', 'tipo_dato' => 'texto', 'clave' => false, 'sensible' => false, 'orden' => 4],
+        ],
     ],
 
     // ── Situaciones del año ──
@@ -808,7 +844,14 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 7,
         'fuente_texto' => 'Schedule 1-A: intereses del préstamo de un vehículo nuevo (VIN e intereses pagados)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/i1040gi.pdf',
-        'casillas' => [],
+        // F6 6.3a (Schedule 1-A Parte IV): un estado por préstamo. Formatos confirmados: pdf, jpg, png, heic.
+        // VIN sensible: identifica un vehículo concreto y se enlaza con su dueño; queda cifrado y enmascarado como un SSN (decisión de 6.3a, a confirmar por Steven).
+        'casillas' => [
+            ['casilla' => 'intereses-pagados', 'descripcion' => 'Intereses pagados en el año sobre el préstamo del vehículo', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 1],
+            ['casilla' => 'vin', 'descripcion' => 'Número de identificación del vehículo (VIN)', 'tipo_dato' => 'texto', 'clave' => false, 'sensible' => true, 'orden' => 2],
+            ['casilla' => 'fecha-prestamo', 'descripcion' => 'Fecha en que se firmó el préstamo', 'tipo_dato' => 'fecha', 'clave' => false, 'sensible' => false, 'orden' => 3],
+            ['casilla' => 'vehiculo-nuevo', 'descripcion' => 'El estado dice que el vehículo es nuevo (no usado)', 'tipo_dato' => 'si_no', 'clave' => false, 'sensible' => false, 'orden' => 4],
+        ],
     ],
     [
         'codigo' => 'informe-vehiculo-limpio', 'grupo' => 'situaciones', 'nombre_oficial' => null,
@@ -870,7 +913,14 @@ return [
         'formatos' => ['pdf', 'jpg', 'png', 'heic'], 'uno_por' => 'unico', 'orden' => 1,
         'fuente_texto' => 'Pagos estimados (1040 línea 26) y pago con la extensión (Schedule 3 línea 10)',
         'fuente_url' => 'https://www.irs.gov/pub/irs-pdf/f1040.pdf',
-        'casillas' => [],
+        // F6 6.3a (1040 línea 26 y Schedule 3 línea 10): un archivo = un pago. Formatos confirmados: pdf, jpg, png, heic (comprobante del 1040-ES, de Direct Pay o de EFTPS, en PDF o captura de pantalla).
+        // `tipo-pago` toma uno de: estimado, extension, otro.
+        'casillas' => [
+            ['casilla' => 'fecha-pago', 'descripcion' => 'Fecha en que se hizo el pago al IRS', 'tipo_dato' => 'fecha', 'clave' => true, 'sensible' => false, 'orden' => 1],
+            ['casilla' => 'monto', 'descripcion' => 'Monto pagado al IRS', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 2],
+            ['casilla' => 'tipo-pago', 'descripcion' => 'Qué pago es según el comprobante: estimado (1040-ES), extension (Form 4868) u otro', 'tipo_dato' => 'codigo', 'clave' => false, 'sensible' => false, 'orden' => 3],
+            ['casilla' => 'anio-aplicado', 'descripcion' => 'Año al que el comprobante aplica el pago', 'tipo_dato' => 'anio', 'clave' => false, 'sensible' => false, 'orden' => 4],
+        ],
     ],
     [
         'codigo' => 'datos-bancarios', 'grupo' => 'pagos', 'nombre_oficial' => null,
