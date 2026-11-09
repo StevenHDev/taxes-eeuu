@@ -22,8 +22,10 @@ class PantallaTest extends TestCase
     private const PESTANAS = [
         'preguntas' => 100,
         'documentos' => 47,
-        'formularios' => 30,
-        'parametros' => 36,
+        // 30 + el Form 8995 de F6 (6.0).
+        'formularios' => 31,
+        // 36 + los parámetros completos de 2025 de F6 (6.1a).
+        'parametros' => 88,
         'reglas' => 13,
     ];
 

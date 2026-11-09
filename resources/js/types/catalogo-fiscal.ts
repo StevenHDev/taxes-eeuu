@@ -79,7 +79,11 @@ export type DocumentoCatalogo = FuenteIrs &
         activado_por: string[];
     };
 
-export type LineaCatalogo = {
+export type LineaCatalogo = FuenteIrs & {
+    id: number;
+    fuente_pagina: string | null;
+    /** Un caso de prueba contra el IRS la cubre: solo entonces se puede validar. */
+    cubierta: boolean;
     linea: string;
     descripcion: string;
     origen_tipo: 'casilla' | 'linea' | 'respuesta' | 'calculo';

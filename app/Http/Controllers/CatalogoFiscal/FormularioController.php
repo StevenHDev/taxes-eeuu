@@ -8,6 +8,7 @@ use App\Http\Requests\CatalogoFiscal\FormularioRequest;
 use App\Models\CatalogoFiscal\CatalogoFormulario;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Services\CatalogoFiscal\CatalogoFiscalEditor;
+use App\Services\CatalogoFiscal\CoberturaCasos;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class FormularioController extends Controller
     public function __construct(
         private readonly CatalogoFiscal $catalogo,
         private readonly CatalogoFiscalEditor $editor,
+        private readonly CoberturaCasos $cobertura,
     ) {}
 
     public function index(int $anio): Response
@@ -36,7 +38,8 @@ class FormularioController extends Controller
                 ['lineas' => fn ($q) => $q->where('activo', true)],
                 fn ($q) => $q->orderByDesc('siempre')->orderBy('orden'),
             );
-            $nombres = $this->nombresValidadores($formularios);
+            $nombres = $this->nombresValidadores($formularios->concat($formularios->flatMap(fn (array $f) => $f['lineas'])));
+            $cubiertas = array_flip($this->cobertura->lineas($anio));
             $activadoPor = $this->activadoPor($this->catalogo, $anio, 'formulario');
 
             return $formularios->map(fn (array $f) => [
@@ -48,11 +51,16 @@ class FormularioController extends Controller
                 'siempre' => $f['siempre'],
                 'ficha' => $f['ficha'],
                 'lineas' => collect($f['lineas'])->map(fn (array $l) => [
+                    'id' => $l['id'],
                     'linea' => $l['linea'],
                     'descripcion' => $l['descripcion'],
                     'origen_tipo' => $l['origen_tipo'],
                     'origen_clave' => $l['origen_clave'],
                     'origen' => $l['origen_clave'] ? array_values(array_filter(array_map('trim', explode(';', $l['origen_clave'])))) : [],
+                    'fuente_pagina' => $l['fuente_pagina'] ?? null,
+                    // Solo se puede validar si un caso de prueba contra el IRS cubre la línea.
+                    'cubierta' => isset($cubiertas["{$f['codigo']}:{$l['linea']}"]),
+                    ...$this->fuente($l, $nombres),
                 ])->values()->all(),
                 'activado_por' => $activadoPor->get($f['codigo'], []),
                 ...$this->fuente($f, $nombres),

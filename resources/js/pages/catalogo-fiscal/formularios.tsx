@@ -19,6 +19,7 @@ import {
     CatalogoVacio,
 } from '@/components/catalogo-fiscal/estado-pagina';
 import { FormularioFormulario } from '@/components/catalogo-fiscal/formularios/formulario-formulario';
+import { FuenteLinea } from '@/components/catalogo-fiscal/formularios/fuente-linea';
 import { FuenteIrs } from '@/components/catalogo-fiscal/fuente-irs';
 import { TablaSkeleton } from '@/components/catalogo-fiscal/tabla-skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -56,15 +57,17 @@ export default function CatalogoFormularios({
     const editor: Editor | null = puedeEditar
         ? { anio, vigente: estadoAnio === 'vigente' }
         : null;
-    const [seleccionado, setSeleccionado] = useState<FormularioCatalogo | null>(
-        null,
-    );
+    const [elegido, setElegido] = useState<FormularioCatalogo | null>(null);
+    // Al validar una línea la tabla se recarga: el panel abierto toma los datos
+    // nuevos y, mientras llegan, conserva la copia anterior (sin perder el scroll).
+    const seleccionado =
+        (elegido && formularios?.find((f) => f.id === elegido.id)) || elegido;
     const [editando, setEditando] = useState<
         FormularioCatalogo | 'nueva' | null
     >(null);
     const cerrarTodo = () => {
         setEditando(null);
-        setSeleccionado(null);
+        setElegido(null);
     };
 
     return (
@@ -83,7 +86,7 @@ export default function CatalogoFormularios({
                 {formularios && formularios.length > 0 ? (
                     <TablaFormularios
                         formularios={formularios}
-                        onVer={setSeleccionado}
+                        onVer={setElegido}
                         onAgregar={editor ? () => setEditando('nueva') : null}
                     />
                 ) : (
@@ -109,12 +112,16 @@ export default function CatalogoFormularios({
                     ) : null
                 }
                 abierto={seleccionado !== null}
-                onCerrar={() => setSeleccionado(null)}
+                onCerrar={() => setElegido(null)}
                 titulo={seleccionado?.nombre ?? ''}
                 descripcion={seleccionado?.para_que ?? undefined}
             >
                 {seleccionado ? (
-                    <DetalleFormulario formulario={seleccionado} />
+                    <DetalleFormulario
+                        formulario={seleccionado}
+                        anio={anio}
+                        puedeValidar={puedeValidar}
+                    />
                 ) : null}
             </DetallePieza>
 
@@ -241,7 +248,15 @@ function TablaFormularios({
     );
 }
 
-function DetalleFormulario({ formulario }: { formulario: FormularioCatalogo }) {
+function DetalleFormulario({
+    formulario,
+    anio,
+    puedeValidar,
+}: {
+    formulario: FormularioCatalogo;
+    anio: number;
+    puedeValidar: boolean;
+}) {
     const { t } = useTranslation();
 
     return (
@@ -292,6 +307,11 @@ function DetalleFormulario({ formulario }: { formulario: FormularioCatalogo }) {
                                         <p className="text-xs text-muted-foreground">
                                             <OrigenLinea linea={l} />
                                         </p>
+                                        <FuenteLinea
+                                            anio={anio}
+                                            linea={l}
+                                            puedeValidar={puedeValidar}
+                                        />
                                     </TableCell>
                                 </TableRow>
                             ))}

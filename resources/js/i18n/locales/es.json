@@ -1343,6 +1343,12 @@
             "lineas": "Líneas",
             "linea": "Línea",
             "deDondeSale": "De dónde sale",
+            "fuente": "Fuente del IRS",
+            "sinFuenteLinea": "Sin fuente del IRS",
+            "marcarLineaValidada": "Marcar validada contra el IRS",
+            "lineaValidada": "Validada contra el IRS",
+            "faltaCaso": "Falta un caso de prueba que cubra esta línea.",
+            "validadaPor": "Validada por {{nombre}} el {{fecha}}",
             "sinLineas": "La ficha de este formulario está pendiente: todavía no tiene el detalle de sus líneas."
         },
         "origenes": {

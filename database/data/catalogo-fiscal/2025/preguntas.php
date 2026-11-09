@@ -764,6 +764,7 @@ return [
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-c'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-se'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:f8995'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-2'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1'],
             ['respuesta' => 'si', 'objetivo' => 'documento:1099-nec'],
@@ -795,6 +796,7 @@ return [
         'activa' => [
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-c'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-se'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:f8995'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-2'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1'],
             ['respuesta' => 'si', 'objetivo' => 'documento:1099-k'],
@@ -814,6 +816,7 @@ return [
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-1'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-c'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-se'],
+            ['respuesta' => 'si', 'objetivo' => 'formulario:f8995'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-2'],
             ['respuesta' => 'si', 'objetivo' => 'formulario:sch-e'],
             ['respuesta' => 'si', 'objetivo' => 'documento:registros-ingresos-gastos'],

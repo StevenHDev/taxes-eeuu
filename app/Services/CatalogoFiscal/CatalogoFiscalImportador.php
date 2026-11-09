@@ -42,7 +42,7 @@ class CatalogoFiscalImportador
         'documentos' => ['codigo', 'grupo', 'nombre_oficial', 'nombre_sencillo_es', 'nombre_sencillo_en', 'emisor_es', 'emisor_en', 'fecha_llegada', 'si_no_llega_es', 'si_no_llega_en', 'que_subir_es', 'que_subir_en', 'plantilla', 'formatos', 'uno_por', 'siempre', 'orden', 'fuente_texto', 'fuente_url', 'imagen_ejemplo', 'casillas'],
         'casillas' => ['casilla', 'descripcion', 'tipo_dato', 'clave', 'sensible', 'orden'],
         'formularios' => ['codigo', 'nombre', 'para_que', 'siempre', 'ficha', 'orden', 'fuente_texto', 'fuente_url', 'lineas'],
-        'lineas' => ['linea', 'descripcion', 'origen_tipo', 'origen_clave', 'campo_pdf', 'orden'],
+        'lineas' => ['linea', 'descripcion', 'origen_tipo', 'origen_clave', 'campo_pdf', 'orden', 'fuente_texto', 'fuente_url', 'fuente_pagina'],
         'reglas' => ['codigo', 'descripcion', 'severidad', 'implementada', 'orden', 'fuente_texto', 'fuente_url'],
         'parametros' => ['categoria', 'clave', 'valor', 'grupo', 'tipo', 'nombre_es', 'condicion_es', 'formulario_linea', 'orden', 'fuente_texto', 'fuente_url'],
     ];

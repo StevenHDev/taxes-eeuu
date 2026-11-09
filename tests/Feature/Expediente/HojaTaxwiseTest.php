@@ -173,7 +173,8 @@ class HojaTaxwiseTest extends TestCase
     public function test_un_documento_que_no_se_lee_sale_manual_y_uno_pendiente_sale_pendiente(): void
     {
         [$cliente, $e] = $this->maria();
-        $registros = $this->item($e, 'registros-ingresos-gastos', EstadoDocumento::Subido);
+        // F6 (6.3a): los registros del negocio ya tienen casillas; el K-1 sigue sin casillas y sale manual.
+        $registros = $this->item($e, 'k-1', EstadoDocumento::Subido);
         $this->archivo($registros);
         $this->item($e, 'recibos-medicos', EstadoDocumento::Pendiente);
         $otro = $this->item($e, 'otro', EstadoDocumento::Subido);
@@ -255,27 +256,26 @@ class HojaTaxwiseTest extends TestCase
         $hoja = $this->hoja($cliente, 2025);
 
         $this->assertSame('Form 1040 · línea 25b', $this->fila($hoja, 'Casilla 4 —', 'Form 1099-NEC')['destino']);
-        // W-2 casilla 3: sin línea fija en el catálogo.
-        $this->assertSame('Form W-2 · pantalla de TaxWise · casilla 3', $this->fila($hoja, 'Casilla 3 —', 'Form W-2')['destino']);
+        // W-2 casilla 3: desde F6 alimenta el Schedule SE, línea 8a.
+        $this->assertSame('Schedule SE · línea 8a', $this->fila($hoja, 'Casilla 3 —', 'Form W-2')['destino']);
         $this->assertSame('Solo para validar (no se digita)', $this->fila($hoja, 'Casilla anio —', 'Form W-2')['destino']);
         $this->assertContains('Form 1040 · línea 25b', array_column($hoja['totales'], 'destino'));
 
         // El CSV usa el mismo destino.
         $csv = collect(iterator_to_array(app(HojaTaxwise::class)->filasCsv($cliente, 2025), false));
-        $this->assertTrue($csv->contains(fn (array $f) => $f[1] === 'Form W-2 · pantalla de TaxWise · casilla 3'));
+        $this->assertTrue($csv->contains(fn (array $f) => $f[1] === 'Schedule SE · línea 8a'));
     }
 
     public function test_los_documentos_sin_casillas_traen_el_destino_de_la_pregunta_que_los_activo(): void
     {
         [$cliente, $e] = $this->clienteConExpediente(['D15' => 'si', 'E8' => 'si', 'G3' => 'deposito_directo', 'G4' => 'debito_cuenta']);
-        foreach (['registros-ingresos-gastos', 'recibos-utiles-educador', 'datos-bancarios'] as $codigo) {
+        // F6 (6.3a): los registros del negocio y los recibos de útiles ya tienen casillas y salen por casilla.
+        foreach (['datos-bancarios'] as $codigo) {
             $this->item($e, $codigo, EstadoDocumento::Subido);
         }
 
         $hoja = $this->hoja($cliente, 2025);
 
-        $this->assertStringContainsString('Schedule C · línea 8-27', $this->fila($hoja, 'Registros de ingresos y gastos', 'Registros')['destino']);
-        $this->assertStringContainsString('Schedule 1 · línea 11', $this->fila($hoja, 'Recibos de útiles', 'Recibos')['destino']);
         $banco = $this->fila($hoja, 'Datos bancarios (número de ruta', 'Datos bancarios')['destino'];
         $this->assertStringContainsString('Form 1040 · línea 35a-35d', $banco);
         $this->assertStringContainsString('Form 1040 · línea 37', $banco);

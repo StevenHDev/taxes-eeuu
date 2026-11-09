@@ -66,6 +66,13 @@ class CatalogoFiscalEditor
             $hijo->setAttribute('tax_year', $anio);
 
             if (! $hijo->exists || $hijo->isDirty()) {
+                // Lo validado contra el IRS ya no es lo que está guardado (6.4).
+                if ($hijo->exists
+                    && $hijo->getAttribute('validado_en') !== null
+                    && array_diff(array_keys($hijo->getDirty()), self::NO_CONTENIDO) !== []) {
+                    $hijo->forceFill(['validado_por' => null, 'validado_en' => null]);
+                }
+
                 $hijo->save();
                 $cambio = true;
             }

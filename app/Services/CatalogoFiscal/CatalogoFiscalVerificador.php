@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Validator;
 /**
  * Revisa la integridad del catálogo fiscal de un año (F1.3): que el 1040
  * esté y sea el único "siempre", que toda referencia por código apunte a
- * algo activo del mismo año y que toda pieza principal tenga su fuente.
+ * algo activo del mismo año y que toda pieza principal tenga su fuente (y toda
+ * línea de cálculo, su fuente con la página).
  * Mira solo lo activo.
  */
 class CatalogoFiscalVerificador
@@ -105,6 +106,15 @@ class CatalogoFiscalVerificador
 
                 if (! $existe) {
                     $errores[] = "{$donde}: el origen \"{$clave}\" no existe en {$anio}.";
+                }
+            }
+
+            // F6: lo que se calcula o sale de otra línea cita su fuente del IRS con la página.
+            if (in_array($linea->origen_tipo, [OrigenLinea::Calculo, OrigenLinea::Linea], true)) {
+                if (blank($linea->fuente_texto) && blank($linea->fuente_url)) {
+                    $errores[] = "{$donde}: línea de cálculo sin fuente del IRS.";
+                } elseif (blank($linea->fuente_pagina)) {
+                    $errores[] = "{$donde}: la fuente no dice la página del IRS.";
                 }
             }
         }

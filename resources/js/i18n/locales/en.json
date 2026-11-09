@@ -1343,6 +1343,12 @@
             "lineas": "Lines",
             "linea": "Line",
             "deDondeSale": "Where it comes from",
+            "fuente": "IRS source",
+            "sinFuenteLinea": "No IRS source",
+            "marcarLineaValidada": "Mark validated against the IRS",
+            "lineaValidada": "Validated against the IRS",
+            "faltaCaso": "A test case that covers this line is missing.",
+            "validadaPor": "Validated by {{nombre}} on {{fecha}}",
             "sinLineas": "This form's detail is pending: its lines are not loaded yet."
         },
         "origenes": {

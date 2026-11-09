@@ -34,7 +34,7 @@ Route::middleware(['auth', 'verified'])->prefix('catalogo-fiscal')->name('catalo
         Route::post('{anio}/reglas', [ReglaController::class, 'store'])->name('reglas.store');
         Route::patch('{anio}/reglas/{regla}', [ReglaController::class, 'update'])->name('reglas.update');
 
-        Route::whereIn('tipo', ['preguntas', 'documentos', 'formularios', 'reglas', 'parametros'])->whereNumber('id')->group(function () {
+        Route::whereIn('tipo', ['preguntas', 'documentos', 'formularios', 'lineas', 'reglas', 'parametros'])->whereNumber('id')->group(function () {
             Route::post('{anio}/{tipo}/{id}/validar', [PiezaController::class, 'validar'])->name('validar');
             Route::patch('{anio}/{tipo}/{id}/activo', [PiezaController::class, 'activo'])->name('activo');
         });

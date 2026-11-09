@@ -7,14 +7,17 @@ use App\Http\Controllers\Controller;
 use App\Models\CatalogoFiscal\CatalogoAnio;
 use App\Models\CatalogoFiscal\CatalogoDocumento;
 use App\Models\CatalogoFiscal\CatalogoFormulario;
+use App\Models\CatalogoFiscal\CatalogoLinea;
 use App\Models\CatalogoFiscal\CatalogoPregunta;
 use App\Models\CatalogoFiscal\CatalogoRegla;
 use App\Models\ParametroFiscal;
 use App\Services\CatalogoFiscal\CatalogoFiscalEditor;
+use App\Services\CatalogoFiscal\CoberturaCasos;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Acciones comunes a las piezas del catálogo fiscal (F1.5): "Marcar como
@@ -29,17 +32,29 @@ class PiezaController extends Controller
         'preguntas' => CatalogoPregunta::class,
         'documentos' => CatalogoDocumento::class,
         'formularios' => CatalogoFormulario::class,
+        'lineas' => CatalogoLinea::class,
         'reglas' => CatalogoRegla::class,
         'parametros' => ParametroFiscal::class,
     ];
 
-    public function __construct(private readonly CatalogoFiscalEditor $editor) {}
+    public function __construct(
+        private readonly CatalogoFiscalEditor $editor,
+        private readonly CoberturaCasos $cobertura,
+    ) {}
 
     public function validar(Request $request, int $anio, string $tipo, int $id): RedirectResponse
     {
         Gate::authorize('validar', CatalogoAnio::class);
 
         $pieza = $this->buscar($anio, $tipo, $id);
+
+        // F6: una línea solo se valida si un caso de prueba contra el IRS la cubre.
+        if ($pieza instanceof CatalogoLinea && ! $this->cobertura->cubre($anio, $pieza->formulario->codigo, $pieza->linea)) {
+            throw ValidationException::withMessages([
+                'validar' => 'Falta un caso de prueba que cubra esta línea.',
+            ]);
+        }
+
         $this->editor->validar($pieza, $request->user());
 
         return $this->guardado('Marcado como validado contra el IRS.');
@@ -48,7 +63,7 @@ class PiezaController extends Controller
     public function activo(Request $request, int $anio, string $tipo, int $id): RedirectResponse
     {
         Gate::authorize('update', CatalogoAnio::class);
-        abort_if($tipo === 'parametros', 404);
+        abort_if(in_array($tipo, ['parametros', 'lineas'], true), 404);
 
         $activo = $request->validate(['activo' => ['required', 'boolean']])['activo'];
         $pieza = $this->buscar($anio, $tipo, $id);

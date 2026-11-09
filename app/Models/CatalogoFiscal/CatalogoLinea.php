@@ -4,6 +4,7 @@ namespace App\Models\CatalogoFiscal;
 
 use App\Enums\CatalogoFiscal\OrigenLinea;
 use App\Models\CatalogoFiscal\Concerns\EsDelCatalogoFiscal;
+use App\Models\CatalogoFiscal\Concerns\TieneFuenteIrs;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Línea de un formulario y de dónde sale su valor (7.3): una casilla de un
  * documento ("w2:1"), otra línea ("sch-c:31"), una respuesta ("B1") o un
- * cálculo. `campo_pdf` se llena en la fase 6.
+ * cálculo. `campo_pdf` se llena en la fase 6. Las líneas que se calculan llevan
+ * su fuente del IRS con la página y se validan una por una (F6, 6.0).
  *
  * @property int $id
  * @property int $formulario_id
@@ -20,12 +22,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property OrigenLinea $origen_tipo
  * @property string|null $origen_clave
  * @property string|null $campo_pdf
+ * @property string|null $fuente_pagina
  * @property int $orden
  */
-#[Fillable(['tax_year', 'formulario_id', 'linea', 'descripcion', 'origen_tipo', 'origen_clave', 'campo_pdf', 'orden', 'activo'])]
+#[Fillable(['tax_year', 'formulario_id', 'linea', 'descripcion', 'origen_tipo', 'origen_clave', 'campo_pdf', 'orden', 'fuente_texto', 'fuente_url', 'fuente_pagina', 'activo'])]
 class CatalogoLinea extends Model
 {
-    use EsDelCatalogoFiscal;
+    use EsDelCatalogoFiscal, TieneFuenteIrs;
 
     protected $table = 'catalogo_lineas';
 
