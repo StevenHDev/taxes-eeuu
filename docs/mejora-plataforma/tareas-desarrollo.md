@@ -178,14 +178,17 @@ Wiplitask: `cmvskow9b007h1420if0ijyyu` · ✅ (5 nov.)
 - [ ] Pendientes menores: claves i18n y tipos que dudamos (`portalFormulario.*`, `portalChat.*`, `common.*`, tipos sin uso de `types/*`) para una pasada futura; el panel de confianza solo existe en la hoja y el visor (no en Excepciones ni Debida diligencia); probar a mano el foco al cerrar el panel de la hoja; probar la vista previa de impresión de la hoja y de la debida diligencia; el estado de error de las pestañas no se probó forzando un fallo del servidor
 
 ### F6 — Cálculo validado y borrador del 1040
-Wiplitask: `cmvskowhd007m1420ml6zef8q` · ⏳
-- [ ] Plan técnico de la fase 6 escrito y aprobado
-- [ ] Reglas que pasaron de F4 (decisión del 2 nov.): R-10 (Schedule C contra 1099), R-11 como bloqueante (con el 8812) y R-12 (proveedor de cuidado, con el 2441)
-- [ ] Validar las 12 calculadoras contra el IRS y por año (puede empezar desde F1)
-- [ ] Completar EITC, 8962 y Schedule 1-A; parámetros de 2026
-- [ ] Llenar el PDF oficial del 1040 y sus schedules (borrador)
-- [ ] Vista "cómo se calculó" por línea
-- [ ] Casos de prueba: mismas líneas que TaxWise
+Wiplitask: `cmvskowhd007m1420ml6zef8q` · 🟡 En curso (plan aprobado el 9 nov.; plan en [fases/fase-6-calculo-borrador-1040.md](fases/fase-6-calculo-borrador-1040.md))
+- [x] Plan técnico de la fase 6 escrito y aprobado (9 nov., escrito con Opus; todas las decisiones a–n aprobadas por Steven). Cambios frente al alcance original: el criterio de terminado es "coincide con el cálculo del IRS" (no hay TaxWise ni declaraciones de GTS; L5 y P9 no aplican); los montos del Schedule C, 2441, pagos, etc. **se leen de los documentos** (no los teclea el preparador); el respaldo manual es último recurso
+- [ ] 6.0 Catálogo: destinos del 1040 corregidos, líneas de cálculo con fuente y validación, Schedule C por línea
+- [ ] 6.1 Parámetros 2025 completos y 2026 cargados; 6.2 Oráculo del IRS (tablas extraídas del PDF y casos con cita)
+- [ ] 6.3 Lectura de documentos de montos: campos fijos y hojas `xlsx`/`csv` sin IA (antes del motor); extractos con IA, sumas por categoría, conciliación con los 1099 y visor (en paralelo con la pantalla)
+- [ ] 6.4 Motor de cálculo nuevo por formulario con traza (Schedules C, SE, 1, 1-A, 2, 3, 8812, 2441, EIC, 8962, 8995)
+- [ ] 6.5 Respaldo manual sin documento (último recurso, con R-15)
+- [ ] 6.6 Reglas R-10, R-11 bloqueante (solo con evidencia en contra), R-11a, R-12, R-14 y R-15
+- [ ] 6.7 Pestaña "Borrador del 1040" con "cómo se calculó" por línea
+- [ ] 6.8 PDF oficial diligenciado (pdftk-java, enmascarado, a pedido, con marca de agua)
+- [ ] 6.9 Casos de punta a punta contra el IRS; 6.10 retiro del motor viejo y cierre
 
 ### F7 — Pendientes para después
 Wiplitask: `cmvskowpm007r1420cq7e3zse` · ⏳
