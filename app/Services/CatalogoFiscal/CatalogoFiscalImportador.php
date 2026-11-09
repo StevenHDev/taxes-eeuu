@@ -123,6 +123,10 @@ class CatalogoFiscalImportador
             }
 
             if ($derivado) {
+                // Un año copiado hace tiempo no tiene los parámetros que el año de origen
+                // sembró después: se completan pendientes antes de aplicar los ajustes.
+                $this->completarParametrosDelOrigen($origen, $anio);
+
                 // Lo único que no viene en los archivos: los parámetros sembrados
                 // (ParametrosFiscalesSeeder) que el año nuevo trae pendientes.
                 $this->aplicarAjustesDeParametros($anio, array_diff_key($ajustes['parametros'] ?? [], array_flip($parametrosDelArchivo)));
@@ -309,6 +313,27 @@ class CatalogoFiscalImportador
             $pregunta === null
                 ? $this->resultado->avisos[] = "Ajuste: la pregunta {$codigo} no existe en {$anio}."
                 : $this->guardar($pregunta, $atributos, 'pregunta', $codigo);
+        }
+    }
+
+    /**
+     * Crea en `$anio`, pendientes y sin validar, los parámetros de `$origen` que todavía no tiene
+     * (nunca se arrastra un monto de un año a otro).
+     */
+    private function completarParametrosDelOrigen(int $origen, int $anio): void
+    {
+        $existentes = ParametroFiscal::query()->where('tax_year', $anio)->get(['categoria', 'clave'])
+            ->map(fn (ParametroFiscal $p) => "{$p->categoria}.{$p->clave}")->all();
+
+        foreach (ParametroFiscal::query()->where('tax_year', $origen)->get() as $parametro) {
+            if (in_array("{$parametro->categoria}.{$parametro->clave}", $existentes, true)) {
+                continue;
+            }
+
+            $copia = $parametro->replicate();
+            $copia->forceFill(['tax_year' => $anio, 'valor' => null, 'validado_por' => null, 'validado_en' => null]);
+            $copia->save();
+            $this->resultado->contar('creados', 'parametro');
         }
     }
 

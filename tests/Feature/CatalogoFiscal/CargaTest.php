@@ -143,6 +143,31 @@ class CargaTest extends TestCase
         $this->assertContains('1040 línea 19: el origen "sch-8812:99" no existe en 2025.', app(CatalogoFiscalVerificador::class)->verificar(2025));
     }
 
+    public function test_cargar_un_anio_copiado_completa_los_parametros_que_el_origen_sembro_despues(): void
+    {
+        $importador = app(CatalogoFiscalImportador::class);
+        $importador->cargar(2025);
+        $this->artisan('catalogo-fiscal:copiar', ['desde' => 2025, 'hasta' => 2026])->assertSuccessful();
+
+        // Como en producción: el año se copió antes de que 2025 sembrara parámetros nuevos.
+        ParametroFiscal::query()->where(['tax_year' => 2026, 'categoria' => 'dependiente_calificado', 'clave' => 'limite_ingreso_bruto_pariente_calificado'])->delete();
+        ParametrosFiscales::invalidate();
+
+        $resultado = $importador->cargar(2026);
+
+        // Se recreó pendiente y el ajuste de 2026 le puso su valor; 2025 no cambió.
+        $this->assertSame(5300, ParametrosFiscales::valor(2026, 'dependiente_calificado', 'limite_ingreso_bruto_pariente_calificado'));
+        $this->assertSame(1, $resultado->creados['parametro'] ?? 0);
+        $this->assertNotContains('Ajuste: el parámetro dependiente_calificado.limite_ingreso_bruto_pariente_calificado no existe en 2026.', $resultado->avisos);
+        $this->assertSame(
+            ParametroFiscal::query()->where('tax_year', 2025)->count(),
+            ParametroFiscal::query()->where('tax_year', 2026)->count(),
+        );
+
+        // Una segunda carga no crea nada.
+        $this->assertSame(0, $importador->cargar(2026)->creados['parametro'] ?? 0);
+    }
+
     public function test_copiar_a_2026_deja_todo_sin_validar_y_los_montos_pendientes(): void
     {
         $importador = app(CatalogoFiscalImportador::class);
