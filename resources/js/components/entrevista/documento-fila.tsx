@@ -5,7 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { DocumentoEstado } from '@/components/entrevista/documento-estado';
 import { DocumentoNoAplica } from '@/components/entrevista/documento-no-aplica';
 import { DocumentoNota } from '@/components/entrevista/documento-nota';
-import { DocumentoSubir } from '@/components/entrevista/documento-subir';
+import {
+    DocumentoSubir,
+    listaFormatos,
+} from '@/components/entrevista/documento-subir';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -348,7 +351,9 @@ export function DocumentoFila({
             <InputError message={otro.errors.agregar} />
 
             <p className="text-xs text-muted-foreground">
-                {t('entrevista.documentos.formatos')}
+                {t('entrevista.documentos.formatos', {
+                    lista: listaFormatos(documento.formatos, i18n.language),
+                })}
             </p>
         </li>
     );

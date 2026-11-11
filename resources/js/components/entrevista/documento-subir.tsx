@@ -14,6 +14,23 @@ export const FORMATOS_MIME: Record<string, string> = {
     heic: '.heic,image/heic',
 };
 
+/**
+ * Los formatos como los lee una persona, en el idioma de la pantalla:
+ * "PDF, JPG, PNG, HEIC, XLSX o CSV". `jpeg` no se nombra aparte de `jpg`.
+ */
+export function listaFormatos(formatos: string[], idioma: string): string {
+    const nombres = [
+        ...new Set(
+            formatos.filter((f) => f !== 'jpeg').map((f) => f.toUpperCase()),
+        ),
+    ];
+
+    return new Intl.ListFormat(idioma, {
+        style: 'long',
+        type: 'disjunction',
+    }).format(nombres);
+}
+
 export function aceptar(formatos: string[]): string {
     return formatos.map((f) => FORMATOS_MIME[f] ?? `.${f}`).join(',');
 }

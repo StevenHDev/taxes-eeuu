@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
     aceptar,
     errorDeArchivos,
+    listaFormatos,
 } from '@/components/entrevista/documento-subir';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ const FORMATOS = ['pdf', 'jpg', 'png', 'heic'];
  * archivos, para lo que el cliente quiere entregar y no está en la lista.
  */
 export function OtroDocumento() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const inputRef = useRef<HTMLInputElement>(null);
     const descripcionId = useId();
     const descripcionErrorId = useId();
@@ -147,7 +148,9 @@ export function OtroDocumento() {
                         : t('entrevista.documentos.otroSubir')}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                    {t('entrevista.documentos.formatos')}
+                    {t('entrevista.documentos.formatos', {
+                        lista: listaFormatos(FORMATOS, i18n.language),
+                    })}
                 </p>
             </form>
         </section>

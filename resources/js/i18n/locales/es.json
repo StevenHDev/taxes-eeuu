@@ -1550,7 +1550,7 @@
             "agregarOtro": "Agregar otro",
             "subiendo": "Subiendo…",
             "subiendoPorcentaje": "Subiendo… {{porcentaje}} %",
-            "formatos": "PDF, JPG, PNG o HEIC, hasta 20 MB cada uno. Puedes elegir varios a la vez.",
+            "formatos": "{{lista}}, hasta 20 MB cada uno. Puedes elegir varios a la vez.",
             "volver": "Volver a la entrevista",
             "enEstePaso": "Documentos de este paso",
             "verTodos": "Tus documentos",

@@ -1550,7 +1550,7 @@
             "agregarOtro": "Add another",
             "subiendo": "Uploading…",
             "subiendoPorcentaje": "Uploading… {{porcentaje}}%",
-            "formatos": "PDF, JPG, PNG or HEIC, up to 20 MB each. You can choose several at once.",
+            "formatos": "{{lista}}, up to 20 MB each. You can choose several at once.",
             "volver": "Back to the interview",
             "enEstePaso": "Documents for this step",
             "verTodos": "Your documents",
