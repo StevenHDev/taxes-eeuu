@@ -20,6 +20,34 @@ function csrf(): string {
     );
 }
 
+/** Casillas que son el número de una casilla del formulario (1, 12a, 2b…): esas se muestran; las internas (`clase-detectada`) no. */
+const CASILLA_DE_FORMULARIO = /^\d+[a-z]?$/i;
+
+/**
+ * El valor como lo lee una persona: la clase de archivo en palabras y las
+ * cantidades (millas, pies cuadrados) con separador de miles. Lo demás va tal
+ * cual se leyó.
+ */
+function valorLegible(
+    d: DatoLeido,
+    valor: string,
+    t: TFunction,
+    idioma: string,
+): string {
+    if (d.casilla === 'clase-detectada') {
+        return t(`visor.clase.${valor}`, { defaultValue: valor });
+    }
+
+    if (d.tipo_dato === 'numero' && /^-?\d+(\.\d+)?$/.test(valor)) {
+        // `always`: en español Intl no agrupa los números de 4 cifras (1200).
+        return new Intl.NumberFormat(idioma, { useGrouping: 'always' }).format(
+            Number(valor),
+        );
+    }
+
+    return valor;
+}
+
 /**
  * Los datos leídos, uno por fila. Con el foco en la lista, las flechas
  * arriba y abajo pasan de un dato al siguiente y lo eligen. Lo sensible se
@@ -30,6 +58,7 @@ export function ListaDatos({
     clienteId,
     itemId,
     datos,
+    archivoDe,
     umbral,
     seleccionadoId,
     revelados,
@@ -40,6 +69,8 @@ export function ListaDatos({
     clienteId: number;
     itemId: number;
     datos: DatoLeido[];
+    /** Lectura → nombre del archivo, solo si el documento tiene varios archivos. */
+    archivoDe: Map<number, string> | null;
     umbral: number;
     seleccionadoId: number | null;
     revelados: Record<number, ValorRevelado>;
@@ -91,6 +122,7 @@ export function ListaDatos({
                     clienteId={clienteId}
                     itemId={itemId}
                     dato={d}
+                    archivo={archivoDe?.get(d.lectura_id) ?? null}
                     umbral={umbral}
                     seleccionado={d.id === seleccionadoId}
                     revelado={revelados[d.id]}
@@ -107,6 +139,7 @@ function DatoFila({
     clienteId,
     itemId,
     dato: d,
+    archivo,
     umbral,
     seleccionado,
     revelado,
@@ -117,6 +150,7 @@ function DatoFila({
     clienteId: number;
     itemId: number;
     dato: DatoLeido;
+    archivo: string | null;
     umbral: number;
     seleccionado: boolean;
     revelado: ValorRevelado | undefined;
@@ -178,7 +212,11 @@ function DatoFila({
             <span className="text-muted-foreground">{t('visor.oculto')}</span>
         );
     } else if (valor) {
-        contenido = <span className="font-medium break-all">{valor}</span>;
+        contenido = (
+            <span className="font-medium break-all">
+                {valorLegible(d, valor, t, i18n.language)}
+            </span>
+        );
     } else {
         contenido = (
             <span className="text-amber-700 dark:text-amber-400">
@@ -203,8 +241,15 @@ function DatoFila({
                 className="flex w-full flex-col items-start gap-0.5 rounded-md text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
                 <span className="text-xs text-muted-foreground">
-                    {d.casilla} · {d.descripcion}
+                    {CASILLA_DE_FORMULARIO.test(d.casilla)
+                        ? `${d.casilla} · ${d.descripcion}`
+                        : d.descripcion}
                 </span>
+                {archivo ? (
+                    <span className="text-xs break-all text-muted-foreground">
+                        {t('visor.archivoDelDato', { archivo })}
+                    </span>
+                ) : null}
                 <span className="text-sm">{contenido}</span>
             </button>
             <div className="flex flex-wrap items-center gap-1.5">

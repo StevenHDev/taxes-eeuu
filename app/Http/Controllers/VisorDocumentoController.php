@@ -89,10 +89,13 @@ class VisorDocumentoController extends Controller
                 'tipo_detectado' => $l->tipo_detectado,
                 'anio_detectado' => $l->anio_detectado,
                 'terminada_en' => $l->terminada_en?->toIso8601String(),
-                'imagenes' => collect(range(1, max($l->paginas, 0)))
-                    ->filter(fn (int $n) => $n >= 1)
-                    ->map(fn (int $n) => route('clientes.documentos.visor.pagina', [$cliente, $item, $l, $n]))
-                    ->values(),
+                // Sin páginas (una hoja xlsx o csv, que se lee sin imagen) no hay
+                // imágenes: `range(1, 0)` daría [1, 0] y pediría una página que no existe.
+                'imagenes' => $l->paginas > 0
+                    ? collect(range(1, $l->paginas))
+                        ->map(fn (int $n) => route('clientes.documentos.visor.pagina', [$cliente, $item, $l, $n]))
+                        ->values()
+                    : [],
             ])->values(),
             'excepciones' => $delDocumento->map(function (Excepcion $e) use ($explicador, $reglas) {
                 $explicacion = $explicador->explicar($e);

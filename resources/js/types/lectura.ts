@@ -99,9 +99,13 @@ export type ItemVisor = {
 /** Una hoja de un archivo: lo que el selector de página recorre. */
 export type Hoja = {
     lecturaId: number;
-    pagina: number;
-    url: string;
+    /** Nula en un archivo sin imágenes (hoja xlsx o csv, leída sin IA). */
+    pagina: number | null;
+    /** Nula en un archivo sin imágenes: se muestra el enlace al original. */
+    url: string | null;
     archivo: string;
+    /** El archivo original, para abrirlo cuando no hay imagen. */
+    archivoUrl: string | null;
 };
 
 /** Lo que `revelar` devuelve; vive solo en memoria. */

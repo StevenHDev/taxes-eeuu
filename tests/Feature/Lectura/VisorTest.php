@@ -167,6 +167,21 @@ class VisorTest extends TestCase
         $this->assertStringNotContainsString('6789', $respuesta->getContent());
     }
 
+    public function test_una_lectura_sin_paginas_no_pide_imagenes(): void
+    {
+        // Una hoja xlsx o csv se lee sin imágenes (paginas = 0): range(1, 0)
+        // daba [1, 0] y el visor pedía una página que no existe (404).
+        $this->lectura->update(['paginas' => 0]);
+
+        $this->actingAs($this->preparador)->get($this->ruta('clientes.documentos.visor'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('lecturas', 1, fn (Assert $l) => $l
+                    ->where('paginas', 0)
+                    ->where('imagenes', [])
+                    ->etc()));
+    }
+
     public function test_el_visor_explica_las_excepciones_de_todo_el_documento_aunque_no_sean_de_una_casilla(): void
     {
         app()->setLocale('es');

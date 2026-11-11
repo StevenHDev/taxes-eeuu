@@ -58,7 +58,18 @@
         "excepcionesTitulo_one": "Excepción abierta en este documento",
         "excepcionesTitulo_other": "{{count}} excepciones abiertas en este documento",
         "queHacer": "Qué hacer:",
-        "queRevisa": "Qué revisa la regla:"
+        "queRevisa": "Qué revisa la regla:",
+        "hojaSinImagen": "Es una hoja de cálculo: se leyó sin IA y no tiene imagen. Ábrela para ver sus filas.",
+        "archivoDelDato": "De {{archivo}}",
+        "clase": {
+            "plantilla": "Plantilla de registros",
+            "extracto_banco": "Extracto del banco",
+            "extracto_tarjeta": "Extracto de tarjeta",
+            "recibo": "Recibo",
+            "hoja_calculo": "Hoja de cálculo propia",
+            "millaje": "Registro de millaje",
+            "otro": "Otro"
+        }
     },
     "common": {
         "actions": "Acciones",

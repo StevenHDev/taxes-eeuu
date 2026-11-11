@@ -58,7 +58,18 @@
         "excepcionesTitulo_one": "Open exception on this document",
         "excepcionesTitulo_other": "{{count}} open exceptions on this document",
         "queHacer": "What to do:",
-        "queRevisa": "What the rule checks:"
+        "queRevisa": "What the rule checks:",
+        "hojaSinImagen": "This is a spreadsheet: it was read without AI and has no image. Open it to see its rows.",
+        "archivoDelDato": "From {{archivo}}",
+        "clase": {
+            "plantilla": "Records template",
+            "extracto_banco": "Bank statement",
+            "extracto_tarjeta": "Card statement",
+            "recibo": "Receipt",
+            "hoja_calculo": "Own spreadsheet",
+            "millaje": "Mileage log",
+            "otro": "Other"
+        }
     },
     "common": {
         "actions": "Actions",

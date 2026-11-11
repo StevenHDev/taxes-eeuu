@@ -44,20 +44,27 @@ function indiceDeHoja(
 ): number {
     const dato = datos.find((d) => d.id === datoId);
 
-    if (!dato?.pagina) {
+    if (!dato) {
         return 0;
     }
 
     let antes = 0;
 
     for (const l of lecturas) {
+        // Un archivo sin imágenes (hoja xlsx o csv) ocupa una sola hoja.
+        const cuantas = Math.max(l.imagenes.length, 1);
+
         if (l.id === dato.lectura_id) {
-            return dato.pagina <= l.imagenes.length
+            if (l.imagenes.length === 0) {
+                return antes;
+            }
+
+            return dato.pagina && dato.pagina <= l.imagenes.length
                 ? antes + dato.pagina - 1
                 : 0;
         }
 
-        antes += l.imagenes.length;
+        antes += cuantas;
     }
 
     return 0;
@@ -107,20 +114,51 @@ export default function VisorDocumento({
 
     const hojas = useMemo<Hoja[]>(
         () =>
-            lecturas.flatMap((l) => {
-                const archivo =
-                    archivos.find((a) => a.id === l.documento_id)?.nombre ??
-                    item.nombre;
+            lecturas.flatMap((l): Hoja[] => {
+                const original = archivos.find((a) => a.id === l.documento_id);
+                const archivo = original?.nombre ?? item.nombre;
+                const archivoUrl = original?.url ?? null;
+
+                // Una hoja xlsx o csv se lee sin imágenes: una sola "hoja" con
+                // el enlace al archivo original en vez de la imagen.
+                if (l.imagenes.length === 0) {
+                    return [
+                        {
+                            lecturaId: l.id,
+                            pagina: null,
+                            url: null,
+                            archivo,
+                            archivoUrl,
+                        },
+                    ];
+                }
 
                 return l.imagenes.map((url, i) => ({
                     lecturaId: l.id,
                     pagina: i + 1,
                     url,
                     archivo,
+                    archivoUrl,
                 }));
             }),
         [lecturas, archivos, item.nombre],
     );
+
+    // Con varios archivos, cada dato dice de cuál salió.
+    const archivoDe = useMemo(() => {
+        if (archivos.length < 2) {
+            return null;
+        }
+
+        const nombres = new Map(archivos.map((a) => [a.id, a.nombre]));
+
+        return new Map(
+            lecturas.map((l) => [
+                l.id,
+                nombres.get(l.documento_id) ?? item.nombre,
+            ]),
+        );
+    }, [archivos, lecturas, item.nombre]);
 
     const seleccionado = datos.find((d) => d.id === seleccionadoId) ?? null;
     const revelado = seleccionado ? revelados[seleccionado.id] : undefined;
@@ -139,15 +177,19 @@ export default function VisorDocumento({
         setSeleccionadoId(id);
         const dato = datos.find((d) => d.id === id);
 
-        if (dato?.pagina) {
-            const i = hojas.findIndex(
-                (h) =>
-                    h.lecturaId === dato.lectura_id && h.pagina === dato.pagina,
-            );
+        if (!dato) {
+            return;
+        }
 
-            if (i !== -1) {
-                setIndiceHoja(i);
-            }
+        // Su página; en un archivo sin imágenes, la hoja de ese archivo.
+        const i = hojas.findIndex(
+            (h) =>
+                h.lecturaId === dato.lectura_id &&
+                (h.pagina === null || h.pagina === dato.pagina),
+        );
+
+        if (i !== -1) {
+            setIndiceHoja(i);
         }
     };
 
@@ -318,6 +360,7 @@ export default function VisorDocumento({
                                         clienteId={cliente.id}
                                         itemId={item.id}
                                         datos={datos}
+                                        archivoDe={archivoDe}
                                         umbral={umbral}
                                         seleccionadoId={seleccionadoId}
                                         revelados={revelados}

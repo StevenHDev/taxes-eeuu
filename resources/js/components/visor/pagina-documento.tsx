@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ImageOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, FileSpreadsheet, ImageOff } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -61,24 +61,59 @@ export function PaginaDocumento({
             {/* `key` reinicia el estado de carga al cambiar de hoja. */}
             {/* Con el visor fijo, una hoja más alta que la pantalla se recorre aquí dentro. */}
             <div className="lg:max-h-[calc(100svh-10rem)] lg:overflow-y-auto lg:rounded-lg">
-                <ImagenHoja
-                    key={hoja.url}
-                    hoja={hoja}
-                    primera={indice === 0}
-                    recuadro={recuadro}
-                />
+                {hoja.url === null ? (
+                    <HojaSinImagen hoja={hoja} />
+                ) : (
+                    <ImagenHoja
+                        key={hoja.url}
+                        url={hoja.url}
+                        archivo={hoja.archivo}
+                        recuadro={recuadro}
+                    />
+                )}
             </div>
         </div>
     );
 }
 
+/**
+ * Un archivo que se leyó sin imágenes (hoja xlsx o csv): no hay página que
+ * mostrar, así que se dice por qué y se ofrece el archivo original.
+ */
+function HojaSinImagen({ hoja }: { hoja: Hoja }) {
+    const { t } = useTranslation();
+
+    return (
+        <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center">
+            <FileSpreadsheet
+                className="size-8 text-muted-foreground"
+                aria-hidden="true"
+            />
+            <div className="space-y-1">
+                <p className="font-medium break-all">{hoja.archivo}</p>
+                <p className="max-w-sm text-sm text-muted-foreground">
+                    {t('visor.hojaSinImagen')}
+                </p>
+            </div>
+            {hoja.archivoUrl ? (
+                <Button variant="outline" size="sm" asChild>
+                    <a href={hoja.archivoUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink aria-hidden="true" />
+                        {t('visor.verArchivo', { nombre: hoja.archivo })}
+                    </a>
+                </Button>
+            ) : null}
+        </div>
+    );
+}
+
 function ImagenHoja({
-    hoja,
-    primera,
+    url,
+    archivo,
     recuadro,
 }: {
-    hoja: Hoja;
-    primera: boolean;
+    url: string;
+    archivo: string;
     recuadro: Recuadro | null;
 }) {
     const { t } = useTranslation();
@@ -117,9 +152,11 @@ function ImagenHoja({
             <div className={estado === 'cargando' ? 'hidden' : 'relative'}>
                 <img
                     ref={marcarSiYaCargo}
-                    src={hoja.url}
-                    alt={t('visor.imagenAlt', { archivo: hoja.archivo })}
-                    loading={primera ? 'eager' : 'lazy'}
+                    src={url}
+                    alt={t('visor.imagenAlt', { archivo })}
+                    // Sin `lazy`: la imagen está oculta mientras carga y el
+                    // navegador nunca descarga una imagen `lazy` oculta.
+                    loading="eager"
                     className="block h-auto w-full"
                     onLoad={() => setEstado('lista')}
                     onError={() => setEstado('error')}
