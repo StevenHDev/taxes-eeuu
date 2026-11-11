@@ -1,0 +1,168 @@
+<?php
+
+// 6.9b. Schedule C de un negocio de una persona: 1099-NEC + 1099-K + cobros sin formulario, gastos de varias categorías,
+// millaje a la tarifa estándar de 2025 (USD 0,70 por milla, i1040sc p. 1 y p. 6) y comidas al 50 % (i1040sc p. 1 y p. 10).
+// Sin oficina en casa (línea 30 en blanco), sin devoluciones (línea 2), sin costo de mercancía (línea 4) ni otros ingresos (línea 6).
+// Transcrito a mano, sin ver la calculadora. Todos los montos son enteros: no hay redondeo que discutir.
+$fuente = fn (string $doc, string $pagina) => ['doc' => $doc, 'pagina' => $pagina, 'url' => "https://www.irs.gov/pub/irs-prior/{$doc}--2025.pdf"];
+
+return [
+    'codigo' => 'schedule-c-ingresos-y-gastos',
+    'anio' => 2025,
+    'descripcion' => 'Negocio de servicios de una sola persona con USD 30.000 de ingresos brutos (dos 1099-NEC, un 1099-K y cobros en efectivo sin formulario) y USD 6.015 de gastos, con millaje y comidas: ganancia neta de USD 23.985 en la línea 31.',
+    'entradas' => [
+        'estado_civil' => 'soltero',
+        'dueno_del_negocio' => 'contribuyente',
+        '1099_nec' => [['casilla_1' => '12000'], ['casilla_1' => '6000']],
+        '1099_k' => [['casilla_1a' => '9500']],
+        'cobros_sin_formulario' => '2500',
+        'todo_el_1099_k_es_del_negocio' => 'si',
+        'devoluciones_y_descuentos' => '0',
+        'gastos' => [
+            'publicidad' => '600',
+            'millas_de_negocio' => '3000',
+            'metodo_del_vehiculo' => 'tarifa_estandar',
+            'estacionamiento_y_peajes_de_negocio' => '85',
+            'seguro_del_negocio_no_de_salud' => '900',
+            'gastos_de_oficina' => '450',
+            'materiales_y_suministros' => '1200',
+            'comidas_de_negocio_costo_real' => '640',
+            'sujeto_a_horas_de_servicio_del_dot' => 'no',
+            'segunda_linea_telefonica_del_negocio' => '360',
+        ],
+        'oficina_en_casa' => 'no',
+    ],
+    'pasos' => [
+        [
+            'formulario' => 'sch-c',
+            'linea' => '1',
+            'texto' => 'Ingresos brutos: casillas 1 de los 1099-NEC (12.000 + 6.000), casilla 1a del 1099-K (9.500) y cobros sin formulario (2.500). El IRS pide reportar todo el ingreso del negocio "from all sources" e incluir lo de los 1099-NEC y revisar los 1099-K. Total: USD 30.000.',
+            'valor' => '30000',
+            'fuente' => $fuente('i1040sc', 'p. 5 (Part I. Income y Line 1)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '3',
+            'texto' => 'Línea 1 menos línea 2 (sin devoluciones ni descuentos): 30.000 − 0 = USD 30.000.',
+            'valor' => '30000',
+            'fuente' => $fuente('f1040sc', 'p. 1 (Part I, líneas 2 y 3)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '5',
+            'texto' => 'Ganancia bruta: línea 3 menos línea 4 (sin costo de mercancía) = USD 30.000.',
+            'valor' => '30000',
+            'fuente' => $fuente('f1040sc', 'p. 1 (Part I, líneas 4 y 5)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '7',
+            'texto' => 'Ingreso bruto: líneas 5 y 6 (sin otros ingresos) = USD 30.000.',
+            'valor' => '30000',
+            'fuente' => $fuente('f1040sc', 'p. 1 (Part I, líneas 6 y 7)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '8',
+            'texto' => 'Publicidad: USD 600.',
+            'valor' => '600',
+            'fuente' => $fuente('f1040sc', 'p. 1 (Part II, línea 8)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '9-tarifa',
+            'texto' => 'Tarifa estándar de millaje de 2025: 70 centavos por milla.',
+            'valor' => '0.70',
+            'fuente' => $fuente('i1040sc', 'p. 1 (What\'s New, Standard mileage rate)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '9-millas',
+            'texto' => 'Millas de negocio por la tarifa: 3.000 × 0,70 = USD 2.100.',
+            'valor' => '2100',
+            'fuente' => $fuente('i1040sc', 'p. 6 (Line 9: "Multiply the number of business miles driven by 0.70")'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '9',
+            'texto' => 'Auto y camioneta: millas (2.100) más estacionamiento y peajes de negocio (85) = USD 2.185.',
+            'valor' => '2185',
+            'fuente' => $fuente('i1040sc', 'p. 6 (Line 9: "Add to this amount your parking fees and tolls")'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '15',
+            'texto' => 'Seguro del negocio (no de salud): USD 900.',
+            'valor' => '900',
+            'fuente' => $fuente('f1040sc', 'p. 1 (Part II, línea 15)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '18',
+            'texto' => 'Gastos de oficina: USD 450.',
+            'valor' => '450',
+            'fuente' => $fuente('f1040sc', 'p. 1 (Part II, línea 18)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '22',
+            'texto' => 'Materiales y suministros (no hay Parte III): USD 1.200.',
+            'valor' => '1200',
+            'fuente' => $fuente('f1040sc', 'p. 1 (Part II, línea 22)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '24b-porcentaje',
+            'texto' => 'Porcentaje deducible de las comidas de negocio en 2025: 50 % (80 % solo para quien está sujeto a las horas de servicio del DOT, que no es el caso).',
+            'valor' => '0.50',
+            'fuente' => $fuente('i1040sc', 'p. 10 (Line 24b, Amount of deduction)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '24b',
+            'texto' => 'Comidas deducibles: 640 × 50 % = USD 320.',
+            'valor' => '320',
+            'fuente' => $fuente('i1040sc', 'p. 9 (Line 24b) y p. 10 (Amount of deduction)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '25',
+            'texto' => 'Servicios: solo la segunda línea telefónica del negocio (la primera línea de la casa no se deduce): USD 360.',
+            'valor' => '360',
+            'fuente' => $fuente('i1040sc', 'p. 10 (Line 25, Local telephone service)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '28',
+            'texto' => 'Total de gastos, líneas 8 a 27b: 600 + 2.185 + 900 + 450 + 1.200 + 320 + 360 = USD 6.015.',
+            'valor' => '6015',
+            'fuente' => $fuente('f1040sc', 'p. 1 (línea 28)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '29',
+            'texto' => 'Ganancia provisional: línea 7 menos línea 28 = 30.000 − 6.015 = USD 23.985.',
+            'valor' => '23985',
+            'fuente' => $fuente('f1040sc', 'p. 1 (línea 29)'),
+        ],
+        [
+            'formulario' => 'sch-c',
+            'linea' => '31',
+            'texto' => 'Ganancia neta: línea 29 menos línea 30 (sin oficina en casa) = USD 23.985. Va al Schedule 1, línea 3, y al Schedule SE, línea 2.',
+            'valor' => '23985',
+            'fuente' => $fuente('f1040sc', 'p. 1 (línea 31)'),
+        ],
+    ],
+    'lineas' => [
+        'sch-c' => [
+            '1' => '30000', '3' => '30000', '5' => '30000', '7' => '30000',
+            '8' => '600', '9' => '2185', '15' => '900', '18' => '450', '22' => '1200',
+            '24b' => '320', '25' => '360', '28' => '6015', '29' => '23985', '31' => '23985',
+        ],
+    ],
+    'cubre' => [
+        'sch-c:1', 'sch-c:3', 'sch-c:5', 'sch-c:7', 'sch-c:8', 'sch-c:9', 'sch-c:15', 'sch-c:18',
+        'sch-c:22', 'sch-c:24b', 'sch-c:25', 'sch-c:28', 'sch-c:29', 'sch-c:31',
+    ],
+    'contraste' => null,
+];
