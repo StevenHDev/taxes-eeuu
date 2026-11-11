@@ -48,7 +48,7 @@
 | 2 | 6.4g | Calculadora `Eitc` | ola 1 | ✅ |
 | 2 | 6.1b | Parámetros de 2026 | ola 1 | ✅ |
 | 2 | 6.9a | Primer lote de casos del IRS, escrito sin ver el código | ola 1 | ✅ |
-| 3 | 6.4z (paso previo) · 6.4b · 6.4d · 6.4f · 6.4h · 6.5 · 6.3c · 6.9b | Detallada abajo (11 nov.); **con Opus 5.5** | ola 2 | ⏳ |
+| 3 | 6.4z (paso previo) · 6.4b · 6.4d · 6.4f · 6.4h · 6.5 · 6.3c · 6.9b | Detallada abajo (11 nov.); **con Opus 5.5** | ola 2 | ✅ |
 | 4 | 6.4i · 6.7a · 6.3d | Se detallan al cerrar la ola 3 | ola 3 | ⏳ |
 | 5 | 6.6 · 6.7b · 6.8a · 6.8b-n · 6.3e | Se detallan al cerrar la ola 4 | ola 4 | ⏳ |
 | 6 | 6.8c · 6.9 | Se detallan al cerrar la ola 5 | ola 5 | ⏳ |
@@ -737,3 +737,59 @@ Cada cifra cita formulario, línea, **página** y URL del PDF fijado. Donde dos 
 5. `wayfinder:generate`, `pint --test`, `types:check`, `eslint` sobre lo tocado y la suite completa (`PAO_DISABLE=1 php artisan test --parallel`, una sola vez).
 6. "Cómo quedó" de la ola, `tareas-desarrollo.md`, Wiplitask (empresa **Cupperlab**); preguntar a Steven antes de cada commit (`/commit`).
 7. Detallar la **ola 4** (6.4i orquestador y foto, 6.7a, 6.3d) con los nombres reales.
+
+## Cómo quedó la ola 3 (11 nov. 2026, Opus 5.5)
+
+- **6.4z (agente principal):** `Nucleo\Apoyo`, `DocumentoEntrada`, `EntradasDeclaracion::documentos()` e inglés por área (`lang/calculo/<area>`). Commits `6703bf5` y `6c14bec`.
+- **6.4b:** `ScheduleC`, `ScheduleSe` y `ScheduleC\DuenoNegocio` (decisión B). Millaje 0,70, comidas 50 %, método simplificado (USD 5, 300 pies, limitado por la ganancia), SE con W-2 de la misma persona. Con la 4c bajo USD 400 se escriben 2 a 4c y lo demás no aplica (el EIC lee la 4c). K-1 → SE no soportado.
+- **6.4d:** `Deducciones` (12d, 12e, 13a, 13b, 14, 15; corre por dentro `Schedule1A` y `Form8995`), `Deducciones\Mayores`. La ceguera sale de la pregunta **A9** (`"no"`, `"usted"`, `"conyuge"`, `"usted,conyuge"`). Vehículo nuevo del 1-A: siempre `falta_dato` (el ensamblaje en EE. UU. no se pregunta).
+- **6.4f:** `Schedule8812`, `Form2441` (+ `Credito2441`), `Schedule3`, `Creditos\Corte`. Tabla de la línea 8 del 2441 completa en `TablaF2441CsvTest`; el `skip` de `TablasIrsTest` se quitó.
+- **6.4h:** `Form8962` (+ `TablasPrima`, `EstadoResidencia`, `PolizasMarketplace`) y `PagosYResultado` (25a a 38 menos 27a). Estado de residencia: se saca de la dirección postal A2 (por verificar: lo correcto es una pregunta propia).
+- **6.5:** tablas `expediente_datos_sin_documento` y su historial, `DatosSinDocumento`, `AnotarSinDocumentoRequest`, `DatosSinDocumentoController`, `routes/expediente-borrador.php` (`clientes.borrador.sin-documento.*`) y `R15SinDocumento` (sin registrar). No se anota después de presentar; retirar no borra. Canales: llamada, WhatsApp, presencial, correo, portal.
+- **6.3c:** extractos, recibos y fotos de registros con IA, por bloques de 5 páginas; tope de 40 páginas por archivo y 120 por cliente y año; motivos nuevos (0,95 repetido en la página, categoría propuesta por la IA, sin categoría); R-14 con "demasiadas páginas" y "tope alcanzado"; comando `lectura:medir-costo`.
+- **6.9b:** 16 casos nuevos escritos sin ver el código (Schedule C, SE, 12d/12e, 8995, 8812, 2441, pagos).
+
+### Cierre (agente principal)
+
+- **Catálogo:** 84 líneas nuevas en `formularios.php` (SE 7, 8b–8d; 2441 9b, 13, 18–31; Schedule 3 línea 3; 1-A; 8995 3, 12, 16; 8962 2b, 8b, 9, 10 y columnas c–e; 1040 25c, 29, 30, 35a, 38). `35a-35d` se dejó (la usa la hoja de TaxWise) y se agregó `35a`.
+- **Parámetros nuevos de 2025:** `credito_cuidado_dependientes.tope_beneficios_excluibles` (USD 5.000, Form 2441 p. 2, línea 21) y `additional_medicare_tax.tasa_medicare_regular` (1,45 %, Form 8959 p. 1, línea 21), con la migración espejo `2026_11_11_160000`. En 2026 quedan pendientes.
+- **Contraste de doble lectura** (`ContrasteCasosOla3Test`): 14 de 15 casos coinciden. Se corrigieron 4 diferencias confirmadas contra el PDF:
+  1. Schedule 2 línea 12: el Form 8960 solo cuando la 11b pasa del umbral (i1040gi, Schedule 2, líneas 17a–17z); antes salía no soportada con cualquier 1099-INT.
+  2. Línea 12d del 1040: guarda el **número de casillas** (el formulario de 2025 no tiene monto ahí); el adicional entra en la 12e.
+  3. Schedule 8812: con la 16a en cero se escribe la 16a = 0 antes de parar.
+  4. Form 2441: si se sabe que la persona sin ingreso no fue estudiante ni incapacitada, cuenta su ingreso real (0) en vez de `falta_dato`.
+  Queda **1 incompleta**: la línea 9 del Schedule C no suma estacionamiento y peajes con la tarifa estándar (i1040sc p. 6) porque los registros no tienen una categoría para ellos.
+- **Medición de costo** (`lectura:medir-costo`, modelo de visión de `.env`, local, 11 nov.): 10 documentos sintéticos, 19 páginas, 11 llamadas, unas 74.600 fichas de entrada y 9.400 de salida en total; **unas 3.900 de entrada y 500 de salida por página** y **unos 5 segundos por página**. Un extracto de 40 páginas: unas 8 llamadas y unos 150 s (el trabajo tiene 240 s). El costo en dólares falta: se calcula con la tarifa vigente del modelo (opciones `--tarifa-entrada` y `--tarifa-salida`).
+- **Suite completa:** 1.605 verdes, 4 saltadas, 1 incompleta (peajes). `pint` y `types:check` limpios.
+
+### Pendientes y decisiones que salen de la ola 3
+
+1. **Peajes y estacionamiento** con la tarifa estándar (Schedule C línea 9): hace falta una categoría propia en los registros (plantilla y `ResultadoSumas`): va con 6.3d en la ola 4.
+2. **Confianza de las sumas con categoría de la IA:** `SumasRegistrosPorRenglones` debe tomar la menor entre la del renglón y `CalculadoraConfianza::evaluarCategoria()` (6.3d, ola 4).
+3. **Preguntas que el cálculo necesita y la entrevista no hace:** estado de residencia (8962), estudiante o incapacitado del contribuyente y del cónyuge (2441), ensamblaje del vehículo en EE. UU. (1-A), sobrepago del año anterior aplicado (línea 26), si el cónyuge MFS detalla (12b), asignación de póliza entre familias (8962 línea 9).
+4. **Casilla 13 del W-2:** separarla en tres (empleado estatutario, plan de retiro, pago por enfermedad) para detectar al empleado estatutario.
+5. **1099-MISC casilla 3:** premios a la línea 8i o 8z (hoy 8z).
+6. **R-10** (ola 5): agregar la pregunta "¿todo este 1099-K es del negocio?". **R-15** (ola 5): registrarla y su texto en `ExplicadorExcepcion` (la frase la dejó 6.5).
+7. **Para 6.4i (ola 4):** orden de cálculo de cada subtarea (ver sus entregas): ScheduleC → ScheduleSe → Schedule1 → Form2441::calcularBeneficios → Ingresos1040 → Deducciones → Form8962 → ImpuestoYSchedule2 → Form2441::calcular → Schedule3 → Eitc → Schedule8812 → ImpuestoYSchedule2 otra vez → PagosYResultado. `edadAlFinDeAnio` debe aplicar la regla del IRS (se cumple el día antes del cumpleaños); `personaId` del recibo de cuidado = la persona cuidada; `DatosSinDocumento::vigentes()` escribe (marca reemplazados).
+8. **Redondeo** a dólares enteros por línea (pendiente 1 de la ola 2): el contraste compara redondeando al final; el caso `schedule-se-borde-400-redondeo` muestra que en el borde de USD 400 cambia el resultado.
+9. **2026:** las líneas siguen con la numeración de 2025 (pendiente 4 de la ola 2); los dos parámetros nuevos están pendientes.
+10. **Tiempo del trabajo de lectura:** 240 s alcanza para 40 páginas según la medición, con poco margen; revisarlo con extractos reales.
+
+### Decisiones de Steven sobre los datos que faltan (11 nov. 2026)
+
+**Regla:** todo dato que el cálculo necesita **se obtiene**. Primero se deduce de un documento que ya se le pide al cliente o de una respuesta que ya existe; solo si no se puede, se pregunta, **con una pregunta condicional** (solo cuando el caso la necesita) y corta. Lo que es criterio del preparador va a Revisión.
+
+| Dato | De dónde sale | Pregunta nueva (condicional) |
+| --- | --- | --- |
+| Estado de residencia (8962 línea 4) | Dirección postal A2 (ya lo hace `EstadoResidencia`); si no se reconoce, casilla nueva **`estado`** del documento `id-foto` (licencia o ID) | Solo si ninguno sirve y hay 1095-A |
+| Sobrepago del año anterior aplicado (1040 línea 26) | Casilla nueva de la **línea 36** del documento `declaracion-anterior` (hoy se pide en G5 pero no se lee) | Solo si no la sube y G1 = sí |
+| Asignación de póliza entre familias (8962 línea 9) | Comparar las personas cubiertas del 1095-A (filas 16 a 20) con las de la declaración: si coinciden, "no" | Solo si el 1095-A cubre a alguien que no está en la declaración |
+| Empleado estatutario (W-2 casilla 13) | Separar la casilla 13 del W-2 en tres casillas al leerlo (estatutario, plan de retiro, pago por enfermedad) | No |
+| Peajes y estacionamiento con tarifa estándar (Schedule C línea 9) | Categoría nueva en la plantilla de registros, en `plantilla-registros.php` y en `ResultadoSumas` | No |
+| Ensamblaje del vehículo en EE. UU. (Schedule 1-A Parte IV) | **Decodificar el VIN** con el decodificador público de la NHTSA (vPIC, país de la planta), como indica el IRS; se envía solo el VIN | Solo si la NHTSA no responde o no trae el país |
+| Estudiante o incapacitado, contribuyente y cónyuge (2441, i2441 p. 4) | No sale de documentos | Solo si hay gastos de cuidado y uno de los dos no tuvo ingreso del trabajo |
+| ¿El cónyuge MFS detalla? (1040 línea 12b) | No sale de documentos | Solo si el estado civil es MFS |
+| ¿Todo el 1099-K es del negocio? (i1040gi, Schedule 1, p. 88) | No sale de documentos | Solo si hay 1099-K; también va en R-10 (ola 5) |
+| 1099-MISC casilla 3: premio (8i) u otro (8z) | No sale de documentos | Solo si hay 1099-MISC con casilla 3: "¿Qué fue este pago? Premio o sorteo / Otro"; mientras no responda, 8z con aviso |
+
+**Dónde va:** en la **ola 4**, junto con `ArmadorEntradas` (6.4i), que es quien lleva estas respuestas y casillas a las calculadoras. Se agrega una subtarea de catálogo y entrevista (casillas nuevas, preguntas condicionales y la categoría de peajes) y una de ajustes de calculadoras (2441, 12b, 8962 línea 9, 1-A con el VIN, 1099-MISC casilla 3, Schedule C línea 9). El servicio del VIN es una llamada a un tercero: va detrás de una interfaz, simulado en las pruebas y con el VIN fuera de logs y trazas.
