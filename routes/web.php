@@ -18,6 +18,7 @@ require __DIR__.'/expediente-ficha.php';
 require __DIR__.'/expediente-revision.php';
 require __DIR__.'/expediente-hoja.php';
 require __DIR__.'/expediente-debida-diligencia.php';
+require __DIR__.'/expediente-borrador.php';
 require __DIR__.'/catalogo-fiscal.php';
 require __DIR__.'/usuarios.php';
 require __DIR__.'/bitacora.php';
