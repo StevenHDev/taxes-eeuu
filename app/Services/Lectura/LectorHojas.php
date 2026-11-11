@@ -241,7 +241,7 @@ class LectorHojas implements LectorDocumentos
                 if ($monto === null) {
                     $observaciones['filas_sin_monto']++;
                 } else {
-                    $casillas[$tabla['cantidades'][$normal]] = $monto;
+                    $casillas[$tabla['cantidades'][$normal]] = self::cantidad($monto);
                 }
 
                 continue;
@@ -632,6 +632,15 @@ class LectorHojas implements LectorDocumentos
      * Un monto en texto con dos decimales ("45.20", "-300.00"), o null si no es un monto. No adivina:
      * más de dos decimales o un texto que no se entiende no son un monto.
      */
+    /**
+     * Millas y pies cuadrados son cantidades (`numero` en el catálogo), no
+     * dinero: sin los ceros de sobra ("1200.00" → "1200", "12.50" → "12.5").
+     */
+    private static function cantidad(string $decimal): string
+    {
+        return str_contains($decimal, '.') ? rtrim(rtrim($decimal, '0'), '.') : $decimal;
+    }
+
     private function decimal(mixed $celda): ?string
     {
         if (is_int($celda)) {

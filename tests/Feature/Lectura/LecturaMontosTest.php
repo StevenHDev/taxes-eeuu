@@ -149,7 +149,7 @@ class LecturaMontosTest extends TestCase
             'registros-ingresos-gastos' => [
                 'clase-detectada' => ['codigo', false, false], 'periodo-desde' => ['fecha', false, false], 'periodo-hasta' => ['fecha', false, false],
                 'total-depositos' => ['monto', false, false], 'total-retiros' => ['monto', false, false], 'saldo-inicial' => ['monto', false, false], 'saldo-final' => ['monto', false, false],
-                'millas-negocio' => ['monto', true, false], 'pies-cuadrados-casa' => ['monto', true, false], 'pies-cuadrados-oficina' => ['monto', true, false],
+                'millas-negocio' => ['numero', true, false], 'pies-cuadrados-casa' => ['numero', true, false], 'pies-cuadrados-oficina' => ['numero', true, false],
             ],
         ];
     }

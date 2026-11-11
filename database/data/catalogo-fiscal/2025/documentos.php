@@ -228,16 +228,16 @@ return [
         // Formatos: pdf, jpg, png, heic y también xlsx y csv (decisión l; solo aquí). Se leen sin IA (6.3b).
         // `lectura = renglones` (6.3b): se lee por renglones y la plataforma suma por categoría; xlsx y csv se leen sin IA (LectorHojas).
         'casillas' => [
-            ['casilla' => 'clase-detectada', 'descripcion' => 'Clase de documento: plantilla, extracto_banco, extracto_tarjeta, recibo, hoja_calculo, millaje u otro', 'tipo_dato' => 'codigo', 'clave' => false, 'sensible' => false, 'orden' => 1],
+            ['casilla' => 'clase-detectada', 'descripcion' => 'Tipo de archivo que se detectó', 'tipo_dato' => 'codigo', 'clave' => false, 'sensible' => false, 'orden' => 1],
             ['casilla' => 'periodo-desde', 'descripcion' => 'Primer día del período que cubre el documento (extractos)', 'tipo_dato' => 'fecha', 'clave' => false, 'sensible' => false, 'orden' => 2],
             ['casilla' => 'periodo-hasta', 'descripcion' => 'Último día del período que cubre el documento (extractos)', 'tipo_dato' => 'fecha', 'clave' => false, 'sensible' => false, 'orden' => 3],
             ['casilla' => 'total-depositos', 'descripcion' => 'Total de depósitos impreso en el extracto', 'tipo_dato' => 'monto', 'clave' => false, 'sensible' => false, 'orden' => 4],
             ['casilla' => 'total-retiros', 'descripcion' => 'Total de retiros impreso en el extracto', 'tipo_dato' => 'monto', 'clave' => false, 'sensible' => false, 'orden' => 5],
             ['casilla' => 'saldo-inicial', 'descripcion' => 'Saldo inicial impreso en el extracto', 'tipo_dato' => 'monto', 'clave' => false, 'sensible' => false, 'orden' => 6],
             ['casilla' => 'saldo-final', 'descripcion' => 'Saldo final impreso en el extracto', 'tipo_dato' => 'monto', 'clave' => false, 'sensible' => false, 'orden' => 7],
-            ['casilla' => 'millas-negocio', 'descripcion' => 'Millas del negocio del año, según el registro de millaje', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 8],
-            ['casilla' => 'pies-cuadrados-casa', 'descripcion' => 'Pies cuadrados de la casa', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 9],
-            ['casilla' => 'pies-cuadrados-oficina', 'descripcion' => 'Pies cuadrados de la oficina en casa', 'tipo_dato' => 'monto', 'clave' => true, 'sensible' => false, 'orden' => 10],
+            ['casilla' => 'millas-negocio', 'descripcion' => 'Millas del negocio del año, según el registro de millaje', 'tipo_dato' => 'numero', 'clave' => true, 'sensible' => false, 'orden' => 8],
+            ['casilla' => 'pies-cuadrados-casa', 'descripcion' => 'Pies cuadrados de la casa', 'tipo_dato' => 'numero', 'clave' => true, 'sensible' => false, 'orden' => 9],
+            ['casilla' => 'pies-cuadrados-oficina', 'descripcion' => 'Pies cuadrados de la oficina en casa', 'tipo_dato' => 'numero', 'clave' => true, 'sensible' => false, 'orden' => 10],
         ],
     ],
 

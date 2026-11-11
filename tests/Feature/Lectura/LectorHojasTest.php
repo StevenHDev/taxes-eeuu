@@ -63,9 +63,9 @@ class LectorHojasTest extends RegistrosTestCase
 
         // Millas y pies cuadrados van a sus casillas fijas, con el mismo motivo.
         $datos = $lectura->datos->keyBy('casilla');
-        $this->assertSame('9800.00', $datos['millas-negocio']->valor);
-        $this->assertSame('1850.00', $datos['pies-cuadrados-casa']->valor);
-        $this->assertSame('140.00', $datos['pies-cuadrados-oficina']->valor);
+        $this->assertSame('9800', $datos['millas-negocio']->valor);
+        $this->assertSame('1850', $datos['pies-cuadrados-casa']->valor);
+        $this->assertSame('140', $datos['pies-cuadrados-oficina']->valor);
         $this->assertSame('plantilla', $datos['clase-detectada']->valor);
         $this->assertSame(MotivoConfianza::HojaCalculo, $datos['millas-negocio']->motivo_confianza);
 
@@ -82,7 +82,7 @@ class LectorHojasTest extends RegistrosTestCase
         $this->assertSame([
             '1-sin-formulario' => ['8000.00'], '2' => ['150.50'], '8' => ['120.00'], '9' => ['300.00'], '25' => ['95.25'], '27b' => ['40.00'],
         ], $this->montosPorLinea($lectura));
-        $this->assertSame('1200.00', $lectura->datos->firstWhere('casilla', 'millas-negocio')->valor);
+        $this->assertSame('1200', $lectura->datos->firstWhere('casilla', 'millas-negocio')->valor);
         $this->assertSame(0, Excepcion::query()->where('regla_codigo', 'R-14')->count());
     }
 
