@@ -3,6 +3,7 @@
 namespace App\Services\Lectura;
 
 use App\Enums\Lectura\MotivoConfianza;
+use App\Models\Documento;
 use App\Models\Lectura\Excepcion;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
 
@@ -53,40 +54,78 @@ class ExplicadorExcepcion
      */
     private function registros(array $detalle): array
     {
+        $archivo = $this->nombreArchivo($detalle['documento_id'] ?? null);
+
         if (($detalle['tipo'] ?? null) === 'archivo_sin_lector') {
             return [
-                'caso' => __('Este archivo de registros es un PDF o una foto: se lee en una versión posterior y el preparador lo revisa.'),
+                'caso' => __('«:archivo» es un PDF o una foto de registros: todavía no se lee solo, lo revisa el preparador.', ['archivo' => $archivo]),
                 'que_hacer' => __('Revisa el archivo; si el cliente lleva sus cuentas, la plantilla en Excel es lo más rápido.'),
             ];
         }
 
         if (($detalle['tipo'] ?? null) === 'sin_categoria') {
+            $n = (int) ($detalle['renglones'] ?? 0);
+
             return [
-                'caso' => __('Renglones de la hoja sin categoría: :n. No suman al Schedule C hasta que les pongas una.', ['n' => $this->texto($detalle['renglones'] ?? '?')]),
-                'que_hacer' => __('Ponle categoría a cada renglón en el visor, o márcalo como personal o transferencia.'),
+                'caso' => $this->plural('En «:archivo» hay 1 renglón sin categoría: no suma al Schedule C.', 'En «:archivo» hay :n renglones sin categoría: no suman al Schedule C.', $n, ['archivo' => $archivo, 'n' => $n]),
+                'que_hacer' => __('Abre el archivo y revisa esos renglones; si son del negocio, pídele al cliente que les ponga categoría en la plantilla y la vuelva a subir. Ponerles categoría desde el visor llega en una versión posterior.'),
             ];
         }
 
         $partes = [];
 
         if (($detalle['formato_no_reconocido'] ?? false) === true) {
-            $partes[] = __('la hoja no se reconoció como la plantilla ni como una lista de movimientos con fecha y monto');
+            $partes[] = __('no se reconoció como la plantilla ni como una lista de movimientos con fecha y monto');
         }
 
         if (is_array($detalle['columnas_no_reconocidas'] ?? null) && $detalle['columnas_no_reconocidas'] !== []) {
-            $partes[] = __('columnas sin reconocer: :columnas', ['columnas' => implode(', ', array_map($this->texto(...), $detalle['columnas_no_reconocidas']))]);
+            $columnas = array_map($this->texto(...), $detalle['columnas_no_reconocidas']);
+            $partes[] = $this->plural('la columna :columnas', 'las columnas :columnas', count($columnas), ['columnas' => implode(', ', $columnas)]);
         }
 
-        foreach (['filas_sin_monto' => 'filas sin un monto que se entienda: :n', 'filas_sin_fecha' => 'filas sin una fecha que se entienda: :n', 'formulas_sin_valor' => 'celdas con fórmula sin valor guardado: :n', 'hojas_sin_leer' => 'otras hojas del archivo sin leer: :n'] as $clave => $texto) {
-            if ((int) ($detalle[$clave] ?? 0) > 0) {
-                $partes[] = __($texto, ['n' => (int) $detalle[$clave]]);
+        $conteos = [
+            'filas_sin_monto' => ['1 fila sin un monto que se entienda', ':n filas sin un monto que se entienda'],
+            'filas_sin_fecha' => ['1 fila sin una fecha que se entienda', ':n filas sin una fecha que se entienda'],
+            'formulas_sin_valor' => ['1 celda con fórmula sin valor guardado', ':n celdas con fórmula sin valor guardado'],
+            'hojas_sin_leer' => ['1 hoja más del archivo sin leer', ':n hojas más del archivo sin leer'],
+        ];
+
+        foreach ($conteos as $clave => $texto) {
+            $n = (int) ($detalle[$clave] ?? 0);
+
+            if ($n > 0) {
+                $partes[] = $this->plural($texto[0], $texto[1], $n, ['n' => $n]);
             }
         }
 
         return [
-            'caso' => __('La hoja trae datos que no se reconocieron').($partes === [] ? '.' : ': '.implode('; ', $partes).'.'),
-            'que_hacer' => __('Abre la hoja y revisa lo que no se reconoció; si hace falta, pídele al cliente la plantilla en Excel.'),
+            'caso' => __('En «:archivo» hay datos que no se reconocieron', ['archivo' => $archivo]).($partes === [] ? '.' : ': '.implode('; ', $partes).'.'),
+            'que_hacer' => __('Abre el archivo y revisa lo que no se reconoció; si hace falta, pídele al cliente la plantilla en Excel.'),
         ];
+    }
+
+    /**
+     * Una frase en singular o en plural. No usa `trans_choice`: sin `es.json`,
+     * Laravel elige la frase en el idioma de respaldo (inglés).
+     *
+     * @param  array<string, mixed>  $reemplazos
+     */
+    private function plural(string $singular, string $plural, int $n, array $reemplazos = []): string
+    {
+        return __($n === 1 ? $singular : $plural, $reemplazos);
+    }
+
+    /**
+     * El nombre con que el cliente subió el archivo (se ve también en la ficha
+     * y en el visor); no se guarda en el detalle de la excepción.
+     */
+    private function nombreArchivo(mixed $documentoId): string
+    {
+        $nombre = is_numeric($documentoId)
+            ? Documento::query()->whereKey((int) $documentoId)->value('file_original_name')
+            : null;
+
+        return is_string($nombre) && $nombre !== '' ? $nombre : __('el archivo');
     }
 
     /**

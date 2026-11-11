@@ -162,6 +162,7 @@ class RenglonesTest extends RegistrosTestCase
 
     public function test_r14_dice_en_palabras_que_pasa_sin_montos_ni_descripciones(): void
     {
+        app()->setLocale('es');
         $this->subirYLeer('hoja-propia.csv');
         $this->subir('otra.pdf', '%PDF-1.4 vacío');
         app(MotorReglas::class)->correr($this->entrevista);
@@ -172,8 +173,8 @@ class RenglonesTest extends RegistrosTestCase
         $this->assertCount(3, $textos);
 
         $todo = json_encode($textos, JSON_UNESCAPED_UNICODE);
-        $this->assertStringContainsString('columnas sin reconocer: E', $todo);
-        $this->assertStringContainsString('Renglones de la hoja sin categoría: 1', $todo);
+        $this->assertStringContainsString('no se reconocieron: la columna E', $todo);
+        $this->assertStringContainsString('hay 1 renglón sin categoría', $todo);
         $this->assertStringContainsString('PDF o una foto', $todo);
 
         foreach (['Client payment', '1200', '45.20', 'Gifts'] as $secreto) {
