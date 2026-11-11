@@ -314,6 +314,8 @@ class ParametrosTest extends TestCase
         'credito_ftc.umbral_de_minimis_soltero' => 'ni el borrador del Schedule 3 ni las instrucciones del 1040 de 2026 traen la cifra',
         'credito_ftc.umbral_de_minimis_mfj' => 'ni el borrador del Schedule 3 ni las instrucciones del 1040 de 2026 traen la cifra',
         'self_employment_tax.maximo_seguro_social_retenido_por_persona' => 'ningún documento del IRS de 2026 revisado trae la cifra',
+        'credito_cuidado_dependientes.tope_beneficios_excluibles' => 'agregado al cierre de la ola 3 (11 nov.); falta verificar la cifra de 2026 en el Form 2441 o sus instrucciones de 2026',
+        'additional_medicare_tax.tasa_medicare_regular' => 'agregado al cierre de la ola 3 (11 nov.); falta verificarlo en el Form 8959 de 2026',
     ];
 
     /**
@@ -321,7 +323,7 @@ class ParametrosTest extends TestCase
      *
      * @var list<string>
      */
-    private const SIN_FUENTE_DEL_IRS = ['lectura.umbral_confianza'];
+    private const SIN_FUENTE_DEL_IRS = ['lectura.umbral_confianza', 'lectura.maximo_paginas_renglones', 'lectura.maximo_paginas_ia_por_cliente'];
 
     public function test_los_parametros_de_2026_con_valor_traen_fuente_con_pagina_y_url_del_irs_y_el_resto_esta_pendiente_por_nombre(): void
     {

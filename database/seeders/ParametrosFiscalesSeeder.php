@@ -88,6 +88,7 @@ class ParametrosFiscalesSeeder extends Seeder
             // CreditEligibilityCalculator.
             ['credito_cuidado_dependientes', 'tope_gastos_1_persona', 3000],
             ['credito_cuidado_dependientes', 'tope_gastos_2_mas_personas', 6000],
+            ['credito_cuidado_dependientes', 'tope_beneficios_excluibles', 5000],
             ['credito_cuidado_dependientes', 'porcentaje_maximo', 0.35],
             ['credito_cuidado_dependientes', 'porcentaje_minimo', 0.20],
             ['credito_cuidado_dependientes', 'agi_umbral_porcentaje_maximo', 15000],
@@ -196,6 +197,7 @@ class ParametrosFiscalesSeeder extends Seeder
             ['self_employment_tax', 'factor_deduccion_mitad', '0.50'],
             ['additional_medicare_tax', 'tasa', '0.009'],
             ['additional_medicare_tax', 'umbral_mfs', 125000],
+            ['additional_medicare_tax', 'tasa_medicare_regular', '0.0145'],
             ['niit', 'tasa', '0.038'],
             ['niit', 'umbral_mfs', 125000],
             ['qbi', 'tasa', '0.20'],

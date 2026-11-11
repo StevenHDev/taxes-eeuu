@@ -24,8 +24,8 @@ class PantallaTest extends TestCase
         'documentos' => 47,
         // 30 + el Form 8995 de F6 (6.0).
         'formularios' => 31,
-        // 36 + los parámetros completos de 2025 de F6 (6.1a).
-        'parametros' => 88,
+        // 36 + los parámetros completos de 2025 de F6 (6.1a) + los dos límites de la lectura con IA (6.3c).
+        'parametros' => 92,
         // 13 + R-14 y R-15 de F6 (6.3b).
         'reglas' => 15,
     ];

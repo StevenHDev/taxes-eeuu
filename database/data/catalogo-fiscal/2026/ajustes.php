@@ -23,6 +23,8 @@
  *  - credito_ftc.umbral_de_minimis_soltero y _mfj: el borrador de 2026 del Schedule 3 y de las instrucciones del
  *    1040 no trae la cifra (las instrucciones del 1040 de 2026 aún no están publicadas).
  *  - self_employment_tax.maximo_seguro_social_retenido_por_persona: ningún documento del IRS de 2026 revisado trae la cifra.
+ *  - credito_cuidado_dependientes.tope_beneficios_excluibles y additional_medicare_tax.tasa_medicare_regular:
+ *    agregados en 2025 al cierre de la ola 3 (11 nov.); falta verificar su cifra en los formularios de 2026.
  *
  * Línea por línea, los formularios de 2026 cambian de número frente a 2025 (ver el informe de 6.1b):
  * `lineas` queda como estaba porque este mecanismo solo edita líneas que ya existen y no puede crear ni

@@ -65,8 +65,9 @@ class CatalogoRealTest extends TestCase
         // constancia-horas-propinas 3, estado-prestamo-vehiculo 4 y registros-ingresos-gastos 10.
         $this->assertSame(379, $conteos['casillas']);
         // 111 + las de F6 (6.0): 1040 de 19 a 37; Schedules 1, 2 y 3 y Schedule SE, 8812, 2441 y 8962 completos;
-        // Schedule C por categoría (35); Schedule 1-A (15) y Form 8995 (8).
-        $this->assertSame(238, $conteos['lineas']);
+        // Schedule C por categoría (35); Schedule 1-A (15) y Form 8995 (8). Cierre de la ola 3: +84 líneas que
+        // escriben las calculadoras (SE 4, 2441 12, Schedule 3 1, 1-A 16, 8995 3, 8962 43 y 1040 5).
+        $this->assertSame(322, $conteos['lineas']);
 
         // 2026 apaga F10 y F11: los créditos por vehículo limpio y de energía
         // de la vivienda terminan en 2025 (F3.9).
