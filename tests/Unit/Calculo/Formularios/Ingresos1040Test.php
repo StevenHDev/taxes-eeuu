@@ -15,6 +15,9 @@ use Tests\TestCase;
 
 uses(TestCase::class);
 
+// Los motivos se comparan en español; el idioma por defecto de la aplicación es inglés.
+beforeEach(fn () => app()->setLocale('es'));
+
 /*
  * Valores esperados: aritmética de las líneas del Form 1040 de 2025, p. 1
  * (https://www.irs.gov/pub/irs-prior/f1040--2025.pdf):

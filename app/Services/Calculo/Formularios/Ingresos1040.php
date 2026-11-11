@@ -2,14 +2,12 @@
 
 namespace App\Services\Calculo\Formularios;
 
+use App\Services\Calculo\Nucleo\Apoyo;
 use App\Services\Calculo\Nucleo\Calculadora;
-use App\Services\Calculo\Nucleo\DatoEntrada;
 use App\Services\Calculo\Nucleo\Declaracion;
 use App\Services\Calculo\Nucleo\Dinero;
 use App\Services\Calculo\Nucleo\EntradasDeclaracion;
-use App\Services\Calculo\Nucleo\EstadoLinea;
 use App\Services\Calculo\Nucleo\Linea;
-use App\Services\Calculo\Nucleo\OrigenTraza;
 use App\Services\Calculo\Nucleo\Traza;
 
 /**
@@ -41,8 +39,6 @@ final class Ingresos1040 implements Calculadora
     /** Líneas que suma la 1z: "Add lines 1a through 1h" (la 1i, combate no gravable, no entra). */
     private const LINEAS_DEL_TRABAJO = ['1a', '1b', '1c', '1d', '1e', '1f', '1g', '1h'];
 
-    private const NOMBRES = ['1040' => 'Form 1040', 'sch-1' => 'Schedule 1'];
-
     public function formulario(): string
     {
         return self::FORMULARIO;
@@ -53,11 +49,11 @@ final class Ingresos1040 implements Calculadora
         $this->linea1a($e, $d);
         $this->linea1c($e, $d);
         $this->linea1z($d);
-        $this->copiar($d, '8', 'sch-1', '10');
+        Apoyo::copiar($d, self::FORMULARIO, '8', 'sch-1', '10');
         $this->linea9($e, $d);
-        $this->copiar($d, '10', 'sch-1', '26');
+        Apoyo::copiar($d, self::FORMULARIO, '10', 'sch-1', '26');
         $this->linea11a($d);
-        $this->copiar($d, '11b', self::FORMULARIO, '11a');
+        Apoyo::copiar($d, self::FORMULARIO, '11b', self::FORMULARIO, '11a');
     }
 
     /** Línea 1a: suma de la casilla 1 de todos los W-2 (1040, p. 1). */
@@ -81,7 +77,7 @@ final class Ingresos1040 implements Calculadora
             ->conEntrada(__('W-2, casilla 1 (suma de todos los W-2)'), $dato->valor, $dato->origen, $dato->referencia ?? 'w2:1')
             ->conResultado(__('Línea 1a del Form 1040'), $dato->valor);
 
-        $d->poner(Linea::calculada(self::FORMULARIO, '1a', $dato->valor, $traza, $this->sinValidar(['w2:1' => $dato])));
+        $d->poner(Linea::calculada(self::FORMULARIO, '1a', $dato->valor, $traza, Apoyo::sinValidar(['w2:1' => $dato])));
     }
 
     /**
@@ -116,7 +112,7 @@ final class Ingresos1040 implements Calculadora
     {
         $fuentes = array_map(fn (string $l): array => [self::FORMULARIO, $l, false], self::LINEAS_DEL_TRABAJO);
 
-        $resultado = $this->leerLineas($d, '1z', $fuentes);
+        $resultado = Apoyo::leerLineas($d, self::FORMULARIO, '1z', $fuentes);
 
         if ($resultado instanceof Linea) {
             $d->poner($resultado);
@@ -137,7 +133,7 @@ final class Ingresos1040 implements Calculadora
      */
     private function linea9(EntradasDeclaracion $e, Declaracion $d): void
     {
-        $resultado = $this->leerLineas($d, '9', [[self::FORMULARIO, '1z', true], [self::FORMULARIO, '8', true]]);
+        $resultado = Apoyo::leerLineas($d, self::FORMULARIO, '9', [[self::FORMULARIO, '1z', true], [self::FORMULARIO, '8', true]]);
 
         if ($resultado instanceof Linea) {
             $d->poner($resultado);
@@ -145,7 +141,7 @@ final class Ingresos1040 implements Calculadora
             return;
         }
 
-        $fuera = $this->documentosPresentes($e);
+        $fuera = Apoyo::documentosPresentes($e, self::DOCUMENTOS_FUERA_DEL_PILOTO);
 
         if ($fuera !== []) {
             $d->poner(Linea::noSoportada(
@@ -172,7 +168,7 @@ final class Ingresos1040 implements Calculadora
         $nueve = $d->linea(self::FORMULARIO, '9');
         $diez = $d->linea(self::FORMULARIO, '10');
 
-        $resultado = $this->leerLineas($d, '11a', [[self::FORMULARIO, '9', true], [self::FORMULARIO, '10', true]]);
+        $resultado = Apoyo::leerLineas($d, self::FORMULARIO, '11a', [[self::FORMULARIO, '9', true], [self::FORMULARIO, '10', true]]);
 
         if ($resultado instanceof Linea) {
             $d->poner($resultado);
@@ -192,126 +188,5 @@ final class Ingresos1040 implements Calculadora
             ->conResultado(__('Línea 11a del Form 1040 (ingreso ajustado)'), $ingresoAjustado);
 
         $d->poner(Linea::calculada(self::FORMULARIO, '11a', $ingresoAjustado, $traza, $sinValidar));
-    }
-
-    /** Copia una línea de otro formulario (o de otra línea del 1040) sin cambiarla. */
-    private function copiar(Declaracion $d, string $destino, string $formularioOrigen, string $lineaOrigen): void
-    {
-        $resultado = $this->leerLineas($d, $destino, [[$formularioOrigen, $lineaOrigen, true]]);
-
-        if ($resultado instanceof Linea) {
-            $d->poner($resultado);
-
-            return;
-        }
-
-        [$total, $traza, $sinValidar, $aplicadas] = $resultado;
-
-        if ($aplicadas === 0) {
-            $d->poner(Linea::noAplica(self::FORMULARIO, $destino, $d->linea($formularioOrigen, $lineaOrigen)?->motivo));
-
-            return;
-        }
-
-        $d->poner(Linea::calculada(self::FORMULARIO, $destino, $total, $traza->conResultado(__('Línea :linea del Form 1040', ['linea' => $destino]), $total), $sinValidar));
-    }
-
-    /**
-     * Lee líneas de la declaración y las suma. Una línea que falta y es
-     * requerida da `falta_dato` (nunca se supone cero); una `falta_dato` o
-     * `no_soportada` de origen se hereda; una `no_aplica` cuenta cero. Si hay
-     * varios problemas, `falta_dato` manda sobre `no_soportada`.
-     *
-     * @param  list<array{0: string, 1: string, 2: bool}>  $fuentes  [formulario, línea, requerida]
-     * @return array{0: Dinero, 1: Traza, 2: list<string>, 3: int}|Linea total, traza, datos sin validar y cuántas líneas contaron
-     */
-    private function leerLineas(Declaracion $d, string $destino, array $fuentes): array|Linea
-    {
-        $total = Dinero::deCentavos(0);
-        $traza = Traza::vacia();
-        $sinValidar = [];
-        $aplicadas = 0;
-        $falta = null;
-        $noSoportada = null;
-
-        foreach ($fuentes as [$formulario, $linea, $requerida]) {
-            $nombre = self::NOMBRES[$formulario] ?? $formulario;
-            $origen = $d->linea($formulario, $linea);
-
-            if ($origen === null) {
-                if ($requerida) {
-                    $falta ??= __('Falta la línea :linea del :formulario.', ['linea' => $linea, 'formulario' => $nombre]);
-                }
-
-                continue;
-            }
-
-            if ($origen->estado === EstadoLinea::FaltaDato) {
-                $falta ??= __('No se puede calcular: depende de la línea :linea del :formulario, que tiene datos pendientes.', ['linea' => $linea, 'formulario' => $nombre]);
-
-                continue;
-            }
-
-            if ($origen->estado === EstadoLinea::NoSoportada) {
-                $noSoportada ??= __('No se puede calcular: depende de la línea :linea del :formulario, que el piloto no soporta.', ['linea' => $linea, 'formulario' => $nombre]);
-
-                continue;
-            }
-
-            if ($origen->estado === EstadoLinea::NoAplica || ! $origen->valor instanceof Dinero) {
-                continue;
-            }
-
-            $aplicadas++;
-            $total = $total->mas($origen->valor);
-            $traza = $traza->conEntrada(__('Línea :linea del :formulario', ['linea' => $linea, 'formulario' => $nombre]), $origen->valor, OrigenTraza::Linea, $formulario.':'.$linea);
-            $sinValidar = [...$sinValidar, ...$origen->datosSinValidar];
-        }
-
-        if ($falta !== null) {
-            return Linea::faltaDato(self::FORMULARIO, $destino, $falta, $traza);
-        }
-
-        if ($noSoportada !== null) {
-            return Linea::noSoportada(self::FORMULARIO, $destino, $noSoportada, $traza);
-        }
-
-        return [$total, $traza, array_values(array_unique($sinValidar)), $aplicadas];
-    }
-
-    /**
-     * Códigos de los documentos fuera del piloto que tienen algún dato en la
-     * declaración (la clave de un dato es "documento:casilla").
-     *
-     * @return list<string>
-     */
-    private function documentosPresentes(EntradasDeclaracion $e): array
-    {
-        return array_values(array_filter(
-            self::DOCUMENTOS_FUERA_DEL_PILOTO,
-            fn (string $documento): bool => array_any(
-                array_keys($e->datos),
-                fn (string $clave): bool => str_starts_with($clave, $documento.':'),
-            ),
-        ));
-    }
-
-    /**
-     * Referencias (no valores) de los datos que entran sin validar o con excepción.
-     *
-     * @param  array<string, DatoEntrada>  $datos
-     * @return list<string>
-     */
-    private function sinValidar(array $datos): array
-    {
-        $referencias = [];
-
-        foreach ($datos as $clave => $dato) {
-            if ($dato->usaSinValidar()) {
-                $referencias[] = $dato->referencia ?? $clave;
-            }
-        }
-
-        return $referencias;
     }
 }

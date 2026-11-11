@@ -30,6 +30,13 @@ class EitcTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Los motivos se comparan en español; el idioma por defecto de la aplicación es inglés.
+        app()->setLocale('es');
+    }
+
     // ---- Ejemplo del propio IRS --------------------------------------------------------------------------------
 
     public function test_ejemplo_de_la_eic_table_soltero_un_hijo_con_2455_da_842(): void

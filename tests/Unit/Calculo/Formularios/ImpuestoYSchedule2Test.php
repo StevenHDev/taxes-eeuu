@@ -28,6 +28,13 @@ class ImpuestoYSchedule2Test extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Los motivos se comparan en español; el idioma por defecto de la aplicación es inglés.
+        app()->setLocale('es');
+    }
+
     private function d(string $dolares): Dinero
     {
         return Dinero::deDolares($dolares);

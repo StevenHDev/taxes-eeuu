@@ -6,11 +6,11 @@ use App\Enums\Expediente\EstadoCivilIrs;
 use App\Services\Calculo\Formularios\Impuesto\HojaImpuesto;
 use App\Services\Calculo\Formularios\Impuesto\TablaImpuesto;
 use App\Services\Calculo\Formularios\Impuesto\Tramos;
+use App\Services\Calculo\Nucleo\Apoyo;
 use App\Services\Calculo\Nucleo\Calculadora;
 use App\Services\Calculo\Nucleo\Declaracion;
 use App\Services\Calculo\Nucleo\Dinero;
 use App\Services\Calculo\Nucleo\EntradasDeclaracion;
-use App\Services\Calculo\Nucleo\EstadoLinea;
 use App\Services\Calculo\Nucleo\Linea;
 use App\Services\Calculo\Nucleo\OrigenTraza;
 use App\Services\Calculo\Nucleo\Traza;
@@ -40,13 +40,6 @@ final class ImpuestoYSchedule2 implements Calculadora
 
     private const SCH2 = 'sch-2';
 
-    private const NOMBRES = [
-        '1040' => 'Form 1040',
-        'sch-2' => 'Schedule 2',
-        'sch-se' => 'Schedule SE',
-        'f8962' => 'Form 8962',
-    ];
-
     /** Documentos con dividendos calificados o ganancias de capital: exigen la hoja QDCG (Pub. 1040, p. 14, nota). */
     private const DOCUMENTOS_QDCG = ['1099-div', '1099-b', '1099-da', 'k-1'];
 
@@ -68,18 +61,18 @@ final class ImpuestoYSchedule2 implements Calculadora
         $this->schedule2Linea12($e, $d);
         $this->schedule2Linea21($d);
 
-        $this->suma($d, self::F1040, '17', [[self::SCH2, '3']], __('Línea 17 del Form 1040'), copiar: true);
-        $this->suma($d, self::F1040, '18', [[self::F1040, '16'], [self::F1040, '17']], __('Línea 18 del Form 1040'));
-        $this->suma($d, self::F1040, '21', [[self::F1040, '19'], [self::F1040, '20']], __('Línea 21 del Form 1040'));
+        Apoyo::sumar($d, self::F1040, '17', [[self::SCH2, '3']], __('Línea 17 del Form 1040'), copiar: true);
+        Apoyo::sumar($d, self::F1040, '18', [[self::F1040, '16'], [self::F1040, '17']], __('Línea 18 del Form 1040'));
+        Apoyo::sumar($d, self::F1040, '21', [[self::F1040, '19'], [self::F1040, '20']], __('Línea 21 del Form 1040'));
         $this->linea22($d);
-        $this->suma($d, self::F1040, '23', [[self::SCH2, '21']], __('Línea 23 del Form 1040'), copiar: true);
-        $this->suma($d, self::F1040, '24', [[self::F1040, '22'], [self::F1040, '23']], __('Línea 24 del Form 1040'));
+        Apoyo::sumar($d, self::F1040, '23', [[self::SCH2, '21']], __('Línea 23 del Form 1040'), copiar: true);
+        Apoyo::sumar($d, self::F1040, '24', [[self::F1040, '22'], [self::F1040, '23']], __('Línea 24 del Form 1040'));
     }
 
     /** Línea 16: Tax Table (menos de USD 100.000) o Tax Computation Worksheet. */
     private function linea16(EntradasDeclaracion $e, Declaracion $d): void
     {
-        $lectura = $this->leer($d, self::F1040, '15', self::F1040, '16');
+        $lectura = Apoyo::leerUna($d, self::F1040, '15', self::F1040, '16');
 
         if ($lectura instanceof Linea) {
             $d->poner($lectura);
@@ -90,12 +83,12 @@ final class ImpuestoYSchedule2 implements Calculadora
         [$ingreso, $sinValidar] = $lectura;
 
         if ($e->estadoCivil === null) {
-            $d->poner(Linea::faltaDato(self::F1040, '16', $this->motivoSinEstadoCivil()));
+            $d->poner(Linea::faltaDato(self::F1040, '16', Apoyo::motivoSinEstadoCivil()));
 
             return;
         }
 
-        $fuera = $this->documentosPresentes($e, self::DOCUMENTOS_QDCG);
+        $fuera = Apoyo::documentosPresentes($e, self::DOCUMENTOS_QDCG);
 
         if ($fuera !== []) {
             $d->poner(Linea::noSoportada(self::F1040, '16', __('Hay documentos de dividendos o ganancias de capital (:documentos): falta la hoja de dividendos calificados y ganancias de capital.', ['documentos' => implode(', ', $fuera)])));
@@ -125,7 +118,7 @@ final class ImpuestoYSchedule2 implements Calculadora
                     ->conOperacion(__('Tax Computation Worksheet (Pub. 1040, p. 14 y 15): línea 15 × :tasa menos :resta.', ['tasa' => $hoja['tasa'], 'resta' => $hoja['resta']->texto()]));
             }
         } catch (RuntimeException $excepcion) {
-            $d->poner(Linea::faltaDato(self::F1040, '16', $this->motivoSinParametro($e->taxYear, $excepcion)));
+            $d->poner(Linea::faltaDato(self::F1040, '16', Apoyo::motivoSinParametro($e->taxYear, $excepcion)));
 
             return;
         }
@@ -140,7 +133,7 @@ final class ImpuestoYSchedule2 implements Calculadora
     private function schedule2Linea3(EntradasDeclaracion $e, Declaracion $d): void
     {
         $f8962 = $d->linea('f8962', '29');
-        $hay1095 = $this->documentosPresentes($e, ['1095-a']) !== [];
+        $hay1095 = Apoyo::documentosPresentes($e, ['1095-a']) !== [];
 
         if ($f8962 === null && $hay1095) {
             $d->poner(Linea::faltaDato(self::SCH2, '3', __('Falta la línea 29 del Form 8962: el cliente tiene un 1095-A.')));
@@ -158,7 +151,7 @@ final class ImpuestoYSchedule2 implements Calculadora
             return;
         }
 
-        $lectura = $this->leer($d, 'f8962', '29', self::SCH2, '3');
+        $lectura = Apoyo::leerUna($d, 'f8962', '29', self::SCH2, '3');
 
         if ($lectura instanceof Linea) {
             $d->poner($lectura);
@@ -177,7 +170,7 @@ final class ImpuestoYSchedule2 implements Calculadora
     /** Schedule 2, línea 4: impuesto de trabajo por cuenta propia, línea 12 del Schedule SE. */
     private function schedule2Linea4(Declaracion $d): void
     {
-        $this->suma($d, self::SCH2, '4', [['sch-se', '12']], __('Línea 4 del Schedule 2'), copiar: true);
+        Apoyo::sumar($d, self::SCH2, '4', [['sch-se', '12']], __('Línea 4 del Schedule 2'), copiar: true);
     }
 
     /**
@@ -188,7 +181,7 @@ final class ImpuestoYSchedule2 implements Calculadora
     private function schedule2Linea11(EntradasDeclaracion $e, Declaracion $d): void
     {
         if ($e->estadoCivil === null) {
-            $d->poner(Linea::faltaDato(self::SCH2, '11', $this->motivoSinEstadoCivil()));
+            $d->poner(Linea::faltaDato(self::SCH2, '11', Apoyo::motivoSinEstadoCivil()));
 
             return;
         }
@@ -201,7 +194,7 @@ final class ImpuestoYSchedule2 implements Calculadora
             return;
         }
 
-        $lectura = $this->leer($d, 'sch-se', '6', self::SCH2, '11');
+        $lectura = Apoyo::leerUna($d, 'sch-se', '6', self::SCH2, '11');
 
         if ($lectura instanceof Linea) {
             $d->poner($lectura);
@@ -215,7 +208,7 @@ final class ImpuestoYSchedule2 implements Calculadora
             $umbral = $this->umbralMedicare($e->taxYear, $e->estadoCivil);
             $tasa = (string) ParametrosFiscales::valorRequerido($e->taxYear, 'additional_medicare_tax', 'tasa');
         } catch (RuntimeException $excepcion) {
-            $d->poner(Linea::faltaDato(self::SCH2, '11', $this->motivoSinParametro($e->taxYear, $excepcion)));
+            $d->poner(Linea::faltaDato(self::SCH2, '11', Apoyo::motivoSinParametro($e->taxYear, $excepcion)));
 
             return;
         }
@@ -257,7 +250,7 @@ final class ImpuestoYSchedule2 implements Calculadora
     /** Schedule 2, línea 12 (Form 8960): no soportada si hay datos que podrían dispararla. */
     private function schedule2Linea12(EntradasDeclaracion $e, Declaracion $d): void
     {
-        $fuera = $this->documentosPresentes($e, self::DOCUMENTOS_NIIT);
+        $fuera = Apoyo::documentosPresentes($e, self::DOCUMENTOS_NIIT);
 
         if ($fuera !== []) {
             $d->poner(Linea::noSoportada(self::SCH2, '12', __('Hay documentos de intereses, dividendos o alquileres (:documentos): falta el Form 8960 (impuesto sobre la inversión).', ['documentos' => implode(', ', $fuera)])));
@@ -273,13 +266,13 @@ final class ImpuestoYSchedule2 implements Calculadora
             $partes[] = [self::SCH2, '12'];
         }
 
-        $this->suma($d, self::SCH2, '21', $partes, __('Línea 21 del Schedule 2'));
+        Apoyo::sumar($d, self::SCH2, '21', $partes, __('Línea 21 del Schedule 2'));
     }
 
     /** 1040, línea 22: línea 18 menos línea 21; si es cero o menos, cero. */
     private function linea22(Declaracion $d): void
     {
-        $lectura = $this->leerVarias($d, [[self::F1040, '18'], [self::F1040, '21']], self::F1040, '22');
+        $lectura = Apoyo::leerVarias($d, [[self::F1040, '18'], [self::F1040, '21']], self::F1040, '22');
 
         if ($lectura instanceof Linea) {
             $d->poner($lectura);
@@ -295,92 +288,6 @@ final class ImpuestoYSchedule2 implements Calculadora
             ->conResultado(__('Línea 22 del Form 1040'), $valor), $sinValidar));
     }
 
-    /**
-     * Suma (o copia) líneas ya escritas y la deja como calculada, o propaga lo que falta.
-     *
-     * @param  list<array{0: string, 1: string}>  $partes  [formulario, línea]
-     */
-    private function suma(Declaracion $d, string $formulario, string $linea, array $partes, string $titulo, bool $copiar = false): void
-    {
-        $lectura = $this->leerVarias($d, $partes, $formulario, $linea);
-
-        if ($lectura instanceof Linea) {
-            $d->poner($lectura);
-
-            return;
-        }
-
-        [$valores, $traza, $sinValidar] = $lectura;
-        $total = array_reduce($valores, fn (Dinero $a, Dinero $b): Dinero => $a->mas($b), Dinero::deCentavos(0));
-
-        if (! $copiar) {
-            $traza = $traza->conOperacion(__('Suma de las líneas anteriores.'));
-        }
-
-        $d->poner(Linea::calculada($formulario, $linea, $total, $traza->conResultado($titulo, $total), $sinValidar));
-    }
-
-    /**
-     * Lee varias líneas ya escritas; si alguna no sirve devuelve la línea destino con el motivo.
-     *
-     * @param  list<array{0: string, 1: string}>  $partes
-     * @return array{0: list<Dinero>, 1: Traza, 2: list<string>}|Linea
-     */
-    private function leerVarias(Declaracion $d, array $partes, string $formulario, string $linea): array|Linea
-    {
-        $valores = [];
-        $traza = Traza::vacia();
-        $sinValidar = [];
-
-        foreach ($partes as [$f, $l]) {
-            $lectura = $this->leer($d, $f, $l, $formulario, $linea);
-
-            if ($lectura instanceof Linea) {
-                return $lectura;
-            }
-
-            [$valor, $pendientes] = $lectura;
-            $valores[] = $valor;
-            $sinValidar = [...$sinValidar, ...$pendientes];
-            $traza = $traza->conEntrada($this->nombreLinea($f, $l), $valor, OrigenTraza::Linea, "{$f}:{$l}");
-        }
-
-        return [$valores, $traza, array_values(array_unique($sinValidar))];
-    }
-
-    /**
-     * Una línea de otro formulario: su valor, o la línea destino con falta_dato / no_soportada.
-     * "No aplica" cuenta como cero (no hay nada que sumar).
-     *
-     * @return array{0: Dinero, 1: list<string>}|Linea
-     */
-    private function leer(Declaracion $d, string $formulario, string $linea, string $destinoFormulario, string $destinoLinea): array|Linea
-    {
-        $origen = $d->linea($formulario, $linea);
-
-        if ($origen === null) {
-            return Linea::faltaDato($destinoFormulario, $destinoLinea, __('Falta :linea.', ['linea' => $this->nombreLinea($formulario, $linea, true)]));
-        }
-
-        return match ($origen->estado) {
-            EstadoLinea::Calculada => $origen->valor instanceof Dinero
-                ? [$origen->valor, $origen->datosSinValidar]
-                : Linea::faltaDato($destinoFormulario, $destinoLinea, __(':linea no tiene un monto.', ['linea' => ucfirst($this->nombreLinea($formulario, $linea, true))])),
-            EstadoLinea::NoAplica => [Dinero::deCentavos(0), []],
-            EstadoLinea::FaltaDato => Linea::faltaDato($destinoFormulario, $destinoLinea, $origen->motivo ?? __('Falta :linea.', ['linea' => $this->nombreLinea($formulario, $linea, true)])),
-            EstadoLinea::NoSoportada => Linea::noSoportada($destinoFormulario, $destinoLinea, $origen->motivo ?? __(':linea no está soportada.', ['linea' => ucfirst($this->nombreLinea($formulario, $linea, true))])),
-        };
-    }
-
-    private function nombreLinea(string $formulario, string $linea, bool $conArticulo = false): string
-    {
-        $nombre = self::NOMBRES[$formulario] ?? $formulario;
-
-        return $conArticulo
-            ? __('la línea :linea del :formulario', ['linea' => $linea, 'formulario' => $nombre])
-            : __('Línea :linea del :formulario', ['linea' => $linea, 'formulario' => $nombre]);
-    }
-
     /** Umbral del Form 8959 (líneas 5 y 9) según el estado civil. */
     private function umbralMedicare(int $taxYear, EstadoCivilIrs $estadoCivil): Dinero
     {
@@ -391,44 +298,5 @@ final class ImpuestoYSchedule2 implements Calculadora
         };
 
         return Dinero::deDolares((int) ParametrosFiscales::valorRequerido($taxYear, 'additional_medicare_tax', $clave));
-    }
-
-    /**
-     * Códigos de documento (de la lista) que tienen algún dato en la declaración.
-     *
-     * @param  list<string>  $documentos
-     * @return list<string>
-     */
-    private function documentosPresentes(EntradasDeclaracion $e, array $documentos): array
-    {
-        return array_values(array_filter(
-            $documentos,
-            fn (string $documento): bool => $this->hayDatos($e, $documento),
-        ));
-    }
-
-    private function hayDatos(EntradasDeclaracion $e, string $documento): bool
-    {
-        foreach (array_keys($e->datos) as $clave) {
-            if (str_starts_with((string) $clave, $documento.':')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function motivoSinEstadoCivil(): string
-    {
-        return __('Falta decidir el estado civil en Revisión.');
-    }
-
-    private function motivoSinParametro(int $taxYear, RuntimeException $excepcion): string
-    {
-        if (preg_match('/\[([a-z0-9_.]+)\]/', $excepcion->getMessage(), $m) === 1) {
-            return __('No se puede calcular: falta el parámetro :parametro de :anio (Catálogo → Parámetros).', ['parametro' => $m[1], 'anio' => (string) $taxYear]);
-        }
-
-        return __('No se puede calcular: falta un parámetro de :anio (Catálogo → Parámetros).', ['anio' => (string) $taxYear]);
     }
 }

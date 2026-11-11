@@ -35,6 +35,8 @@ uses(TestCase::class, RefreshDatabase::class);
  */
 
 beforeEach(function () {
+    // Los motivos se comparan en español; el idioma por defecto de la aplicación es inglés.
+    app()->setLocale('es');
     $this->seed(ParametrosFiscalesSeeder::class);
 });
 
