@@ -6,6 +6,7 @@ use App\Enums\Lectura\MotivoConfianza;
 use App\Models\Documento;
 use App\Models\Lectura\Excepcion;
 use App\Services\CatalogoFiscal\CatalogoFiscal;
+use App\Services\Lectura\Reglas\R14RegistrosNegocio;
 
 /**
  * Dice en palabras por qué saltó una excepción en este caso (no qué revisa la
@@ -47,7 +48,7 @@ class ExplicadorExcepcion
     }
 
     /**
-     * R-14, registros del negocio (F6 6.3b). Solo letras de columna y conteos: nunca montos ni descripciones.
+     * R-14, registros del negocio (F6 6.3b y 6.3c). Solo letras de columna y conteos: nunca montos ni descripciones.
      *
      * @param  array<string, mixed>  $detalle
      * @return array{caso: string, que_hacer: string|null}
@@ -58,8 +59,27 @@ class ExplicadorExcepcion
 
         if (($detalle['tipo'] ?? null) === 'archivo_sin_lector') {
             return [
-                'caso' => __('«:archivo» es un PDF o una foto de registros: todavía no se lee solo, lo revisa el preparador.', ['archivo' => $archivo]),
+                'caso' => __('«:archivo» es un PDF o una foto de registros que no se leyó solo (la lectura automática está apagada o no terminó): lo revisa el preparador.', ['archivo' => $archivo]),
                 'que_hacer' => __('Revisa el archivo; si el cliente lleva sus cuentas, la plantilla en Excel es lo más rápido.'),
+            ];
+        }
+
+        if (($detalle['tipo'] ?? null) === 'demasiadas_paginas') {
+            return [
+                'caso' => __('«:archivo» tiene más de :maximo páginas: no se leyó. El máximo por archivo es el parámetro «lectura.maximo_paginas_renglones».', ['archivo' => $archivo, 'maximo' => (int) ($detalle['maximo'] ?? 0)]),
+                'que_hacer' => __('Pídele al cliente que lo suba por meses; puedes dejarle una observación: «:cliente»', ['cliente' => (string) R14RegistrosNegocio::textoParaCliente('demasiadas_paginas')]),
+            ];
+        }
+
+        if (($detalle['tipo'] ?? null) === 'tope_alcanzado') {
+            return [
+                'caso' => __('«:archivo» no se mandó a leer con IA: el cliente ya lleva :usadas de :tope páginas leídas con IA este año y este archivo tiene :paginas.', [
+                    'archivo' => $archivo,
+                    'usadas' => (int) ($detalle['usadas'] ?? 0),
+                    'tope' => (int) ($detalle['tope'] ?? 0),
+                    'paginas' => (int) ($detalle['paginas'] ?? 0),
+                ]),
+                'que_hacer' => __('Decide: revisa el archivo a mano, pídele al cliente la plantilla en Excel o sube el tope en Catálogo fiscal del año → Parámetros («lectura.maximo_paginas_ia_por_cliente»); con el tope nuevo, el archivo se lee cuando el cliente lo vuelva a subir.'),
             ];
         }
 

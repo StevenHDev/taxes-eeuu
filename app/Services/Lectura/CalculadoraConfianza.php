@@ -4,6 +4,8 @@ namespace App\Services\Lectura;
 
 use App\Enums\Lectura\Legibilidad;
 use App\Enums\Lectura\MotivoConfianza;
+use App\Enums\Lectura\OrigenCategoria;
+use App\Enums\Lectura\SentidoRenglon;
 
 /**
  * La confianza (0 a 1) de un dato leído (F4.3c). OpenAI no da una confianza
@@ -17,6 +19,11 @@ use App\Enums\Lectura\MotivoConfianza;
  * | El modelo lo leyó `claro` y tiene el formato correcto      | 0,90      |
  * | El modelo lo leyó `dudoso`                                 | 0,60      |
  * | Salió de una celda de una hoja de cálculo (sin IA)         | 0,99      |
+ *
+ * Los renglones de los registros leídos con IA (F6 6.3c) agregan tres
+ * motivos: el monto está en el texto de su página pero otro movimiento de la
+ * misma página tiene el mismo valor (0,95, `evaluarRenglon`), y para la
+ * categoría (`evaluarCategoria`) la propuso la IA (0,60) o no tiene (0,60).
  *
  * El orden importa: el formato se revisa antes que la capa de texto, así que
  * un valor mal formateado nunca pasa de 0,60 aunque el texto lo contenga (un
@@ -38,6 +45,9 @@ class CalculadoraConfianza
 
     public const EN_TEXTO_DEL_PDF = 0.99;
 
+    /** El monto está en el texto de su página, pero otro movimiento de esa página tiene el mismo valor (6.3c). */
+    public const EN_TEXTO_REPETIDO = 0.95;
+
     /**
      * El número de cada motivo.
      *
@@ -51,6 +61,9 @@ class CalculadoraConfianza
         'no_se_ve' => self::SIN_LECTURA,
         'sin_valor' => self::SIN_LECTURA,
         'hoja_calculo' => self::EN_TEXTO_DEL_PDF,
+        'repetido_en_pagina' => self::EN_TEXTO_REPETIDO,
+        'categoria_ia' => self::REVISION,
+        'sin_categoria' => self::REVISION,
     ];
 
     /**
@@ -84,6 +97,50 @@ class CalculadoraConfianza
         };
 
         return ['confianza' => self::CONFIANZA[$motivo->value], 'motivo' => $motivo];
+    }
+
+    /**
+     * La confianza del monto de un renglón de los registros leído con IA (F6
+     * 6.3c): la misma regla de las casillas (`evaluar`, tipo `monto`), con una
+     * diferencia: si el monto está en el texto de su página pero otro
+     * movimiento de esa página tiene el mismo valor, baja a 0,95 porque no se
+     * puede comprobar cuál de los dos es. Es la confianza y el motivo que se
+     * guardan con el renglón. La categoría va aparte (`evaluarCategoria`).
+     *
+     * @param  bool  $estaEnTextoDeSuPagina  el monto se encontró en la capa de texto del PDF, en la página del renglón
+     * @param  bool  $repetidoEnLaPagina  otro renglón de la misma página tiene el mismo monto
+     * @return array{confianza: float, motivo: MotivoConfianza}
+     */
+    public function evaluarRenglon(?string $monto, Legibilidad $legibilidad, bool $estaEnTextoDeSuPagina, bool $repetidoEnLaPagina): array
+    {
+        $evaluacion = $this->evaluar(['tipo_dato' => 'monto'], $monto, $legibilidad, $estaEnTextoDeSuPagina);
+
+        if ($evaluacion['motivo'] === MotivoConfianza::EnTextoDelPdf && $repetidoEnLaPagina) {
+            return ['confianza' => self::EN_TEXTO_REPETIDO, 'motivo' => MotivoConfianza::RepetidoEnPagina];
+        }
+
+        return $evaluacion;
+    }
+
+    /**
+     * La confianza de la categoría de un renglón (F6 6.3c): la que dice el
+     * documento o puso el preparador no baja nada (null); la propuesta por la
+     * IA y la que falta en un ingreso, un gasto o un renglón que no se sabe qué
+     * es quedan en 0,60. La suma de una categoría (6.3d) toma la menor entre
+     * esto y la confianza de cada renglón: así una suma con renglones
+     * clasificados por la IA va a revisión del preparador (decisión m).
+     *
+     * @return array{confianza: float, motivo: MotivoConfianza}|null
+     */
+    public function evaluarCategoria(?string $categoria, ?OrigenCategoria $categoriaOrigen, SentidoRenglon $sentido): ?array
+    {
+        $motivo = match (true) {
+            $categoria === null && in_array($sentido, [SentidoRenglon::Ingreso, SentidoRenglon::Gasto, SentidoRenglon::NoSe], true) => MotivoConfianza::SinCategoria,
+            $categoria !== null && $categoriaOrigen === OrigenCategoria::Ia => MotivoConfianza::CategoriaIa,
+            default => null,
+        };
+
+        return $motivo === null ? null : ['confianza' => self::CONFIANZA[$motivo->value], 'motivo' => $motivo];
     }
 
     /**

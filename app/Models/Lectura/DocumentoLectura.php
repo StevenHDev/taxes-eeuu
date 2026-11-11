@@ -33,7 +33,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $total_retiros
  * @property string|null $saldo_inicial
  * @property string|null $saldo_final
- * @property array{columnas_no_reconocidas?: list<string>, filas_sin_monto?: int, formulas_sin_valor?: int, filas_sin_fecha?: int, hojas_sin_leer?: int, formato_no_reconocido?: bool}|null $observaciones
+ * @property array{columnas_no_reconocidas?: list<string>, filas_sin_monto?: int, formulas_sin_valor?: int, filas_sin_fecha?: int, hojas_sin_leer?: int, formato_no_reconocido?: bool, sin_leer?: string, maximo?: int, paginas?: int, usadas?: int, tope?: int}|null $observaciones
  * @property string|null $error
  * @property Carbon|null $terminada_en
  */

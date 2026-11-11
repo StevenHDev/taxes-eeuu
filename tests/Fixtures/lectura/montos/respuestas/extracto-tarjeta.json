@@ -1,0 +1,274 @@
+[
+  {
+    "tipo_documento": "registros-ingresos-gastos",
+    "anio": 2025,
+    "paginas_legibles": true,
+    "clase": "extracto_tarjeta",
+    "casillas": {
+      "clase-detectada": {
+        "valor": "extracto_tarjeta",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Business Card"
+      },
+      "periodo-desde": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "periodo-hasta": {
+        "valor": "2025-04-30",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Statement closing date: 04/30/2025"
+      },
+      "total-depositos": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "total-retiros": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "saldo-inicial": {
+        "valor": "500.00",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Previous balance"
+      },
+      "saldo-final": {
+        "valor": "948.38",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "New balance"
+      },
+      "millas-negocio": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-casa": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-oficina": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      }
+    },
+    "renglones": [
+      {
+        "pagina": 1,
+        "fecha": "2025-04-01",
+        "descripcion": "GOOGLE ADS",
+        "monto": "120.00",
+        "sentido": "gasto",
+        "categoria": "8",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/01 GOOGLE ADS 120.00"
+      },
+      {
+        "pagina": 1,
+        "fecha": "2025-04-02",
+        "descripcion": "STAPLES STORE 88",
+        "monto": "33.10",
+        "sentido": "gasto",
+        "categoria": "18",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/02 STAPLES STORE 88 33.10"
+      },
+      {
+        "pagina": 2,
+        "fecha": "2025-04-05",
+        "descripcion": "UBER TRIP",
+        "monto": "18.75",
+        "sentido": "gasto",
+        "categoria": "24a",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/05 UBER TRIP 18.75"
+      },
+      {
+        "pagina": 2,
+        "fecha": "2025-04-07",
+        "descripcion": "ZOOM VIDEO",
+        "monto": "15.99",
+        "sentido": "gasto",
+        "categoria": "18",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/07 ZOOM VIDEO 15.99"
+      },
+      {
+        "pagina": 3,
+        "fecha": "2025-04-10",
+        "descripcion": "DELTA AIR LINES",
+        "monto": "310.40",
+        "sentido": "gasto",
+        "categoria": "24a",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/10 DELTA AIR LINES 310.40"
+      },
+      {
+        "pagina": 3,
+        "fecha": "2025-04-11",
+        "descripcion": "HOTEL SAMPLE INN",
+        "monto": "189.00",
+        "sentido": "gasto",
+        "categoria": "24a",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/11 HOTEL SAMPLE INN 189.00"
+      },
+      {
+        "pagina": 4,
+        "fecha": "2025-04-15",
+        "descripcion": "VERIZON WIRELESS",
+        "monto": "72.30",
+        "sentido": "gasto",
+        "categoria": "25",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/15 VERIZON WIRELESS 72.30"
+      },
+      {
+        "pagina": 4,
+        "fecha": "2025-04-18",
+        "descripcion": "FEDEX OFFICE",
+        "monto": "24.60",
+        "sentido": "gasto",
+        "categoria": "18",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/18 FEDEX OFFICE 24.60"
+      },
+      {
+        "pagina": 5,
+        "fecha": "2025-04-21",
+        "descripcion": "HOME DEPOT",
+        "monto": "96.45",
+        "sentido": "gasto",
+        "categoria": "22",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/21 HOME DEPOT 96.45"
+      },
+      {
+        "pagina": 5,
+        "fecha": "2025-04-24",
+        "descripcion": "CAFE SAMPLE",
+        "monto": "27.80",
+        "sentido": "gasto",
+        "categoria": "24b",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/24 CAFE SAMPLE 27.80"
+      }
+    ]
+  },
+  {
+    "tipo_documento": "registros-ingresos-gastos",
+    "anio": 2025,
+    "paginas_legibles": true,
+    "clase": "extracto_tarjeta",
+    "casillas": {
+      "clase-detectada": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "periodo-desde": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "periodo-hasta": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "total-depositos": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "total-retiros": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "saldo-inicial": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "saldo-final": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "millas-negocio": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-casa": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-oficina": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      }
+    },
+    "renglones": [
+      {
+        "pagina": 1,
+        "fecha": "2025-04-28",
+        "descripcion": "PAYMENT THANK YOU",
+        "monto": "500.00",
+        "sentido": "transferencia",
+        "categoria": "no_se",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/28 PAYMENT THANK YOU -500.00"
+      },
+      {
+        "pagina": 1,
+        "fecha": "2025-04-29",
+        "descripcion": "LINKEDIN PREMIUM",
+        "monto": "39.99",
+        "sentido": "gasto",
+        "categoria": "27b",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "04/29 LINKEDIN PREMIUM 39.99"
+      }
+    ]
+  }
+]

@@ -17,7 +17,9 @@ use Carbon\CarbonImmutable;
  *
  * Los documentos de renglones (F6 6.3b) traen además `renglones`, la clase del
  * archivo, su período y `observaciones`: lo que la hoja trajo y no se reconoció
- * (solo conteos y letras de columna, nunca valores), que lee la regla R-14.
+ * (solo conteos y letras de columna, nunca valores), que lee la regla R-14. Un
+ * PDF o una foto que no se mandó a la IA (6.3c) lleva `sin_leer` (el motivo) y
+ * sus conteos (`maximo`, o `paginas`, `usadas` y `tope`).
  */
 final readonly class LecturaResultado
 {
@@ -26,7 +28,7 @@ final readonly class LecturaResultado
      * @param  string|null  $tipoDetectado  el código del formulario que el lector vio, o `desconocido`
      * @param  array<string, array{valor: string|null, legibilidad: Legibilidad, confianza: float, motivo: MotivoConfianza, pagina: int|null, recuadro: array{x: float, y: float, ancho: float, alto: float}|null, evidencia: string|null}>  $casillas
      * @param  list<RenglonLeido>  $renglones
-     * @param  array{columnas_no_reconocidas?: list<string>, filas_sin_monto?: int, formulas_sin_valor?: int, filas_sin_fecha?: int, hojas_sin_leer?: int, formato_no_reconocido?: bool}|null  $observaciones
+     * @param  array{columnas_no_reconocidas?: list<string>, filas_sin_monto?: int, formulas_sin_valor?: int, filas_sin_fecha?: int, hojas_sin_leer?: int, formato_no_reconocido?: bool, sin_leer?: string, maximo?: int, paginas?: int, usadas?: int, tope?: int}|null  $observaciones
      */
     public function __construct(
         public string $lector,

@@ -103,7 +103,8 @@ class HojaTaxwiseTest extends TestCase
 
         $this->assertSame(count($this->filas($hoja)), $hoja['conteos']['filas']);
         $this->assertSame(0.9, $hoja['umbral']);
-        $this->assertCount(7, $hoja['confianza_tabla']);
+        // Un motivo por fila: los 7 de F4 y 6.3b más los 3 de los renglones leídos con IA (6.3c).
+        $this->assertCount(10, $hoja['confianza_tabla']);
     }
 
     public function test_la_prioridad_de_los_estados(): void

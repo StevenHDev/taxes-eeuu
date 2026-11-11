@@ -1,0 +1,83 @@
+[
+  {
+    "tipo_documento": "registros-ingresos-gastos",
+    "anio": 2025,
+    "paginas_legibles": true,
+    "clase": "recibo",
+    "casillas": {
+      "clase-detectada": {
+        "valor": "recibo",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Receipt #A-2207"
+      },
+      "periodo-desde": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "periodo-hasta": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "total-depositos": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "total-retiros": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "saldo-inicial": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "saldo-final": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "millas-negocio": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-casa": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-oficina": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      }
+    },
+    "renglones": [
+      {
+        "pagina": 1,
+        "fecha": "2025-04-12",
+        "descripcion": "PAPER AND INK SUPPLY CO.",
+        "monto": "63.25",
+        "sentido": "gasto",
+        "categoria": "18",
+        "categoria_impresa": true,
+        "legibilidad": "claro",
+        "evidencia": "TOTAL 63.25"
+      }
+    ]
+  }
+]

@@ -1,0 +1,182 @@
+[
+  {
+    "tipo_documento": "registros-ingresos-gastos",
+    "anio": 2025,
+    "paginas_legibles": true,
+    "clase": "extracto_banco",
+    "casillas": {
+      "clase-detectada": {
+        "valor": "extracto_banco",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Business Checking"
+      },
+      "periodo-desde": {
+        "valor": "2025-03-01",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Statement period: 03/01/2025 - 03/31/2025"
+      },
+      "periodo-hasta": {
+        "valor": "2025-03-31",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Statement period: 03/01/2025 - 03/31/2025"
+      },
+      "total-depositos": {
+        "valor": "4350.00",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Total deposits"
+      },
+      "total-retiros": {
+        "valor": "1190.50",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Total withdrawals"
+      },
+      "saldo-inicial": {
+        "valor": "2500.00",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Beginning balance"
+      },
+      "saldo-final": {
+        "valor": "5659.50",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "Ending balance"
+      },
+      "millas-negocio": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-casa": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-oficina": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      }
+    },
+    "renglones": [
+      {
+        "pagina": 1,
+        "fecha": "2025-03-03",
+        "descripcion": "Deposit ACME DESIGN LLC",
+        "monto": "1200.00",
+        "sentido": "ingreso",
+        "categoria": "1-sin-formulario",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/03 Deposit ACME DESIGN LLC 1,200.00"
+      },
+      {
+        "pagina": 1,
+        "fecha": "2025-03-05",
+        "descripcion": "Card purchase OFFICE DEPOT #123",
+        "monto": "85.40",
+        "sentido": "gasto",
+        "categoria": "18",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/05 Card purchase OFFICE DEPOT #123 -85.40"
+      },
+      {
+        "pagina": 1,
+        "fecha": "2025-03-07",
+        "descripcion": "Card purchase SHELL OIL 5501",
+        "monto": "45.00",
+        "sentido": "gasto",
+        "categoria": "9",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/07 Card purchase SHELL OIL 5501 -45.00"
+      },
+      {
+        "pagina": 1,
+        "fecha": "2025-03-10",
+        "descripcion": "Card purchase SHELL OIL 5501",
+        "monto": "45.00",
+        "sentido": "gasto",
+        "categoria": "9",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/10 Card purchase SHELL OIL 5501 -45.00"
+      },
+      {
+        "pagina": 2,
+        "fecha": "2025-03-12",
+        "descripcion": "Zelle from J SAMPLE",
+        "monto": "650.00",
+        "sentido": "ingreso",
+        "categoria": "no_se",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/12 Zelle from J SAMPLE 650.00"
+      },
+      {
+        "pagina": 2,
+        "fecha": "2025-03-15",
+        "descripcion": "Online transfer to savings ****1111",
+        "monto": "300.00",
+        "sentido": "transferencia",
+        "categoria": "no_se",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/15 Online transfer to savings ****1111 -300.00"
+      },
+      {
+        "pagina": 2,
+        "fecha": "2025-03-18",
+        "descripcion": "Card purchase ADOBE CREATIVE CLOUD",
+        "monto": "54.99",
+        "sentido": "gasto",
+        "categoria": "18",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/18 Card purchase ADOBE CREATIVE CLOUD -54.99"
+      },
+      {
+        "pagina": 2,
+        "fecha": "2025-03-20",
+        "descripcion": "Deposit STRIPE PAYOUT",
+        "monto": "2500.00",
+        "sentido": "ingreso",
+        "categoria": "1-sin-formulario",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/20 Deposit STRIPE PAYOUT 2,500.00"
+      },
+      {
+        "pagina": 3,
+        "fecha": "2025-03-25",
+        "descripcion": "Card purchase COMCAST INTERNET",
+        "monto": "89.99",
+        "sentido": "gasto",
+        "categoria": "25",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/25 Card purchase COMCAST INTERNET -89.99"
+      },
+      {
+        "pagina": 3,
+        "fecha": "2025-03-28",
+        "descripcion": "Check #1001 OFFICE RENT",
+        "monto": "570.12",
+        "sentido": "gasto",
+        "categoria": "20b",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "03/28 Check #1001 OFFICE RENT -570.12"
+      }
+    ]
+  }
+]

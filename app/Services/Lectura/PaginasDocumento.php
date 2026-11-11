@@ -32,6 +32,13 @@ class PaginasDocumento
     /** Un formulario del IRS tiene 1 o 2 páginas; más de esto no es un formulario. */
     public const MAXIMO_PAGINAS = 10;
 
+    /**
+     * El código de la RuntimeException cuando el archivo tiene más páginas que
+     * el máximo: quien lee lo distingue de un archivo dañado (6.3c: un extracto
+     * largo no es un error, se le pide al cliente que lo suba por meses).
+     */
+    public const DEMASIADAS_PAGINAS = 4131;
+
     /** Lado más largo de la imagen que se guarda: baja el costo y el tamaño sin perder lectura. */
     private const LADO_MAXIMO = 2400;
 
@@ -43,10 +50,13 @@ class PaginasDocumento
      * Genera y guarda las páginas del archivo. Devuelve cuántas son y las
      * deja anotadas en la lectura.
      *
+     * @param  int|null  $maximo  cuántas páginas se aceptan; sin decirlo, MAXIMO_PAGINAS (formularios).
+     *                            Los registros del negocio usan el parámetro `lectura.maximo_paginas_renglones` (6.3c).
+     *
      * @throws RuntimeException si el archivo no se puede leer, no es de un tipo
-     *                          soportado, tiene demasiadas páginas o falta una herramienta
+     *                          soportado, tiene demasiadas páginas (código DEMASIADAS_PAGINAS) o falta una herramienta
      */
-    public function generar(Documento $documento, DocumentoLectura $lectura): int
+    public function generar(Documento $documento, DocumentoLectura $lectura, ?int $maximo = null): int
     {
         $contenido = $this->almacen->leer($documento);
 
@@ -54,18 +64,7 @@ class PaginasDocumento
             throw new RuntimeException('El archivo del documento no está en el disco.');
         }
 
-        $directorio = $this->directorioTemporal();
-
-        try {
-            $imagenes = match ($this->tipo($contenido, $documento)) {
-                'pdf' => $this->paginasDePdf($contenido, $directorio),
-                'heic' => [$this->aPng($this->heicAJpg($contenido, $directorio))],
-                'jpg', 'png' => [$this->aPng($contenido)],
-                default => throw new RuntimeException('Tipo de archivo no soportado para la lectura.'),
-            };
-        } finally {
-            $this->borrarDirectorio($directorio);
-        }
+        $imagenes = $this->imagenes($contenido, $documento->formato, $maximo);
 
         $this->borrarPaginas($lectura);
 
@@ -78,6 +77,33 @@ class PaginasDocumento
         $lectura->update(['paginas' => count($imagenes)]);
 
         return count($imagenes);
+    }
+
+    /**
+     * Un PNG por página del contenido de un archivo, sin guardar nada. Lo usa
+     * `generar()` y el comando `lectura:medir-costo`, que lee los fixtures
+     * sintéticos sin crear documentos.
+     *
+     * @param  string|null  $formato  la extensión declarada; solo desempata el HEIC
+     * @return list<string>
+     *
+     * @throws RuntimeException igual que `generar()`
+     */
+    public function imagenes(string $contenido, ?string $formato = null, ?int $maximo = null): array
+    {
+        $maximo = max(1, $maximo ?? self::MAXIMO_PAGINAS);
+        $directorio = $this->directorioTemporal();
+
+        try {
+            return match ($this->tipo($contenido, $formato)) {
+                'pdf' => $this->paginasDePdf($contenido, $directorio, $maximo),
+                'heic' => [$this->aPng($this->heicAJpg($contenido, $directorio))],
+                'jpg', 'png' => [$this->aPng($contenido)],
+                default => throw new RuntimeException('Tipo de archivo no soportado para la lectura.'),
+            };
+        } finally {
+            $this->borrarDirectorio($directorio);
+        }
     }
 
     /**
@@ -113,7 +139,7 @@ class PaginasDocumento
      * El tipo por lo que trae el archivo, no por su extensión; la extensión
      * solo desempata el HEIC, que algunas versiones de libmagic no reconocen.
      */
-    private function tipo(string $contenido, Documento $documento): ?string
+    private function tipo(string $contenido, ?string $formato): ?string
     {
         $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->buffer($contenido);
 
@@ -122,7 +148,7 @@ class PaginasDocumento
             $mime === 'image/jpeg' => 'jpg',
             $mime === 'image/png' => 'png',
             in_array($mime, ['image/heic', 'image/heif'], true) => 'heic',
-            in_array(strtolower((string) $documento->formato), ['heic', 'heif'], true) && $this->pareceHeic($contenido) => 'heic',
+            in_array(strtolower((string) $formato), ['heic', 'heif'], true) && $this->pareceHeic($contenido) => 'heic',
             default => null,
         };
     }
@@ -138,7 +164,7 @@ class PaginasDocumento
     /**
      * @return list<string> un PNG por página
      */
-    private function paginasDePdf(string $contenido, string $directorio): array
+    private function paginasDePdf(string $contenido, string $directorio, int $maximo): array
     {
         $binario = $this->binario('pdftoppm', 'poppler-utils');
 
@@ -146,7 +172,7 @@ class PaginasDocumento
         file_put_contents($entrada, $contenido);
 
         // Pide una página más que el máximo: si sale, el archivo tiene demasiadas.
-        $proceso = new Process([$binario, '-png', '-r', (string) self::RESOLUCION_PDF, '-f', '1', '-l', (string) (self::MAXIMO_PAGINAS + 1), $entrada, "{$directorio}/pagina"]);
+        $proceso = new Process([$binario, '-png', '-r', (string) self::RESOLUCION_PDF, '-f', '1', '-l', (string) ($maximo + 1), $entrada, "{$directorio}/pagina"]);
         $proceso->setTimeout(120);
         $proceso->run();
 
@@ -157,7 +183,7 @@ class PaginasDocumento
         natsort($paginas);
 
         throw_if($paginas === [], new RuntimeException('El PDF no tiene páginas que se puedan leer.'));
-        throw_if(count($paginas) > self::MAXIMO_PAGINAS, new RuntimeException('El PDF tiene demasiadas páginas para ser un formulario ('.self::MAXIMO_PAGINAS.' como máximo).'));
+        throw_if(count($paginas) > $maximo, new RuntimeException("El PDF tiene demasiadas páginas para leerlo ({$maximo} como máximo).", self::DEMASIADAS_PAGINAS));
 
         return array_values(array_map(fn (string $ruta) => $this->aPng((string) file_get_contents($ruta)), $paginas));
     }

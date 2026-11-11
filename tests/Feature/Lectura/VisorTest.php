@@ -147,7 +147,8 @@ class VisorTest extends TestCase
                 ->has('imagenes', 1)
                 ->etc())
             ->has('datos', 2)
-            ->has('confianza_tabla', 7)
+            // Los 7 motivos de F4 y 6.3b más los 3 de los renglones leídos con IA (6.3c).
+            ->has('confianza_tabla', 10)
             ->where('umbral', 0.9)
             ->has('datos.0', fn (Assert $d) => $d
                 ->where('sensible', true)

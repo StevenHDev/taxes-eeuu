@@ -1,0 +1,83 @@
+[
+  {
+    "tipo_documento": "registros-ingresos-gastos",
+    "anio": 2025,
+    "paginas_legibles": true,
+    "clase": "recibo",
+    "casillas": {
+      "clase-detectada": {
+        "valor": "recibo",
+        "legibilidad": "claro",
+        "pagina": 1,
+        "texto_cercano": "BLUE PLATE DINER"
+      },
+      "periodo-desde": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "periodo-hasta": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "total-depositos": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "total-retiros": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "saldo-inicial": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "saldo-final": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "millas-negocio": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-casa": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      },
+      "pies-cuadrados-oficina": {
+        "valor": null,
+        "legibilidad": "claro",
+        "pagina": null,
+        "texto_cercano": null
+      }
+    },
+    "renglones": [
+      {
+        "pagina": 1,
+        "fecha": "2025-04-18",
+        "descripcion": "BLUE PLATE DINER",
+        "monto": "42.80",
+        "sentido": "gasto",
+        "categoria": "24b",
+        "categoria_impresa": false,
+        "legibilidad": "claro",
+        "evidencia": "TOTAL 42.80"
+      }
+    ]
+  }
+]

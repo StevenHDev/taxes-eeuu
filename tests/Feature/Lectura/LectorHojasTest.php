@@ -15,7 +15,6 @@ use App\Services\CatalogoFiscal\CatalogoFiscal;
 use App\Services\Lectura\LectorDocumentos;
 use App\Services\Lectura\LectorHojas;
 use App\Services\Lectura\LectorManual;
-use App\Services\Lectura\LectorOpenAi;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -183,13 +182,15 @@ class LectorHojasTest extends RegistrosTestCase
         $this->assertSame(['hoja'], Excepcion::query()->where('regla_codigo', 'R-14')->get()->pluck('detalle.tipo')->all());
     }
 
-    // ── PDF y fotos: no salen a OpenAI ──
+    // ── PDF y fotos: con la lectura automática apagada no salen a OpenAI ──
 
-    public function test_un_pdf_de_registros_no_sale_a_openai_se_lee_manual_y_abre_r14(): void
+    public function test_un_pdf_de_registros_con_la_lectura_automatica_apagada_no_sale_a_openai_se_lee_manual_y_abre_r14(): void
     {
+        // Desde 6.3c un PDF de registros se lee con IA (LecturaRenglonesIaTest); sin la bandera, sigue manual.
+        config(['tax.lectura_automatica' => false]);
         $archivo = $this->subir('plantilla-registros-llena-en.pdf');
 
-        $this->assertInstanceOf(LectorOpenAi::class, app(LectorDocumentos::class));
+        $this->assertInstanceOf(LectorManual::class, app(LectorDocumentos::class));
 
         $lectura = $this->leer($archivo);
 

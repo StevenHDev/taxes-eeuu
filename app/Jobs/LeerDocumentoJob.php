@@ -86,7 +86,14 @@ class LeerDocumentoJob implements ShouldQueue
             throw $error;
         }
 
-        $checklist->leido($item);
+        // Un extracto que no se mandó a la IA (demasiadas páginas o el cliente llegó al tope de
+        // páginas con IA, F6 6.3c) no se pudo leer: el preparador lo ve "por revisar" y R-14 dice por qué.
+        if (isset($lectura->observaciones['sin_leer'])) {
+            $checklist->noSePudoLeer($item);
+        } else {
+            $checklist->leido($item);
+        }
+
         $reglas->correr($item->entrevista);
     }
 

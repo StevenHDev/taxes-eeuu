@@ -1,0 +1,113 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 1306 >>
+stream
+BT
+/F1 16 Tf 1 0 0 1 50 740 Tm (First Sample Bank - Business Checking) Tj
+/F1 10 Tf 1 0 0 1 50 720 Tm (Statement period: 03/01/2025 - 03/31/2025    Account: ****0000    Sample Studio LLC) Tj
+/F1 9 Tf 1 0 0 1 480 740 Tm (Page 1 of 3) Tj
+/F1 10 Tf 1 0 0 1 50 690 Tm (Beginning balance) Tj
+/F1 10 Tf 1 0 0 1 400 690 Tm (2,500.00) Tj
+/F1 10 Tf 1 0 0 1 50 674 Tm (Total deposits) Tj
+/F1 10 Tf 1 0 0 1 400 674 Tm (4,350.00) Tj
+/F1 10 Tf 1 0 0 1 50 658 Tm (Total withdrawals) Tj
+/F1 10 Tf 1 0 0 1 400 658 Tm (1,190.50) Tj
+/F1 10 Tf 1 0 0 1 50 642 Tm (Ending balance) Tj
+/F1 10 Tf 1 0 0 1 400 642 Tm (5,659.50) Tj
+/F1 10 Tf 1 0 0 1 50 612 Tm (Date) Tj
+/F1 10 Tf 1 0 0 1 120 612 Tm (Description) Tj
+/F1 10 Tf 1 0 0 1 450 612 Tm (Amount) Tj
+/F1 10 Tf 1 0 0 1 50 592 Tm (03/03) Tj
+/F1 10 Tf 1 0 0 1 120 592 Tm (Deposit ACME DESIGN LLC) Tj
+/F1 10 Tf 1 0 0 1 450 592 Tm (1,200.00) Tj
+/F1 10 Tf 1 0 0 1 50 574 Tm (03/05) Tj
+/F1 10 Tf 1 0 0 1 120 574 Tm (Card purchase OFFICE DEPOT #123) Tj
+/F1 10 Tf 1 0 0 1 450 574 Tm (-85.40) Tj
+/F1 10 Tf 1 0 0 1 50 556 Tm (03/07) Tj
+/F1 10 Tf 1 0 0 1 120 556 Tm (Card purchase SHELL OIL 5501) Tj
+/F1 10 Tf 1 0 0 1 450 556 Tm (-45.00) Tj
+/F1 10 Tf 1 0 0 1 50 538 Tm (03/10) Tj
+/F1 10 Tf 1 0 0 1 120 538 Tm (Card purchase SHELL OIL 5501) Tj
+/F1 10 Tf 1 0 0 1 450 538 Tm (-45.00) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 936 >>
+stream
+BT
+/F1 16 Tf 1 0 0 1 50 740 Tm (First Sample Bank - Business Checking) Tj
+/F1 10 Tf 1 0 0 1 50 720 Tm (Statement period: 03/01/2025 - 03/31/2025    Account: ****0000    Sample Studio LLC) Tj
+/F1 9 Tf 1 0 0 1 480 740 Tm (Page 2 of 3) Tj
+/F1 10 Tf 1 0 0 1 50 676 Tm (Date) Tj
+/F1 10 Tf 1 0 0 1 120 676 Tm (Description) Tj
+/F1 10 Tf 1 0 0 1 450 676 Tm (Amount) Tj
+/F1 10 Tf 1 0 0 1 50 656 Tm (03/12) Tj
+/F1 10 Tf 1 0 0 1 120 656 Tm (Zelle from J SAMPLE) Tj
+/F1 10 Tf 1 0 0 1 450 656 Tm (650.00) Tj
+/F1 10 Tf 1 0 0 1 50 638 Tm (03/15) Tj
+/F1 10 Tf 1 0 0 1 120 638 Tm (Online transfer to savings ****1111) Tj
+/F1 10 Tf 1 0 0 1 450 638 Tm (-300.00) Tj
+/F1 10 Tf 1 0 0 1 50 620 Tm (03/18) Tj
+/F1 10 Tf 1 0 0 1 120 620 Tm (Card purchase ADOBE CREATIVE CLOUD) Tj
+/F1 10 Tf 1 0 0 1 450 620 Tm (-54.99) Tj
+/F1 10 Tf 1 0 0 1 50 602 Tm (03/20) Tj
+/F1 10 Tf 1 0 0 1 120 602 Tm (Deposit STRIPE PAYOUT) Tj
+/F1 10 Tf 1 0 0 1 450 602 Tm (2,500.00) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 648 >>
+stream
+BT
+/F1 16 Tf 1 0 0 1 50 740 Tm (First Sample Bank - Business Checking) Tj
+/F1 10 Tf 1 0 0 1 50 720 Tm (Statement period: 03/01/2025 - 03/31/2025    Account: ****0000    Sample Studio LLC) Tj
+/F1 9 Tf 1 0 0 1 480 740 Tm (Page 3 of 3) Tj
+/F1 10 Tf 1 0 0 1 50 676 Tm (Date) Tj
+/F1 10 Tf 1 0 0 1 120 676 Tm (Description) Tj
+/F1 10 Tf 1 0 0 1 450 676 Tm (Amount) Tj
+/F1 10 Tf 1 0 0 1 50 656 Tm (03/25) Tj
+/F1 10 Tf 1 0 0 1 120 656 Tm (Card purchase COMCAST INTERNET) Tj
+/F1 10 Tf 1 0 0 1 450 656 Tm (-89.99) Tj
+/F1 10 Tf 1 0 0 1 50 638 Tm (03/28) Tj
+/F1 10 Tf 1 0 0 1 120 638 Tm (Check #1001 OFFICE RENT) Tj
+/F1 10 Tf 1 0 0 1 450 638 Tm (-570.12) Tj
+ET
+endstream
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000224 00000 n 
+0000000350 00000 n 
+0000001707 00000 n 
+0000001833 00000 n 
+0000002819 00000 n 
+0000002945 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+3643
+%%EOF
