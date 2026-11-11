@@ -369,6 +369,7 @@ class ImpuestoYSchedule2Test extends TestCase
         // Pub. 1040 (2025), p. 14, nota: con dividendos calificados o ganancias de capital se usa otra hoja (QDCG).
         $datos = ['1099-div:1b' => new DatoEntrada($this->d('300'), OrigenTraza::Leido, 'doc-2')];
         [$e, $dec] = $this->armar(EstadoCivilIrs::Single, '50000', $datos);
+        $this->poner($dec, '1040', '11b', '250000');
         $this->correr($e, $dec);
 
         $this->assertSame(EstadoLinea::NoSoportada, $dec->linea('1040', '16')->estado);
@@ -378,11 +379,13 @@ class ImpuestoYSchedule2Test extends TestCase
         $this->assertSame('parcial', $dec->estadoGeneral());
     }
 
-    public function test_intereses_o_alquileres_dejan_el_8960_no_soportado_y_arrastran_la_21_23_y_24(): void
+    public function test_intereses_o_alquileres_sobre_el_umbral_dejan_el_8960_no_soportado_y_arrastran_la_21_23_y_24(): void
     {
+        // i1040gi de 2025, Schedule 2: el Form 8960 se mira si la línea 11b pasa de USD 200.000 (soltero).
         foreach (['1099-int:1', 'registros-alquiler:total'] as $clave) {
             $datos = [$clave => new DatoEntrada($this->d('500'), OrigenTraza::Leido, 'doc-3')];
             [$e, $dec] = $this->armar(EstadoCivilIrs::Single, '50000', $datos);
+            $this->poner($dec, '1040', '11b', '200001');
             $this->correr($e, $dec);
 
             $this->assertSame(EstadoLinea::NoSoportada, $dec->linea('sch-2', '12')->estado, $clave);
@@ -394,6 +397,26 @@ class ImpuestoYSchedule2Test extends TestCase
         }
 
         $this->assertSame('parcial', $dec->estadoGeneral());
+    }
+
+    public function test_intereses_bajo_el_umbral_no_piden_el_8960_y_la_24_se_calcula(): void
+    {
+        foreach ([[EstadoCivilIrs::Single, '200000'], [EstadoCivilIrs::Mfj, '250000'], [EstadoCivilIrs::Qss, '250000'], [EstadoCivilIrs::Mfs, '125000']] as [$estado, $agi]) {
+            [$e, $dec] = $this->armar($estado, '50000', ['1099-int:1' => new DatoEntrada($this->d('300'), OrigenTraza::Leido, 'doc-3')]);
+            $this->poner($dec, '1040', '11b', $agi);
+            $this->correr($e, $dec);
+
+            $this->assertSame(EstadoLinea::NoAplica, $dec->linea('sch-2', '12')->estado, $estado->value);
+            $this->assertSame(EstadoLinea::Calculada, $dec->linea('1040', '24')->estado, $estado->value);
+        }
+    }
+
+    public function test_intereses_sin_la_linea_11b_dejan_el_8960_pendiente(): void
+    {
+        [$e, $dec] = $this->armar(EstadoCivilIrs::Single, '50000', ['1099-int:1' => new DatoEntrada($this->d('300'), OrigenTraza::Leido, 'doc-3')]);
+        $this->correr($e, $dec);
+
+        $this->assertSame(EstadoLinea::FaltaDato, $dec->linea('sch-2', '12')->estado);
     }
 
     public function test_sin_datos_que_disparen_el_8960_la_linea_12_no_se_escribe(): void

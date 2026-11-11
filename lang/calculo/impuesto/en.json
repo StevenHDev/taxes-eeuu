@@ -1,0 +1,5 @@
+{
+    "Hay documentos de intereses, dividendos o alquileres (:documentos) y el ingreso pasa del umbral: falta el Form 8960 (impuesto sobre la inversión).": "There are interest, dividend or rental documents (:documentos) and income is over the threshold: Form 8960 (net investment income tax) is missing.",
+    "El ingreso no pasa del umbral del impuesto sobre la inversión (Form 8960): no se debe.": "Income isn't over the net investment income tax threshold (Form 8960): it isn't owed.",
+    "Umbral del impuesto sobre la inversión": "Net investment income tax threshold"
+}

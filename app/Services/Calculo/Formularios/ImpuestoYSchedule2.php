@@ -252,9 +252,48 @@ final class ImpuestoYSchedule2 implements Calculadora
     {
         $fuera = Apoyo::documentosPresentes($e, self::DOCUMENTOS_NIIT);
 
-        if ($fuera !== []) {
-            $d->poner(Linea::noSoportada(self::SCH2, '12', __('Hay documentos de intereses, dividendos o alquileres (:documentos): falta el Form 8960 (impuesto sobre la inversión).', ['documentos' => implode(', ', $fuera)])));
+        if ($fuera === []) {
+            return;
         }
+
+        // El Form 8960 solo se llena si el ingreso ajustado modificado pasa del umbral del estado civil
+        // (instrucciones del 1040 de 2025, Schedule 2, línea 12; Form 8960, línea 14). En el piloto ese
+        // ingreso es la línea 11b del 1040 (no hay ingreso extranjero excluido).
+        if ($e->estadoCivil === null) {
+            $d->poner(Linea::faltaDato(self::SCH2, '12', Apoyo::motivoSinEstadoCivil()));
+
+            return;
+        }
+
+        $agi = Apoyo::leerUna($d, '1040', '11b', self::SCH2, '12');
+
+        if ($agi instanceof Linea) {
+            $d->poner($agi);
+
+            return;
+        }
+
+        try {
+            $umbral = Apoyo::parametroEnDolares($e->taxYear, 'niit', match ($e->estadoCivil) {
+                EstadoCivilIrs::Mfj, EstadoCivilIrs::Qss => 'umbral_mfj',
+                EstadoCivilIrs::Mfs => 'umbral_mfs',
+                EstadoCivilIrs::Single, EstadoCivilIrs::Hoh => 'umbral_soltero',
+            });
+        } catch (RuntimeException $excepcion) {
+            $d->poner(Linea::faltaDato(self::SCH2, '12', Apoyo::motivoSinParametro($e->taxYear, $excepcion)));
+
+            return;
+        }
+
+        if ($agi[0]->centavos() > $umbral->centavos()) {
+            $d->poner(Linea::noSoportada(self::SCH2, '12', __('Hay documentos de intereses, dividendos o alquileres (:documentos) y el ingreso pasa del umbral: falta el Form 8960 (impuesto sobre la inversión).', ['documentos' => implode(', ', $fuera)])));
+
+            return;
+        }
+
+        $d->poner(Linea::noAplica(self::SCH2, '12', __('El ingreso no pasa del umbral del impuesto sobre la inversión (Form 8960): no se debe.'), Traza::vacia()
+            ->conEntrada(Apoyo::nombreLinea('1040', '11b'), $agi[0], OrigenTraza::Linea, '1040:11b')
+            ->conParametro(__('Umbral del impuesto sobre la inversión'), $umbral, 'niit')));
     }
 
     /** Schedule 2, línea 21: "Add lines 4, 7 through 16, 18, and 19"; del piloto, la 4 y la 11 (y la 12 si quedó no soportada). */
