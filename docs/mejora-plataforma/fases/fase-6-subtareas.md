@@ -1,4 +1,4 @@
-# Fase 6 — Subtareas para trabajar con Sonnet 5.5
+# Fase 6 — Subtareas (olas 1 y 2 con Sonnet 5.5; desde la ola 3, Opus 5.5)
 
 9 nov. 2026 · Plan **aprobado por Steven el 9 nov.**: [`fase-6-calculo-borrador-1040.md`](fase-6-calculo-borrador-1040.md). Lee primero las secciones "Qué hay hoy", "Estrategia de validación contra el IRS" y "Decisiones tomadas (9 nov.)" del plan.
 
@@ -48,7 +48,7 @@
 | 2 | 6.4g | Calculadora `Eitc` | ola 1 | ✅ |
 | 2 | 6.1b | Parámetros de 2026 | ola 1 | ✅ |
 | 2 | 6.9a | Primer lote de casos del IRS, escrito sin ver el código | ola 1 | ✅ |
-| 3 | 6.4b · 6.4d · 6.4f · 6.4h · 6.5 · 6.3c | Se detallan al cerrar la ola 2 | ola 2 | ⏳ |
+| 3 | 6.4z (paso previo) · 6.4b · 6.4d · 6.4f · 6.4h · 6.5 · 6.3c · 6.9b | Detallada abajo (11 nov.); **con Opus 5.5** | ola 2 | ⏳ |
 | 4 | 6.4i · 6.7a · 6.3d | Se detallan al cerrar la ola 3 | ola 3 | ⏳ |
 | 5 | 6.6 · 6.7b · 6.8a · 6.8b-n · 6.3e | Se detallan al cerrar la ola 4 | ola 4 | ⏳ |
 | 6 | 6.8c · 6.9 | Se detallan al cerrar la ola 5 | ola 5 | ⏳ |
@@ -465,3 +465,275 @@ Cada valor esperado cita formulario, línea, **página** y URL del PDF fijado (a
 7. **Cobertura de documentos fuera del piloto:** alquileres y regalías (1099-MISC casillas 1 y 2) y el 1099-SA no marcan la declaración como parcial.
 8. **Fechas ambiguas** en hojas propias (03/10/2025): se leen como mes/día/año.
 9. **Texto fijo del portal** "PDF, JPG, PNG o HEIC" en `es.json` sigue sin leer los formatos del catálogo.
+
+---
+
+# Ola 3
+
+**Modelo:** desde esta ola **todo se hace con Opus 5.5** (decisión de Steven, 11 nov.): el agente principal y cada subtarea. Lo demás de "Cómo se trabaja" y las "Reglas comunes" sigue igual.
+
+**Qué trae:** las calculadoras que faltan del piloto (6.4b Schedule C y SE; 6.4d deducciones, Schedule 1-A y Form 8995; 6.4f 8812, 2441 y Schedule 3; 6.4h 8962 y pagos), el respaldo manual del lado del servidor (6.5), la lectura con IA de extractos, recibos y fotos (6.3c, tramo 2) y un segundo lote de casos del IRS escrito sin ver el código (6.9b). Antes de lanzarlas, el agente principal hace un **paso previo (6.4z)** que deja listo lo que comparten.
+
+## Decisiones de Steven para la ola 3 (11 nov.)
+
+**Steven aprobó las cuatro propuestas el 11 nov. 2026** (A, B y C tal cual; D: autoriza correr la medición al cerrar la ola).
+
+| # | Qué | Decisión |
+| --- | --- | --- |
+| A | **A qué línea va cada 1099 de trabajo independiente.** El plan dice "los 1099 que el preparador mandó a C (F5)", pero F5 no guarda esa decisión. | Por defecto, **todo 1099-NEC (c. 1) y 1099-K (c. 1a) del cliente que no esté en "no aplica" va a la línea 1 del Schedule C**. El 1099-MISC sigue como hoy (c. 3 y 8 a la línea 8z del Schedule 1; c. 1 y 2 → `no_soportada`, Schedule E). Mandar un 1099 a otra línea queda para F7; mientras tanto, R-10 (ola 5) pide la nota. **Verificado contra el IRS (11 nov.), ver abajo.** |
+| B | **Un solo negocio.** El Schedule C y el SE son por persona; si los dos cónyuges tienen 1099 de trabajo independiente, son dos Schedule C y dos SE. | El piloto calcula **un Schedule C y un SE**, de la persona dueña de los 1099 y de los registros. Si hay 1099 de trabajo independiente de las dos personas, el Schedule C y el SE salen `no_soportada` ("dos negocios: lo calcula el preparador; llega en F7"). |
+| C | **Tope de páginas leídas con IA por cliente y año** (`lectura.maximo_paginas_ia_por_cliente`), hasta medir el costo. | **120 páginas** por cliente y año (unos 3 extractos de 40 páginas). Se ajusta después de la medición. |
+| D | **Medir el costo de OpenAI** (`lectura:medir-costo`) con los documentos sintéticos, **contra OpenAI de verdad, en local**, con la clave de desarrollo. | Lo corre el agente principal al cerrar la ola, **solo con tu autorización** en ese momento (cuesta poco: unas decenas de páginas). **Autorizado por Steven el 11 nov.** |
+
+### Verificación de la decisión A contra el IRS (11 nov.)
+
+**Lo confirma el IRS para el caso normal:**
+- Instrucciones del Schedule C de 2025 (`i1040sc.pdf`, línea 1, p. 5): "Enter gross receipts from your trade or business" y "be sure line 1 includes amounts properly shown on your Forms 1099-NEC"; si la suma de las casillas 1 de los 1099-NEC es mayor que la línea 1, hay que adjuntar una explicación. En la misma página, el 1099-K y el 1099-MISC aparecen como los 1099 de ingresos del negocio que hay que revisar.
+- Instrucciones del 1040 de 2025 (`i1040gi.pdf`, Schedule 1, líneas 8a a 8z, p. 89): el ingreso de trabajo independiente va al **Schedule C "even if you don't have any business expenses"**, y la compensación de no empleado de los 1099-MISC, 1099-NEC o 1099-K **no** va a las líneas 8a a 8z, salvo que no sea ingreso de trabajo independiente (afición o actividad esporádica).
+
+**Excepciones que dice el IRS y cómo las cubre el piloto:**
+
+| Caso (fuente) | A dónde va según el IRS | En el piloto |
+| --- | --- | --- |
+| Afición o actividad esporádica (`i1040gi` p. 89; Pub. 525) | Schedule 1 línea 8j (actividad sin fin de lucro) | El cálculo lo manda a C por defecto; **R-10** (ola 5) pide la nota y el preparador lo mueve a mano en TaxWise. Mover el 1099 desde la plataforma queda para F7. |
+| Empleado mal clasificado (`i1040gi`, línea 1g) | Form 8919 → 1040 línea 1g | Igual que el anterior (R-10 + F7). |
+| Pagos de exención de Medicaid (Medicaid waiver) en un 1099-MISC o 1099-NEC (`i1040gi`, línea 1d) | 1040 línea 1d y Schedule 1 línea 8s | Igual (R-10 + F7). |
+| **1099-K con pagos por error** (regalos, reembolsos) **o venta de cosas personales con pérdida** (`i1040gi`, Schedule 1, p. 88) | Se anota en el espacio de arriba del Schedule 1; el resto, según lo que sea | **No lo resuelve el defecto.** Se agrega a R-10: si hay 1099-K, el preparador confirma que todo es del negocio. |
+| **1099-K por venta de cosas personales con ganancia** (`i1040gi` p. 88) | Form 8949 y Schedule D | Igual que el anterior (R-10); Schedule D no es del piloto. |
+| Empleado estatutario: W-2 con la casilla 13 marcada (`i1040sc` p. 5) | **Otro** Schedule C, sin impuesto de autoempleo | **Hoy no se detecta**: el catálogo lee la casilla 13 del W-2 como un solo sí/no para tres opciones. Pendiente: separarla en tres casillas (empleado estatutario, plan de retiro, pago por enfermedad) y entonces marcar `no_soportada`. |
+
+**Lo que cambia por esta verificación:**
+1. La decisión A se queda como estaba para el caso normal.
+2. **Empleado estatutario:** queda pendiente separar la casilla 13 del W-2 en el catálogo; hasta entonces no se detecta (6.4b solo lo reporta).
+3. **R-10** (ola 5) agrega una pregunta para el 1099-K ("¿Todo lo de este 1099-K es del negocio?"). Se anota aquí para detallarla en la ola 5.
+4. Hallazgo aparte, **sin cambiar en esta ola**: `Schedule1` manda la casilla 3 del 1099-MISC a la línea 8z, pero el IRS pone los premios en la **8i** (`i1040gi`, línea 8i). La casilla 3 ("otros ingresos") puede ser una u otra según lo que sea. Queda para el cierre de la ola 3: decidir si va a 8i, 8z o la elige el preparador.
+
+## 6.4z — Paso previo del agente principal (antes de lanzar la ola)
+
+Lo hace el agente principal, solo, antes de lanzar las subtareas; así ninguna de ellas toca el núcleo ni archivos compartidos.
+
+1. **Detalle por documento y por persona en las entradas.** `EntradasDeclaracion` solo trae `datos` sumados por `documento:casilla`. El 2441 (por proveedor y por cónyuge), el 8962 (por póliza y por mes), los comprobantes de pago (tipo y fecha de cada uno) y el SE (salarios de la persona) necesitan cada documento por separado. Se agrega **al final**, con valor por defecto:
+   - `DocumentoEntrada` (DTO `readonly` en `Nucleo/`): `string $codigo`, `int $itemId`, `?int $personaId`, `array<string, DatoEntrada> $casillas` (por casilla del catálogo).
+   - `EntradasDeclaracion::$documentos`: `array<string, list<DocumentoEntrada>>` por código de documento (`[]` por defecto), y el método `documentos(string $codigo): list<DocumentoEntrada>`.
+   - `$datos` no cambia: sigue siendo la suma por clave, para las calculadoras de la ola 2.
+2. **Ayudantes comunes.** Las cuatro calculadoras de la ola 2 repiten `leerLineas`, `leerDatos`, `copiar`, `documentosPresentes`, `sinValidar`, `parametroEnDolares` y los motivos de "falta el estado civil" y "falta el parámetro". Se pasan a una clase del núcleo, **`Nucleo\Apoyo`** (métodos públicos, sin estado, que reciben el código del formulario de destino), y las cuatro calculadoras la usan. Sus pruebas deben seguir verdes sin cambiarlas. Las calculadoras de la ola 3 **usan `Apoyo`** y no copian esos métodos.
+3. **Textos en inglés del servidor.** `AppServiceProvider` carga además `lang/calculo/<area>/en.json` (cada carpeta que exista) y `lang/lectura/montos/en.json`, como ya hace con `lang/expediente/<area>`. Así cada subtarea escribe su inglés en su propio archivo y no hay dos agentes en el mismo.
+4. **Parámetros.** Verificado al escribir esta ola: los parámetros que usan 6.4b, 6.4d, 6.4f y 6.4h ya existen en 2025 (`schedule_c.*`, `self_employment_tax.*`, `credito_ctc.*`, `credito_odc.*`, `credito_actc.*`, `credito_cuidado_dependientes.*`, `qbi.*`, `schedule_1a.*`, `deduccion_estandar.adicional_*`, `credito_prima_salud.*`). Si una subtarea descubre que le falta uno, **no lo agrega**: deja la línea `falta_dato` con el nombre del parámetro y lo reporta.
+
+**Criterio de terminado:** pruebas del núcleo y de las cuatro calculadoras verdes sin cambiar lo que esperan; `pint` limpio; los nombres reales se anotan aquí abajo si cambian.
+
+### Cómo quedó el 6.4z (11 nov., agente principal) ✅
+
+- **`Nucleo\DocumentoEntrada`** (`codigo`, `itemId`, `personaId`, `casillas`; métodos `casilla()`, `monto()` y `referencia()` = `"w2#7"`, nunca un valor) y **`EntradasDeclaracion::$documentos`** con `documentos(string $codigo)`.
+- **`Nucleo\Apoyo`**, clase final con métodos **estáticos**: `nombre()`, `nombreLinea()`, `leerLineas()` (varias fuentes con "requerida"; `falta_dato` manda), `copiar()`, `leerDatos()`, `leerUna()` / `leerVarias()` / `sumar()` (cortan en la primera que no sirve y heredan su motivo), `documentosPresentes()`, `hayDatos()` (mira `datos` y `documentos`), `sinValidar()`, `parametroEnDolares()`, `persona()`, `personaPorId()`, `motivoSinEstadoCivil()` y `motivoSinParametro()`. El mapa de nombres de formulario está en `Apoyo::NOMBRES`.
+- `Schedule1`, `Ingresos1040` e `ImpuestoYSchedule2` ya usan `Apoyo` (quedan unas 470 líneas menos). **`Eitc` no se tocó**: tiene su propio flujo con `SinCalculo`.
+- Inglés del servidor: `AppServiceProvider` carga `lang/calculo/<area>/en.json` (áreas `nucleo`, `ingresos`, `impuesto`, `eitc`, `schedule-c`, `deducciones`, `creditos`, `pagos`), `lang/expediente/borrador/en.json` y `lang/lectura/montos/en.json`. Los textos de `Apoyo` ya tienen su inglés en `lang/calculo/nucleo/en.json`.
+- **Ojo en las pruebas:** el idioma por defecto de la aplicación es **inglés**. Una prueba que compara un motivo en español tiene que fijar `app()->setLocale('es')` (en `beforeEach` o en `setUp`); así quedaron las cuatro pruebas de calculadoras y `ApoyoTest`.
+- Pruebas: `tests/Unit/Calculo/Nucleo/ApoyoTest.php` (nueva); `tests/Unit/Calculo` 193 verdes; `tests/Feature/Calculo` 33 verdes y 1 saltada (2441); `tests/Feature/Lectura` 213 verdes y 2 saltadas.
+
+
+## Contratos compartidos de la ola 3
+
+**Todo lo de "Contratos compartidos de la ola 2" sigue valiendo** (convenciones 1 a 7, cómo llegan los datos, núcleo, parámetros, PDF fijados). Además:
+
+- **`Apoyo`** (6.4z) para leer líneas y datos, sumar, copiar y armar los motivos. No copies esos métodos en tu calculadora.
+- **`$e->documentos('w2')`** y los demás para lo que va por documento o por persona. El dueño de un documento es `personaId` (contribuyente, cónyuge o dependiente: búscalo en `$e->personas`). Si un documento que necesitas por persona trae `personaId = null`, la línea sale `falta_dato` ("Falta saber de quién es el W-2 #N").
+- **Líneas que faltan en el catálogo.** Si tu cálculo necesita una línea intermedia que no está en `formularios.php` (por ejemplo la 8b del Schedule SE), **escríbela igual** en `Declaracion` con su número del formulario y **repórtala** con su fuente y página: el agente principal la agrega al catálogo al cerrar (nadie edita `formularios.php` en esta ola).
+- **Quién escribe qué línea del 1040** (para no pisarse):
+
+| Líneas del 1040 | Las escribe |
+| --- | --- |
+| 1a, 1c, 1z, 8, 9, 10, 11a, 11b | 6.4c (ya existe) |
+| **1e** | **6.4f** (2441, beneficios de cuidado del W-2 c. 10 que se gravan) |
+| **12d, 12e, 13a, 13b, 14, 15** | **6.4d** |
+| 16, 17, 18, 21, 22, 23, 24 | 6.4e (ya existe) |
+| **19, 20** | **6.4f** (19 = 8812 línea 14; 20 = Schedule 3 línea 8) |
+| 27a | 6.4g (ya existe) |
+| **25a, 25b, 25c, 25d, 26, 28, 29, 31, 32, 33, 34, 35a, 36, 37** | **6.4h** (28 copia la línea 27 del 8812 que escribe 6.4f; 29 sale `no_soportada` si hay 1098-T, si no `no_aplica`; 31 copia la 15 del Schedule 3) |
+
+- **Pruebas en español:** fija `app()->setLocale('es')` si comparas un motivo (el idioma por defecto es inglés).
+- **Textos del servidor:** `__('…')` en español y su inglés en **`lang/calculo/<tu-area>/en.json`** (6.4b `schedule-c`, 6.4d `deducciones`, 6.4f `creditos`, 6.4h `pagos`), en `lang/expediente/borrador/en.json` (6.5) o en `lang/lectura/montos/en.json` (6.3c). Sin `trans_choice()`: dos frases con `__()` (singular y plural).
+
+**Archivos compartidos de la ola 3 y quién manda:**
+
+| Archivo | Dueño |
+| --- | --- |
+| `app/Services/Calculo/Nucleo/**` | **nadie** (lo dejó listo 6.4z); si algo no te alcanza, para y pregunta |
+| `database/data/catalogo-fiscal/2025/formularios.php`, `documentos.php` | **nadie** (reporta lo que falte) |
+| `database/data/catalogo-fiscal/2025/parametros.php`, `parametros-metadatos.php`, `2026/ajustes.php` | 6.3c (solo los dos parámetros `lectura.*`) |
+| `app/Enums/Lectura/MotivoConfianza.php`, `EsquemaLectura`, `LectorOpenAi`, `PaginasDocumento`, `R14RegistrosNegocio`, `ExplicadorExcepcion` | 6.3c |
+| `app/Services/Lectura/Reglas/MotorReglas.php`, `2025/reglas.php` | **nadie** (R-15 se registra en la ola 5) |
+| `routes/web.php` | 6.5 (solo el `require` de `expediente-borrador.php`) |
+| `tests/Feature/Calculo/TablasIrsTest.php` | 6.4f (solo quitar el `skip` del 2441 cuando su prueba propia de la tabla pase) |
+| `tests/Fixtures/irs/casos/**` | 6.9b (las demás subtareas **no leen** los casos nuevos de 6.9b) |
+
+---
+
+## 6.4b — Calculadoras `ScheduleC` y `ScheduleSe`
+
+**Plan:** tabla de 6.4b a 6.4h (fila 6.4b) y "Resultado hacia el Schedule C" de 6.3d. **Skills:** `arch-service-classes`, `arch-value-objects`. **Modelo:** Opus 5.5.
+
+**Contexto mínimo:** el núcleo con `Apoyo` y `DocumentoEntrada`, las convenciones, `Schedule1` (cómo lee la línea 31 y la 13 del SE), `App\Services\Lectura\ResultadoSumas` (las claves de `sumasRegistros`), el catálogo de líneas de `sch-c` y `sch-se` en `2025/formularios.php`, los PDF fijados `f1040sc`, `i1040sc`, `f1040sse` e `i1040sse`, y los parámetros `schedule_c.*` y `self_employment_tax.*`.
+
+**Qué hacer** (en `App\Services\Calculo\Formularios\ScheduleC` y `\ScheduleSe`, con lo que necesites en `Formularios/ScheduleC/`):
+1. **Dueño del negocio (decisión B):** la persona de los 1099-NEC y 1099-K (por `personaId`) y de los registros. Si hay 1099 de trabajo independiente de dos personas, todas las líneas de los dos formularios salen `no_soportada` con el motivo de la decisión B. Sin 1099 ni registros, el Schedule C sale `no_aplica`.
+2. **Schedule C:**
+   - `1` = `1099-nec:1` + `1099-k:1a` (decisión A; **verifica en el catálogo el código real de la casilla 1a del 1099-K**) + `sumasRegistros['1-sin-formulario']`. Cada parte va a la traza con su origen.
+   - `2` (devoluciones, de los registros), `3` = 1 − 2, `4` costo de lo vendido: **`no_soportada`** si hay datos de inventario; si no, `no_aplica` (la Parte III no es del piloto). `5` = 3 − 4, `6` otros ingresos (de los registros si existe la clave; si no, `no_aplica`), `7` = 5 + 6.
+   - **Empleado estatutario** (`i1040sc` p. 5): hoy **no se puede detectar**, porque el catálogo lee la casilla 13 del W-2 como un solo sí/no que junta tres opciones (empleado estatutario, plan de retiro y pago por enfermedad), y el plan de retiro es muy común. **No lo implementes**: solo repórtalo en tu entrega. Queda el pendiente de separar la casilla 13 en tres casillas del catálogo.
+   - `8` a `27b` = `sumasRegistros` de cada línea, con estas excepciones **que verificas en las instrucciones de 2025**: `9` = millas × `schedule_c.millaje_estandar` (si hay `millas`; si también hay gastos reales de vehículo en la 9 de los registros, `falta_dato` "el preparador elige la tarifa estándar o los gastos reales"); `13` (depreciación) `no_soportada` si hay datos (Form 4562, F7); `24b` = comidas × `schedule_c.comidas_porcentaje_deducible`. Una categoría sin datos queda `no_aplica`.
+   - `28` = suma de 8 a 27b, `29` = 7 − 28, `30` = **método simplificado** con `pies-oficina` × `schedule_c.oficina_casa_tarifa_pie_cuadrado`, con el tope de `schedule_c.oficina_casa_tope_pies_cuadrados` **y el límite de la ganancia de la línea 29** (verifica la hoja del método simplificado en `i1040sc`); sin `pies-oficina`, `no_aplica`. `31` = 29 − 30. Con pérdida (31 negativa), **la línea 32 no es del piloto**: escribe 31 tal cual y agrega a la traza "con pérdida, el preparador marca 32a o 32b".
+3. **Schedule SE** (del dueño del negocio): `2` (línea 31 del Schedule C), `3`, `4a` = 3 × `self_employment_tax.factor_ingreso_neto`, `4c`, regla del mínimo de `self_employment_tax.minimo_ingreso_neto` (si 4c es menor, el SE no se presenta: líneas en `no_aplica` y 1040 sin impuesto de autoempleo), `6`, `8a` (W-2 casillas 3 y 7 **de esa misma persona**, desde `$e->documentos('w2')`), `8b`, `8c`, `8d` (`no_aplica` si no hay datos, 8b y 8c no son del piloto), `9` = tope de `self_employment_tax.tope_salario_social_security` − 8d, `10`, `11`, `12` = 10 + 11, `13` = 12 × `self_employment_tax.factor_deduccion_mitad`. **Verifica cada número de línea y cada operación contra el `f1040sse` de 2025.**
+4. Lo que el Schedule 1 (líneas 3 y 15) y el Schedule 2 (línea 4) ya leen: no los tocas, solo escribes las líneas que ellos esperan (31 del C, 12 y 13 del SE).
+
+**Pruebas** (`tests/Unit/Calculo/Formularios/ScheduleCTest.php`, `ScheduleSeTest.php`): cifras sacadas de las instrucciones y armadas a mano con cita (formulario, línea, página): ingresos por 1099-NEC + 1099-K + sin formulario; gastos por categoría; millaje con la tarifa del año; comidas al porcentaje deducible; oficina en casa con el tope de pies y limitada por la ganancia; pérdida; SE bajo el mínimo; SE con salarios W-2 de la misma persona que reducen la base del Seguro Social (y W-2 del cónyuge que **no** la reducen); SE por encima del tope; dos dueños → `no_soportada`; datos sin validar → `usaSinValidar`; 2026 con el millaje pendiente → `falta_dato` con el nombre del parámetro; la traza sin valores sensibles.
+
+**Archivos permitidos:** `app/Services/Calculo/Formularios/ScheduleC.php`, `ScheduleSe.php`, `Formularios/ScheduleC/**`, sus pruebas, `lang/calculo/schedule-c/en.json`.
+**No tocar:** el núcleo, el catálogo, otras calculadoras.
+
+**Criterio de terminado:** pruebas verdes, `pint` limpio; entrega con las líneas que escribe cada clase, las reglas verificadas con su página (millaje, comidas, método simplificado, mínimo y tope del SE), las líneas que faltan en el catálogo y lo que dejaste `no_soportada`.
+
+---
+
+## 6.4d — Calculadoras `Deducciones`, `Schedule1A` y `Form8995`
+
+**Plan:** fila 6.4d y decisión h. **Skills:** `arch-service-classes`, `arch-value-objects`. **Modelo:** Opus 5.5.
+
+**Contexto mínimo:** el núcleo con `Apoyo`, las convenciones, `PersonaEntrada` (edad), el catálogo de líneas de `1040` (12d a 15), `sch-1a` y `f8995`, los PDF fijados `f1040`, `i1040gi` (líneas 12 y 13, hoja de la deducción estándar), `f1040s1a`, `f8995` e `i8995`, los casos ya escritos `i1040gi-s1a-horas-extra-ejemplo-1` y `-2` (**solo como ejemplo de formato**: sus cifras las verifica 6.9b), y los parámetros `deduccion_estandar.*`, `schedule_1a.*` y `qbi.*`.
+
+**Qué hacer:**
+1. **`Deducciones`** (1040): `12d` (adicional por 65 años o más y por ceguera: edad de `PersonaEntrada::edadAlFinDeAnio` del contribuyente y del cónyuge; **la ceguera no se pregunta hoy**: si no hay dato, cuenta solo la edad y lo dice en la traza), `12e` (deducción estándar por estado civil + 12d; **dependiente de otro** con `deduccion_estandar.dependiente_minimo` y `dependiente_adicional_ingreso_trabajo` si `PersonaEntrada::otroPuedeReclamar` del contribuyente es `true`; si es `null`, usa la normal y lo dice; **itemizada `no_soportada`** si hay datos de Schedule A), `13a` (línea 15 del Form 8995), `13b` (Schedule 1-A, su línea final), `14` = 12e + 13a + 13b, `15` = 11b − 14 (mínimo cero). **Verifica en `i1040gi` el número exacto de cada línea de 2025 y la hoja de la deducción estándar del dependiente.**
+2. **`Schedule1A`**: las cuatro partes con sus topes y reducciones por MAGI (`schedule_1a.*`): propinas calificadas (`constancia-horas-propinas:propinas-calificadas` y los W-2 con código TP o la casilla 14 si el catálogo la trae), horas extra (`constancia-horas-propinas:horas-extra-calificadas` y código TT), intereses del préstamo del vehículo (`estado-prestamo-vehiculo:intereses-pagados`, solo si `vehiculo-nuevo` = sí; el ensamblado en EE. UU. no se lee hoy: `falta_dato` "falta confirmar que el vehículo se ensambló en EE. UU." **si las instrucciones lo exigen**, verifícalo) y mayores de 65 (por persona). MAGI según las instrucciones del 1-A (con el 1040 línea 11b como base). Escribe las líneas del catálogo de `sch-1a` y su total. Verifica el sentido del redondeo de las líneas 11, 19 y 28 (por verificar en el plan).
+3. **`Form8995`** (QBI simple, decisión h): solo si el ingreso gravable antes de QBI está **bajo** `qbi.umbral_*` del estado civil; si no, todas las líneas `no_soportada` ("8995-A en F7"). QBI = ganancia del Schedule C (línea 31) menos la parte deducible del SE (Schedule 1 línea 15) y demás ajustes que diga `i8995` (**verifica cuáles aplican al piloto**); `qbi.tasa`; límite por el ingreso gravable menos ganancia de capital neta. Pérdida de QBI: arrastre a otro año `no_soportada`. Escribe las líneas de `f8995` del catálogo (2, 4, 5, 10, 11, 13, 14, 15) y las intermedias que necesites.
+4. **Orden:** `Deducciones` necesita la 13a (8995) y la 13b (1-A), y el 8995 necesita el ingreso gravable antes de QBI (11b − 12e − 13b). Resuélvelo dentro de la subtarea (por ejemplo, `Deducciones` corre en dos pasos o llama a las otras dos) y **documenta el orden** para el orquestador de 6.4i.
+
+**Pruebas** (`tests/Unit/Calculo/Formularios/DeduccionesTest.php`, `Schedule1ATest.php`, `Form8995Test.php`): por estado civil (MFS incluido); 65+ de uno y de los dos cónyuges; dependiente de otro; itemizada → `no_soportada`; 1-A con cada parte, en el tope y en la reducción por MAGI; vehículo usado → no cuenta; 8995 bajo y sobre el umbral; QBI negativo; 15 en cero; 2026 con un parámetro pendiente.
+
+**Archivos permitidos:** `app/Services/Calculo/Formularios/Deducciones.php`, `Schedule1A.php`, `Form8995.php`, sus subcarpetas si las necesitas, sus pruebas, `lang/calculo/deducciones/en.json`.
+**No tocar:** el núcleo, el catálogo, otras calculadoras, los casos.
+
+**Criterio de terminado:** pruebas verdes, `pint` limpio; entrega con el orden entre las tres clases, las reglas verificadas con su página (65+ y ceguera, dependiente, cada parte del 1-A y su MAGI, QBI), las líneas que faltan en el catálogo y lo que quedó `falta_dato` por datos que la entrevista no pregunta (ceguera, ensamblado en EE. UU.).
+
+---
+
+## 6.4f — Calculadoras `Schedule8812`, `Form2441` y `Schedule3`
+
+**Plan:** fila 6.4f. **Skills:** `arch-service-classes`, `arch-value-objects`. **Modelo:** Opus 5.5.
+
+**Contexto mínimo:** el núcleo con `Apoyo` y `DocumentoEntrada`, las convenciones, `Eitc` (cómo evalúa a los hijos con `PersonaEntrada`), `ClasificacionPersona`, el catálogo de líneas de `sch-8812`, `f2441` y `sch-3`, `tests/Fixtures/irs/2025/f2441-tabla.csv`, el `skip` del 2441 en `TablasIrsTest.php`, los PDF fijados `f1040s8`, `i1040s8`, `f2441`, `i2441` y `f1040s3`, los casos ya escritos `i2441-ejemplo-*` (**solo como formato**), y los parámetros `credito_ctc.*`, `credito_odc.*`, `credito_actc.*` y `credito_cuidado_dependientes.*`.
+
+**Qué hacer:**
+1. **`Schedule8812`**: Parte I (crédito por hijos de `credito_ctc.monto_por_dependiente` por hijo calificado con **SSN válido para trabajar**; crédito por otros dependientes de `credito_odc.*` para los demás dependientes y para los hijos sin SSN válido; reducción por cada USD 1.000 sobre el umbral de MAGI; **límite por el impuesto** con la hoja de las instrucciones, usando la línea 18 del 1040 y los créditos del Schedule 3 que corresponda según `i1040s8`) → línea 14 → **1040 línea 19**. Parte II-A (ACTC: `credito_actc.tope_reembolsable_por_hijo`, ingreso del trabajo sobre `credito_actc.umbral_ingreso_trabajo` × `credito_actc.tasa_ingreso_trabajo`) → **línea 27 del 8812**. La Parte II-B (tres o más hijos con impuesto de Seguro Social) solo si las instrucciones la piden para el caso; si no la puedes cubrir, `no_soportada`. Hijo calificado: `ClasificacionPersona::HijoCalificado`, edad menor de 17 al fin de año (**verifica la edad en `i1040s8`**) y `ssnValido` y no `noValidoParaTrabajar`. **Verifica cada número de línea contra el PDF de 2025.**
+2. **`Form2441`**: Parte I (proveedores, desde `$e->documentos('recibo-cuidado')`: un proveedor por nombre, **sin escribir nombre ni TIN en la traza**, solo el id del ítem; si el TIN falta, la línea sale igual con la marca y la regla R-12 de la ola 5 lo cubre), Parte II (gastos por persona cuidada con el tope de `tope_gastos_1_persona` o `tope_gastos_2_mas_personas`; **ingreso del trabajo de cada cónyuge** con W-2 c. 1 de cada uno desde `$e->documentos('w2')` más la ganancia neta de autoempleo de esa persona; el cónyuge estudiante o incapacitado no se pregunta hoy → `falta_dato` solo si el cónyuge no tiene ingreso del trabajo; porcentaje de la tabla `credito_cuidado_dependientes.tabla` por AGI, **probado contra todas las filas de `f2441-tabla.csv`** en `tests/Feature/Calculo/TablaF2441CsvTest.php` y quitando el `skip` del 2441 de `TablasIrsTest.php`), Parte III (beneficios del W-2 c. 10: la parte que se excluye y la que se grava → **1040 línea 1e**). Crédito limitado por el impuesto con la hoja de las instrucciones → línea 11 del 2441 → **Schedule 3 línea 2**. MFS: verifica la excepción del cónyuge que vive separado; si no, `falta_dato` con "Con MFS, este crédito lo revisa el preparador".
+3. **`Schedule3`**: `2` (2441), `8` (suma de la Parte I del piloto) → **1040 línea 20**; `9` (crédito de prima neto del 8962, línea 26 del 8962, que escribe 6.4h: si no está, `falta_dato` solo si el cliente tiene 1095-A), `10` (pago con la extensión: `$e->documentos('comprobantes-pagos')` con `tipo-pago` = extensión del año), `11` (exceso de Seguro Social retenido con dos o más empleadores de una misma persona: W-2 c. 4 por persona contra el máximo del año; **si el parámetro no existe, reporta**), `15` (suma de la Parte II del piloto) → 1040 línea 31 (la copia 6.4h).
+4. **Orden:** el 8812 y el 2441 necesitan la línea 18 del 1040 (6.4e) y el 2441 el AGI (11b). Documenta el orden para 6.4i.
+
+**Pruebas** (`tests/Unit/Calculo/Formularios/Schedule8812Test.php`, `Form2441Test.php`, `Schedule3Test.php`, `tests/Feature/Calculo/TablaF2441CsvTest.php`): un hijo, dos hijos, un hijo sin SSN válido (cuenta como otro dependiente), hijo de 17 años, reducción por MAGI en MFJ y soltero, límite por el impuesto, ACTC con ingreso del trabajo bajo el umbral y por encima; 2441 con uno y dos proveedores, una y dos personas, el tope, el cónyuge sin ingreso del trabajo, la tabla completa, W-2 c. 10 con exceso; Schedule 3 con extensión y exceso de Seguro Social; MFS; 2026 con un parámetro pendiente.
+
+**Archivos permitidos:** `app/Services/Calculo/Formularios/Schedule8812.php`, `Form2441.php`, `Schedule3.php`, sus subcarpetas si las necesitas, sus pruebas, `tests/Feature/Calculo/TablaF2441CsvTest.php`, `tests/Feature/Calculo/TablasIrsTest.php` (solo quitar el `skip` del 2441), `lang/calculo/creditos/en.json`.
+**No tocar:** el núcleo, el catálogo, otras calculadoras, los casos.
+
+**Criterio de terminado:** pruebas verdes (las filas de la tabla del 2441 incluidas), `pint` limpio; entrega con el orden, las reglas verificadas con su página (edad del hijo, SSN, límite por el impuesto, ingreso del trabajo de cada cónyuge, MFS) y lo que quedó `no_soportada` o `falta_dato`.
+
+---
+
+## 6.4h — Calculadoras `Form8962` y `PagosYResultado`
+
+**Plan:** fila 6.4h. **Skills:** `arch-service-classes`, `arch-value-objects`. **Modelo:** Opus 5.5.
+
+**Contexto mínimo:** el núcleo con `Apoyo` y `DocumentoEntrada`, las convenciones, `ImpuestoYSchedule2` (cómo lee la línea 29 del 8962 para el Schedule 2 línea 1a y el Form 8959), la regla `R09Adelanto8962` (qué revisa del 1095-A), el catálogo de líneas de `f8962` y del 1040 (25a a 37), las casillas del 1095-A en `documentos.php`, `tests/Fixtures/irs/2025/f8962-*.csv`, los PDF fijados `f8962`, `i8962`, `f1040`, `i1040gi` (líneas 25 a 37) y `f8959`, el caso ya escrito `i8962-ejemplo-joe` (**solo como formato**) y los parámetros `credito_prima_salud.*`.
+
+**Qué hacer:**
+1. **`Form8962`**: tamaño de la familia (personas de la declaración), `2a`/`2b`/`3` (ingreso del hogar: línea 11b del 1040 más lo que agreguen las instrucciones para el piloto), `4` (línea de pobreza por estado; **el estado de residencia** sale de la dirección del cliente si la plataforma la tiene; si no, `falta_dato`), `5` (porcentaje), `7` (cifra aplicable con `tabla_cifra_aplicable`), `8a`, `8b`; **Parte II mensual** con los meses del 1095-A (`21-A` a `32-C` de cada póliza desde `$e->documentos('1095-a')`; columnas a, b, d, e, f según las instrucciones; anual en la línea 11 si **todos** los meses son iguales y cubren el año, como dicen las instrucciones), `24` a `29` (crédito neto → línea 26; exceso del adelanto → línea 27 con el tope de `tabla_tope_devolucion` → 28 → **29**). Asignación entre declaraciones (Parte IV) y casados que presentan separados por violencia (Parte V): `no_soportada` si aplican. MFS sin la excepción: sin crédito y todo el adelanto se devuelve (**verifícalo**). **Prueba la tabla de la cifra aplicable y la de la devolución contra los CSV completos.**
+2. **`PagosYResultado`** (1040): `25a` (W-2 c. 2 de todos), `25b` (1099 con retención: NEC c. 4 y los demás que el piloto lee), `25c` (Medicare adicional retenido del Form 8959 Parte V: casilla 6 de los W-2 menos 1,45 % de la casilla 5, **verifícalo en el 8959**), `25d` = suma, `26` (pagos estimados del año: `comprobantes-pagos` con `tipo-pago` = estimado y `anio-aplicado` = año de la declaración, más lo aplicado del año anterior si el catálogo lo trae; **verifica en `i1040gi` qué comprobantes cuentan**), `28` (copia la 27 del 8812), `29` (`no_soportada` si hay 1098-T; si no, `no_aplica`), `31` (copia la 15 del Schedule 3), `32` = 27a + 28 + 29 + 30 + 31 (30 `no_aplica` en el piloto), `33` = 25d + 26 + 32, `34` (sobrepago), `35a` (reembolso), **35b a 35d no se calculan ni se leen** (cuenta bancaria: el borrador solo dice si existe la respuesta G3), `36` (`no_aplica` en el piloto), `37` (lo que se debe). La multa por pago estimado insuficiente (38) `no_soportada` si podría aplicar (se debe más de lo que dicen las instrucciones).
+
+**Pruebas** (`tests/Unit/Calculo/Formularios/Form8962Test.php`, `PagosYResultadoTest.php`, `tests/Feature/Calculo/TablasF8962CsvTest.php`): familia de 1, 2 y 4; ingreso bajo 100 % y sobre 400 % de la línea de pobreza (verifica las reglas de 2025); meses iguales (línea 11) y distintos (12 a 23); devolución con y sin tope; dos pólizas; MFS; retenciones de varios W-2 y 1099; pagos estimados de distintos tipos y años (los de otro año no cuentan); reembolso y saldo a pagar; Medicare adicional retenido; la traza sin números de póliza ni de cuenta.
+
+**Archivos permitidos:** `app/Services/Calculo/Formularios/Form8962.php`, `PagosYResultado.php`, sus subcarpetas si las necesitas, sus pruebas, `tests/Feature/Calculo/TablasF8962CsvTest.php`, `lang/calculo/pagos/en.json`.
+**No tocar:** el núcleo, el catálogo, otras calculadoras, `R09Adelanto8962`, los casos.
+
+**Criterio de terminado:** pruebas verdes (las tablas del 8962 completas incluidas), `pint` limpio; entrega con las reglas verificadas con su página, de dónde sale el estado de residencia (o que falta), los comprobantes que cuentan en la 26, las líneas que faltan en el catálogo y lo que quedó `no_soportada`.
+
+---
+
+## 6.5 — Respaldo manual sin documento (servidor)
+
+**Plan:** sección "6.5". **Skills:** `sec-mass-assignment`, `eloquent-casts`, `controller-form-requests`, `validation-after-hooks`, `controller-dependency-injection`. **Modelo:** Opus 5.5. **Solo el servidor:** el diálogo de la pantalla es de 6.7b (ola 5).
+
+**Contexto mínimo:** la sección 6.5 del plan, `DatosDocumento::corregir()` (cómo corre el motor de reglas y reabre la validación), `RevisionExpediente` y `EstadosExpediente` (cómo F5 reabre una revisión aprobada cuando cambia algo), `routes/expediente-revision.php` y su controlador (patrón de rutas y permisos), una regla existente como modelo (`R11HijoSinSsn`, `Hallazgo`), `Expediente` y `ExpedientePersona`, `BitacoraActividad`.
+
+**Qué hacer:**
+1. **Migración** con `expediente_datos_sin_documento` (`expediente_id`, `clave` (`documento:casilla` o `registros-ingresos-gastos:<línea del Schedule C>`), `persona_id` nullable, `valor` cifrado, `motivo` obligatorio, `fuente` (`cliente_dijo` / `otro`), `fuente_fecha`, `fuente_canal` nullable, `anotado_por`, `reemplazado_en` nullable, timestamps; único por `expediente_id` + `clave` + `persona_id` vigente) y `expediente_dato_sin_documento_cambios` (historial: valor anterior y nuevo cifrados, motivo, quién, cuándo). Modelos `ExpedienteDatoSinDocumento` y `ExpedienteDatoSinDocumentoCambio` (`#[Fillable]`, casts `encrypted`).
+2. **`App\Services\Expediente\DatosSinDocumento`** (único camino de escritura): `anotar()`, `cambiar()`, `retirar()`, y `vigentes(Expediente)` (lo que leerá `ArmadorEntradas` en la ola 4: solo los que **no** tienen documento leído para su clave, y para los que sí lo tienen, marca `reemplazado_en` sin borrarlos). Cada escritura: historial, `MotorReglas::correr()` y la reapertura de la revisión aprobada **como lo hace F5** (usa su servicio, no copies la lógica).
+3. **`AnotarSinDocumentoRequest`** con `after()`: rechaza si la clave ya tiene un archivo leído ("Este dato ya sale del documento; corrígelo en el visor"), si la clave no existe en el catálogo del año o si el monto no es un monto. **`DatosSinDocumentoController`** (`store`, `update`, `destroy`) con la autorización del preparador sobre el cliente; el cliente recibe 403.
+4. **`routes/expediente-borrador.php`** (lo creas; dueño único) con esas tres rutas bajo `clientes/{cliente}/borrador/sin-documento`, y su `require` en `routes/web.php`. Luego `php artisan wayfinder:generate --with-form`.
+5. **`R15SinDocumento`** (informativa): una excepción por dato anotado vigente, con `detalle` de ids y la clave, **nunca el valor ni el motivo**. **No la registres** en `MotorReglas` (eso es de la ola 5); pruébala llamándola directo.
+6. Bitácora: acción y etiqueta sin el valor ("Anotó un dato sin documento: comprobantes-pagos:monto (cliente #N)").
+
+**Pruebas** (`tests/Feature/Expediente/DatosSinDocumentoTest.php`): anotar exige motivo; no se puede con documento leído; subir y leer el documento después marca el manual como reemplazado y `vigentes()` ya no lo devuelve; historial al cambiar; reabre la revisión aprobada; R-15 da un hallazgo por dato sin valor ni motivo en `detalle`; el cliente recibe 403; otro preparador sin acceso recibe 403; el valor nunca en logs, bitácora ni respuesta de error.
+
+**Archivos permitidos:** la migración, los dos modelos, `app/Services/Expediente/DatosSinDocumento.php`, el request, el controlador, `routes/expediente-borrador.php`, el `require` en `routes/web.php`, `app/Services/Lectura/Reglas/R15SinDocumento.php`, los archivos que genera Wayfinder, sus pruebas, `lang/expediente/borrador/en.json`.
+**No tocar:** `MotorReglas`, `reglas.php`, `ExplicadorExcepcion`, el núcleo del cálculo, el frontend.
+
+**Criterio de terminado:** pruebas verdes, `pint` limpio, Wayfinder generado; entrega con las rutas, las claves que acepta, cómo reabre la revisión y la frase de R-15 que tendrá que ir en `ExplicadorExcepcion` en la ola 5.
+
+---
+
+## 6.3c — Extractos, recibos sueltos y fotos con IA (tramo 2)
+
+**Plan:** sección "6.3c" completa y decisión n. **Skills:** `arch-service-classes`, `arch-dto-pattern`, `eloquent-casts`. **Modelo:** Opus 5.5. **OpenAI siempre simulado** con `Http::fake` (salvo el comando de medición, que no se corre en la subtarea).
+
+**Contexto mínimo:** la sección 6.3c del plan, `EsquemaLectura`, `LectorOpenAi` (hoy manda los documentos de renglones a `LectorHojas` o al manual), `LectorHojas` y `RenglonLeido` (cómo se escriben renglones), `DatosDocumento::guardarLectura()`, `CalculadoraConfianza`, `UbicadorEnPdf`, `PaginasDocumento` (`MAXIMO_PAGINAS`), `MotivoConfianza`, `R14RegistrosNegocio` (hoy marca todo PDF o foto como `archivo_sin_lector`), `ExplicadorExcepcion::registros()`, `docs/mejora-plataforma/guia-confianza-de-lectura.md`, `LeerDocumentoJob`, los fixtures de `tests/Fixtures/lectura/montos/` y `2025/plantilla-registros.php` (categorías → líneas).
+
+**Qué hacer:**
+1. **Esquema en modo lista:** para `lectura = renglones`, `EsquemaLectura` pide las casillas fijas del documento **y** `renglones[]` (`pagina`, `fecha`, `descripcion`, `monto`, `sentido`, `categoria` como opciones cerradas con las líneas del Schedule C del año y `no_se`, `legibilidad`, `evidencia`), con las instrucciones del plan ("no inventes renglones…").
+2. **Lector:** `LectorOpenAi` lee los PDF y las imágenes de `registros-ingresos-gastos` con IA (las hojas siguen con `LectorHojas`), **por bloques de páginas** (una llamada por bloque; los renglones se juntan en orden). Límite: el parámetro `lectura.maximo_paginas_renglones` (40) para este documento y `PaginasDocumento::MAXIMO_PAGINAS` para los demás; un archivo más largo queda "no se pudo leer: demasiadas páginas, súbelo por meses".
+3. **Tope por cliente** (decisión C): el parámetro `lectura.maximo_paginas_ia_por_cliente` (páginas leídas con IA por cliente y año en documentos de renglones). Al llegar al tope, el archivo siguiente **no va a OpenAI** y queda "sin leer: tope de lectura alcanzado".
+4. **Confianza de cada renglón** (la tabla del plan, calculada por la plataforma): 0,99 único en el texto de su página, **0,95 repetido en la página** (motivo nuevo), 0,90 desde imagen, 0,60 dudoso, 0 sin valor. Motivos nuevos en `MotivoConfianza` con título y explicación: repetido en la página, **categoría propuesta por la IA** y **sin categoría**; agrégalos a la tabla de `guia-confianza-de-lectura.md`. `categoria_origen` = `documento` si el papel la dice, `ia` si la propuso el modelo.
+5. **R-14 en esta ola** (eres el dueño): el PDF o la foto leídos con IA **ya no** abren `archivo_sin_lector`; casos nuevos: "demasiadas páginas" y "tope de lectura alcanzado" (uno por archivo), con su texto en `ExplicadorExcepcion::registros()` y el texto para el cliente. El cuadre y la conciliación **no** son tuyos (6.3d, ola 4).
+6. **Parámetros:** `lectura.maximo_paginas_renglones` = 40 y `lectura.maximo_paginas_ia_por_cliente` = 120 en `2025/parametros.php` y `parametros-metadatos.php`, con fuente "Proceso: decisión de Steven (9 y 11 nov. 2026)". Revisa que 2026 los herede al cargar (el arreglo `c116aec` completa los parámetros nuevos); si no, agrégalos a `2026/ajustes.php`.
+7. **Comando `lectura:medir-costo`** (solo local; **se niega a correr** si `app.env` es `production` o si falta la clave de desarrollo): lee los fixtures sintéticos de `tests/Fixtures/lectura/montos/` y escribe por documento páginas, llamadas, tokens de entrada y salida, segundos y costo estimado (tarifa del modelo como opción del comando, sin cifra fija en el código). **No lo corras**: lo corre el agente principal (decisión D).
+8. **Fixtures nuevos** (sintéticos, sin datos reales): extracto bancario con texto de 3 páginas, con totales impresos y dos movimientos de igual monto en una página; el mismo escaneado; extracto de tarjeta; dos recibos sueltos. Respuestas simuladas de OpenAI en `tests/Fixtures/lectura/montos/respuestas/`.
+
+**Pruebas** (`tests/Feature/Lectura/LecturaRenglonesIaTest.php`, y ampliar `LecturaMontosTest.php` y `RenglonesTest.php` donde toque): esquema en modo lista con las categorías del año; renglones leídos de un extracto con texto (0,99 y 0,95 en la misma página), escaneado (≤ 0,90), recibo con categoría impresa (`documento`) y propuesta (`ia`); bloques de páginas (dos llamadas para un archivo largo, renglones en orden); archivo de más de 40 páginas → texto y R-14, sin error 500; cliente en el tope → `Http::assertNothingSent()` para el archivo siguiente y R-14; las hojas siguen sin OpenAI; ningún monto ni descripción en `excepciones.detalle`, logs ni bitácora; el comando se niega en producción.
+
+**Archivos permitidos:** `app/Services/Lectura/EsquemaLectura.php`, `LectorOpenAi.php`, `PaginasDocumento.php`, `CalculadoraConfianza.php` (solo los motivos nuevos), `RenglonLeido.php` (si hace falta un campo), `DatosDocumento.php` (solo lo que toque guardar renglones de la IA), `app/Enums/Lectura/MotivoConfianza.php`, `Reglas/R14RegistrosNegocio.php`, `ExplicadorExcepcion.php` (solo `registros()`), `app/Jobs/LeerDocumentoJob.php` (solo el tope por cliente si va ahí), el comando nuevo en `app/Console/Commands/`, `2025/parametros.php`, `parametros-metadatos.php`, `2026/ajustes.php` (solo los dos parámetros), `docs/mejora-plataforma/guia-confianza-de-lectura.md`, `tests/Fixtures/lectura/montos/**`, sus pruebas, `lang/lectura/montos/en.json`.
+**No tocar:** `SumasRegistros` y su implementación (6.3d), `MotorReglas`, `reglas.php`, el visor, el núcleo del cálculo.
+
+**Criterio de terminado:** pruebas verdes, `pint` limpio; entrega con el esquema (forma del JSON), cómo se arman los bloques, cómo se cuenta el tope por cliente, la tabla de motivos nueva y lo que quedó "por verificar" (por ejemplo, la tarifa vigente del modelo).
+
+---
+
+## 6.9b — Segundo lote de casos del IRS (escrito sin ver el código)
+
+**Plan:** "Estrategia de validación" capas 3 y 4. **Modelo:** Opus 5.5. **Regla de oro (la misma de 6.9a):** no abras `app/Services/Calculo/` ni ninguna calculadora ni sus pruebas; el valor esperado sale del PDF y de las instrucciones, a mano, paso por paso.
+
+**Contexto mínimo:** `tests/Fixtures/irs/casos/README.md`, los casos de 6.9a como modelo, `tests/Support/CasosIrs.php`, los PDF y tablas de `tests/Fixtures/irs/2025/`.
+
+**Qué hacer:** en `tests/Fixtures/irs/casos/2025/`, con `entradas`, `pasos` (con fuente y **página**), `lineas` esperadas y `cubre`:
+1. `schedule-c-ingresos-y-gastos`: 1099-NEC + 1099-K + ingresos sin formulario, gastos de varias categorías, millaje con la tarifa de 2025, comidas al porcentaje deducible → líneas 1, 7, 9, 24b, 28, 29, 31.
+2. `schedule-c-oficina-simplificada` y `schedule-c-oficina-limitada-por-ganancia`: método simplificado (línea 30) con y sin el límite de la ganancia.
+3. `schedule-se-bajo-minimo`, `schedule-se-con-w2` (salarios W-2 que reducen la base del Seguro Social) y `schedule-se-sobre-tope`.
+4. `deduccion-estandar-65-mfj` y `deduccion-estandar-dependiente`: líneas 12d y 12e.
+5. `form8995-bajo-umbral`: QBI simple → línea 15 del 8995 y 13a del 1040.
+6. `schedule-8812-dos-hijos`, `schedule-8812-reduccion-magi` y `schedule-8812-actc-limitado`: Parte I y II-A.
+7. `form2441-dos-personas-mfj` y `form2441-conyuge-sin-ingreso`.
+8. `pagos-estimados-y-retenciones`: líneas 25a a 26 y 33 a 37 con un 1040-ES del año y uno de otro año (que no cuenta).
+Cada cifra cita formulario, línea, **página** y URL del PDF fijado. Donde dos lecturas den cifras distintas, escribe las dos como `pendiente de revisión` y repórtalo.
+
+**Archivos permitidos:** `tests/Fixtures/irs/casos/2025/**` (solo archivos nuevos) y, si fijas un PDF nuevo, `tests/Fixtures/irs/2025/pdf/*` y `fuentes.json` (pregunta antes).
+**No tocar:** `app/**`, `tests/Unit/**`, `tests/Feature/**` salvo para correr `CasosIrsTest`.
+
+**Criterio de terminado:** `CasosIrsTest` verde; entrega con la lista de casos, las líneas que cubre cada uno, las lecturas ambiguas y las cifras que no pudiste confirmar.
+
+---
+
+## Qué hace el agente principal al cerrar la ola 3
+
+1. Revisar cada entrega contra el plan; **verificar al azar** cinco cifras de cada calculadora contra el PDF.
+2. Agregar al catálogo (`formularios.php`) las líneas intermedias que reportaron las subtareas, con su fuente y página, y recargar el catálogo local.
+3. **Contrastar los casos de 6.9b con las calculadoras** (un `ContrasteCasos…Test` por calculadora, como el de la ola 2): si no coinciden, revisar contra el PDF antes de tocar cualquiera de los dos.
+4. Con la autorización de Steven, correr `lectura:medir-costo` en local y anotar el resultado; proponer el valor final del tope por cliente.
+5. `wayfinder:generate`, `pint --test`, `types:check`, `eslint` sobre lo tocado y la suite completa (`PAO_DISABLE=1 php artisan test --parallel`, una sola vez).
+6. "Cómo quedó" de la ola, `tareas-desarrollo.md`, Wiplitask (empresa **Cupperlab**); preguntar a Steven antes de cada commit (`/commit`).
+7. Detallar la **ola 4** (6.4i orquestador y foto, 6.7a, 6.3d) con los nombres reales.

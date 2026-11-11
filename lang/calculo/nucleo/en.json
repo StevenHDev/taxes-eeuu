@@ -1,0 +1,15 @@
+{
+    "la línea :linea del :formulario": "line :linea of :formulario",
+    "Línea :linea del :formulario": "Line :linea of :formulario",
+    "Falta la línea :linea del :formulario.": "Line :linea of :formulario is missing.",
+    "No se puede calcular: depende de la línea :linea del :formulario, que tiene datos pendientes.": "Can't be figured: it depends on line :linea of :formulario, which has pending data.",
+    "No se puede calcular: depende de la línea :linea del :formulario, que el piloto no soporta.": "Can't be figured: it depends on line :linea of :formulario, which the pilot doesn't support.",
+    "Falta el monto de :casilla.": "The amount of :casilla is missing.",
+    "Falta :linea.": ":linea is missing.",
+    ":linea no tiene un monto.": ":linea has no amount.",
+    ":linea no está soportada.": ":linea isn't supported.",
+    "Suma de las líneas anteriores.": "Sum of the lines above.",
+    "Falta decidir el estado civil en Revisión.": "The filing status still has to be decided in Review.",
+    "No se puede calcular: falta el parámetro :parametro de :anio (Catálogo → Parámetros).": "Can't be figured: parameter :parametro for :anio is missing (Catalog → Parameters).",
+    "No se puede calcular: falta un parámetro de :anio (Catálogo → Parámetros).": "Can't be figured: a parameter for :anio is missing (Catalog → Parameters)."
+}

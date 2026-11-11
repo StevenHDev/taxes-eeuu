@@ -155,9 +155,16 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Textos en inglés del servidor de F5, uno por área (lang/expediente/<area>/en.json).
-        foreach (['estados', 'ficha', 'revision', 'debida-diligencia', 'hoja', 'panel', 'mi-declaracion'] as $area) {
+        foreach (['estados', 'ficha', 'revision', 'debida-diligencia', 'hoja', 'panel', 'mi-declaracion', 'borrador'] as $area) {
             $this->app['translator']->addJsonPath(lang_path("expediente/{$area}"));
         }
+
+        // F6: textos en inglés del cálculo (uno por área: lang/calculo/<area>/en.json) y de la lectura de montos.
+        foreach (['nucleo', 'ingresos', 'impuesto', 'eitc', 'schedule-c', 'deducciones', 'creditos', 'pagos'] as $area) {
+            $this->app['translator']->addJsonPath(lang_path("calculo/{$area}"));
+        }
+
+        $this->app['translator']->addJsonPath(lang_path('lectura/montos'));
 
         foreach ([CatalogoPregunta::class, CatalogoDocumento::class, CatalogoCasilla::class, CatalogoFormulario::class, CatalogoLinea::class, CatalogoActivacion::class, CatalogoRegla::class, ParametroFiscal::class] as $pieza) {
             $pieza::observe(CatalogoCambioObserver::class);
